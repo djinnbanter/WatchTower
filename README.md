@@ -17,17 +17,6 @@
 
 Watchtower is a **NeoForge mod for Linux dedicated servers** — a live ops dashboard, scheduled health reports, and a disaster-recovery toolkit in one install. Built for **modpack admins and self-hosters** who need incident triage, not player analytics. Everything stays on your machine: no cloud account, no telemetry service, no database to run.
 
-```mermaid
-flowchart LR
-  MC[Minecraft + mods] --> WT[Watchtower]
-  WT --> Dash["Dashboard :8787"]
-  WT --> Disk["watchtower/ reports"]
-  CLI[watchtower-cli JAR] --> DR[DR bundle + viewer]
-  MC -.->|server won't boot| CLI
-```
-
-
-
 ## Quick start
 
 1. Download from **[GitHub Releases](https://github.com/djinnbanter/WatchTower/releases)** or **[Modrinth](https://modrinth.com/mod/watchtower)**:
