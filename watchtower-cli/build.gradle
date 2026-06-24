@@ -1,0 +1,48 @@
+plugins {
+    id 'java'
+}
+
+group = 'dev.mcstatus.watchtower'
+version = rootProject.findProperty('mod_version') ?: '1.0.0'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':watchtower-core')
+}
+
+base {
+    archivesName = 'watchtower-cli'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.register('fatJar', Jar) {
+    archiveClassifier = ''
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from sourceSets.main.output
+    dependsOn classes
+    dependsOn project(':watchtower-core').tasks.named('jar')
+    from {
+        configurations.runtimeClasspath.collect { entry ->
+            entry.isDirectory() ? entry : zipTree(entry)
+        }
+    }
+    manifest {
+        attributes('Main-Class': 'dev.mcstatus.watchtower.cli.DrCliMain')
+    }
+}
+
+tasks.named('jar') {
+    enabled = false
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('fatJar')
+}

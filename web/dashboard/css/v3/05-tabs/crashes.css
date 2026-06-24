@@ -1,0 +1,374 @@
+/* Watchtower UI v3 — Crashes Tab */
+
+.wt-crashes-summary {
+  /* reuses .wt-issues-summary grid from issues.css */
+}
+
+.wt-tab-crashes .wt-live-toolbar {
+  margin-top: calc(var(--wt-space-2) * -1);
+}
+
+/* Crash card */
+.wt-crash-card {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+.wt-crash-card__accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--wt-danger);
+}
+
+.wt-crash-card__accent--critical { background: var(--wt-danger); }
+.wt-crash-card__accent--warn { background: var(--wt-warning); }
+.wt-crash-card__accent--ok { background: var(--wt-healthy); }
+.wt-crash-card__accent--info { background: var(--wt-text-tertiary); }
+.wt-crash-card__accent--resolved { background: var(--wt-healthy); }
+
+.wt-crash-card--resolved {
+  opacity: 0.92;
+}
+
+.wt-crash-card--highlight {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wt-accent, #5b9cf5) 55%, transparent);
+}
+
+.wt-crash-card__orphan-note {
+  margin: var(--wt-space-2) 0 0;
+  color: var(--wt-text-secondary);
+}
+
+.wt-crash-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--wt-space-4);
+  padding: var(--wt-space-5) var(--wt-space-5) var(--wt-space-4);
+  padding-left: calc(var(--wt-space-5) + 4px);
+  border-bottom: 1px solid var(--wt-border);
+}
+
+.wt-crash-card__lead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.wt-crash-card__title {
+  margin: 0;
+  font-size: var(--wt-text-subheading);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--wt-text-primary);
+}
+
+.wt-crash-card__when {
+  font-size: var(--wt-text-body);
+  font-weight: 600;
+  color: var(--wt-text-secondary);
+}
+
+.wt-crash-card__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wt-space-2);
+}
+
+.wt-crash-card__file {
+  font-size: 12px;
+  color: var(--wt-text-tertiary);
+}
+
+.wt-crash-card__review {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+  flex-shrink: 0;
+  font-size: var(--wt-text-caption);
+  font-weight: 600;
+  color: var(--wt-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.wt-crash-card__head-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--wt-space-2);
+  flex-shrink: 0;
+}
+
+.wt-crash-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--wt-space-2);
+}
+
+.wt-crash-log-tail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wt-space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--wt-space-2);
+}
+
+.wt-crash-log-modal__viewer {
+  margin: 0;
+  max-height: min(60vh, 520px);
+  overflow: auto;
+  padding: var(--wt-space-4);
+  border-radius: var(--wt-radius-md);
+  background: var(--wt-surface-0);
+  border: 1px solid var(--wt-border);
+  font-family: var(--wt-font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--wt-text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.wt-crash-log-modal__meta {
+  margin: 0 0 var(--wt-space-3);
+}
+
+.wt-crash-card__body {
+  border: none;
+  background: transparent;
+}
+
+.wt-crash-card__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wt-space-3);
+  padding: var(--wt-space-3) var(--wt-space-5);
+  padding-left: calc(var(--wt-space-5) + 4px);
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--wt-text-caption);
+  font-weight: 600;
+  color: var(--wt-text-tertiary);
+  border-bottom: 1px solid var(--wt-border);
+  background: var(--wt-surface-2);
+}
+
+.wt-crash-card__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.wt-crash-card__chevron {
+  flex-shrink: 0;
+  transition: transform 180ms ease;
+}
+
+.wt-crash-card__body[open] .wt-crash-card__chevron,
+.wt-crash-history[open] .wt-crash-card__chevron {
+  transform: rotate(180deg);
+}
+
+.wt-crash-card__content {
+  padding: var(--wt-space-5);
+  padding-left: calc(var(--wt-space-5) + 4px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-4);
+}
+
+/* Pre-crash context */
+.wt-crash-context {
+  padding: var(--wt-space-4);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-lg);
+  background: var(--wt-surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-4);
+}
+
+.wt-crash-context__title {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+  margin: 0;
+  font-size: var(--wt-text-body);
+  font-weight: 700;
+}
+
+.wt-crash-context__summary {
+  margin: 0;
+}
+
+.wt-crash-context__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--wt-space-3);
+}
+
+.wt-crash-metric {
+  padding: var(--wt-space-3);
+  border-radius: var(--wt-radius-md);
+  background: var(--wt-surface-1);
+  border: 1px solid var(--wt-border);
+}
+
+.wt-crash-metric__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--wt-text-tertiary);
+  margin-bottom: 4px;
+}
+
+.wt-crash-metric__value {
+  font-size: var(--wt-text-body);
+  font-weight: 600;
+  color: var(--wt-text-primary);
+}
+
+.wt-crash-sparkline {
+  width: 100%;
+  min-height: 64px;
+}
+
+.wt-crash-sparkline canvas {
+  width: 100%;
+  height: 64px;
+  display: block;
+}
+
+/* Key events timeline */
+.wt-crash-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-2);
+}
+
+.wt-crash-events__item {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: var(--wt-space-3);
+  align-items: start;
+  padding: var(--wt-space-2) var(--wt-space-3);
+  border-radius: var(--wt-radius-md);
+  background: var(--wt-surface-1);
+  border: 1px solid var(--wt-border);
+}
+
+.wt-crash-events__item--highlight {
+  border-color: color-mix(in srgb, var(--wt-warning) 45%, var(--wt-border));
+  background: color-mix(in srgb, var(--wt-warning) 8%, var(--wt-surface-1));
+}
+
+.wt-crash-events__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wt-text-tertiary);
+}
+
+.wt-crash-events__time {
+  white-space: nowrap;
+}
+
+.wt-crash-events__label {
+  font-size: var(--wt-text-caption);
+  color: var(--wt-text-secondary);
+  word-break: break-word;
+}
+
+/* Log tail */
+.wt-crash-log-tail {
+  margin: var(--wt-space-2) 0 0;
+  padding: var(--wt-space-4);
+  border-radius: var(--wt-radius-md);
+  background: var(--wt-surface-0);
+  border: 1px solid var(--wt-border);
+  font-family: var(--wt-font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--wt-text-secondary);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Mod fix + fix list */
+.wt-crash-mod-fix {
+  padding: var(--wt-space-4);
+  border-radius: var(--wt-radius-md);
+  border: 1px solid color-mix(in srgb, var(--wt-brand) 35%, var(--wt-border));
+  background: color-mix(in srgb, var(--wt-brand) 6%, var(--wt-surface-1));
+}
+
+.wt-crash-fix-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--wt-space-3);
+}
+
+.wt-crash-tech {
+  border-top: 1px solid var(--wt-border);
+  padding-top: var(--wt-space-3);
+}
+
+.wt-crash-tech > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--wt-text-secondary);
+  list-style: none;
+}
+
+.wt-crash-tech > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Review history */
+.wt-crash-history {
+  padding: 0;
+  overflow: hidden;
+}
+
+.wt-crash-history > .wt-accordion__summary {
+  padding: var(--wt-space-4) var(--wt-space-5);
+  background: var(--wt-surface-2);
+}
+
+.wt-crash-history__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--wt-space-4) var(--wt-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-3);
+}
+
+.wt-crash-history__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wt-space-3);
+}
+
+/* Category pill tints on status pills */
+.wt-tab-crashes .crash-cat-mod { background: color-mix(in srgb, var(--wt-brand) 20%, var(--wt-surface-3)); }
+.wt-tab-crashes .crash-cat-host { background: color-mix(in srgb, var(--wt-warning) 20%, var(--wt-surface-3)); }
+.wt-tab-crashes .crash-cat-loader { background: color-mix(in srgb, var(--wt-text-tertiary) 15%, var(--wt-surface-3)); }
+.wt-tab-crashes .crash-cat-unknown { background: var(--wt-surface-3); }

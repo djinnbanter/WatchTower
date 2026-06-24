@@ -1,0 +1,147 @@
+{
+  "WT-003": {
+    "number": 1,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/1",
+    "title": "Container metrics (bloom.host)"
+  },
+  "WT-004": {
+    "number": 2,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/2",
+    "title": "False panel down (bloom.host)"
+  },
+  "WT-005": {
+    "number": 3,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/3",
+    "title": "CPU display scale"
+  },
+  "WT-006": {
+    "number": 4,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/4",
+    "title": "TPS threshold in Settings UI"
+  },
+  "WT-007": {
+    "number": 5,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/5",
+    "title": "Mod classification false positives"
+  },
+  "WT-008": {
+    "number": 6,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/6",
+    "title": "Two-layer mod side scoring"
+  },
+  "WT-009": {
+    "number": 7,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/7",
+    "title": "Mod dependency tree UI"
+  },
+  "WT-010": {
+    "number": 8,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/8",
+    "title": "Server-required allowlist"
+  },
+  "WT-011": {
+    "number": 9,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/9",
+    "title": "Modrinth opt-in network"
+  },
+  "WT-012": {
+    "number": 10,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/10",
+    "title": "Group similar watchdog crashes"
+  },
+  "WT-013": {
+    "number": 11,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/11",
+    "title": "Mark all crashes reviewed"
+  },
+  "WT-014": {
+    "number": 12,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/12",
+    "title": "External backups unusable"
+  },
+  "repo": "djinnbanter/WatchTower",
+  "updatedAt": "2026-06-20T13:46:15.386Z",
+  "WT-001": {
+    "number": 13,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/13",
+    "title": "Dashboard read authentication",
+    "shipped": true,
+    "state": "closed"
+  },
+  "WT-002": {
+    "number": 14,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/14",
+    "title": "Auth credentials clarity",
+    "shipped": true,
+    "state": "closed"
+  },
+  "WT-015": {
+    "number": 15,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/15",
+    "title": "Default admin account + forced password change",
+    "shipped": true,
+    "state": "closed"
+  },
+  "WT-016": {
+    "number": 16,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/16",
+    "title": "Username/password login + session",
+    "shipped": true,
+    "state": "closed"
+  },
+  "WT-017": {
+    "number": 17,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/17",
+    "title": "Exposure warning + first-login onboarding",
+    "shipped": true,
+    "state": "closed"
+  },
+  "WT-018": {
+    "number": 18,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/18",
+    "title": "Upgrade migration + credential reveal",
+    "shipped": true,
+    "state": "closed"
+  },
+  "WT-019": {
+    "number": 19,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/19",
+    "title": "Optional TOTP 2FA",
+    "shipped": true,
+    "state": "closed"
+  },
+  "WT-020": {
+    "number": 20,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/20",
+    "title": "Operator password reset",
+    "shipped": true,
+    "state": "closed"
+  },
+  "WT-021": {
+    "number": 21,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/21",
+    "title": "Credential storage at rest",
+    "shipped": true,
+    "state": "closed"
+  },
+  "WT-022": {
+    "number": 22,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/22",
+    "title": "Crash reports misclassified as unknown"
+  },
+  "WT-023": {
+    "number": 23,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/23",
+    "title": "Performance insights from saved live data"
+  },
+  "WT-024": {
+    "number": 24,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/24",
+    "title": "Live ops dashboard — tabs without full report"
+  },
+  "WT-025": {
+    "number": 25,
+    "url": "https://github.com/djinnbanter/WatchTower/issues/25",
+    "title": "Update available notification (not auto-update)"
+  }
+}

@@ -1,0 +1,8 @@
+[17Jun2026 09:15:01.100] [main/INFO] [net.neoforged.fml.loading.FMLLoader/]: NeoForge 21.1.0 loading
+[17Jun2026 09:15:03.200] [main/INFO] [net.minecraft.server.Main/]: Starting minecraft server version 1.21.1
+[17Jun2026 09:15:08.500] [modloading-worker-0/ERROR] [create/]: Mod create requires flywheel 1.0.0 or above
+[17Jun2026 09:15:08.501] [modloading-worker-0/ERROR] [create/]: Currently, flywheel is 0.11.3
+[17Jun2026 09:15:08.550] [main/ERROR] [net.neoforged.fml.ModLoader/]: Mod loading has failed
+[17Jun2026 09:15:08.551] [main/FATAL] [net.neoforged.fml.ModLoader/]: Mod (create) failed to load correctly
+net.neoforged.fml.ModLoadingException: Mod create has failed to load correctly
+[17Jun2026 09:15:08.600] [main/ERROR] [net.minecraft.server.Main/]: Failed to start the minecraft server

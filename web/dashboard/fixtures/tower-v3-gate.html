@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="black">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watchtower UI v3 — Gate Fixture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="tower-app">
+    <aside class="tower-rail" aria-label="Main navigation">
+      <div class="tower-rail__logo">
+        <img src="../assets/watchtower-wordmark.png?v=4" alt="Watchtower" width="80" height="80">
+      </div>
+      <nav class="tower-rail__nav">
+        <div class="tower-rail__group-label">Monitor</div>
+        <button type="button" class="tower-rail__item active" data-tab="overview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          <span class="tower-rail__label">Overview</span>
+        </button>
+        <button type="button" class="tower-rail__item" data-tab="live">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span class="tower-rail__label">Live</span>
+        </button>
+        <button type="button" class="tower-rail__item" data-tab="session">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <span class="tower-rail__label">Session</span>
+        </button>
+        <div class="tower-rail__sep"></div>
+        <div class="tower-rail__group-label">Triage</div>
+        <button type="button" class="tower-rail__item" data-tab="issues">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/></svg>
+          <span class="tower-rail__label">Issues</span>
+          <span class="tower-badge tower-badge--warn">3</span>
+        </button>
+        <button type="button" class="tower-rail__item" data-tab="crashes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          <span class="tower-rail__label">Crashes</span>
+        </button>
+        <div class="tower-rail__sep"></div>
+        <div class="tower-rail__group-label">Ops</div>
+        <button type="button" class="tower-rail__item" data-tab="mods"><span class="tower-rail__label">Mods</span></button>
+        <button type="button" class="tower-rail__item" data-tab="backups"><span class="tower-rail__label">Backups</span></button>
+        <button type="button" class="tower-rail__item" data-tab="activity"><span class="tower-rail__label">Activity</span></button>
+      </nav>
+    </aside>
+
+    <div class="tower-app__main">
+      <header class="tower-cmdbar">
+        <div class="tower-cmdbar__host">
+          <h1 class="tower-cmdbar__hostname">Survival SMP</h1>
+          <p class="tower-cmdbar__path">/home/container/minecraft</p>
+        </div>
+        <div class="tower-cmdbar__context">
+          <p class="tower-cmdbar__report-window">Report window: last 30 days</p>
+          <p class="tower-cmdbar__freshness">Last full report: <strong>2 hours ago</strong></p>
+        </div>
+        <div class="tower-cmdbar__actions">
+          <div class="tower-cmdbar__clock">
+            <span class="tower-cmdbar__clock-time">14:32:08</span>
+            <span class="tower-cmdbar__clock-date">Fri, Jun 19</span>
+          </div>
+          <span class="tower-cmdbar__divider"></span>
+          <span class="tower-version-chip">Watchtower 1.0.1b · up to date</span>
+          <button type="button" class="tower-btn tower-btn--primary">Run Report</button>
+          <button type="button" class="tower-btn tower-btn--ghost">⌘K</button>
+        </div>
+      </header>
+
+      <div class="tower-banner-stack">
+        <div class="tower-banner tower-banner--info">Environment: bare metal · 8 CPU cores</div>
+      </div>
+
+      <main class="tower-canvas">
+        <div class="tower-bento tower-enter">
+          <section class="tower-brief tower-bento__brief">
+            <div class="tower-survey-bg"></div>
+            <div class="tower-brief__gradient tower-brief__gradient--ok"></div>
+            <div class="tower-brief__pills">
+              <span class="tower-pill tower-pill--ok">TPS stable</span>
+              <span class="tower-pill tower-pill--warn">Disk warn</span>
+            </div>
+            <div class="tower-brief__tldr-label">TLDR</div>
+            <p class="tower-brief__tldr">Server is running well with 8 players online. Watch disk space and review 3 open issues on the Issues tab.</p>
+            <p class="tower-caption">Last full report: 2 hours ago</p>
+          </section>
+          <aside class="tower-verdict tower-verdict--ok tower-bento__verdict">
+            <span class="tower-label">Global health</span>
+            <span class="tower-beacon tower-beacon--lg tower-beacon--healthy tower-beacon--pulse"></span>
+            <span class="tower-verdict__word tower-verdict__word--ok">Healthy</span>
+          </aside>
+          <div class="tower-bento__session tower-session-chip">
+            <span class="tower-beacon tower-beacon--healthy"></span> Session: Stable
+          </div>
+        </div>
+
+        <div class="tower-signal-grid">
+          <div class="tower-signal tower-enter">
+            <span class="tower-signal__question">Is tick performance healthy?</span>
+            <span class="tower-signal__value">19.98<span class="tower-signal__unit">TPS</span></span>
+            <div class="tower-signal__chart"></div>
+            <p class="tower-signal__caption">MSPT 12.4 ms</p>
+          </div>
+          <div class="tower-signal tower-enter">
+            <span class="tower-signal__question">Is host CPU within limits?</span>
+            <span class="tower-signal__value">42<span class="tower-signal__unit">%</span></span>
+            <div class="tower-signal__chart"></div>
+            <p class="tower-signal__caption">8 cores · load 0.52/core</p>
+          </div>
+          <div class="tower-signal tower-enter">
+            <span class="tower-signal__question">Is Java heap headroom OK?</span>
+            <span class="tower-signal__value">4.2<span class="tower-signal__unit">GB free</span></span>
+            <div class="tower-signal__chart"></div>
+            <p class="tower-signal__caption">of 8 GB max heap</p>
+          </div>
+          <div class="tower-signal tower-enter">
+            <span class="tower-signal__question">How many players are online?</span>
+            <span class="tower-signal__value">8<span class="tower-signal__unit">online</span></span>
+            <div class="tower-signal__chart"></div>
+            <p class="tower-signal__caption">Uptime 48.2h</p>
+          </div>
+        </div>
+
+        <div class="tower-columns tower-columns--2">
+          <section class="tower-panel tower-enter">
+            <h2 class="tower-panel__title">Diagnostics</h2>
+            <p class="tower-caption">All checks passed for storage and world jobs.</p>
+          </section>
+          <section class="tower-panel tower-enter">
+            <div class="tower-panel__head">
+              <h2 class="tower-panel__title">Recent activity</h2>
+              <button type="button" class="tower-btn tower-btn--ghost tower-btn--sm">Open Activity →</button>
+            </div>
+            <div class="tower-timeline">
+              <div class="tower-timeline__item tower-timeline__item--warn">
+                <strong>Mod warning</strong>
+                <p class="tower-caption">Client mod detected on server · 2h ago</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

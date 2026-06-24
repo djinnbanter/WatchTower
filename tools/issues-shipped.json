@@ -1,0 +1,62 @@
+{
+  "repo": "djinnbanter/WatchTower",
+  "milestone": "1.0.0 — Initial public release",
+  "closeComment": "Shipped in **Watchtower 1.0.0** (2026-06-19). See [CHANGELOG](https://github.com/djinnbanter/WatchTower/blob/main/CHANGELOG.md#100---2026-06-19) and [v1.0.0 release](https://github.com/djinnbanter/WatchTower/releases/tag/v1.0.0).",
+  "labels": ["shipped", "dashboard"],
+  "issues": [
+    {
+      "id": "WT-001",
+      "title": "Dashboard read authentication",
+      "labels": ["WT-001", "shipped", "tester-feedback", "dashboard"],
+      "body": "**Status:** shipped **1.0.0**\n\n**Problem:** Dashboard on `:8787` exposed live metrics and reports without login.\n\n**Shipped:** All `/api/*` require authenticated session; username/password + optional TOTP 2FA."
+    },
+    {
+      "id": "WT-002",
+      "title": "Auth credentials clarity",
+      "labels": ["WT-002", "shipped", "tester-feedback", "dashboard"],
+      "body": "**Status:** shipped **1.0.0**\n\n**Problem:** Auth model unclear; legacy token did not lock reads.\n\n**Shipped:** INSTALL + Help document login, forced password change, 2FA, operator reset; legacy `dashboardAuthToken` deprecated."
+    },
+    {
+      "id": "WT-015",
+      "title": "Default admin account + forced password change",
+      "labels": ["WT-015", "shipped", "dashboard"],
+      "body": "**Status:** shipped **1.0.0**\n\n**Shipped:** Default `watchtower` user + random password logged once; forced password change on first login."
+    },
+    {
+      "id": "WT-016",
+      "title": "Username/password login + session",
+      "labels": ["WT-016", "shipped", "dashboard"],
+      "body": "**Status:** shipped **1.0.0**\n\n**Shipped:** Session cookie after login; all dashboard routes protected."
+    },
+    {
+      "id": "WT-017",
+      "title": "Exposure warning + first-login onboarding",
+      "labels": ["WT-017", "shipped", "tester-feedback", "dashboard"],
+      "body": "**Status:** shipped **1.0.0**\n\n**Shipped:** Banner when dashboard bound to `0.0.0.0`; onboarding tour + security checklist."
+    },
+    {
+      "id": "WT-018",
+      "title": "Upgrade migration + credential reveal",
+      "labels": ["WT-018", "shipped", "dashboard"],
+      "body": "**Status:** shipped **1.0.0**\n\n**Shipped:** One-time credential reveal in log on upgrade path; migration from legacy token."
+    },
+    {
+      "id": "WT-019",
+      "title": "Optional TOTP 2FA",
+      "labels": ["WT-019", "shipped", "dashboard"],
+      "body": "**Status:** shipped **1.0.0**\n\n**Shipped:** TOTP in Help → Security; recovery codes."
+    },
+    {
+      "id": "WT-020",
+      "title": "Operator password reset",
+      "labels": ["WT-020", "shipped", "dashboard"],
+      "body": "**Status:** shipped **1.0.0**\n\n**Shipped:** `/watchtower dashboard reset-password` (OP 4); file-based recovery documented."
+    },
+    {
+      "id": "WT-021",
+      "title": "Credential storage at rest",
+      "labels": ["WT-021", "shipped", "dashboard"],
+      "body": "**Status:** shipped **1.0.0**\n\n**Shipped:** PBKDF2 password hashes; encrypted TOTP secrets in `dashboard-auth.json`."
+    }
+  ]
+}

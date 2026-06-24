@@ -1,0 +1,127 @@
+/* Watchtower UI v3 — Theme Tokens (CloudGuard palette) */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --wt-surface-0: #F4F4F5;
+  --wt-surface-1: #FFFFFF;
+  --wt-surface-2: #F0F0F2;
+  --wt-surface-3: #E8E8EC;
+  --wt-surface-4: #DCDCE2;
+
+  --wt-border: rgba(0, 0, 0, 0.08);
+  --wt-border-strong: rgba(0, 0, 0, 0.16);
+
+  --wt-text-primary: rgba(0, 0, 0, 0.88);
+  --wt-text-secondary: rgba(0, 0, 0, 0.58);
+  --wt-text-tertiary: rgba(0, 0, 0, 0.4);
+  --wt-text-ghost: rgba(0, 0, 0, 0.08);
+
+  --wt-accent: #FF5722;
+  --wt-accent-soft: rgba(255, 107, 44, 0.12);
+  --wt-accent-glow: rgba(255, 107, 44, 0.28);
+  --wt-accent-on: #FFFFFF;
+  --wt-danger: #EF4444;
+  --wt-warning: #F59E0B;
+  --wt-info: #3B82F6;
+  --wt-healthy: #22C55E;
+
+  --wt-chart-grid: rgba(0, 0, 0, 0.06);
+
+  --wt-glass-bg: rgba(255, 255, 255, 0.85);
+  --wt-glass-border: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --wt-surface-0: #0D0D0D;
+  --wt-surface-1: #161616;
+  --wt-surface-2: #1F1F1F;
+  --wt-surface-3: #282828;
+  --wt-surface-4: #323232;
+
+  --wt-border: rgba(255, 255, 255, 0.08);
+  --wt-border-strong: rgba(255, 255, 255, 0.16);
+
+  --wt-text-primary: rgba(255, 255, 255, 0.92);
+  --wt-text-secondary: rgba(255, 255, 255, 0.62);
+  --wt-text-tertiary: rgba(255, 255, 255, 0.42);
+  --wt-text-ghost: rgba(255, 255, 255, 0.12);
+
+  --wt-accent: #FF5722;
+  --wt-accent-soft: rgba(255, 107, 44, 0.14);
+  --wt-accent-glow: rgba(255, 107, 44, 0.35);
+  --wt-accent-on: #FFFFFF;
+  --wt-danger: #EF4444;
+  --wt-warning: #F59E0B;
+  --wt-info: #60A5FA;
+  --wt-healthy: #22C55E;
+
+  --wt-chart-grid: rgba(255, 255, 255, 0.06);
+
+  --wt-glass-bg: rgba(26, 26, 26, 0.88);
+  --wt-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="black"] {
+  color-scheme: dark;
+
+  --wt-surface-0: #0A0A0A;
+  --wt-surface-1: #141414;
+  --wt-surface-2: #1E1E1E;
+  --wt-surface-3: #282828;
+  --wt-surface-4: #323232;
+
+  --wt-border: rgba(255, 255, 255, 0.07);
+  --wt-border-strong: rgba(255, 255, 255, 0.14);
+
+  --wt-text-primary: rgba(255, 255, 255, 0.94);
+  --wt-text-secondary: rgba(255, 255, 255, 0.6);
+  --wt-text-tertiary: rgba(255, 255, 255, 0.4);
+  --wt-text-ghost: rgba(255, 255, 255, 0.1);
+
+  --wt-accent: #FF5722;
+  --wt-accent-soft: rgba(255, 107, 44, 0.12);
+  --wt-accent-glow: rgba(255, 107, 44, 0.32);
+  --wt-accent-on: #FFFFFF;
+  --wt-danger: #EF4444;
+  --wt-warning: #F59E0B;
+  --wt-info: #60A5FA;
+  --wt-healthy: #22C55E;
+
+  --wt-chart-grid: rgba(255, 255, 255, 0.05);
+
+  --wt-glass-bg: rgba(20, 20, 20, 0.9);
+  --wt-glass-border: rgba(255, 255, 255, 0.07);
+}
+
+:root {
+  --wt-glass-blur: 16px;
+
+  --wt-shadow-card: 0 2px 12px -2px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --wt-shadow-card-hover: 0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --wt-shadow-modal: 0 24px 64px -12px rgba(0, 0, 0, 0.35), 0 8px 24px -4px rgba(0, 0, 0, 0.18);
+  --wt-shadow-bento: 0 2px 16px -4px rgba(0, 0, 0, 0.2);
+  --wt-shadow-bento-deep: 0 8px 32px -8px rgba(0, 0, 0, 0.35);
+
+  --wt-survey-opacity: 0.22;
+}
+
+[data-theme="light"] {
+  --wt-shadow-card: 0 2px 12px -2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --wt-shadow-card-hover: 0 8px 24px -4px rgba(0, 0, 0, 0.1);
+  --wt-shadow-bento: 0 2px 12px -2px rgba(0, 0, 0, 0.06);
+  --wt-shadow-bento-deep: 0 8px 28px -6px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+  --wt-shadow-card: 0 2px 16px -2px rgba(0, 0, 0, 0.4);
+  --wt-shadow-card-hover: 0 8px 28px -4px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="black"] {
+  --wt-shadow-card: 0 2px 16px -2px rgba(0, 0, 0, 0.55);
+  --wt-shadow-card-hover: 0 8px 28px -4px rgba(0, 0, 0, 0.7);
+}

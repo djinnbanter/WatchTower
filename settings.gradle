@@ -1,0 +1,20 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'watchtower'
+
+include 'watchtower-core'
+include 'watchtower-cli'
+include 'neoforge-1.21.1'
+project(':neoforge-1.21.1').projectDir = file('mods/neoforge-1.21.1')
+
+// Future loader projects — uncomment and add mods/<loader>-<mc>/ source tree:
+// include 'fabric-1.21.1'
+// project(':fabric-1.21.1').projectDir = file('mods/fabric-1.21.1')

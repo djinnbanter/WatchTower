@@ -1,0 +1,53 @@
+---- Minecraft Crash Report ----
+// I feel sad now :(
+
+Time: 2026-06-18 08:12:44
+Description: Watching Server
+
+java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds (should be max 0.05)
+	at net.minecraft.server.dedicated.ServerHangWatchdog.run(ServerHangWatchdog.java:52)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+
+-- System Details --
+Details:
+	Minecraft Version: 1.21.1
+	Minecraft Version ID: 1.21.1
+	Operating System: Linux (amd64) version 6.1.0
+	Java Version: 21.0.3, Eclipse Adoptium
+	Memory: 4123456789 bytes (3932 MiB) / 8589934592 bytes (8192 MiB) up to 8589934592 bytes (8192 MiB)
+	CPUs: 8
+	Server Running: true
+	Player Count: 3 / 20
+	Data Packs: vanilla, mod_data
+	Enabled Feature Flags: minecraft:vanilla
+	World Generation: Experimental
+	Is Modded: Definitely; Server brand changed to 'neoforge'
+	Type: Dedicated Server (map_server.txt)
+	ModLauncher: 11.0.0+main.5f1c4f2
+	ModLauncher launch target: forgeserver
+	ModLauncher services:
+		/ slf4jfixer PLUGINSERVICE
+		/ runtimedistcleaner PLUGINSERVICE
+		/ runtime_enum_extender PLUGINSERVICE
+		/ object_holder_definalize PLUGINSERVICE
+		/ capability_token_subclass PLUGINSERVICE
+		/ accesstransformer PLUGINSERVICE
+		/ eventbus PLUGINSERVICE
+		/ mixin PLUGINSERVICE
+		/ fml TRANSFORMATIONSERVICE
+		/ mixin TRANSFORMATIONSERVICE
+	FML Language Providers:
+		javafml@4.0
+		lowcodefml@4.0
+		minecraft@4.0
+	Mod List:
+		chunky-neoforge-1.4.28.jar                |Chunky                        |chunky                        |1.4.28              |DONE      |
+		neoforge-21.1.72.jar                      |NeoForge                      |neoforge                      |21.1.72             |DONE      |
+
+-- Recent log context (fixture) --
+[18Jun2026 08:12:28.102] [Server thread/INFO]: [Chunky] Task running for minecraft:overworld. Processed: 6126400 chunks (43.53%)
+[18Jun2026 08:12:32.218] [Server thread/WARN]: Can't keep up! Is the server overloaded? Running 2847ms or 56 ticks behind
+[18Jun2026 08:12:36.441] [Server thread/INFO]: [Chunky] Task running for minecraft:overworld. Processed: 6126520 chunks (43.54%)
+[18Jun2026 08:12:40.313] [Server thread/INFO]: [Chunky] Task running for minecraft:overworld. Processed: 6126564 chunks (43.54%)
+[18Jun2026 08:12:42.891] [Server thread/WARN]: Can't keep up! Is the server overloaded? Running 5120ms or 102 ticks behind

@@ -1,0 +1,74 @@
+/* Watchtower UI v3 — Queue & Data Tables */
+
+.wt-table-wrap {
+  background: var(--wt-surface-1);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-xl);
+  overflow: hidden;
+  box-shadow: var(--wt-shadow-card);
+}
+
+.wt-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+/* Headers */
+.wt-table th {
+  padding: var(--wt-space-4) var(--wt-space-4);
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-label);
+  font-weight: 700;
+  color: var(--wt-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--wt-border-strong);
+  white-space: nowrap;
+  background: var(--wt-surface-2);
+}
+
+/* Rows */
+.wt-table td {
+  padding: var(--wt-space-3) var(--wt-space-4);
+  font-size: var(--wt-text-body);
+  border-bottom: 1px solid var(--wt-border);
+  transition: all 150ms var(--wt-ease-out);
+}
+
+.wt-table tbody tr {
+  position: relative;
+  transition: background-color 150ms var(--wt-ease-out);
+}
+
+.wt-table tbody tr:nth-child(even) td {
+  background-color: color-mix(in srgb, var(--wt-surface-2) 35%, transparent);
+}
+
+.wt-table tbody tr:hover td {
+  background-color: color-mix(in srgb, var(--wt-accent) 6%, var(--wt-surface-2));
+}
+
+/* Row Actions */
+.wt-table__actions {
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 200ms var(--wt-ease-out);
+  display: flex;
+  gap: var(--wt-space-2);
+  justify-content: flex-end;
+}
+
+.wt-table tbody tr:hover .wt-table__actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Compact Table Variant */
+.wt-table--compact td,
+.wt-table--compact th {
+  padding: var(--wt-space-2) var(--wt-space-3);
+  font-size: 13px;
+}
+
+

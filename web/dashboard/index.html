@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watchtower</title>
+  <link rel="icon" href="/favicon.ico?v=4" sizes="any">
+  <link rel="icon" href="assets/watchtower-icon-simple.png?v=4" type="image/png" sizes="32x32">
+  <link rel="icon" href="assets/watchtower-icon-simple.png?v=4" type="image/png" sizes="16x16">
+  <link rel="shortcut icon" href="/favicon.ico?v=4">
+  <link rel="apple-touch-icon" href="assets/watchtower-icon-simple.png?v=4">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/chart.umd.min.js" defer></script>
+  <script src="vendor/lucide.min.js" defer></script>
+  <script src="labels.js" defer></script>
+  <script src="acks.js" defer></script>
+  <script src="client-mod-ignores.js" defer></script>
+  <script src="health.js" defer></script>
+  <script src="viz.js" defer></script>
+  <script src="charts.js" defer></script>
+  <script src="auth.js" defer></script>
+  <script src="api.js" defer></script>
+  <script src="toast.js" defer></script>
+  <script src="tower/motion.js" defer></script>
+  <script src="tower/state.js" defer></script>
+  <script src="tower/shell.js" defer></script>
+  <script src="tower/data.js" defer></script>
+  <script src="tower/nav.js" defer></script>
+  <script src="tower/sidebar.js" defer></script>
+  <script src="tower/cmdk.js" defer></script>
+  <script src="tower/views.js" defer></script>
+  <script src="tower/render/shared.js" defer></script>
+  <script src="tower/render/_source-badge.js" defer></script>
+  <script src="tower/render/_tab-footer.js" defer></script>
+  <script src="tower/render/_tab-chrome.js" defer></script>
+  <script src="tower/data-sources.js" defer></script>
+  <script src="tower/render/live-alerts.js" defer></script>
+  <script src="tower/render/overview.js" defer></script>
+  <script src="tower/render/live.js" defer></script>
+  <script src="tower/render/insights-ops.js" defer></script>
+  <script src="tower/render/performance.js" defer></script>
+  <script src="tower/render/session.js" defer></script>
+  <script src="tower/render/issues.js" defer></script>
+  <script src="tower/render/crashes.js" defer></script>
+  <script src="tower/render/spark.js" defer></script>
+  <script src="tower/render/mods.js" defer></script>
+  <script src="tower/render/backups.js" defer></script>
+  <script src="backup-settings.js" defer></script>
+  <script src="setup-wizard.js" defer></script>
+  <script src="tower/render/activity.js" defer></script>
+  <script src="tower/render/sources.js" defer></script>
+  <script src="tower/tab-motion.js" defer></script>
+  <script src="tower/render/docs.js" defer></script>
+  <script src="tour.js" defer></script>
+  <script src="tower/routing.js" defer></script>
+  <script src="wiki-bundle.js" defer></script>
+  <script src="wiki-widgets.js" defer></script>
+  <script src="wiki.js" defer></script>
+  <script src="settings.js" defer></script>
+  <script src="help.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="wt-shell">
+    <div id="tower-boot" class="wt-fullscreen wt-boot" aria-live="polite" aria-busy="true">
+      <div class="wt-boot__card">
+        <img src="assets/watchtower-wordmark.png?v=4" alt="Watchtower" class="wt-boot__logo wt-wordmark" width="80" height="80">
+        <h2 class="wt-boot__title">Watchtower</h2>
+        <div class="wt-boot__steps" id="boot-steps">
+          <div class="wt-boot__step is-active" data-step="init">Initializing...</div>
+        </div>
+        <p class="wt-text-caption wt-text-tertiary" id="tower-boot-message" style="margin-top:24px">Starting…</p>
+      </div>
+    </div>
+
+    <div id="tower-setup-wizard" class="wt-fullscreen wt-fullscreen--setup wt-setup-wizard is-hidden" aria-labelledby="setup-wizard-title">
+      <div class="wt-setup-wizard__layout">
+        <div class="wt-setup-wizard__shell wt-panel--glass">
+          <aside class="wt-setup-wizard__rail" id="setup-wizard-rail" aria-label="Setup steps"></aside>
+          <div class="wt-setup-wizard__main">
+            <div class="wt-setup-wizard__toolbar" id="setup-wizard-toolbar"></div>
+            <div class="wt-setup-wizard__card-inner" id="setup-wizard-body"></div>
+            <div class="wt-setup-wizard__actions" id="setup-wizard-actions"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tower-setup-scan" class="wt-fullscreen wt-fullscreen--setup wt-boot wt-setup-scan is-hidden" aria-live="polite" aria-busy="true"></div>
+
+    <div id="tower-welcome" class="wt-fullscreen wt-auth is-hidden" aria-labelledby="welcome-title">
+      <div class="wt-auth__card wt-panel--glass">
+        <img src="assets/watchtower-wordmark.png?v=4" alt="Watchtower" class="wt-auth__logo wt-wordmark" width="80" height="80">
+        <h2 class="wt-auth__title" id="welcome-title">Welcome to Watchtower</h2>
+        <p class="wt-auth__desc">Live charts, crash scans, and online players work right away. Run a baseline report to unlock Issues, mod analysis, and session history.</p>
+        <p class="wt-text-caption wt-text-tertiary hidden" id="welcome-host" style="margin-bottom: 24px;"></p>
+        
+        <div class="wt-auth__form">
+          <button type="button" class="wt-btn wt-btn--primary" id="welcome-run-btn">Run first health report (30 days)</button>
+          <button type="button" class="wt-btn wt-btn--ghost" id="welcome-skip-btn">Skip for now</button>
+          <button type="button" class="wt-btn wt-btn--ghost" id="welcome-help-btn">Open Help guide</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="wt-rail wt-shell__nav" id="tower-rail" aria-label="Main navigation">
+      <div class="wt-rail__header">
+        <div class="wt-rail__brand" id="rail-logo">
+          <img src="assets/watchtower-wordmark.png?v=4" alt="" class="wt-rail__wordmark wt-wordmark" width="40" height="40">
+          <span class="wt-rail__title"><span class="wt-rail__title-accent">Watch</span>tower</span>
+        </div>
+      </div>
+      <div class="wt-rail__scroll">
+      <nav class="wt-rail__nav" role="navigation">
+        <div class="wt-rail__group">
+          <div class="wt-rail__label">Monitor</div>
+          <a class="wt-rail__link is-active" data-tab="overview" aria-label="Overview">
+            <span class="wt-rail__icon"><i data-lucide="layout-dashboard"></i></span>
+            <span class="wt-rail__text">Overview</span>
+          </a>
+          <a class="wt-rail__link" data-tab="live" aria-label="Live">
+            <span class="wt-rail__icon"><i data-lucide="activity"></i></span>
+            <span class="wt-rail__text">Live</span>
+          </a>
+          <a class="wt-rail__link" data-tab="performance" aria-label="Insights">
+            <span class="wt-rail__icon"><i data-lucide="lightbulb"></i></span>
+            <span class="wt-rail__text">Insights</span>
+            <span class="wt-rail__badge hidden" data-tab-badge="performance">0</span>
+          </a>
+          <a class="wt-rail__link" data-tab="session" aria-label="Session">
+            <span class="wt-rail__icon"><i data-lucide="users"></i></span>
+            <span class="wt-rail__text">Session</span>
+          </a>
+          <a class="wt-rail__link" data-tab="sources" aria-label="Data sources">
+            <span class="wt-rail__icon"><i data-lucide="layers"></i></span>
+            <span class="wt-rail__text">Sources</span>
+          </a>
+        </div>
+        <div class="wt-rail__group">
+          <div class="wt-rail__label">Triage</div>
+          <a class="wt-rail__link" data-tab="issues" aria-label="Issues">
+            <span class="wt-rail__icon"><i data-lucide="inbox"></i></span>
+            <span class="wt-rail__text">Issues</span>
+            <span class="wt-rail__badge hidden" data-tab-badge="issues">0</span>
+          </a>
+          <a class="wt-rail__link" data-tab="crashes" aria-label="Crashes">
+            <span class="wt-rail__icon"><i data-lucide="file-warning"></i></span>
+            <span class="wt-rail__text">Crashes</span>
+            <span class="wt-rail__badge hidden" data-tab-badge="crashes">0</span>
+          </a>
+          <a class="wt-rail__link" data-tab="spark" aria-label="Spark">
+            <span class="wt-rail__icon"><i data-lucide="zap"></i></span>
+            <span class="wt-rail__text">Spark</span>
+          </a>
+        </div>
+        <div class="wt-rail__group">
+          <div class="wt-rail__label">Ops</div>
+          <a class="wt-rail__link" data-tab="mods" aria-label="Mods">
+            <span class="wt-rail__icon"><i data-lucide="package"></i></span>
+            <span class="wt-rail__text">Mods</span>
+            <span class="wt-rail__badge hidden" data-tab-badge="mods">0</span>
+          </a>
+          <a class="wt-rail__link" data-tab="backups" aria-label="Backups">
+            <span class="wt-rail__icon"><i data-lucide="database-backup"></i></span>
+            <span class="wt-rail__text">Backups</span>
+            <span class="wt-rail__badge hidden" data-tab-badge="backups">0</span>
+          </a>
+          <a class="wt-rail__link" data-tab="activity" aria-label="Activity">
+            <span class="wt-rail__icon"><i data-lucide="history"></i></span>
+            <span class="wt-rail__text">Activity</span>
+            <span class="wt-rail__badge hidden" data-tab-badge="activity">0</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="wt-rail__actions" id="rail-report-actions">
+        <div class="wt-rail__label">Report</div>
+        <select id="report-select" class="wt-rail__select" aria-label="Report history">
+          <option value="latest">Latest report</option>
+        </select>
+        <button type="button" class="wt-btn wt-btn--primary wt-rail__run-btn" id="run-report-btn">
+          <i data-lucide="play" width="16" height="16"></i>
+          <span class="wt-rail__run-text">Run report</span>
+        </button>
+        <p class="wt-rail__report-meta" id="tower-report-window">—</p>
+        <span id="tower-report-window-hint" class="is-hidden wt-text-caption wt-text-tertiary"></span>
+        <span id="tower-report-freshness" class="is-hidden wt-text-caption"></span>
+      </div>
+      </div>
+
+      <div class="wt-rail__bottom">
+        <nav class="wt-rail__nav" role="navigation">
+          <div class="wt-rail__group" style="margin-bottom: 0;">
+            <div class="wt-rail__label">Admin</div>
+            <a class="wt-rail__link" data-tab="docs" aria-label="Documentation">
+              <span class="wt-rail__icon"><i data-lucide="book-open"></i></span>
+              <span class="wt-rail__text">Docs</span>
+            </a>
+            <a class="wt-rail__link" id="settings-btn" aria-label="Settings">
+              <span class="wt-rail__icon"><i data-lucide="settings"></i></span>
+              <span class="wt-rail__text">Settings</span>
+            </a>
+            <a class="wt-rail__link" id="help-btn" aria-label="Help">
+              <span class="wt-rail__icon"><i data-lucide="help-circle"></i></span>
+              <span class="wt-rail__text">Help</span>
+            </a>
+          </div>
+        </nav>
+        <div class="wt-rail__footer">
+          <button type="button" class="wt-btn wt-btn--icon" id="theme-toggle" aria-label="Cycle theme">
+            <i data-lucide="circle-dot" id="theme-icon"></i>
+          </button>
+          <span class="wt-rail__version" id="nav-version-chip">v3.0.0</span>
+          <button type="button" class="wt-btn wt-btn--icon hidden" id="logout-btn" aria-label="Sign out">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <header class="wt-cmdbar wt-shell__cmd">
+      <div class="wt-cmdbar__left">
+        <button type="button" class="wt-btn wt-btn--icon wt-btn--ghost wt-cmdbar__menu-btn" id="mobile-menu-btn">
+          <i data-lucide="menu"></i>
+        </button>
+        <button type="button" class="wt-btn wt-btn--icon wt-btn--ghost" id="sidebar-toggle-btn" aria-label="Toggle sidebar" aria-expanded="true">
+          <i data-lucide="panel-left"></i>
+        </button>
+      </div>
+      <div class="wt-cmdbar__center">
+        <button type="button" class="wt-cmdbar__search" id="cmdk-btn" title="Command palette">
+          <i data-lucide="search" width="16" height="16"></i>
+          <span>Search anything</span>
+          <kbd class="wt-cmdbar__kbd">Ctrl K</kbd>
+        </button>
+      </div>
+      <div class="wt-cmdbar__right">
+        <button type="button" class="wt-btn wt-btn--icon wt-btn--ghost" id="cmdbar-theme-toggle" aria-label="Cycle theme">
+          <i data-lucide="moon" id="cmdbar-theme-icon"></i>
+        </button>
+        <div class="wt-cmdbar__title-block">
+          <h1 class="wt-cmdbar__title"><span id="tower-host-name">—</span></h1>
+          <span class="wt-cmdbar__subtitle" id="tower-cmdbar-context" hidden></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="wt-shell__main" id="main-scroll-area">
+      <div id="tower-banners" class="wt-global-banners"></div>
+      <div id="main-content" class="wt-canvas" role="main"></div>
+    </main>
+  </div>
+
+  <div class="wt-toast-container" id="toast-stack" aria-live="polite"></div>
+
+  <div class="wt-modal-backdrop" id="report-loading" aria-live="polite">
+    <div class="wt-modal">
+      <div class="wt-modal__header">
+        <h2 class="wt-modal__title">Running health report</h2>
+      </div>
+      <div class="wt-modal__body">
+        <ol class="wt-setup-scan__steps" id="report-loading-steps">
+          <li>Collecting host metrics…</li>
+          <li>Scanning logs and crashes…</li>
+          <li>Building health report…</li>
+        </ol>
+        <p class="wt-text-body wt-text-secondary" id="report-loading-msg">Starting…</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wt-modal-backdrop" id="run-modal" aria-hidden="true">
+    <div class="wt-modal" role="dialog" aria-labelledby="run-modal-title">
+      <div class="wt-modal__header">
+        <h2 class="wt-modal__title" id="run-modal-title">Run health report</h2>
+        <button type="button" class="wt-btn wt-btn--icon wt-btn--ghost wt-modal__close" id="run-modal-close" aria-label="Close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="wt-modal__body">
+        <div class="wt-input-group" style="margin-bottom: 16px;">
+          <select id="lookback-preset" style="width:100%;height:48px;background:var(--wt-surface-0);border:1px solid var(--wt-border-strong);border-radius:var(--wt-radius-md);padding:0 16px;color:var(--wt-text-primary);">
+            <option value="24">Last 24 hours</option>
+            <option value="48">Last 48 hours</option>
+            <option value="168">Last 7 days</option>
+            <option value="720">Last 30 days</option>
+          </select>
+        </div>
+        <div class="wt-input-group" style="margin-bottom: 16px;">
+          <input type="datetime-local" id="since-custom" placeholder=" ">
+          <label for="since-custom">Custom since (optional)</label>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="incremental-run" checked> 
+          <label for="incremental-run" class="wt-text-body">Incremental (scan since last report)</label>
+        </div>
+        <p class="wt-text-caption wt-text-tertiary" id="run-modal-note" style="margin-top: 16px;">Builds an audit snapshot — full Issues list, mod analysis, session stats, and log window. Day-to-day tabs still update from scans between reports.</p>
+      </div>
+      <div class="wt-modal__footer">
+        <button type="button" class="wt-btn wt-btn--ghost" id="run-cancel-btn">Cancel</button>
+        <button type="button" class="wt-btn wt-btn--primary" id="run-confirm-btn">Start report</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wt-modal-backdrop" id="crash-log-modal" aria-hidden="true">
+    <div class="wt-modal wt-modal--wide wt-crash-log-modal" role="dialog" aria-labelledby="crash-log-modal-title">
+      <div class="wt-modal__header">
+        <h2 class="wt-modal__title" id="crash-log-modal-title">Crash report</h2>
+        <button type="button" class="wt-btn wt-btn--icon wt-btn--ghost wt-modal__close" id="crash-log-modal-close" aria-label="Close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="wt-modal__body">
+        <p class="text-caption wt-crash-log-modal__meta" id="crash-log-modal-meta"></p>
+        <pre class="wt-crash-log-modal__viewer" id="crash-log-modal-viewer">Loading…</pre>
+      </div>
+      <div class="wt-modal__footer">
+        <button type="button" class="wt-btn wt-btn--ghost" id="crash-log-modal-copy">Copy all</button>
+        <button type="button" class="wt-btn wt-btn--ghost" id="crash-log-modal-download">Download</button>
+        <button type="button" class="wt-btn wt-btn--primary" id="crash-log-modal-done">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wt-modal-backdrop" id="lag-incident-modal" aria-hidden="true">
+    <div class="wt-modal wt-modal--wide wt-lag-incident-modal" role="dialog" aria-labelledby="lag-incident-modal-title">
+      <div class="wt-modal__header">
+        <h2 class="wt-modal__title" id="lag-incident-modal-title">Lag spike investigation</h2>
+        <button type="button" class="wt-btn wt-btn--icon wt-btn--ghost wt-modal__close" id="lag-incident-modal-close" aria-label="Close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="wt-modal__body" id="lag-incident-modal-body">
+        <p class="text-caption">Loading investigation…</p>
+      </div>
+      <div class="wt-modal__footer">
+        <button type="button" class="wt-btn wt-btn--primary" id="lag-incident-modal-done">Close</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

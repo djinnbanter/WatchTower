@@ -1,0 +1,424 @@
+/* Settings → Backups wizard */
+
+.wt-bs-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-5);
+  max-width: 42rem;
+}
+
+.wt-bs-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 var(--wt-space-2);
+}
+
+.wt-bs-lead {
+  margin: 0 0 var(--wt-space-4);
+  color: var(--wt-text-secondary);
+  line-height: 1.5;
+}
+
+.wt-bs-intro {
+  margin-bottom: var(--wt-space-4);
+}
+
+.wt-bs-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: var(--wt-space-4) 0 var(--wt-space-2);
+}
+
+.wt-bs-banner {
+  padding: var(--wt-space-3) var(--wt-space-4);
+  border-radius: var(--wt-radius-md);
+  margin-bottom: var(--wt-space-4);
+  border: 1px solid var(--wt-border);
+}
+
+.wt-bs-banner--info {
+  background: var(--wt-info-soft, rgba(59, 130, 246, 0.12));
+}
+
+.wt-bs-steps {
+  display: flex;
+  gap: var(--wt-space-2);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--wt-space-5);
+  flex-wrap: wrap;
+}
+
+.wt-bs-steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+  font-size: var(--wt-text-sm);
+  color: var(--wt-text-tertiary);
+  flex: 1;
+  min-width: 7rem;
+}
+
+.wt-bs-steps__item.is-active {
+  color: var(--wt-text-primary);
+  font-weight: 600;
+}
+
+.wt-bs-steps__item.is-done .wt-bs-steps__num {
+  background: var(--wt-healthy);
+  color: var(--wt-surface-0);
+}
+
+.wt-bs-steps__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--wt-surface-2);
+  border: 1px solid var(--wt-border);
+}
+
+.wt-bs-option-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-3);
+  margin-bottom: var(--wt-space-4);
+}
+
+.wt-bs-option-card {
+  display: block;
+  padding: var(--wt-space-4);
+  border: 2px solid var(--wt-border);
+  border-radius: var(--wt-radius-md);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+  position: relative;
+}
+
+.wt-bs-option-card:hover {
+  border-color: var(--wt-text-tertiary);
+}
+
+.wt-bs-option-card.is-selected {
+  border-color: var(--wt-accent);
+  background: var(--wt-accent-soft);
+}
+
+.wt-bs-option-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wt-bs-option-card__badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--wt-healthy);
+  margin-bottom: var(--wt-space-1);
+}
+
+.wt-bs-option-card__title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--wt-space-1);
+}
+
+.wt-bs-option-card__desc {
+  display: block;
+  font-size: var(--wt-text-sm);
+  color: var(--wt-text-secondary);
+  line-height: 1.45;
+}
+
+.wt-bs-option-card__example {
+  display: block;
+  font-size: var(--wt-text-xs);
+  color: var(--wt-text-tertiary);
+  margin-top: var(--wt-space-2);
+  font-style: italic;
+}
+
+.wt-bs-start-here {
+  padding: var(--wt-space-4);
+  border-radius: var(--wt-radius-md);
+  border: 1px solid var(--wt-border);
+  background: var(--wt-accent-soft, rgba(99, 102, 241, 0.08));
+}
+
+.wt-bs-start-here__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 var(--wt-space-2);
+}
+
+.wt-bs-start-here__body {
+  margin: 0;
+  font-size: var(--wt-text-sm);
+  color: var(--wt-text-secondary);
+  line-height: 1.55;
+}
+
+.wt-bs-recipe {
+  list-style: none;
+  padding: 0;
+  margin: var(--wt-space-4) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-4);
+}
+
+.wt-bs-recipe__step {
+  display: flex;
+  gap: var(--wt-space-3);
+  align-items: flex-start;
+}
+
+.wt-bs-recipe__num {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  background: var(--wt-accent);
+  color: var(--wt-surface-0);
+}
+
+.wt-bs-recipe__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wt-bs-recipe__body strong {
+  display: block;
+  margin-bottom: var(--wt-space-1);
+}
+
+.wt-bs-copy-primary {
+  margin-top: var(--wt-space-2);
+}
+
+.wt-bs-success {
+  padding: var(--wt-space-3) var(--wt-space-4);
+  border-radius: var(--wt-radius-md);
+  margin-bottom: var(--wt-space-4);
+  border: 1px solid var(--wt-healthy);
+  background: var(--wt-healthy-soft, rgba(34, 197, 94, 0.12));
+}
+
+.wt-bs-success p {
+  margin: 0;
+  font-size: var(--wt-text-sm);
+  color: var(--wt-text-primary);
+  line-height: 1.5;
+}
+
+.wt-bs-marker--hidden {
+  display: none;
+}
+
+.wt-bs-local__summary {
+  cursor: pointer;
+  list-style: none;
+  margin: 0;
+}
+
+.wt-bs-local__summary::-webkit-details-marker {
+  display: none;
+}
+
+.wt-bs-local__body {
+  padding-top: var(--wt-space-3);
+}
+
+.wt-bs-local {
+  padding: var(--wt-space-5);
+}
+
+.wt-bs-advanced {
+  margin-bottom: var(--wt-space-4);
+}
+
+.wt-bs-advanced-both {
+  display: block;
+  margin-bottom: var(--wt-space-2);
+}
+
+.wt-bs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wt-space-2);
+  margin-top: var(--wt-space-4);
+}
+
+.wt-bs-label {
+  display: block;
+  font-size: var(--wt-text-sm);
+  font-weight: 600;
+  margin-bottom: var(--wt-space-2);
+  color: var(--wt-text-secondary);
+}
+
+.wt-bs-token__row {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--wt-space-2);
+}
+
+.wt-bs-token code,
+.wt-bs-curl__pre {
+  flex: 1;
+  min-width: 12rem;
+  padding: var(--wt-space-3);
+  background: var(--wt-surface-0);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-md);
+  word-break: break-all;
+  font-size: var(--wt-text-xs);
+}
+
+.wt-bs-curl__pre {
+  white-space: pre-wrap;
+  margin: var(--wt-space-2) 0;
+}
+
+.wt-bs-guide {
+  margin: var(--wt-space-3) 0 0;
+  padding-left: 1.25rem;
+  font-size: var(--wt-text-sm);
+  color: var(--wt-text-secondary);
+  line-height: 1.5;
+}
+
+.wt-bs-status-list {
+  list-style: none;
+  padding: var(--wt-space-3);
+  margin: var(--wt-space-4) 0 0;
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-md);
+  background: var(--wt-surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-2);
+}
+
+.wt-bs-status-list--embed {
+  margin-top: var(--wt-space-3);
+}
+
+.wt-bs-status-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wt-space-2);
+  color: var(--wt-text-secondary);
+  font-size: var(--wt-text-sm);
+  line-height: 1.4;
+}
+
+.wt-bs-status-list__item.is-done {
+  color: var(--wt-text-primary);
+}
+
+.wt-bs-status-list__icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--wt-text-tertiary);
+}
+
+.wt-bs-status-list__item.is-done .wt-bs-status-list__icon {
+  color: var(--wt-healthy);
+}
+
+.wt-bs-status-list__label {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Legacy checklist — kept for older markup; icons use safe CSS escapes */
+.wt-bs-checklist {
+  list-style: none;
+  padding: 0;
+  margin: var(--wt-space-4) 0;
+}
+
+.wt-bs-checklist li {
+  padding: var(--wt-space-2) 0 var(--wt-space-2) 1.75rem;
+  position: relative;
+  color: var(--wt-text-secondary);
+  font-size: var(--wt-text-sm);
+}
+
+.wt-bs-checklist li::before {
+  content: '\25CB';
+  position: absolute;
+  left: 0;
+  color: var(--wt-text-tertiary);
+}
+
+.wt-bs-checklist li.is-done {
+  color: var(--wt-text-primary);
+}
+
+.wt-bs-checklist li.is-done::before {
+  content: '\2713';
+  color: var(--wt-healthy);
+  font-weight: 700;
+}
+
+.wt-bs-marker input {
+  width: 100%;
+  margin-bottom: var(--wt-space-2);
+}
+
+.wt-bs-token-missing {
+  margin-bottom: var(--wt-space-4);
+  padding: var(--wt-space-3);
+  border: 1px dashed var(--wt-border);
+  border-radius: var(--wt-radius-md);
+}
+
+.wt-bs-curl .wt-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wt-bs-wizard {
+  padding: var(--wt-space-5);
+}
+
+.wt-bs-wizard--embed {
+  padding: 0;
+}
+
+.wt-bs-lead--embed {
+  margin: 0 0 var(--wt-space-4);
+}
+
+.wt-bs-recipe--embed {
+  margin-top: var(--wt-space-3);
+}
+
+.wt-bs-actions--embed {
+  margin-top: var(--wt-space-3);
+  padding-top: var(--wt-space-3);
+  border-top: 1px solid var(--wt-border);
+}
+
+.wt-bs-advanced--embed {
+  margin-top: var(--wt-space-3);
+}

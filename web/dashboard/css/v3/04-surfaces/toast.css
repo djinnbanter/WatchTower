@@ -1,0 +1,143 @@
+/* Watchtower UI v3 — Toast System (Notifications) */
+
+.wt-toast-container {
+  position: fixed;
+  bottom: var(--wt-space-6);
+  right: var(--wt-space-6);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-3);
+  pointer-events: none; /* Let clicks pass through container */
+}
+
+/* Base Toast Card */
+.wt-toast {
+  background: var(--wt-surface-1);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-lg);
+  box-shadow: var(--wt-shadow-card-hover);
+  width: 320px;
+  max-width: calc(100vw - var(--wt-space-8));
+  display: flex;
+  overflow: hidden; /* For the progress bar */
+  pointer-events: auto;
+  position: relative;
+  
+  /* Entrance animation */
+  animation: wt-toast-enter 300ms var(--wt-ease-spring) forwards;
+  will-change: transform, opacity;
+}
+
+.wt-toast.is-exiting {
+  animation: wt-toast-exit 200ms var(--wt-ease-out) forwards;
+}
+
+/* Glass variant for toast */
+.wt-toast {
+  background: var(--wt-glass-bg);
+  backdrop-filter: blur(var(--wt-glass-blur));
+  -webkit-backdrop-filter: blur(var(--wt-glass-blur));
+  border: 1px solid var(--wt-glass-border);
+}
+
+/* Colored accent bar on the left */
+.wt-toast::before {
+  content: "";
+  width: 4px;
+  background: var(--wt-text-tertiary); /* default neutral */
+  flex-shrink: 0;
+}
+
+.wt-toast--success::before { background: var(--wt-healthy); }
+.wt-toast--error::before { background: var(--wt-danger); }
+.wt-toast--warning::before { background: var(--wt-warning); }
+.wt-toast--info::before { background: var(--wt-info); }
+
+/* Content Area */
+.wt-toast__content {
+  padding: var(--wt-space-3) var(--wt-space-4);
+  flex: 1;
+  display: flex;
+  gap: var(--wt-space-3);
+}
+
+.wt-toast__icon {
+  margin-top: 2px;
+}
+
+.wt-toast--success .wt-toast__icon { color: var(--wt-healthy); }
+.wt-toast--error .wt-toast__icon { color: var(--wt-danger); }
+.wt-toast--warning .wt-toast__icon { color: var(--wt-warning); }
+.wt-toast--info .wt-toast__icon { color: var(--wt-info); }
+
+.wt-toast__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wt-toast__title {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-body);
+  font-weight: 600;
+  color: var(--wt-text-primary);
+}
+
+.wt-toast__desc {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-caption);
+  color: var(--wt-text-secondary);
+}
+
+/* Close Button */
+.wt-toast__close {
+  padding: var(--wt-space-2);
+  color: var(--wt-text-tertiary);
+  display: flex;
+  align-items: flex-start;
+  transition: color 200ms ease;
+}
+
+.wt-toast__close:hover {
+  color: var(--wt-text-primary);
+}
+
+/* Auto-dismiss Progress Bar */
+.wt-toast__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2); /* Fallback */
+  transform-origin: left;
+}
+
+.wt-toast--success .wt-toast__progress { background: var(--wt-healthy); }
+.wt-toast--error .wt-toast__progress { background: var(--wt-danger); }
+.wt-toast--warning .wt-toast__progress { background: var(--wt-warning); }
+.wt-toast--info .wt-toast__progress { background: var(--wt-info); }
+
+/* The JS will set the animation duration via style inline */
+.wt-toast__progress--active {
+  animation: wt-toast-progress linear forwards;
+}
+
+@keyframes wt-toast-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 640px) {
+  .wt-toast-container {
+    bottom: var(--wt-space-4);
+    right: var(--wt-space-4);
+    left: var(--wt-space-4);
+  }
+  .wt-toast {
+    width: 100%;
+    max-width: 100%;
+  }
+}

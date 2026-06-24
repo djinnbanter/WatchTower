@@ -1,0 +1,2933 @@
+{
+  "captured_at": "2026-06-05T23:30:05.148+01:00",
+  "source_file": "H5BVV4Annz.sparkprofile",
+  "source_kind": "spark_upload",
+  "source_path": "watchtower/spark-upload/H5BVV4Annz.sparkprofile",
+  "spark_viewer_url": "https://spark.lucko.me/H5BVV4Annz",
+  "spark_raw_url": "https://spark.lucko.me/H5BVV4Annz?raw\u003d1",
+  "fresh": true,
+  "mod_catalog": {
+    "kubeutils": {
+      "name": "kubeutils",
+      "version": "21.1.3"
+    },
+    "almanac": {
+      "name": "almanac",
+      "version": "1.5.2"
+    },
+    "supermartijn642configlib": {
+      "name": "supermartijn642configlib",
+      "version": "1.1.8"
+    },
+    "sodium_extra": {
+      "name": "sodium_extra",
+      "version": "0.6.0+mc1.21.1"
+    },
+    "createdeco": {
+      "name": "createdeco",
+      "version": "2.1.3"
+    },
+    "fabric_rendering_fluids_v1": {
+      "name": "fabric_rendering_fluids_v1",
+      "version": "3.1.6+a51883b219"
+    },
+    "aeronautics_bundled": {
+      "name": "aeronautics_bundled",
+      "version": "1.2.1"
+    },
+    "create_jetpack": {
+      "name": "create_jetpack",
+      "version": "5.1.2"
+    },
+    "fabric_convention_tags_v1": {
+      "name": "fabric_convention_tags_v1",
+      "version": "2.1.5+7f945d5b19"
+    },
+    "neoforge": {
+      "name": "neoforge",
+      "version": "21.1.230"
+    },
+    "modernfix": {
+      "name": "modernfix",
+      "version": "5.27.7+mc1.21.1"
+    },
+    "fabric_block_view_api_v2": {
+      "name": "fabric_block_view_api_v2",
+      "version": "1.0.11+e9036fd419"
+    },
+    "fabric_convention_tags_v2": {
+      "name": "fabric_convention_tags_v2",
+      "version": "2.11.1+87e5848019"
+    },
+    "fabric_command_api_v2": {
+      "name": "fabric_command_api_v2",
+      "version": "2.2.28+36d727be19"
+    },
+    "krypton_fnp": {
+      "name": "krypton_fnp",
+      "version": "0.2.28.1-1.21.1"
+    },
+    "iris": {
+      "name": "iris",
+      "version": "1.8.8+mc1.21.1"
+    },
+    "quickrightclick": {
+      "name": "quickrightclick",
+      "version": "1.6"
+    },
+    "veil": {
+      "name": "veil",
+      "version": "4.0.0"
+    },
+    "solstice": {
+      "name": "solstice",
+      "version": "1.9.2_1.21.1"
+    },
+    "statuemenus": {
+      "name": "statuemenus",
+      "version": "21.1.0"
+    },
+    "create_new_age": {
+      "name": "create_new_age",
+      "version": "1.1.7c+mc1.21.1"
+    },
+    "fabric_screen_api_v1": {
+      "name": "fabric_screen_api_v1",
+      "version": "2.0.25+0ae1214819"
+    },
+    "supplementaries": {
+      "name": "supplementaries",
+      "version": "1.21.1-3.6.6"
+    },
+    "corpse": {
+      "name": "corpse",
+      "version": "1.21.1-1.1.13"
+    },
+    "countriesdelight": {
+      "name": "countriesdelight",
+      "version": "1.0.7-korea-lunar"
+    },
+    "fabric_game_rule_api_v1": {
+      "name": "fabric_game_rule_api_v1",
+      "version": "1.0.53+36d727be19"
+    },
+    "torqueapi": {
+      "name": "torqueapi",
+      "version": "1.0.0-SNAPSHOT"
+    },
+    "sablefarandwide": {
+      "name": "sablefarandwide",
+      "version": "1.0.0"
+    },
+    "servercore": {
+      "name": "servercore",
+      "version": "1.5.5+1.21.1"
+    },
+    "spark": {
+      "name": "spark",
+      "version": "1.10.124"
+    },
+    "reeses_sodium_options": {
+      "name": "reeses_sodium_options",
+      "version": "1.8.3+mc1.21.4"
+    },
+    "curios": {
+      "name": "curios",
+      "version": "9.5.1+1.21.1"
+    },
+    "trading_floor": {
+      "name": "trading_floor",
+      "version": "3.0.16"
+    },
+    "pretty_in_pink": {
+      "name": "pretty_in_pink",
+      "version": "1.0.4"
+    },
+    "searchables": {
+      "name": "searchables",
+      "version": "1.0.2"
+    },
+    "createlazytick": {
+      "name": "createlazytick",
+      "version": "2.4.9-6.0.x"
+    },
+    "fabric_entity_events_v1": {
+      "name": "fabric_entity_events_v1",
+      "version": "1.8.0+5ede667619"
+    },
+    "worldedit": {
+      "name": "worldedit",
+      "version": "7.3.8+6939-7d32b45"
+    },
+    "conditional_mixin": {
+      "name": "conditional_mixin",
+      "version": "0.6.4"
+    },
+    "fabric_rendering_data_attachment_v1": {
+      "name": "fabric_rendering_data_attachment_v1",
+      "version": "0.3.49+73761d2e19"
+    },
+    "flightlib": {
+      "name": "flightlib",
+      "version": "3.2.1"
+    },
+    "jadeaddons": {
+      "name": "jadeaddons",
+      "version": "6.1.0+neoforge"
+    },
+    "sparsestructures": {
+      "name": "sparsestructures",
+      "version": "3.0"
+    },
+    "fabric_client_tags_api_v1": {
+      "name": "fabric_client_tags_api_v1",
+      "version": "1.1.15+e053909619"
+    },
+    "elytraslot": {
+      "name": "elytraslot",
+      "version": "9.0.2+1.21.1"
+    },
+    "create_tweaked_controllers": {
+      "name": "create_tweaked_controllers",
+      "version": "1.21.1-1.2.7"
+    },
+    "bellsandwhistles": {
+      "name": "bellsandwhistles",
+      "version": "0.4.7-1.21.1"
+    },
+    "createbigcannons": {
+      "name": "createbigcannons",
+      "version": "5.11.5"
+    },
+    "numismaticsutils": {
+      "name": "numismaticsutils",
+      "version": "2.1-1.21.1"
+    },
+    "compat_manager": {
+      "name": "compat_manager",
+      "version": "1.0.7"
+    },
+    "bits_n_bobs": {
+      "name": "bits_n_bobs",
+      "version": "0.0.44"
+    },
+    "fabric_model_loading_api_v1": {
+      "name": "fabric_model_loading_api_v1",
+      "version": "2.1.0+6e8f52c719"
+    },
+    "jei": {
+      "name": "jei",
+      "version": "19.27.0.340"
+    },
+    "lithium": {
+      "name": "lithium",
+      "version": "0.15.3+mc1.21.1"
+    },
+    "aeronautics": {
+      "name": "aeronautics",
+      "version": "1.2.1"
+    },
+    "fabric_screen_handler_api_v1": {
+      "name": "fabric_screen_handler_api_v1",
+      "version": "1.3.90+8dbc56dd19"
+    },
+    "caelus": {
+      "name": "caelus",
+      "version": "7.0.1+1.21.1"
+    },
+    "fabric_rendering_v1": {
+      "name": "fabric_rendering_v1",
+      "version": "5.1.0+1a09bd5a19"
+    },
+    "fabric_renderer_indigo": {
+      "name": "fabric_renderer_indigo",
+      "version": "1.7.1+9125b6dc19"
+    },
+    "colorfulpipes": {
+      "name": "colorfulpipes",
+      "version": "2.3.1"
+    },
+    "strawstatues": {
+      "name": "strawstatues",
+      "version": "21.1.0"
+    },
+    "plasmovoice": {
+      "name": "plasmovoice",
+      "version": "2.1.9"
+    },
+    "neruina": {
+      "name": "neruina",
+      "version": "3.3.1"
+    },
+    "craterlib": {
+      "name": "craterlib",
+      "version": "3.1.1"
+    },
+    "sdlink": {
+      "name": "sdlink",
+      "version": "3.4.1"
+    },
+    "compacthelpcommand": {
+      "name": "compacthelpcommand",
+      "version": "2.8"
+    },
+    "corpsecurioscompat": {
+      "name": "corpsecurioscompat",
+      "version": "4.0.1"
+    },
+    "sodium": {
+      "name": "sodium",
+      "version": "0.6.13+mc1.21.1"
+    },
+    "luckperms": {
+      "name": "luckperms",
+      "version": "5.4.150"
+    },
+    "fabric_particles_v1": {
+      "name": "fabric_particles_v1",
+      "version": "4.0.2+824f924c19"
+    },
+    "dungeons_arise_seven_seas": {
+      "name": "dungeons_arise_seven_seas",
+      "version": "1.0.4"
+    },
+    "sophisticatedbackpackscreateintegration": {
+      "name": "sophisticatedbackpackscreateintegration",
+      "version": "0.1.5"
+    },
+    "createschematicchecker": {
+      "name": "createschematicchecker",
+      "version": "1.21.25-6.0"
+    },
+    "offroad": {
+      "name": "offroad",
+      "version": "1.2.1"
+    },
+    "dungeons_arise": {
+      "name": "dungeons_arise",
+      "version": "2.1.68"
+    },
+    "emi": {
+      "name": "emi",
+      "version": "1.1.22+1.21.1+neoforge"
+    },
+    "minecraft": {
+      "name": "minecraft",
+      "version": "1.21.1"
+    },
+    "fabric_api_base": {
+      "name": "fabric_api_base",
+      "version": "0.4.42+d1308ded19"
+    },
+    "mousetweaks": {
+      "name": "mousetweaks",
+      "version": "2.26.1"
+    },
+    "createutilities": {
+      "name": "createutilities",
+      "version": "0.3.6"
+    },
+    "fabric_block_api_v1": {
+      "name": "fabric_block_api_v1",
+      "version": "1.1.0+b0c22bb819"
+    },
+    "fabric_resource_conditions_api_v1": {
+      "name": "fabric_resource_conditions_api_v1",
+      "version": "4.3.0+5bdd099819"
+    },
+    "configurabledespawntimer": {
+      "name": "configurabledespawntimer",
+      "version": "4.3"
+    },
+    "kotlinforforge": {
+      "name": "kotlinforforge",
+      "version": "5.11.0"
+    },
+    "brewinandchewin": {
+      "name": "brewinandchewin",
+      "version": "4.4.2"
+    },
+    "flywheel": {
+      "name": "flywheel",
+      "version": "1.0.6"
+    },
+    "ponder": {
+      "name": "ponder",
+      "version": "1.0.82+mc1.21.1"
+    },
+    "sablecompanion": {
+      "name": "sablecompanion",
+      "version": "1.6.0"
+    },
+    "xaerominimap": {
+      "name": "xaerominimap",
+      "version": "25.3.13"
+    },
+    "fabric_item_group_api_v1": {
+      "name": "fabric_item_group_api_v1",
+      "version": "4.1.7+e324903319"
+    },
+    "greenhouseconfig_night_config": {
+      "name": "greenhouseconfig_night_config",
+      "version": "1.1.0"
+    },
+    "polymorph": {
+      "name": "polymorph",
+      "version": "1.1.0+1.21.1"
+    },
+    "fabric_registry_sync_v0": {
+      "name": "fabric_registry_sync_v0",
+      "version": "5.3.1+f9aace1619"
+    },
+    "structory_towers": {
+      "name": "structory_towers",
+      "version": "1.0.16"
+    },
+    "create_mob_spawners": {
+      "name": "create_mob_spawners",
+      "version": "1.0.0"
+    },
+    "appleskin": {
+      "name": "appleskin",
+      "version": "3.0.9+mc1.21"
+    },
+    "fabric_recipe_api_v1": {
+      "name": "fabric_recipe_api_v1",
+      "version": "5.0.15+59440bcc19"
+    },
+    "lootr": {
+      "name": "lootr",
+      "version": "1.21.1-1.11.37.120"
+    },
+    "fabric_object_builder_api_v1": {
+      "name": "fabric_object_builder_api_v1",
+      "version": "15.2.1+cc242efd19"
+    },
+    "constructionstick": {
+      "name": "constructionstick",
+      "version": "1.3.0"
+    },
+    "puzzleslib": {
+      "name": "puzzleslib",
+      "version": "21.1.39"
+    },
+    "gjeb": {
+      "name": "gjeb",
+      "version": "1.3.0.40"
+    },
+    "create_power_loader": {
+      "name": "create_power_loader",
+      "version": "2.0.5-mc1.21.1"
+    },
+    "consolefilter": {
+      "name": "consolefilter",
+      "version": "1.6.0"
+    },
+    "fabric_sound_api_v1": {
+      "name": "fabric_sound_api_v1",
+      "version": "1.0.23+10b84f8419"
+    },
+    "fabric_message_api_v1": {
+      "name": "fabric_message_api_v1",
+      "version": "6.0.14+6a754fce19"
+    },
+    "betterend": {
+      "name": "betterend",
+      "version": "21.0.24"
+    },
+    "configurable": {
+      "name": "configurable",
+      "version": "3.5.1"
+    },
+    "fabric_renderer_api_v1": {
+      "name": "fabric_renderer_api_v1",
+      "version": "3.4.1+9125b6dc19"
+    },
+    "pv_addon_groups": {
+      "name": "pv_addon_groups",
+      "version": "1.1.1"
+    },
+    "mr_chunky_playerpause": {
+      "name": "mr_chunky_playerpause",
+      "version": "1.0.1"
+    },
+    "wover": {
+      "name": "wover",
+      "version": "21.0.20"
+    },
+    "geckolib": {
+      "name": "geckolib",
+      "version": "4.8.4"
+    },
+    "fabric_item_api_v1": {
+      "name": "fabric_item_api_v1",
+      "version": "11.2.0+0c57911319"
+    },
+    "morejs": {
+      "name": "morejs",
+      "version": "1.21.1-0.16.0"
+    },
+    "placeholder_api": {
+      "name": "placeholder_api",
+      "version": "2.4.2_1.21"
+    },
+    "votifier": {
+      "name": "votifier",
+      "version": "1.2"
+    },
+    "incendium": {
+      "name": "incendium",
+      "version": "5.4.3"
+    },
+    "sophisticatedcore": {
+      "name": "sophisticatedcore",
+      "version": "1.4.44"
+    },
+    "ntgl": {
+      "name": "ntgl",
+      "version": "3.1.5"
+    },
+    "ritchiesprojectilelib": {
+      "name": "ritchiesprojectilelib",
+      "version": "2.1.2"
+    },
+    "xaeroworldmap": {
+      "name": "xaeroworldmap",
+      "version": "1.40.16"
+    },
+    "controlling": {
+      "name": "controlling",
+      "version": "19.0.5"
+    },
+    "fabric_data_attachment_api_v1": {
+      "name": "fabric_data_attachment_api_v1",
+      "version": "1.4.5+26d408aa19"
+    },
+    "aeronautics_dyeable_components": {
+      "name": "aeronautics_dyeable_components",
+      "version": "1.0.3+mc1.21.1"
+    },
+    "colorful_catalysts": {
+      "name": "colorful_catalysts",
+      "version": "1.3.2"
+    },
+    "sophisticatedbackpacks": {
+      "name": "sophisticatedbackpacks",
+      "version": "3.25.51"
+    },
+    "simulated": {
+      "name": "simulated",
+      "version": "1.2.1"
+    },
+    "wunderlib": {
+      "name": "wunderlib",
+      "version": "21.0.10"
+    },
+    "railways": {
+      "name": "railways",
+      "version": "0.2.0+neoforge-mc1.21.1"
+    },
+    "sodiumoptionsapi": {
+      "name": "sodiumoptionsapi",
+      "version": "1.0.10"
+    },
+    "baguettelib": {
+      "name": "baguettelib",
+      "version": "2.0.3"
+    },
+    "connector": {
+      "name": "connector",
+      "version": "2.0.0-beta.14+1.21.1"
+    },
+    "create_jetpack_curios": {
+      "name": "create_jetpack_curios",
+      "version": "1.2.0"
+    },
+    "fabric_api": {
+      "name": "fabric_api",
+      "version": "0.116.7+2.2.4+1.21.1"
+    },
+    "forgified_fabric_api": {
+      "name": "forgified_fabric_api",
+      "version": "0.116.7+2.2.4+1.21.1"
+    },
+    "bclib": {
+      "name": "bclib",
+      "version": "21.0.20"
+    },
+    "fabric_content_registries_v0": {
+      "name": "fabric_content_registries_v0",
+      "version": "8.0.19+5e0d320019"
+    },
+    "sodiumdynamiclights": {
+      "name": "sodiumdynamiclights",
+      "version": "1.0.9"
+    },
+    "greenhouseconfig_toml": {
+      "name": "greenhouseconfig_toml",
+      "version": "1.1.0"
+    },
+    "create_connected": {
+      "name": "create_connected",
+      "version": "1.1.16-mc1.21.1"
+    },
+    "chipped": {
+      "name": "chipped",
+      "version": "4.0.2"
+    },
+    "farmersdelight": {
+      "name": "farmersdelight",
+      "version": "1.2.11a"
+    },
+    "fabric_api_lookup_api_v1": {
+      "name": "fabric_api_lookup_api_v1",
+      "version": "1.6.71+c290471319"
+    },
+    "greenhouseconfig": {
+      "name": "greenhouseconfig",
+      "version": "2.2.3+1.21.1"
+    },
+    "patchouli": {
+      "name": "patchouli",
+      "version": "1.21.1-93-NEOFORGE"
+    },
+    "stockmarket": {
+      "name": "stockmarket",
+      "version": "1.0.1"
+    },
+    "numismatics": {
+      "name": "numismatics",
+      "version": "1.0.20+neoforge-mc1.21.1"
+    },
+    "suppsquared": {
+      "name": "suppsquared",
+      "version": "1.21-1.2.17"
+    },
+    "sophisticatedstoragecreateintegration": {
+      "name": "sophisticatedstoragecreateintegration",
+      "version": "0.1.17"
+    },
+    "collective": {
+      "name": "collective",
+      "version": "8.22"
+    },
+    "camera": {
+      "name": "camera",
+      "version": "1.21.1-1.0.21"
+    },
+    "resourcefullib": {
+      "name": "resourcefullib",
+      "version": "3.0.12"
+    },
+    "sablephysicscompat": {
+      "name": "sablephysicscompat",
+      "version": "1.3.0"
+    },
+    "lootjs": {
+      "name": "lootjs",
+      "version": "1.21.1-3.7.0"
+    },
+    "architectury": {
+      "name": "architectury",
+      "version": "13.0.8"
+    },
+    "cosmeticarmorreworkedforked": {
+      "name": "cosmeticarmorreworkedforked",
+      "version": "1.21.1-0.0.4"
+    },
+    "kubejsoffline": {
+      "name": "kubejsoffline",
+      "version": "5.2.0"
+    },
+    "grieflogger": {
+      "name": "grieflogger",
+      "version": "1.2.9-1.21.1"
+    },
+    "fabric_loot_api_v2": {
+      "name": "fabric_loot_api_v2",
+      "version": "3.0.15+a3ee712d19"
+    },
+    "fabric_loot_api_v3": {
+      "name": "fabric_loot_api_v3",
+      "version": "1.0.3+333dfad919"
+    },
+    "fabric_networking_api_v1": {
+      "name": "fabric_networking_api_v1",
+      "version": "4.3.0+30a980d919"
+    },
+    "observable": {
+      "name": "observable",
+      "version": "5.4.4"
+    },
+    "letmedespawn": {
+      "name": "letmedespawn",
+      "version": "1.5.0"
+    },
+    "mobstacker": {
+      "name": "mobstacker",
+      "version": "1.0.14b"
+    },
+    "cosmeticarmoursmod": {
+      "name": "cosmeticarmoursmod",
+      "version": "1.5.3.0"
+    },
+    "fabric_lifecycle_events_v1": {
+      "name": "fabric_lifecycle_events_v1",
+      "version": "2.6.0+e40d8add19"
+    },
+    "fabric_key_binding_api_v1": {
+      "name": "fabric_key_binding_api_v1",
+      "version": "1.0.47+62cc7ce119"
+    },
+    "esl": {
+      "name": "esl",
+      "version": "1.0.3"
+    },
+    "fabric_transfer_api_v1": {
+      "name": "fabric_transfer_api_v1",
+      "version": "5.4.3+a25cb45619"
+    },
+    "rhino": {
+      "name": "rhino",
+      "version": "2101.2.7-build.81"
+    },
+    "kubejs": {
+      "name": "kubejs",
+      "version": "2101.7.2-build.363"
+    },
+    "kubejsdelight": {
+      "name": "kubejsdelight",
+      "version": "1.1.4"
+    },
+    "sophisticatedstorage": {
+      "name": "sophisticatedstorage",
+      "version": "1.5.55"
+    },
+    "copycats": {
+      "name": "copycats",
+      "version": "3.0.4+mc.1.21.1-neoforge"
+    },
+    "xaerolib": {
+      "name": "xaerolib",
+      "version": "1.1.15"
+    },
+    "fabric_resource_loader_v0": {
+      "name": "fabric_resource_loader_v0",
+      "version": "1.3.1+4ea8954419"
+    },
+    "create": {
+      "name": "create",
+      "version": "6.0.10"
+    },
+    "create_integrated_farming": {
+      "name": "create_integrated_farming",
+      "version": "1.2.2"
+    },
+    "createcasing": {
+      "name": "createcasing",
+      "version": "1.8.1-ht1"
+    },
+    "dndecor": {
+      "name": "dndecor",
+      "version": "2.2b"
+    },
+    "create_stats": {
+      "name": "create_stats",
+      "version": "0.10.35.T"
+    },
+    "sliceanddice": {
+      "name": "sliceanddice",
+      "version": "4.2.4"
+    },
+    "cgs": {
+      "name": "cgs",
+      "version": "1.4.6"
+    },
+    "petrolsparts": {
+      "name": "petrolsparts",
+      "version": "1.2.10"
+    },
+    "create_break_levitite": {
+      "name": "create_break_levitite",
+      "version": "1.0.0"
+    },
+    "extra_gauges": {
+      "name": "extra_gauges",
+      "version": "2.1.2"
+    },
+    "sable": {
+      "name": "sable",
+      "version": "1.2.2"
+    },
+    "shtreimel": {
+      "name": "shtreimel",
+      "version": "0.3.1"
+    },
+    "aeronautics_utility_objects": {
+      "name": "aeronautics_utility_objects",
+      "version": "0.2.3"
+    },
+    "pipeorgans": {
+      "name": "pipeorgans",
+      "version": "0.8.2+1.21.1"
+    },
+    "tuningwrench": {
+      "name": "tuningwrench",
+      "version": "1.0.0"
+    },
+    "kubejs_create": {
+      "name": "kubejs_create",
+      "version": "2101.3.1-build.18"
+    },
+    "tracks": {
+      "name": "tracks",
+      "version": "1.0.5"
+    },
+    "sable_weighted_addons": {
+      "name": "sable_weighted_addons",
+      "version": "1.0.2"
+    },
+    "createpropulsion": {
+      "name": "createpropulsion",
+      "version": "1.1.4"
+    },
+    "nowheel": {
+      "name": "nowheel",
+      "version": "1.0.6"
+    },
+    "petrolpark": {
+      "name": "petrolpark",
+      "version": "1.4.34"
+    },
+    "someassemblyrequired": {
+      "name": "someassemblyrequired",
+      "version": "5.2.8"
+    },
+    "create_dragons_plus": {
+      "name": "create_dragons_plus",
+      "version": "1.10.0b"
+    },
+    "stam1ocreatetweaks": {
+      "name": "stam1ocreatetweaks",
+      "version": "1.0.8"
+    },
+    "structory": {
+      "name": "structory",
+      "version": "1.3.16"
+    },
+    "clumps": {
+      "name": "clumps",
+      "version": "19.0.0.1"
+    },
+    "create_ltab": {
+      "name": "create_ltab",
+      "version": "4.0.0"
+    },
+    "powergrid": {
+      "name": "powergrid",
+      "version": "0.5.5.1"
+    },
+    "lingua_bib": {
+      "name": "lingua_bib",
+      "version": "1.21.1-1.0.5"
+    },
+    "terralith": {
+      "name": "terralith",
+      "version": "2.5.8"
+    },
+    "drivebywire": {
+      "name": "drivebywire",
+      "version": "0.2.9"
+    },
+    "aeroworks": {
+      "name": "aeroworks",
+      "version": "1.2.11"
+    },
+    "drivebywiretypewriter": {
+      "name": "drivebywiretypewriter",
+      "version": "1.0.2"
+    },
+    "skinlayers3d": {
+      "name": "skinlayers3d",
+      "version": "1.7.5"
+    },
+    "fabric_transitive_access_wideners_v1": {
+      "name": "fabric_transitive_access_wideners_v1",
+      "version": "6.2.0+6c854b6f19"
+    },
+    "gpu_tape": {
+      "name": "gpu_tape",
+      "version": "1.0.2"
+    },
+    "bigcontraptions": {
+      "name": "bigcontraptions",
+      "version": "1.0"
+    },
+    "moonlight": {
+      "name": "moonlight",
+      "version": "1.21.1-3.0.9"
+    },
+    "tt20neoforged": {
+      "name": "tt20neoforged",
+      "version": "1.1"
+    },
+    "chunkyborder": {
+      "name": "chunkyborder",
+      "version": "1.2.18"
+    },
+    "chunky": {
+      "name": "chunky",
+      "version": "1.4.23"
+    },
+    "fabric_blockrenderlayer_v1": {
+      "name": "fabric_blockrenderlayer_v1",
+      "version": "1.1.52+c290471319"
+    },
+    "jade": {
+      "name": "jade",
+      "version": "15.10.5+neoforge"
+    },
+    "create_bb": {
+      "name": "create_bb",
+      "version": "1.0.7"
+    },
+    "villagertrades": {
+      "name": "villagertrades",
+      "version": "1.21.1-1.0.6-neoforge"
+    },
+    "deployer": {
+      "name": "deployer",
+      "version": "0.1.2"
+    },
+    "create_sa": {
+      "name": "create_sa",
+      "version": "2.1.3"
+    },
+    "fabric_gametest_api_v1": {
+      "name": "fabric_gametest_api_v1",
+      "version": "2.0.5+29f188ce19"
+    },
+    "sgui": {
+      "name": "sgui",
+      "version": "1.6.1_1.21.1"
+    },
+    "createrandomizefilters": {
+      "name": "createrandomizefilters",
+      "version": "1.0.7"
+    },
+    "clockware": {
+      "name": "clockware",
+      "version": "1.0.0"
+    },
+    "fabric_biome_api_v1": {
+      "name": "fabric_biome_api_v1",
+      "version": "13.0.31+1e62d33c19"
+    },
+    "betteradvancedtooltips": {
+      "name": "betteradvancedtooltips",
+      "version": "2101.1.0-build.1"
+    },
+    "emi_enchanting": {
+      "name": "emi_enchanting",
+      "version": "0.1.2+1.21+neoforge"
+    },
+    "ferritecore": {
+      "name": "ferritecore",
+      "version": "7.0.3"
+    },
+    "common_economy_api": {
+      "name": "common_economy_api",
+      "version": "1.1.1"
+    },
+    "packetfixer": {
+      "name": "packetfixer",
+      "version": "3.3.1"
+    },
+    "badoptimizations": {
+      "name": "badoptimizations",
+      "version": "2.4.1"
+    },
+    "create_enchantment_industry": {
+      "name": "create_enchantment_industry",
+      "version": "2.3.1"
+    },
+    "create_structures_arise": {
+      "name": "create_structures_arise",
+      "version": "175.48.47"
+    },
+    "fabric_data_generation_api_v1": {
+      "name": "fabric_data_generation_api_v1",
+      "version": "20.2.34+a4c3605619"
+    },
+    "fabric_events_interaction_v0": {
+      "name": "fabric_events_interaction_v0",
+      "version": "0.7.13+86e0887119"
+    },
+    "sophisticatedstorageinmotion": {
+      "name": "sophisticatedstorageinmotion",
+      "version": "0.10.30"
+    },
+    "createaddition": {
+      "name": "createaddition",
+      "version": "1.6.0"
+    },
+    "fabric_permissions_api_v0": {
+      "name": "fabric_permissions_api_v0",
+      "version": "0.2-SNAPSHOT"
+    }
+  },
+  "window": {
+    "start_ms": 1780698605148,
+    "end_ms": 1780698665423,
+    "ticks": 620,
+    "sample_interval_us": 4000,
+    "duration_sec": 60.275
+  },
+  "platform": {
+    "loader": "NeoForge",
+    "loader_version": "21.1.230",
+    "minecraft": "1.21.1",
+    "spark_version": 2,
+    "engine": "async",
+    "mode": "execution"
+  },
+  "context": {
+    "tps_1m": 10.05,
+    "tps_5m": 10.68,
+    "tps_15m": 10.65,
+    "mspt_p95_1m": 120.6,
+    "mspt_median_1m": 92.12,
+    "mspt_p95_5m": 116.45,
+    "jvm_heap": {
+      "used_mb": 10417.5,
+      "max_mb": 24000.0
+    },
+    "players": 6,
+    "world_entities": 2244,
+    "top_entities": [
+      {
+        "id": "minecraft:experience_orb",
+        "count": 633
+      },
+      {
+        "id": "minecraft:item",
+        "count": 545
+      },
+      {
+        "id": "create:super_glue",
+        "count": 376
+      },
+      {
+        "id": "simulated:honey_glue",
+        "count": 70
+      },
+      {
+        "id": "minecraft:marker",
+        "count": 64
+      },
+      {
+        "id": "minecraft:sheep",
+        "count": 47
+      },
+      {
+        "id": "minecraft:strider",
+        "count": 32
+      },
+      {
+        "id": "strawstatues:straw_statue",
+        "count": 28
+      }
+    ],
+    "entity_hotspots": [
+      {
+        "dimension": "overworld",
+        "chunk_x": -102,
+        "chunk_z": -17,
+        "total_entities": 180,
+        "top_type": "minecraft:experience_orb",
+        "top_count": 180
+      },
+      {
+        "dimension": "overworld",
+        "chunk_x": -103,
+        "chunk_z": -17,
+        "total_entities": 131,
+        "top_type": "minecraft:experience_orb",
+        "top_count": 118
+      },
+      {
+        "dimension": "overworld",
+        "chunk_x": -102,
+        "chunk_z": 97,
+        "total_entities": 128,
+        "top_type": "minecraft:item",
+        "top_count": 128
+      },
+      {
+        "dimension": "overworld",
+        "chunk_x": -110,
+        "chunk_z": -38,
+        "total_entities": 113,
+        "top_type": "minecraft:item",
+        "top_count": 113
+      },
+      {
+        "dimension": "overworld",
+        "chunk_x": 1736,
+        "chunk_z": 6803,
+        "total_entities": 64,
+        "top_type": "create:super_glue",
+        "top_count": 58
+      },
+      {
+        "dimension": "overworld",
+        "chunk_x": 0,
+        "chunk_z": 0,
+        "total_entities": 63,
+        "top_type": "minecraft:marker",
+        "top_count": 63
+      },
+      {
+        "dimension": "overworld",
+        "chunk_x": 1736,
+        "chunk_z": 6804,
+        "total_entities": 63,
+        "top_type": "create:super_glue",
+        "top_count": 62
+      },
+      {
+        "dimension": "overworld",
+        "chunk_x": -99,
+        "chunk_z": -17,
+        "total_entities": 31,
+        "top_type": "minecraft:experience_orb",
+        "top_count": 31
+      }
+    ],
+    "tile_entities": -1
+  },
+  "system": {
+    "cpu": {
+      "process_1m": 0.25,
+      "system_1m": 0.25,
+      "threads": 6
+    },
+    "memory": {
+      "physical_used_gb": 109.42,
+      "physical_total_gb": 125.68
+    },
+    "disk": {
+      "used_pct": 38.02
+    },
+    "gc": {
+      "total_ms": 1850
+    }
+  },
+  "capture": {
+    "creator": "JOKRisBest",
+    "creator_type": "player",
+    "profiler_settings": {
+      "interval_us": 4000,
+      "engine": "async",
+      "async_engine": true,
+      "aggregator": "simple",
+      "thread_filter": "specific",
+      "thread_id_count": 1
+    },
+    "server_configurations": {
+      "server.properties": "{\"enable-jmx-monitoring\":false,\"rcon.port\":25575,\"enable-command-block\":false,\"gamemode\":\"survival\",\"enable-query\":false,\"generator-settings\":\"{}\",\"enforce-secure-profile\":true,\"level-name\":\"world\",\"query.port\":25565,\"pvp\":true,\"generate-structures\":true,\"max-chained-neighbor-updates\":1000000,\"difficulty\":\"hard\",\"network-compression-threshold\":256,\"max-tick-time\":60000,\"require-resource-pack\":false,\"max-players\":20,\"use-native-transport\":true,\"enable-status\":true,\"online-mode\":true,\"allow-flight\":true,\"initial-disabled-packs\":\"\",\"broadcast-rcon-to-ops\":true,\"view-distance\":20,\"resource-pack-prompt\":\"\",\"bug-report-link\":\"\",\"allow-nether\":true,\"server-port\":25565,\"enable-rcon\":false,\"sync-chunk-writes\":true,\"resource-pack-id\":\"\",\"op-permission-level\":4,\"accepts-transfers\":false,\"prevent-proxy-connections\":false,\"hide-online-players\":false,\"entity-broadcast-range-percentage\":100,\"simulation-distance\":10,\"player-idle-timeout\":0,\"force-gamemode\":false,\"rate-limit\":0,\"hardcore\":false,\"white-list\":false,\"broadcast-console-to-ops\":true,\"region-file-compression\":\"deflate\",\"spawn-npcs\":true,\"spawn-animals\":true,\"log-ips\":true,\"function-permission-level\":2,\"initial-enabled-packs\":\"vanilla\",\"level-type\":\"wover:large\",\"text-filtering-config\":\"\",\"spawn-monsters\":true,\"enforce-whitelist\":false,\"resource-pack-sha1\":\"\",\"spawn-protection\":16,\"max-world-size\":29999984}"
+    }
+  },
+  "engine": "async",
+  "mode": "execution",
+  "timeline": [
+    {
+      "window": 29678310,
+      "ticks": 620,
+      "tps": 10.05,
+      "mspt_median": 92.12,
+      "mspt_max": 180.6,
+      "players": 6,
+      "entities": 2212,
+      "tile_entities": -1,
+      "chunks": 33374,
+      "cpu_process": 0.25,
+      "start_at": "2026-06-05T23:30:05.15+01:00",
+      "end_at": "2026-06-05T23:31:05.183+01:00"
+    }
+  ],
+  "threads_analyzed": [
+    "Server thread"
+  ],
+  "top_methods": [
+    {
+      "pct": 4.19,
+      "weight": 59216,
+      "class": "net.minecraft.server.MinecraftServer$$Lambda.0x00007f959fbd3158",
+      "method": "run",
+      "mod_id": "minecraft",
+      "label": "minecraft · 0x00007f959fbd3158.run",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith"
+      ]
+    },
+    {
+      "pct": 4.19,
+      "weight": 59216,
+      "class": "net.minecraft.server.MinecraftServer",
+      "method": "lambda$spin$2",
+      "mod_id": "minecraft",
+      "label": "minecraft · MinecraftServer.lambda$spin$2",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith",
+        "0x00007f959fbd3158.run"
+      ]
+    },
+    {
+      "pct": 4.19,
+      "weight": 59216,
+      "class": "net.minecraft.server.MinecraftServer",
+      "method": "runServer",
+      "mod_id": "minecraft",
+      "label": "minecraft · MinecraftServer.runServer",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith",
+        "0x00007f959fbd3158.run",
+        "MinecraftServer.lambda$spin$2"
+      ]
+    },
+    {
+      "pct": 3.94,
+      "weight": 55664,
+      "class": "net.minecraft.server.MinecraftServer",
+      "method": "tickServer",
+      "mod_id": "minecraft",
+      "label": "minecraft · MinecraftServer.tickServer",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith",
+        "0x00007f959fbd3158.run",
+        "MinecraftServer.lambda$spin$2",
+        "MinecraftServer.runServer"
+      ]
+    },
+    {
+      "pct": 3.92,
+      "weight": 55432,
+      "class": "net.minecraft.server.dedicated.DedicatedServer",
+      "method": "tickChildren",
+      "mod_id": "minecraft",
+      "label": "minecraft · DedicatedServer.tickChildren",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith",
+        "0x00007f959fbd3158.run",
+        "MinecraftServer.lambda$spin$2",
+        "MinecraftServer.runServer",
+        "MinecraftServer.tickServer"
+      ]
+    },
+    {
+      "pct": 3.92,
+      "weight": 55432,
+      "class": "net.minecraft.server.MinecraftServer",
+      "method": "tickChildren",
+      "mod_id": "minecraft",
+      "label": "minecraft · MinecraftServer.tickChildren",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith",
+        "0x00007f959fbd3158.run",
+        "MinecraftServer.lambda$spin$2",
+        "MinecraftServer.runServer",
+        "MinecraftServer.tickServer",
+        "DedicatedServer.tickChildren"
+      ]
+    },
+    {
+      "pct": 3.45,
+      "weight": 48736,
+      "class": "net.minecraft.server.level.ServerLevel",
+      "method": "tick",
+      "mod_id": "minecraft",
+      "label": "minecraft · ServerLevel.tick",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith",
+        "0x00007f959fbd3158.run",
+        "MinecraftServer.lambda$spin$2",
+        "MinecraftServer.runServer",
+        "MinecraftServer.tickServer",
+        "DedicatedServer.tickChildren",
+        "MinecraftServer.tickChildren"
+      ]
+    },
+    {
+      "pct": 0.88,
+      "weight": 12468,
+      "class": "net.minecraft.server.level.ServerLevel",
+      "method": "handler$eeb000$sable$tickPlotContainer",
+      "mod_id": "minecraft",
+      "label": "minecraft · ServerLevel.handler$eeb000$sable$tickPlotContainer",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith",
+        "0x00007f959fbd3158.run",
+        "MinecraftServer.lambda$spin$2",
+        "MinecraftServer.runServer",
+        "MinecraftServer.tickServer",
+        "DedicatedServer.tickChildren",
+        "MinecraftServer.tickChildren",
+        "ServerLevel.tick"
+      ]
+    },
+    {
+      "pct": 0.88,
+      "weight": 12468,
+      "class": "dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer",
+      "method": "tick",
+      "mod_id": "sable",
+      "label": "sable · ServerSubLevelContainer.tick",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith",
+        "0x00007f959fbd3158.run",
+        "MinecraftServer.lambda$spin$2",
+        "MinecraftServer.runServer",
+        "MinecraftServer.tickServer",
+        "DedicatedServer.tickChildren",
+        "MinecraftServer.tickChildren",
+        "ServerLevel.tick",
+        "ServerLevel.handler$eeb000$sable$tickPlotContainer"
+      ]
+    },
+    {
+      "pct": 0.88,
+      "weight": 12428,
+      "class": "dev.ryanhcode.sable.api.sublevel.SubLevelContainer",
+      "method": "tick",
+      "mod_id": "sable",
+      "label": "sable · SubLevelContainer.tick",
+      "parent_chain": [
+        "Thread.run",
+        "Thread.runWith",
+        "0x00007f959fbd3158.run",
+        "MinecraftServer.lambda$spin$2",
+        "MinecraftServer.runServer",
+        "MinecraftServer.tickServer",
+        "DedicatedServer.tickChildren",
+        "MinecraftServer.tickChildren",
+        "ServerLevel.tick",
+        "ServerLevel.handler$eeb000$sable$tickPlotContainer",
+        "ServerSubLevelContainer.tick"
+      ]
+    }
+  ],
+  "deep": {
+    "top_methods": [
+      {
+        "pct": 4.19,
+        "weight": 59216,
+        "class": "net.minecraft.server.MinecraftServer$$Lambda.0x00007f959fbd3158",
+        "method": "run",
+        "mod_id": "minecraft",
+        "label": "minecraft · 0x00007f959fbd3158.run",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith"
+        ]
+      },
+      {
+        "pct": 4.19,
+        "weight": 59216,
+        "class": "net.minecraft.server.MinecraftServer",
+        "method": "lambda$spin$2",
+        "mod_id": "minecraft",
+        "label": "minecraft · MinecraftServer.lambda$spin$2",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run"
+        ]
+      },
+      {
+        "pct": 4.19,
+        "weight": 59216,
+        "class": "net.minecraft.server.MinecraftServer",
+        "method": "runServer",
+        "mod_id": "minecraft",
+        "label": "minecraft · MinecraftServer.runServer",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2"
+        ]
+      },
+      {
+        "pct": 3.94,
+        "weight": 55664,
+        "class": "net.minecraft.server.MinecraftServer",
+        "method": "tickServer",
+        "mod_id": "minecraft",
+        "label": "minecraft · MinecraftServer.tickServer",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer"
+        ]
+      },
+      {
+        "pct": 3.92,
+        "weight": 55432,
+        "class": "net.minecraft.server.dedicated.DedicatedServer",
+        "method": "tickChildren",
+        "mod_id": "minecraft",
+        "label": "minecraft · DedicatedServer.tickChildren",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer"
+        ]
+      },
+      {
+        "pct": 3.92,
+        "weight": 55432,
+        "class": "net.minecraft.server.MinecraftServer",
+        "method": "tickChildren",
+        "mod_id": "minecraft",
+        "label": "minecraft · MinecraftServer.tickChildren",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren"
+        ]
+      },
+      {
+        "pct": 3.45,
+        "weight": 48736,
+        "class": "net.minecraft.server.level.ServerLevel",
+        "method": "tick",
+        "mod_id": "minecraft",
+        "label": "minecraft · ServerLevel.tick",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren"
+        ]
+      },
+      {
+        "pct": 0.88,
+        "weight": 12468,
+        "class": "net.minecraft.server.level.ServerLevel",
+        "method": "handler$eeb000$sable$tickPlotContainer",
+        "mod_id": "minecraft",
+        "label": "minecraft · ServerLevel.handler$eeb000$sable$tickPlotContainer",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick"
+        ]
+      },
+      {
+        "pct": 0.88,
+        "weight": 12468,
+        "class": "dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer",
+        "method": "tick",
+        "mod_id": "sable",
+        "label": "sable · ServerSubLevelContainer.tick",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "ServerLevel.handler$eeb000$sable$tickPlotContainer"
+        ]
+      },
+      {
+        "pct": 0.88,
+        "weight": 12428,
+        "class": "dev.ryanhcode.sable.api.sublevel.SubLevelContainer",
+        "method": "tick",
+        "mod_id": "sable",
+        "label": "sable · SubLevelContainer.tick",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "ServerLevel.handler$eeb000$sable$tickPlotContainer",
+          "ServerSubLevelContainer.tick"
+        ]
+      },
+      {
+        "pct": 0.88,
+        "weight": 12428,
+        "class": "it.unimi.dsi.fastutil.objects.ObjectArrayList",
+        "method": "forEach",
+        "mod_id": "it",
+        "label": "it · ObjectArrayList.forEach",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "ServerLevel.handler$eeb000$sable$tickPlotContainer",
+          "ServerSubLevelContainer.tick",
+          "SubLevelContainer.tick"
+        ]
+      },
+      {
+        "pct": 0.88,
+        "weight": 12416,
+        "class": "dev.ryanhcode.sable.api.sublevel.SubLevelContainer$$Lambda.0x00007f95a00f1ac0",
+        "method": "accept",
+        "mod_id": "dev",
+        "label": "dev · 0x00007f95a00f1ac0.accept",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "ServerLevel.handler$eeb000$sable$tickPlotContainer",
+          "ServerSubLevelContainer.tick",
+          "SubLevelContainer.tick",
+          "ObjectArrayList.forEach"
+        ]
+      },
+      {
+        "pct": 0.88,
+        "weight": 12412,
+        "class": "dev.ryanhcode.sable.api.sublevel.SubLevelContainer",
+        "method": "lambda$tick$0",
+        "mod_id": "sable",
+        "label": "sable · SubLevelContainer.lambda$tick$0",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "ServerLevel.handler$eeb000$sable$tickPlotContainer",
+          "ServerSubLevelContainer.tick",
+          "SubLevelContainer.tick",
+          "ObjectArrayList.forEach",
+          "0x00007f95a00f1ac0.accept"
+        ]
+      },
+      {
+        "pct": 0.88,
+        "weight": 12376,
+        "class": "dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem",
+        "method": "tick",
+        "mod_id": "sable",
+        "label": "sable · SubLevelPhysicsSystem.tick",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "ServerLevel.handler$eeb000$sable$tickPlotContainer",
+          "ServerSubLevelContainer.tick",
+          "SubLevelContainer.tick",
+          "ObjectArrayList.forEach",
+          "0x00007f95a00f1ac0.accept",
+          "SubLevelContainer.lambda$tick$0"
+        ]
+      },
+      {
+        "pct": 0.83,
+        "weight": 11784,
+        "class": "net.minecraft.world.level.Level",
+        "method": "tickBlockEntities",
+        "mod_id": "minecraft",
+        "label": "minecraft · Level.tickBlockEntities",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick"
+        ]
+      },
+      {
+        "pct": 0.82,
+        "weight": 11640,
+        "class": "net.minecraft.world.level.entity.EntityTickList",
+        "method": "forEach",
+        "mod_id": "minecraft",
+        "label": "minecraft · EntityTickList.forEach",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick"
+        ]
+      },
+      {
+        "pct": 0.82,
+        "weight": 11564,
+        "class": "net.minecraft.server.level.ServerLevel$$Lambda.0x00007f95a010c450",
+        "method": "accept",
+        "mod_id": "minecraft",
+        "label": "minecraft · 0x00007f95a010c450.accept",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "EntityTickList.forEach"
+        ]
+      },
+      {
+        "pct": 0.82,
+        "weight": 11532,
+        "class": "net.minecraft.server.level.ServerLevel",
+        "method": "lambda$tick$2",
+        "mod_id": "minecraft",
+        "label": "minecraft · ServerLevel.lambda$tick$2",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "EntityTickList.forEach",
+          "0x00007f95a010c450.accept"
+        ]
+      },
+      {
+        "pct": 0.8,
+        "weight": 11312,
+        "class": "net.minecraft.world.level.Level",
+        "method": "guardEntityTick",
+        "mod_id": "minecraft",
+        "label": "minecraft · Level.guardEntityTick",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "EntityTickList.forEach",
+          "0x00007f95a010c450.accept",
+          "ServerLevel.lambda$tick$2"
+        ]
+      },
+      {
+        "pct": 0.8,
+        "weight": 11312,
+        "class": "net.minecraft.world.level.Level",
+        "method": "wrapOperation$blb000$neruina$catchTickingEntities$notTheCauseOfTickLag",
+        "mod_id": "minecraft",
+        "label": "minecraft · Level.wrapOperation$blb000$neruina$catchTickingEntities$notTheCauseOfTickLag",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "EntityTickList.forEach",
+          "0x00007f95a010c450.accept",
+          "ServerLevel.lambda$tick$2",
+          "Level.guardEntityTick"
+        ]
+      },
+      {
+        "pct": 0.8,
+        "weight": 11312,
+        "class": "com.bawnorton.neruina.handler.TickHandler",
+        "method": "safelyTickEntities",
+        "mod_id": "neruina",
+        "label": "neruina · TickHandler.safelyTickEntities",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "EntityTickList.forEach",
+          "0x00007f95a010c450.accept",
+          "ServerLevel.lambda$tick$2",
+          "Level.guardEntityTick",
+          "Level.wrapOperation$blb000$neruina$catchTickingEntities$notTheCauseOfTickLag"
+        ]
+      },
+      {
+        "pct": 0.8,
+        "weight": 11312,
+        "class": "net.minecraft.world.level.Level$$Lambda.0x00007f95a010cd18",
+        "method": "call",
+        "mod_id": "minecraft",
+        "label": "minecraft · 0x00007f95a010cd18.call",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "EntityTickList.forEach",
+          "0x00007f95a010c450.accept",
+          "ServerLevel.lambda$tick$2",
+          "Level.guardEntityTick",
+          "Level.wrapOperation$blb000$neruina$catchTickingEntities$notTheCauseOfTickLag",
+          "TickHandler.safelyTickEntities"
+        ]
+      },
+      {
+        "pct": 0.8,
+        "weight": 11312,
+        "class": "net.minecraft.world.level.Level",
+        "method": "mixinextras$bridge$accept$174",
+        "mod_id": "minecraft",
+        "label": "minecraft · Level.mixinextras$bridge$accept$174",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "EntityTickList.forEach",
+          "0x00007f95a010c450.accept",
+          "ServerLevel.lambda$tick$2",
+          "Level.guardEntityTick",
+          "Level.wrapOperation$blb000$neruina$catchTickingEntities$notTheCauseOfTickLag",
+          "TickHandler.safelyTickEntities",
+          "0x00007f95a010cd18.call"
+        ]
+      },
+      {
+        "pct": 0.8,
+        "weight": 11312,
+        "class": "net.minecraft.server.level.ServerLevel$$Lambda.0x00007f95a010c8a8",
+        "method": "accept",
+        "mod_id": "minecraft",
+        "label": "minecraft · 0x00007f95a010c8a8.accept",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "EntityTickList.forEach",
+          "0x00007f95a010c450.accept",
+          "ServerLevel.lambda$tick$2",
+          "Level.guardEntityTick",
+          "Level.wrapOperation$blb000$neruina$catchTickingEntities$notTheCauseOfTickLag",
+          "TickHandler.safelyTickEntities",
+          "0x00007f95a010cd18.call",
+          "Level.mixinextras$bridge$accept$174"
+        ]
+      },
+      {
+        "pct": 0.8,
+        "weight": 11312,
+        "class": "net.minecraft.server.level.ServerLevel",
+        "method": "tickNonPassenger",
+        "mod_id": "minecraft",
+        "label": "minecraft · ServerLevel.tickNonPassenger",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "EntityTickList.forEach",
+          "0x00007f95a010c450.accept",
+          "ServerLevel.lambda$tick$2",
+          "Level.guardEntityTick",
+          "Level.wrapOperation$blb000$neruina$catchTickingEntities$notTheCauseOfTickLag",
+          "TickHandler.safelyTickEntities",
+          "0x00007f95a010cd18.call",
+          "Level.mixinextras$bridge$accept$174",
+          "0x00007f95a010c8a8.accept"
+        ]
+      },
+      {
+        "pct": 0.67,
+        "weight": 9452,
+        "class": "dev.ryanhcode.sable.sublevel.system.ticket.PhysicsChunkTicketManager",
+        "method": "update",
+        "mod_id": "sable",
+        "label": "sable · PhysicsChunkTicketManager.update",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "ServerLevel.handler$eeb000$sable$tickPlotContainer",
+          "ServerSubLevelContainer.tick",
+          "SubLevelContainer.tick",
+          "ObjectArrayList.forEach",
+          "0x00007f95a00f1ac0.accept",
+          "SubLevelContainer.lambda$tick$0",
+          "SubLevelPhysicsSystem.tick"
+        ]
+      },
+      {
+        "pct": 0.66,
+        "weight": 9400,
+        "class": "net.minecraft.world.level.Level",
+        "method": "redirect$den000$observable$redirectTick",
+        "mod_id": "minecraft",
+        "label": "minecraft · Level.redirect$den000$observable$redirectTick",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "Level.tickBlockEntities"
+        ]
+      },
+      {
+        "pct": 0.63,
+        "weight": 8908,
+        "class": "net.minecraft.world.level.chunk.LevelChunk$RebindableTickingBlockEntityWrapper",
+        "method": "tick",
+        "mod_id": "minecraft",
+        "label": "minecraft · LevelChunk$RebindableTickingBlockEntityWrapper.tick",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "Level.tickBlockEntities",
+          "Level.redirect$den000$observable$redirectTick"
+        ]
+      },
+      {
+        "pct": 0.63,
+        "weight": 8900,
+        "class": "net.minecraft.world.level.chunk.LevelChunk$BoundTickingBlockEntity",
+        "method": "tick",
+        "mod_id": "minecraft",
+        "label": "minecraft · LevelChunk$BoundTickingBlockEntity.tick",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "Level.tickBlockEntities",
+          "Level.redirect$den000$observable$redirectTick",
+          "LevelChunk$RebindableTickingBlockEntityWrapper.tick"
+        ]
+      },
+      {
+        "pct": 0.59,
+        "weight": 8400,
+        "class": "net.minecraft.world.level.chunk.LevelChunk$BoundTickingBlockEntity",
+        "method": "wrapOperation$bla000$neruina$catchTickingBlockEntity$notTheCauseOfTickLag",
+        "mod_id": "minecraft",
+        "label": "minecraft · LevelChunk$BoundTickingBlockEntity.wrapOperation$bla000$neruina$catchTickingBlockEntity$notTheCauseOfTickLag",
+        "parent_chain": [
+          "Thread.run",
+          "Thread.runWith",
+          "0x00007f959fbd3158.run",
+          "MinecraftServer.lambda$spin$2",
+          "MinecraftServer.runServer",
+          "MinecraftServer.tickServer",
+          "DedicatedServer.tickChildren",
+          "MinecraftServer.tickChildren",
+          "ServerLevel.tick",
+          "Level.tickBlockEntities",
+          "Level.redirect$den000$observable$redirectTick",
+          "LevelChunk$RebindableTickingBlockEntityWrapper.tick",
+          "LevelChunk$BoundTickingBlockEntity.tick"
+        ]
+      }
+    ]
+  },
+  "mod_rollups": [
+    {
+      "mod_id": "minecraft",
+      "pct": 68.32,
+      "method_count": 11304,
+      "top_label": "0x00007f959fbd3158.run",
+      "display_name": "minecraft 1.21.1"
+    },
+    {
+      "mod_id": "create",
+      "pct": 8.25,
+      "method_count": 1443,
+      "top_label": "SmartBlockEntityTicker.tick",
+      "display_name": "create 6.0.10"
+    },
+    {
+      "mod_id": "sable",
+      "pct": 7.43,
+      "method_count": 450,
+      "top_label": "ServerSubLevelContainer.tick",
+      "display_name": "sable 1.2.2"
+    },
+    {
+      "mod_id": "neoforge",
+      "pct": 3.36,
+      "method_count": 1035,
+      "top_label": "EventHooks.fireLevelTickPost",
+      "display_name": "neoforge 21.1.230"
+    },
+    {
+      "mod_id": "com",
+      "pct": 2.86,
+      "method_count": 2083,
+      "top_label": "0x00007f95a01de618.call"
+    },
+    {
+      "mod_id": "it",
+      "pct": 1.53,
+      "method_count": 755,
+      "top_label": "ObjectArrayList.forEach"
+    },
+    {
+      "mod_id": "neruina",
+      "pct": 1.5,
+      "method_count": 5,
+      "top_label": "TickHandler.safelyTickEntities",
+      "display_name": "neruina 3.3.1"
+    },
+    {
+      "mod_id": "dev",
+      "pct": 0.89,
+      "method_count": 37,
+      "top_label": "0x00007f95a00f1ac0.accept"
+    },
+    {
+      "mod_id": "unknown",
+      "pct": 0.83,
+      "method_count": 645,
+      "top_label": "native./home/container/.sable/natives/sable_rapier_x86_64_linux.so"
+    },
+    {
+      "mod_id": "sophisticatedcore",
+      "pct": 0.58,
+      "method_count": 382,
+      "top_label": "ControllerBlockEntityBase.getStackInSlot",
+      "display_name": "sophisticatedcore 1.4.44"
+    },
+    {
+      "mod_id": "clockware",
+      "pct": 0.51,
+      "method_count": 154,
+      "top_label": "Clockware_EventsSubscribers.clockwareTick",
+      "display_name": "clockware 1.0.0"
+    },
+    {
+      "mod_id": "libc",
+      "pct": 0.41,
+      "method_count": 119,
+      "top_label": "6.syscall"
+    },
+    {
+      "mod_id": "rhino",
+      "pct": 0.3,
+      "method_count": 281,
+      "top_label": "VMBridge$AdapterInvocationHandler.invoke",
+      "display_name": "rhino 2101.2.7-build.81"
+    },
+    {
+      "mod_id": "lithium",
+      "pct": 0.28,
+      "method_count": 347,
+      "top_label": "LithiumEntityCollisions.doesBoxCollideWithBlocks",
+      "display_name": "lithium 0.15.3+mc1.21.1"
+    },
+    {
+      "mod_id": "libjvm",
+      "pct": 0.24,
+      "method_count": 183,
+      "top_label": "so.JVM_FillInStackTrace"
+    },
+    {
+      "mod_id": "io",
+      "pct": 0.23,
+      "method_count": 152,
+      "top_label": "SingleThreadEventExecutor.execute"
+    },
+    {
+      "mod_id": "connector$brigadier",
+      "pct": 0.19,
+      "method_count": 40,
+      "top_label": "ContextChain.runModifier"
+    },
+    {
+      "mod_id": "mors",
+      "pct": 0.15,
+      "method_count": 30,
+      "top_label": "0x00007f95a02bb630.accept"
+    },
+    {
+      "mod_id": "placeholder_api",
+      "pct": 0.15,
+      "method_count": 93,
+      "top_label": "Placeholders.parseText",
+      "display_name": "placeholder_api 2.4.2_1.21"
+    },
+    {
+      "mod_id": "sable_rapier_x86_64_linux",
+      "pct": 0.14,
+      "method_count": 12,
+      "top_label": "so.Java_dev_ryanhcode_sable_physics_impl_rapier_Rapier3D_addChunk"
+    },
+    {
+      "mod_id": "solstice",
+      "pct": 0.13,
+      "method_count": 51,
+      "top_label": "Format.parse",
+      "display_name": "solstice 1.9.2_1.21.1"
+    },
+    {
+      "mod_id": "net",
+      "pct": 0.11,
+      "method_count": 93,
+      "top_label": "0x00007f95a02691a8.insertItem"
+    },
+    {
+      "mod_id": "createpropulsion",
+      "pct": 0.11,
+      "method_count": 88,
+      "top_label": "IonThrusterBlockEntity.tick",
+      "display_name": "createpropulsion 1.1.4"
+    },
+    {
+      "mod_id": "kubejs",
+      "pct": 0.1,
+      "method_count": 65,
+      "top_label": "KubeJSPlayerEventHandler.tick",
+      "display_name": "kubejs 2101.7.2-build.363"
+    },
+    {
+      "mod_id": "ferritecore",
+      "pct": 0.09,
+      "method_count": 270,
+      "top_label": "FastMapEntryMap.get",
+      "display_name": "ferritecore 7.0.3"
+    },
+    {
+      "mod_id": "lootr",
+      "pct": 0.08,
+      "method_count": 68,
+      "top_label": "ILootrBlockEntity.ticker",
+      "display_name": "lootr 1.21.1-1.11.37.120"
+    },
+    {
+      "mod_id": "me",
+      "pct": 0.08,
+      "method_count": 76,
+      "top_label": "ApiPermissionHolder.getInheritedGroups"
+    },
+    {
+      "mod_id": "drivebywire",
+      "pct": 0.08,
+      "method_count": 79,
+      "top_label": "WireCommonEvents.onNeighborNotify",
+      "display_name": "drivebywire 0.2.9"
+    },
+    {
+      "mod_id": "sophisticatedstorage",
+      "pct": 0.07,
+      "method_count": 30,
+      "top_label": "StorageOutputBlockEntity$OutputOnlyItemHandlerWrapper.getStackInSlot",
+      "display_name": "sophisticatedstorage 1.5.55"
+    },
+    {
+      "mod_id": "edn",
+      "pct": 0.06,
+      "method_count": 36,
+      "top_label": "0x00007f959ed82888.accept"
+    },
+    {
+      "mod_id": "cgs",
+      "pct": 0.05,
+      "method_count": 4,
+      "top_label": "GuanoAccumulationHandler.onBatUpdate",
+      "display_name": "cgs 1.4.6"
+    },
+    {
+      "mod_id": "curios",
+      "pct": 0.04,
+      "method_count": 55,
+      "top_label": "CuriosEventHandler.tick",
+      "display_name": "curios 9.5.1+1.21.1"
+    },
+    {
+      "mod_id": "cosmeticarmoursmod",
+      "pct": 0.04,
+      "method_count": 20,
+      "top_label": "GloriousCoronationProdProcedure.onPlayerTick",
+      "display_name": "cosmeticarmoursmod 1.5.3.0"
+    },
+    {
+      "mod_id": "almanac",
+      "pct": 0.04,
+      "method_count": 88,
+      "top_label": "Almanac.hasNonCustomName",
+      "display_name": "almanac 1.5.2"
+    },
+    {
+      "mod_id": "mixinextras.neoforge",
+      "pct": 0.04,
+      "method_count": 6,
+      "top_label": "LocalLongRefImpl.get"
+    },
+    {
+      "mod_id": "org",
+      "pct": 0.04,
+      "method_count": 125,
+      "top_label": "CallbackInfoReturnable.\u003cinit\u003e"
+    },
+    {
+      "mod_id": "petrolpark",
+      "pct": 0.04,
+      "method_count": 74,
+      "top_label": "ItemHelper.equalIgnoringComponents",
+      "display_name": "petrolpark 1.4.34"
+    },
+    {
+      "mod_id": "worldedit",
+      "pct": 0.04,
+      "method_count": 55,
+      "top_label": "NeoForgeWorldEdit.onRightClickBlock",
+      "display_name": "worldedit 7.3.8+6939-7d32b45"
+    },
+    {
+      "mod_id": "ponder",
+      "pct": 0.04,
+      "method_count": 76,
+      "top_label": "LerpedFloat.tickChaser",
+      "display_name": "ponder 1.0.82+mc1.21.1"
+    },
+    {
+      "mod_id": "ntgl",
+      "pct": 0.03,
+      "method_count": 32,
+      "top_label": "DataKeyManager.onLivingTick",
+      "display_name": "ntgl 3.1.5"
+    },
+    {
+      "mod_id": "libjava",
+      "pct": 0.03,
+      "method_count": 31,
+      "top_label": "so.Java_java_lang_Throwable_fillInStackTrace"
+    },
+    {
+      "mod_id": "servercore",
+      "pct": 0.03,
+      "method_count": 26,
+      "top_label": "CachedChunkList.update",
+      "display_name": "servercore 1.5.5+1.21.1"
+    },
+    {
+      "mod_id": "observable",
+      "pct": 0.03,
+      "method_count": 2,
+      "top_label": "Profiler.processBlockEntity",
+      "display_name": "observable 5.4.4"
+    },
+    {
+      "mod_id": "simulated",
+      "pct": 0.03,
+      "method_count": 46,
+      "top_label": "LaserPointerBlockEntity.tick",
+      "display_name": "simulated 1.2.1"
+    },
+    {
+      "mod_id": "flightlib",
+      "pct": 0.02,
+      "method_count": 20,
+      "top_label": "NeoForgeEntrypoint.lambda$new$0",
+      "display_name": "flightlib 3.2.1"
+    },
+    {
+      "mod_id": "sablecompanion",
+      "pct": 0.02,
+      "method_count": 72,
+      "top_label": "SableCompanion.projectOutOfSubLevel",
+      "display_name": "sablecompanion 1.6.0"
+    },
+    {
+      "mod_id": "sophisticatedbackpacks",
+      "pct": 0.02,
+      "method_count": 21,
+      "top_label": "BackpackItem.inventoryTick",
+      "display_name": "sophisticatedbackpacks 3.25.51"
+    },
+    {
+      "mod_id": "eu",
+      "pct": 0.02,
+      "method_count": 9,
+      "top_label": "0x00007f959cf68ec8.onPlaceholderRequest"
+    },
+    {
+      "mod_id": "create_connected",
+      "pct": 0.02,
+      "method_count": 13,
+      "top_label": "LinkWildcardNetworkHandler.updateNetworkOf",
+      "display_name": "create_connected 1.1.16-mc1.21.1"
+    },
+    {
+      "mod_id": "grieflogger",
+      "pct": 0.02,
+      "method_count": 31,
+      "top_label": "BreakBlockEvent.breakBlock",
+      "display_name": "grieflogger 1.2.9-1.21.1"
+    },
+    {
+      "mod_id": "mobstacker",
+      "pct": 0.02,
+      "method_count": 6,
+      "top_label": "MobStacker.updateStackDisplay",
+      "display_name": "mobstacker 1.0.14b"
+    },
+    {
+      "mod_id": "supplementaries",
+      "pct": 0.02,
+      "method_count": 11,
+      "top_label": "ServerEventsForge.onPlayerTick",
+      "display_name": "supplementaries 1.21.1-3.6.6"
+    },
+    {
+      "mod_id": "create_enchantment_industry",
+      "pct": 0.01,
+      "method_count": 8,
+      "top_label": "GrindstoneDrainBlockEntity$1.insertItem",
+      "display_name": "create_enchantment_industry 2.3.1"
+    },
+    {
+      "mod_id": "offroad",
+      "pct": 0.01,
+      "method_count": 20,
+      "top_label": "WheelMountBlockEntity.sable$physicsTick",
+      "display_name": "offroad 1.2.1"
+    },
+    {
+      "mod_id": "aeronautics",
+      "pct": 0.01,
+      "method_count": 35,
+      "top_label": "PropellerBearingContraptionEntity.applyRotation",
+      "display_name": "aeronautics 1.2.1"
+    },
+    {
+      "mod_id": "veil",
+      "pct": 0.01,
+      "method_count": 4,
+      "top_label": "NeoForgeRegistrationFactory$NeoForgeRegistryObject.get",
+      "display_name": "veil 4.0.0"
+    },
+    {
+      "mod_id": "top",
+      "pct": 0.01,
+      "method_count": 11,
+      "top_label": "0x00007f95a022b420.accept"
+    },
+    {
+      "mod_id": "tt20neoforged",
+      "pct": 0.01,
+      "method_count": 26,
+      "top_label": "TPSUtil.tt20",
+      "display_name": "tt20neoforged 1.1"
+    },
+    {
+      "mod_id": "createcasing",
+      "pct": 0.01,
+      "method_count": 10,
+      "top_label": "ItemChangeBlockManager.onRightClick",
+      "display_name": "createcasing 1.8.1-ht1"
+    },
+    {
+      "mod_id": "camera",
+      "pct": 0.01,
+      "method_count": 7,
+      "top_label": "ImageEntity.tick",
+      "display_name": "camera 1.21.1-1.0.21"
+    },
+    {
+      "mod_id": "architectury",
+      "pct": 0.01,
+      "method_count": 13,
+      "top_label": "EventHandlerImplCommon.eventPlayerInteractEvent",
+      "display_name": "architectury 13.0.8"
+    },
+    {
+      "mod_id": "noobanidus",
+      "pct": 0.01,
+      "method_count": 3,
+      "top_label": "0x00007f95a013ae38.tick"
+    },
+    {
+      "mod_id": "caelus",
+      "pct": 0.01,
+      "method_count": 2,
+      "top_label": "CaelusNeoForgeMod.entityTick",
+      "display_name": "caelus 7.0.1+1.21.1"
+    },
+    {
+      "mod_id": "deployer",
+      "pct": 0.01,
+      "method_count": 4,
+      "top_label": "AbstractPanelBehaviour.getValue",
+      "display_name": "deployer 0.1.2"
+    },
+    {
+      "mod_id": "create_new_age",
+      "pct": 0.01,
+      "method_count": 14,
+      "top_label": "CarbonBrushesBlockEntity.tick",
+      "display_name": "create_new_age 1.1.7c+mc1.21.1"
+    },
+    {
+      "mod_id": "sliceanddice",
+      "pct": 0.01,
+      "method_count": 14,
+      "top_label": "WetAir.check",
+      "display_name": "sliceanddice 4.2.4"
+    },
+    {
+      "mod_id": "createaddition",
+      "pct": 0.01,
+      "method_count": 7,
+      "top_label": "AbstractConnectorBlockEntity.tick",
+      "display_name": "createaddition 1.6.0"
+    },
+    {
+      "mod_id": "copycats",
+      "pct": 0.01,
+      "method_count": 12,
+      "top_label": "MultiStateCopycatBlockEntity.write",
+      "display_name": "copycats 3.0.4+mc.1.21.1-neoforge"
+    },
+    {
+      "mod_id": "sdlink",
+      "pct": 0.01,
+      "method_count": 19,
+      "top_label": "ServerEvents.playerJoinEvent",
+      "display_name": "sdlink 3.4.1"
+    },
+    {
+      "mod_id": "kotlin",
+      "pct": 0.01,
+      "method_count": 11,
+      "top_label": "MapsKt__MapsKt.toMutableMap"
+    },
+    {
+      "mod_id": "createlazytick",
+      "pct": 0.01,
+      "method_count": 12,
+      "top_label": "BasinStateSnapshot.\u003cinit\u003e",
+      "display_name": "createlazytick 2.4.9-6.0.x"
+    },
+    {
+      "mod_id": "create_stats",
+      "pct": 0.01,
+      "method_count": 9,
+      "top_label": "StatsDisplayPanelBlock.lambda$getTicker$0",
+      "display_name": "create_stats 0.10.35.T"
+    },
+    {
+      "mod_id": "createutilities",
+      "pct": 0.0,
+      "method_count": 7,
+      "top_label": "VoidTank.onContentsChanged",
+      "display_name": "createutilities 0.3.6"
+    },
+    {
+      "mod_id": "sophisticatedstoragecreateintegration",
+      "pct": 0.0,
+      "method_count": 11,
+      "top_label": "MountedSophisticatedStorage.getExternalItemHandler",
+      "display_name": "sophisticatedstoragecreateintegration 0.1.17"
+    },
+    {
+      "mod_id": "farmersdelight",
+      "pct": 0.0,
+      "method_count": 9,
+      "top_label": "CookingPotBlockEntity.cookingTick",
+      "display_name": "farmersdelight 1.2.11a"
+    },
+    {
+      "mod_id": "powergrid",
+      "pct": 0.0,
+      "method_count": 8,
+      "top_label": "ForgeEvents.chunkTicketUpdate",
+      "display_name": "powergrid 0.5.5.1"
+    },
+    {
+      "mod_id": "create_sa",
+      "pct": 0.0,
+      "method_count": 6,
+      "top_label": "LargeFillingTankItem.inventoryTick",
+      "display_name": "create_sa 2.1.3"
+    },
+    {
+      "mod_id": "betterend",
+      "pct": 0.0,
+      "method_count": 7,
+      "top_label": "GeneratorOptions.changeSpawn",
+      "display_name": "betterend 21.0.24"
+    },
+    {
+      "mod_id": "stockmarket",
+      "pct": 0.0,
+      "method_count": 6,
+      "top_label": "VendorEvents.onServerTickCloth",
+      "display_name": "stockmarket 1.0.1"
+    },
+    {
+      "mod_id": "spark",
+      "pct": 0.0,
+      "method_count": 7,
+      "top_label": "DoubleAverageInfo.median",
+      "display_name": "spark 1.10.124"
+    },
+    {
+      "mod_id": "libzip",
+      "pct": 0.0,
+      "method_count": 7,
+      "top_label": "so.Java_java_util_zip_Deflater_deflateBytesBytes"
+    },
+    {
+      "mod_id": "strawstatues",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "StrawStatue.baseTick",
+      "display_name": "strawstatues 21.1.0"
+    },
+    {
+      "mod_id": "fr",
+      "pct": 0.0,
+      "method_count": 5,
+      "top_label": "0x00007f95a02d48f0.test"
+    },
+    {
+      "mod_id": "polymorph",
+      "pct": 0.0,
+      "method_count": 10,
+      "top_label": "PolymorphRecipeManager.getBlockEntityRecipe",
+      "display_name": "polymorph 1.1.0+1.21.1"
+    },
+    {
+      "mod_id": "Registrate.MC1._21._67",
+      "pct": 0.0,
+      "method_count": 9,
+      "top_label": "ItemProviderEntry.isIn"
+    },
+    {
+      "mod_id": "railways",
+      "pct": 0.0,
+      "method_count": 5,
+      "top_label": "ConductorPossessionController.isPossessingConductor",
+      "display_name": "railways 0.2.0+neoforge-mc1.21.1"
+    },
+    {
+      "mod_id": "collective",
+      "pct": 0.0,
+      "method_count": 6,
+      "top_label": "RegisterCollectiveNeoForgeEvents.onWorldTick",
+      "display_name": "collective 8.22"
+    },
+    {
+      "mod_id": "elytraslot",
+      "pct": 0.0,
+      "method_count": 4,
+      "top_label": "ElytraSlotNeoForgeMod.playerTick",
+      "display_name": "elytraslot 9.0.2+1.21.1"
+    },
+    {
+      "mod_id": "createbigcannons",
+      "pct": 0.0,
+      "method_count": 7,
+      "top_label": "CannonCarriageEntity.tick",
+      "display_name": "createbigcannons 5.11.5"
+    },
+    {
+      "mod_id": "create_dragons_plus",
+      "pct": 0.0,
+      "method_count": 6,
+      "top_label": "EndingFanProcessingType.isValidAt",
+      "display_name": "create_dragons_plus 1.10.0b"
+    },
+    {
+      "mod_id": "esl",
+      "pct": 0.0,
+      "method_count": 6,
+      "top_label": "EnergyHelper.insertToSurrounding",
+      "display_name": "esl 1.0.3"
+    },
+    {
+      "mod_id": "fabric_transfer_api_v1",
+      "pct": 0.0,
+      "method_count": 8,
+      "top_label": "TransferApiNeoCompat.lambda$onAttachBlockEntityCapabilities$3",
+      "display_name": "fabric_transfer_api_v1 5.4.3+a25cb45619"
+    },
+    {
+      "mod_id": "by",
+      "pct": 0.0,
+      "method_count": 3,
+      "top_label": "0x00007f959e36b1c0.accept"
+    },
+    {
+      "mod_id": "fabric_item_api_v1",
+      "pct": 0.0,
+      "method_count": 3,
+      "top_label": "FabricItemStack.canBeEnchantedWith",
+      "display_name": "fabric_item_api_v1 11.2.0+0c57911319"
+    },
+    {
+      "mod_id": "moonlight",
+      "pct": 0.0,
+      "method_count": 4,
+      "top_label": "RegHelperImpl$AttachmentWrapper.getOrNull",
+      "display_name": "moonlight 1.21.1-3.0.9"
+    },
+    {
+      "mod_id": "brewinandchewin",
+      "pct": 0.0,
+      "method_count": 5,
+      "top_label": "BnCCommonEvents.onLivingTick",
+      "display_name": "brewinandchewin 4.4.2"
+    },
+    {
+      "mod_id": "craterlib",
+      "pct": 0.0,
+      "method_count": 6,
+      "top_label": "CraterEventBus.postEvent",
+      "display_name": "craterlib 3.1.1"
+    },
+    {
+      "mod_id": "create_power_loader",
+      "pct": 0.0,
+      "method_count": 6,
+      "top_label": "StationChunkLoader.tick",
+      "display_name": "create_power_loader 2.0.5-mc1.21.1"
+    },
+    {
+      "mod_id": "vectorwing",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "0x00007f95a0156f60.tick"
+    },
+    {
+      "mod_id": "dndecor",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "DnDecorServer.onItemUseOnBlock",
+      "display_name": "dndecor 2.2b"
+    },
+    {
+      "mod_id": "libjavajpeg",
+      "pct": 0.0,
+      "method_count": 5,
+      "top_label": "so.Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage"
+    },
+    {
+      "mod_id": "fabric_events_interaction_v0",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "InteractionEventHooks.onRightClickBlock",
+      "display_name": "fabric_events_interaction_v0 0.7.13+86e0887119"
+    },
+    {
+      "mod_id": "xaerominimap",
+      "pct": 0.0,
+      "method_count": 4,
+      "top_label": "CommonEventsNeoForge.handlePlayerTickStart",
+      "display_name": "xaerominimap 25.3.13"
+    },
+    {
+      "mod_id": "shtreimel",
+      "pct": 0.0,
+      "method_count": 4,
+      "top_label": "i.onSubLevelAdded",
+      "display_name": "shtreimel 0.3.1"
+    },
+    {
+      "mod_id": "someassemblyrequired",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "SandwichLootEnabledCondition.test",
+      "display_name": "someassemblyrequired 5.2.8"
+    },
+    {
+      "mod_id": "javax",
+      "pct": 0.0,
+      "method_count": 3,
+      "top_label": "ImageIO.write"
+    },
+    {
+      "mod_id": "fabric_networking_api_v1",
+      "pct": 0.0,
+      "method_count": 3,
+      "top_label": "NetworkingEventHooks.onPlayerReady",
+      "display_name": "fabric_networking_api_v1 4.3.0+30a980d919"
+    },
+    {
+      "mod_id": "fabric_api_lookup_api_v1",
+      "pct": 0.0,
+      "method_count": 3,
+      "top_label": "BlockApiLookupImpl.find",
+      "display_name": "fabric_api_lookup_api_v1 1.6.71+c290471319"
+    },
+    {
+      "mod_id": "bits_n_bobs",
+      "pct": 0.0,
+      "method_count": 3,
+      "top_label": "LightbulbBlock.getShape",
+      "display_name": "bits_n_bobs 0.0.44"
+    },
+    {
+      "mod_id": "fabric_api_base",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "TriState.orElseGet",
+      "display_name": "fabric_api_base 0.4.42+d1308ded19"
+    },
+    {
+      "mod_id": "appleskin",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "SyncHandler.onLivingTickEvent",
+      "display_name": "appleskin 3.0.9+mc1.21"
+    },
+    {
+      "mod_id": "de",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "0x00007f959f7b2d18.handle"
+    },
+    {
+      "mod_id": "numismatics",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "VendorBlockEntity.write",
+      "display_name": "numismatics 1.0.20+neoforge-mc1.21.1"
+    },
+    {
+      "mod_id": "sophisticatedstorageinmotion",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "MovingStorageFromStorageRecipe.matches",
+      "display_name": "sophisticatedstorageinmotion 0.10.30"
+    },
+    {
+      "mod_id": "fabric_content_registries_v0",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "LandPathNodeTypesRegistry.getPathNodeType",
+      "display_name": "fabric_content_registries_v0 8.0.19+5e0d320019"
+    },
+    {
+      "mod_id": "tracks",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "TracksCommonEvents.physicsTick",
+      "display_name": "tracks 1.0.5"
+    },
+    {
+      "mod_id": "fabric_lifecycle_events_v1",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "LifecycleEventsImpl.lambda$onInitialize$14",
+      "display_name": "fabric_lifecycle_events_v1 2.6.0+e40d8add19"
+    },
+    {
+      "mod_id": "chunkyborder",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "ChunkyBorderNeoForge.onServerTick",
+      "display_name": "chunkyborder 1.2.18"
+    },
+    {
+      "mod_id": "chunky",
+      "pct": 0.0,
+      "method_count": 2,
+      "top_label": "NeoForgeServer.getPlayers",
+      "display_name": "chunky 1.4.23"
+    },
+    {
+      "mod_id": "ld-linux-x86-64",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "2.__tls_get_addr"
+    },
+    {
+      "mod_id": "snownee",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "0x00007f959e7bd668.accept"
+    },
+    {
+      "mod_id": "jade",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "CommonProxy.playerJoin",
+      "display_name": "jade 15.10.5+neoforge"
+    },
+    {
+      "mod_id": "flywheel",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "LevelAttached.get",
+      "display_name": "flywheel 1.0.6"
+    },
+    {
+      "mod_id": "libnio",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "so.Java_sun_nio_ch_UnixFileDispatcherImpl_write0"
+    },
+    {
+      "mod_id": "libm",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "6.logf"
+    },
+    {
+      "mod_id": "rbasamoyai",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "0x00007f959da7a2b0.accept"
+    },
+    {
+      "mod_id": "aeroworks",
+      "pct": 0.0,
+      "method_count": 1,
+      "top_label": "GyroscopeBlockEntity.tick",
+      "display_name": "aeroworks 1.2.11"
+    }
+  ],
+  "mod_hints": [
+    {
+      "mod_id": "minecraft",
+      "pct": 68.32,
+      "summary": "0x00007f959fbd3158.run dominant on Server thread",
+      "display_name": "minecraft 1.21.1"
+    },
+    {
+      "mod_id": "create",
+      "pct": 8.25,
+      "summary": "SmartBlockEntityTicker.tick dominant on Server thread",
+      "display_name": "create 6.0.10"
+    },
+    {
+      "mod_id": "sable",
+      "pct": 7.43,
+      "summary": "ServerSubLevelContainer.tick dominant on Server thread",
+      "display_name": "sable 1.2.2"
+    },
+    {
+      "mod_id": "neoforge",
+      "pct": 3.36,
+      "summary": "EventHooks.fireLevelTickPost dominant on Server thread",
+      "display_name": "neoforge 21.1.230"
+    },
+    {
+      "mod_id": "com",
+      "pct": 2.86,
+      "summary": "0x00007f95a01de618.call dominant on Server thread"
+    }
+  ],
+  "verdict": {
+    "grade": "critical",
+    "headline": "Tick lag during capture — review hot methods and entity pressure below",
+    "summary": "TPS 10.1 · MSPT p95 121ms · 6 players · 2244 entities"
+  },
+  "key_findings": [
+    {
+      "kind": "vanilla_tick",
+      "severity": "critical",
+      "title": "Severe tick lag during capture",
+      "detail": "TPS 10.1 · MSPT p95 121ms"
+    },
+    {
+      "kind": "entity_pressure",
+      "severity": "warn",
+      "title": "High experience orb count (633)",
+      "detail": "XP orbs add entity tick cost"
+    },
+    {
+      "kind": "entity_pressure",
+      "severity": "warn",
+      "title": "Elevated create:super_glue (376)",
+      "detail": "Create contraptions or glue may be loaded"
+    },
+    {
+      "kind": "players",
+      "severity": "info",
+      "title": "6 players online during lag",
+      "detail": "Player-driven chunk loading may contribute"
+    }
+  ],
+  "recommendations": [
+    {
+      "severity": "critical",
+      "category": "config",
+      "title": "Address severe tick lag",
+      "detail": "Profiler ran while the server was struggling. Fix sim distance, entity pressure, and heavy mods.",
+      "actions": [
+        "Lower simulation distance and view distance if MSPT is high",
+        "Profile while lag is active (30–60s sample)",
+        "Pause world pregen during peak player hours"
+      ]
+    },
+    {
+      "severity": "warn",
+      "category": "entities",
+      "title": "Clear excess XP orbs",
+      "detail": "633 experience orbs were present — common farm leak.",
+      "actions": [
+        "Clear orbs near farms: /kill @e[type\u003dminecraft:experience_orb,distance\u003d..64]",
+        "Fix mob farm XP collection (hopper, vacuum, etc.)"
+      ]
+    },
+    {
+      "severity": "warn",
+      "category": "entities",
+      "title": "Review Create contraptions",
+      "detail": "create:super_glue count was high during capture.",
+      "actions": [
+        "Inspect active Create contraptions and super glue blocks",
+        "Reduce loaded chunk count for heavy Create builds"
+      ],
+      "mod_id": "create"
+    },
+    {
+      "severity": "info",
+      "category": "players",
+      "title": "Consider player-driven lag",
+      "detail": "6 players were online — chunk loading and player entities add cost.",
+      "actions": [
+        "Check per-player loaded chunks and bases",
+        "Spread large builds across dimensions if possible"
+      ]
+    },
+    {
+      "severity": "info",
+      "category": "workflow",
+      "title": "Refresh this report",
+      "detail": "Capture a new profile while lagging, then run a Watchtower report.",
+      "actions": [
+        "/spark profiler start → wait 30–60s → /spark profiler stop --save-to-file",
+        "Optional: copy .sparkprofile to watchtower/spark-upload/",
+        "Run report from dashboard or /watchtower run"
+      ]
+    }
+  ]
+}

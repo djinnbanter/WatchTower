@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Gradle test and mod build
+        run: ./gradlew :watchtower-core:test :neoforge-1.21.1:build --no-configuration-cache
+
+      - name: Install DR viewer deps
+        working-directory: web/dr-viewer
+        run: npm ci
+
+      - name: DR smoke tests
+        run: |
+          node tools/test-dr-analyze.mjs
+          node tools/test-dr-viewer.mjs
+          node tools/test-dr-bundle.mjs
+
+      - name: Public tree audit
+        run: node tools/audit-public-tree.mjs

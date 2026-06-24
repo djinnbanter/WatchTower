@@ -1,0 +1,486 @@
+================================================================================
+MINECRAFT SERVER — HEALTH REPORT
+Generated: 2026-06-20 06:58:41  |  Host: example-host
+Window: full 0h since 2026-06-19 06:58:41  |  Overall: CRITICAL  |  Now: CRITICAL
+Server: /var/opt/minecraft/crafty/crafty-4/servers/aaaaaaaa...
+Panel: crafty  |  Loader: neoforge
+================================================================================
+
+TL;DR
+----------------------------------------
+  Server is down. Crafty panel process is not running. New crash report(s) need review. Worst tick lag occurred with no players online (likely background load). Address active critical issues above.
+
+AT A GLANCE
+----------------------------------------
+  Java: DOWN   Panel: DOWN   Logs: fresh (5 min ago)
+  Issues: 2 critical, 4 warning
+  Players: 0 online
+  Mod errors: Client-only warnings 541x (usually safe) | pride 14x
+
+SUMMARY
+----------------------------------------
+Java process: NOT RUNNING
+Panel process: NOT RUNNING
+Last log activity: 2026-06-20 06:53:30 (5 min ago)
+Machine uptime: 83.3 hours
+RAM available: 29.68 GB  |  Disk used: 28%
+Players: 0 online
+Startup noise: 541 client-class warnings (informational; client-class lines = client code blocked on dedicated server — usually harmless)
+Lookback: 7 crash report(s), no OOM, 484 tick-lag warning(s)
+Backup: STALE (2d ago) (64.6 GB) | 2026-06-18_18-16-48.zip
+
+PLAYER ACTIVITY
+----------------------------------------
+  Players: 0 online
+  No joins in lookback window.
+
+SERVER LIFECYCLE
+----------------------------------------
+  Current session started: 2026-06-20 00:37:35
+  Start events in window: 1  |  Clean stops: 8
+  Panel commands: 15 start, 0 stop, 12 restart, 1 kill
+  Last panel action: 2026-06-20 00:36:28,499 — issued command restart_server for server Example Server with ID: aaaaaaaa-03b8-42f4-b0
+
+IN-GAME PERFORMANCE
+----------------------------------------
+  TPS (overworld): 20.00  |  MSPT: 49 ms now  |  24h peak MSPT: 56462 ms (mixed)
+  Tick health: OK (<50 ms)
+  Source: watchtower
+  Session MSPT: min 0 ms | max 522 ms | p95 29 ms
+  Java heap: 8960 MB used / 20480 MB max
+  the_end: MSPT 49 ms | entities 0 | chunks 0
+  the_nether: MSPT 49 ms | entities 0 | chunks 0
+  Entities: 65 loaded  |  Chunks: 77
+  Mods: 195 jar(s)
+
+PERFORMANCE
+----------------------------------------
+  Worst tick lag: 56462 ms behind
+  'Can't keep up' warnings (current session): 61
+  World size: 104 GB / +7733 MB since last report / +9755 MB 24h est. / logs 102 MB
+  CPU
+  Host utilization: 1% now | 45% avg over 288 report samples
+  Load (queue depth, not %): 0.04, 2.04, 4.47 on 20 cores — ~0.0 runnable jobs/core
+  (Load counts waiting processes; utilization is % of CPU time spent working.)
+  Load attribution: unknown
+
+RESOURCE PRESSURE
+----------------------------------------
+  RAM available: 29.68 GB (warn < 2 GB)
+  Disk used: 28% (warn >= 85%)
+  Swap used: 130 MB
+  Failed logins: SSH 0  |  Crafty 0  |  MC 0 (window)  |  Unique IPs: 2 (2 private, 0 public)
+  Interface: wlp0s20f3  |  Rx 11 MB / Tx 102 MB since last run
+
+MODS
+----------------------------------------
+  296 mod ID(s) (195 jar(s) in mods/):
+  adventure_platform_fabric  5.14.1
+  aeronautics  1.3.0
+  aeronautics_bundled  1.3.0
+  aiimprovements  0.5.3
+  aileron  1.21.1-neoforge-1.1.4
+  alloyed  3.0.9+1.21.1
+  almanac  1.5.2
+  alternate_current  1.9.0
+  amendments  1.21-2.0.15
+  another_furniture  4.0.2
+  appleskin  3.0.9+mc1.21
+  architectury  13.0.8
+  armorstatues  21.1.0
+  asynclogger  1.1.4+1.21.1-neoforge
+  athena  4.0.6
+  automodpack_mod  4.0.5
+  axesareweapons  1.10.2
+  balm  21.0.58
+  bellsandwhistles  0.4.7-1.21.1
+  better_lib  1.0.109
+  betterdeserttemples  1.21.1-NeoForge-4.1.5
+  betterdungeons  1.21.1-NeoForge-5.1.4
+  betterendisland  1.21.1-NeoForge-3.1.2
+  betterfortresses  1.21.1-NeoForge-3.1.5
+  bettermineshafts  1.21.1-NeoForge-5.1.1
+  betteroceanmonuments  1.21.1-NeoForge-4.1.2
+  betterstrongholds  1.21.1-NeoForge-5.1.3
+  betterwitchhuts  1.21.1-NeoForge-4.1.1
+  biolith  3.0.10
+  bits_n_bobs  0.0.44
+  bookshelf  21.1.81
+  bountiful  8.0.0-beta.2
+  c2me  0.3.0+alpha.0.93+1.21.1
+  c2me_base  0.3.0+alpha.0.93+1.21.1
+  c2me_client_uncapvd  0.3.0+alpha.0.93+1.21.1
+  c2me_fixes_chunkio_threading_issues  0.3.0+alpha.0.93+1.21.1
+  c2me_fixes_general_threading_issues  0.3.0+alpha.0.93+1.21.1
+  c2me_fixes_worldgen_threading_issues  0.3.0+alpha.0.93+1.21.1
+  c2me_fixes_worldgen_vanilla_bugs  0.3.0+alpha.0.93+1.21.1
+  c2me_notickvd  0.3.0+alpha.0.93+1.21.1
+  c2me_opts_allocs  0.3.0+alpha.0.93+1.21.1
+  c2me_opts_chunkio  0.3.0+alpha.0.93+1.21.1
+  c2me_opts_dfc  0.3.0+alpha.0.93+1.21.1
+  c2me_opts_math  0.3.0+alpha.0.93+1.21.1
+  c2me_opts_natives_math  0.3.0+alpha.0.93+1.21.1
+  c2me_opts_scheduling  0.3.0+alpha.0.93+1.21.1
+  c2me_opts_worldgen_general  0.3.0+alpha.0.93+1.21.1
+  c2me_opts_worldgen_vanilla  0.3.0+alpha.0.93+1.21.1
+  c2me_rewrites_chunk_serializer  0.3.0+alpha.0.93+1.21.1
+  c2me_rewrites_chunk_system  0.3.0+alpha.0.93+1.21.1
+  c2me_rewrites_chunkio  0.3.0+alpha.0.93+1.21.1
+  c2me_server_utils  0.3.0+alpha.0.93+1.21.1
+  c2me_threading_lighting  0.3.0+alpha.0.93+1.21.1
+  cardboarded_conveynience  1.0.0
+  cardinal_components_base  6.1.1
+  cardinal_components_entity  6.1.1
+  cerulean  1.0.0
+  chefsdelight  1.0.5
+  chipped  4.0.2
+  chunky  1.4.23
+  cloth_config  15.0.140
+  cloud  2.0.0-beta.9
+  collective  8.25
+  commongroovylibrary  0.5.1
+  companion  0.0NONE
+  conditional_mixin  0.6.4
+  connectiblechains  2.1.0
+  connector  2.0.0-beta.14+1.21.1
+  connectorextras  1.12.1+1.21.1
+  connectorextras_emi_bridge  1.12.1+1.21.1
+  connectorextras_energy_bridge  1.12.1+1.21.1
+  connectorextras_jei_bridge  1.12.1+1.21.1
+  connectorextras_kubejs_bridge  1.12.1+1.21.1
+  connectorextras_modmenu_bridge  1.12.1+1.21.1
+  connectorextras_pehkui_bridge  1.12.1+1.21.1
+  connectorextras_rei_bridge  1.12.1+1.21.1
+  connectorextras_terrablender_bridge  1.12.1+1.21.1
+  consolefilter  1.21.1-4.0.0-neoforge
+  copycats  3.0.4+mc.1.21.1-neoforge
+  coroutil  1.21.0-1.3.8
+  create  6.0.10
+  create_bb  1.0.7
+  create_better_villagers  1.3.2
+  create_central_kitchen  2.5.0
+  create_confectionery  1.1.2
+  create_connected  1.2.2-mc1.21.1
+  create_dragons_plus  1.11.2b
+  create_enchantment_industry  2.4.2
+  create_factory  0.7a-1.21.1
+  create_ltab  4.0.0
+  create_pattern_schematics  2.0.10
+  create_power_loader  2.0.5-mc1.21.1
+  create_submarine  2.1.6
+  create_ultimate_factory  2.2.4
+  createaddition  1.6.0
+  createcasing  1.8.1-ht1
+  createdeco  2.1.3
+  createdieselgenerators  1.21.1-1.3.13
+  createfood  2.5.0
+  createframed  1.7.3
+  creategoggles  6.1.1
+  createprism  1.2.2
+  createshufflefilter  2.1.0
+  cristellib  3.1.7
+  croptopia  4.2.4
+  croptopiadelight  1.0.1
+  ctov  3.6.3
+  curios  9.5.1+1.21.1
+  cutthrough  21.1.0
+  deeperdarker  1.4.1
+  delightfulcreators  1.2
+  displaydelight  1.6.0
+  distractingtrims  21.1.1
+  dndecor  2.2b
+  dndesires  2.3a-BETA
+  dsbg  1.0
+  easyanvils  21.1.0
+  ecologics  2.3.6
+  emi  1.1.24+1.21.1+neoforge
+  emi_create_schematics  1.1.0
+  emi_loot  0.7.9+1.21+neoforge
+  enchdesc  21.1.10
+  ends_delight  2.6+neoforge.1.21.1
+  epherolib  1.2.0
+  explosiveenhancement  1.1.2
+  extendedwrenches  2.0.2
+  extra_mod_integrations  1.0.3+1.21.1
+  extra_mod_integrations_actually_additions  1.0.3+1.21.1
+  extra_mod_integrations_chipped  1.0.3+1.21.1
+  extra_mod_integrations_core  1.0.3+1.21.1
+  extra_mod_integrations_farmers_delight  1.0.3+1.21.1
+  extra_mod_integrations_irons_spellbooks  1.0.3+1.21.1
+  extra_mod_integrations_pneumaticcraft  1.0.3+1.21.1
+  extra_mod_integrations_rechiseled  1.0.3+1.21.1
+  extra_mod_integrations_reliquary  1.0.3+1.21.1
+  fabric_api  0.116.7+2.2.4+1.21.1
+  fabric_api_base  0.4.42+d1308ded19
+  fabric_api_lookup_api_v1  1.6.71+c290471319
+  fabric_biome_api_v1  13.0.31+1e62d33c19
+  fabric_block_api_v1  1.1.0+b0c22bb819
+  fabric_block_view_api_v2  1.0.11+e9036fd419
+  fabric_blockrenderlayer_v1  1.1.52+c290471319
+  fabric_client_tags_api_v1  1.1.15+e053909619
+  fabric_command_api_v2  2.2.28+36d727be19
+  fabric_content_registries_v0  8.0.19+5e0d320019
+  fabric_convention_tags_v1  2.1.5+7f945d5b19
+  fabric_convention_tags_v2  2.11.1+87e5848019
+  fabric_data_attachment_api_v1  1.4.5+26d408aa19
+  fabric_data_generation_api_v1  20.2.34+a4c3605619
+  fabric_entity_events_v1  1.8.0+5ede667619
+  fabric_events_interaction_v0  0.7.13+86e0887119
+  fabric_game_rule_api_v1  1.0.53+36d727be19
+  fabric_gametest_api_v1  2.0.5+29f188ce19
+  fabric_item_api_v1  11.2.0+0c57911319
+  fabric_item_group_api_v1  4.1.7+e324903319
+  fabric_key_binding_api_v1  1.0.47+62cc7ce119
+  fabric_lifecycle_events_v1  2.6.0+e40d8add19
+  fabric_loot_api_v2  3.0.15+a3ee712d19
+  fabric_loot_api_v3  1.0.3+333dfad919
+  fabric_message_api_v1  6.0.14+6a754fce19
+  fabric_model_loading_api_v1  2.1.0+6e8f52c719
+  fabric_networking_api_v1  4.3.0+30a980d919
+  fabric_object_builder_api_v1  15.2.1+cc242efd19
+  fabric_particles_v1  4.0.2+824f924c19
+  fabric_permissions_api_v0  0.3.1
+  fabric_recipe_api_v1  5.0.15+59440bcc19
+  fabric_registry_sync_v0  5.3.1+f9aace1619
+  fabric_renderer_api_v1  3.4.1+9125b6dc19
+  fabric_renderer_indigo  1.7.1+9125b6dc19
+  fabric_rendering_data_attachment_v1  0.3.49+73761d2e19
+  fabric_rendering_fluids_v1  3.1.6+a51883b219
+  fabric_rendering_v1  5.1.0+1a09bd5a19
+  fabric_resource_conditions_api_v1  4.3.0+5bdd099819
+  fabric_resource_loader_v0  1.3.1+4ea8954419
+  fabric_screen_api_v1  2.0.25+4228281319
+  fabric_screen_handler_api_v1  1.3.90+8dbc56dd19
+  fabric_sound_api_v1  1.0.23+10b84f8419
+  fabric_transfer_api_v1  5.4.3+a25cb45619
+  fabric_transitive_access_wideners_v1  6.2.0+6c854b6f19
+  farmersdelight  1.3.2
+  fastsuite  6.0.7
+  ferritecore  7.0.3
+  flywheel  1.0.6
+  forgified_fabric_api  0.116.7+2.2.4+1.21.1
+  fusion  1.2.12
+  fxntstorage  1.2.7
+  fzzy_config  0.7.6+1.21+neoforge
+  geckolib  4.8.4
+  geophilic  3.5
+  gml  6.0.2
+  gpu_tape  1.0.2
+  ichunutil  1.0.3
+  improved_village_placement  1.1.2
+  incendium  5.4.3
+  interiors  0.6.1
+  jade  15.10.5+neoforge
+  jadeaddons  6.1.0+neoforge
+  jademoddedentities  1.3.1
+  kambrik  8.0.0-beta.2
+  kerria  1.3.0+1.21.1-neoforge
+  kiwi  15.8.4+neoforge
+  konkrete  1.9.9
+  kotlinforforge  5.11.0
+  kuma_api  21.0.8
+  lambdynlights  4.8.8+1.21.1
+  lambdynlights_api  4.8.8+1.21.1
+  lambdynlights_runtime  4.8.8+1.21.1
+  letmedespawn  1.5.0
+  libraryferret  4.0.0
+  lithium  0.15.3+mc1.21.1
+  lithostitched  1.7.9
+  lodestone  1.8.2
+  lootr  1.21.1-1.11.37.120
+  midnightlib  1.6.9
+  minersdelight  1.4.5
+  modernfix  5.27.12+mc1.21.1
+  modmenu  11.0.1
+  moonlight  1.21.1-3.0.17
+  more_sounds  1.21.x-0.3.0-beta
+  moredensityfunctions  2.3.0
+  mr_dungeons_andtaverns  1-v4.4.4
+  mr_lithosphere  1.7
+  mr_still_life  1.0
+  mru  1.0.19+LTS+1.21.1+neoforge
+  mynethersdelight  1.10.2
+  naturalist  1.0.2
+  neobeefix  2.0.1
+  nerb  0.4.3
+  netherite_horse_armor  1.21.1-2.0a
+  netherportalfix  21.1.1
+  noisium  2.7.0+mc1.21-1.21.1
+  numismatic_bounties  2.0
+  numismatics  1.0.20+neoforge-mc1.21.1
+  octolib  0.6.2
+  offroad  1.3.0
+  org_incendo_cloud_minecraft_modded_common_fabric_repack_  2.0.0-beta.9
+  packetfixer  3.3.1
+  percale  1.0.0-beta.1
+  placebo  9.9.1
+  platform  1.3.3
+  ponder  1.0.82+mc1.21.1
+  potionstacks  1.0.0
+  prickle  21.1.11
+  pride  1.2.4+1.21.1
+  puzzleslib  21.1.52
+  quark  4.1-480
+  quick_pack  1.3.2
+  railways  0.2.1+neoforge-mc1.21.1
+  rechiseled  1.2.4
+  rechiseled_chipped  1.3
+  rechiseledcreate  1.1.0
+  recipesforcreate  1.2.1
+  regions_unexplored  0.6.1
+  reintegrated_chipped  1.0.0
+  resourcefulconfig  3.0.11
+  resourcefullib  3.0.12
+  ritchiesprojectilelib  2.1.2
+  sable  2.0.1
+  sablecompanion  1.6.0
+  sablephysicscompat  1.3.0
+  scholar  1.2.0
+  seamlesssleep  2.5.3
+  servercore  1.5.17+1.21.1
+  simulated  1.3.0
+  sliceanddice  4.2.4
+  smart_bounds  1.0.0
+  smarterfarmers  1.21-2.2.4
+  sound_physics_remastered  1.21.1-1.5.1
+  spruceui  6.2.5+1.21.1
+  squaremap  1.3.2
+  statuemenus  21.1.0
+  structure_layout_optimizer  1.0.12
+  supermartijn642configlib  1.1.8
+  supermartijn642corelib  1.1.21
+  supplementaries  1.21.1-3.6.8
+  t_and_t  1.13.9
+  terrablender  4.1.0.8
+  trashslot  21.1.11
+  treechop  0.19.3
+  txnilib  1.0.24
+  vanillabackport  1.1.7.10
+  veil  4.1.4
+  villagercurrency  1.1.1
+  watchtower  1.0.0
+  xaerolib  1.1.15
+  xaerominimap  26.1.0
+  xaerotrainmap  1.0.0
+  xaeroworldmap  1.41.0
+  yeetusexperimentus  87.0.0
+  yet_another_config_lib_v3  3.8.2+1.21.1-neoforge
+  yumi_mc_core  1.0.0-beta.1+1.21.1
+  yungsapi  1.21.1-NeoForge-5.1.6
+  yungsbridges  1.21.1-NeoForge-5.1.1
+  yungsextras  1.21.1-NeoForge-5.1.1
+  zeta  1.1-40
+  zfastnoise  1.0.11+2+1.21.1+neoforge
+
+MOD LOG HEALTH
+----------------------------------------
+  Client-only classes on server: 541 (541 client-only class blocked)
+    What: Some mods reference Minecraft client code; NeoForge blocks it on a dedicated server and logs ERROR.
+    Worry: Usually safe if TPS is healthy and there are no related crashes. Remove client-only mods from server mods/ to reduce noise, or update mods if crashes occur.
+    > [20Jun2026 00:36:48.148] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class net/minecraft/client/Options for invalid dist DEDICATED_SERVER
+    See CLIENT-ONLY MODS ON SERVER for mods you can remove.
+  pride: 14 (14 corrupt jar)
+    > [20Jun2026 00:36:44.153] [main/ERROR] [net.neoforged.fml.loading.moddiscovery.ModFile/LOADING]: Access transformer file META-INF/accesstransformer.cfg provided by mod pride does not exist!
+  See RECOMMENDED ACTIONS for fix guidance.
+
+CLIENT-ONLY MODS ON SERVER
+----------------------------------------
+  Client-class log warnings: 541 (usually harmless — see MOD LOG HEALTH)
+  These mods are typically for the game client, not a dedicated server:
+
+  Likely safe to remove from mods/:
+    appleskin  3.0.9+mc1.21  — Adds various food-related HUD improvements
+    connectorextras_emi_bridge  1.12.1+1.21.1  — Typically client-only on a dedicated server
+    connectorextras_jei_bridge  1.12.1+1.21.1  — Typically client-only on a dedicated server
+    connectorextras_kubejs_bridge  1.12.1+1.21.1  — Typically client-only on a dedicated server
+    connectorextras_modmenu_bridge  1.12.1+1.21.1  — Typically client-only on a dedicated server
+    connectorextras_pehkui_bridge  1.12.1+1.21.1  — Typically client-only on a dedicated server
+    connectorextras_rei_bridge  1.12.1+1.21.1  — Typically client-only on a dedicated server
+    connectorextras_terrablender_bridge  1.12.1+1.21.1  — Typically client-only on a dedicated server
+    lambdynlights  4.8.8+1.21.1  — The most feature-complete dynamic lighting mod.
+    modmenu  11.0.1  — Mod list menu — client UI only
+    sound_physics_remastered  1.21.1-1.5.1  — ''Provides realistic sound attenuation, reverberation, and absorption through blocks.''
+    spruceui  6.2.5+1.21.1  — Typically client-only on a dedicated server
+    trashslot  21.1.11  — ''Adds a trash slot to the inventory screen that allows deletion of unwanted items.''
+    veil  4.1.4  — Client rendering/shaders
+    xaerominimap  26.1.0  — Minimap UI — client only on dedicated servers
+    xaerotrainmap  1.0.0  — ''Adds train map to xaero's world map just like in journey map''
+    xaeroworldmap  1.41.0  — World map UI — client only on dedicated servers
+    yeetusexperimentus  87.0.0  — '
+
+  Keep (libraries / uncertain):
+    connectorextras  — '
+    create  — ''Technology that empowers the player.''
+    emi  — '
+    flywheel  — Insufficient signals — test removal one mod at a time
+    jade  — Minecraft mod shows what you are looking at. (Hwyla fork)
+    lambdynlights_api  — Insufficient signals — test removal one mod at a time
+    lambdynlights_runtime  — Insufficient signals — test removal one mod at a time
+    ponder  — Other mods depend on this jar — review dependents before removing.
+    statuemenus  — Other mods depend on this jar — review dependents before removing.
+    xaerolib  — Insufficient signals — test removal one mod at a time
+
+  Heuristic list — remove one at a time and restart if unsure.
+  Client mods belong in your client pack, not the server.
+
+NOTABLE TIMELINE
+----------------------------------------
+  2026-06-20 06:53:26  Crash report: java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000004.00 seconds (should be max 0.05)
+  2026-06-20 01:36:28  Panel command: issued command restart_server for server Example Server with ID: aaaaaaaa-bbbb-cccc-dddd-000000000001
+  2026-06-20 00:37:35  Server started: Server started
+  2026-06-20 00:36:29  Clean server stop: Stopping server
+  2026-06-19 22:37:54  Panel command: issued command restart_server for server Example Server with ID: aaaaaaaa-bbbb-cccc-dddd-000000000001
+  2026-06-19 21:37:56  Clean server stop: Stopping server
+  2026-06-19 17:06:45  Panel command: issued command restart_server for server Example Server with ID: aaaaaaaa-bbbb-cccc-dddd-000000000001
+  2026-06-19 16:28:25  Panel command: issued command restart_server for server Example Server with ID: aaaaaaaa-bbbb-cccc-dddd-000000000001
+  2026-06-19 16:24:02  Panel command: issued command restart_server for server Example Server with ID: aaaaaaaa-bbbb-cccc-dddd-000000000001
+  2026-06-19 14:32:44  Crash report: java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000092.00 seconds (should be max 0.05)
+  2026-06-19 14:31:42  Crash report: java.lang.ClassNotFoundException: dev.samstevens.totp.qr.QrGenerator
+  2026-06-19 14:28:36  Crash report: net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod (<No mod information provided>)
+  2026-06-19 14:24:00  Crash report: net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod (<No mod information provided>)
+  2026-06-19 14:20:38  Crash report: java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000268.00 seconds (should be max 0.05)
+  2026-06-19 14:19:36  Crash report: java.lang.ClassNotFoundException: dev.samstevens.totp.qr.QrGenerator
+
+ISSUES
+----------------------------------------
+  ACTIVE
+    [CRITICAL] Minecraft Java process is not running but logs show activity in the lookback window.
+        source: logs/latest.log:41954
+        > [20Jun2026 06:53:26.526] [Server Watchdog/ERROR] [net.minecraft.server.dedicated.ServerWatchdog/]: This crash report has been saved to: /var/opt/minecraft/crafty/crafty-4/servers/aaaaaaaa-bbbb-cccc-dddd-000000000001/crash-reports/crash-2026
+    [CRITICAL] New crash report(s) in lookback window: crash-2026-06-20_06.53.26-server.txt — Latest: java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000004.00 seconds (should be max 0.05)
+        source: crash-reports/crash-2026-06-20_06.53.26-server.txt
+        > java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000004.00 seconds (should be max 0.05)
+    [WARNING] 'Can't keep up' appeared 61 time(s) in the current session.
+        source: logs/latest.log:32707
+        > [20Jun2026 06:03:01.599] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2314ms or 46 ticks behind
+        source: logs/latest.log:32810
+        > [20Jun2026 06:04:02.053] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 45468ms or 909 ticks behind
+        source: logs/latest.log:32925
+        > [20Jun2026 06:05:10.982] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 53947ms or 1078 ticks behind
+        source: logs/latest.log:33011
+        > [20Jun2026 06:05:59.674] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 33739ms or 674 ticks behind
+        source: logs/latest.log:33112
+        > [20Jun2026 06:07:03.945] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 49310ms or 986 ticks behind
+    [WARNING] Crafty panel process is not running.
+    [WARNING] Confirm pride is the problem by removing it, testing startup, then reinstalling if needed.
+    [WARNING] Mod issue(s) detected: pride: pride may be a bad download — confirm by removing it and testing startup.
+
+
+RECOMMENDED ACTIONS
+----------------------------------------
+  - Priority: Start the server from your panel or service manager.
+  - Priority: Check full report for last log lines and crash reports.
+  - Priority: Open the new crash report under crash-reports/ and address the mod or config cited.
+  - Priority: Acknowledge each report after review so health reflects current risk.
+  - Server logged 'Can't keep up' warnings — reduce MSPT load, factories, or view distance.
+  - Management panel is not running — restart the panel service before using the web UI.
+  - Update or align mod versions cited in Mods → Update conflicts.
+  - Remove conflicting mods one at a time if updates do not resolve the issue.
+  - [pride] 14 error(s) (14 corrupt jar)
+    Fix: pride may be a bad download — confirm by removing it and testing startup.
+    > [20Jun2026 00:36:44.153] [main/ERROR] [net.neoforged.fml.loading.moddiscovery.ModFile/LOADING]: Access transformer file META-INF/accesstransformer.cfg provided by mod pride does not exist!
+  - Client-only class warnings (541x): usually safe on a healthy server. See CLIENT-ONLY MODS ON SERVER to reduce noise.
+
+================================================================================
+Log and system sources on disk: /var/opt/minecraft/crafty/crafty-4/servers/aaaaaaaa-bbbb-cccc-dddd-000000000001/logs/latest.log | /var/opt/minecraft/crafty/crafty-4/servers/aaaaaaaa-bbbb-cccc-dddd-000000000001/crash-reports/ | /var/opt/minecraft/crafty/crafty-4/servers/aaaaaaaa-bbbb-cccc-dddd-000000000001/watchtower/snapshot.json | /var/opt/minecraft/crafty/crafty-4/servers/aaaaaaaa-bbbb-cccc-dddd-000000000001/watchtower/.watchtower-state.json | /var/opt/minecraft/crafty/crafty-4/servers/aaaaaaaa-bbbb-cccc-dddd-000000000001/watchtower | journalctl --since "1440 minutes ago" | /var/opt/minecraft/crafty/crafty-4/logs/audit.log
+================================================================================

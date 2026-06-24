@@ -1,0 +1,1 @@
+**Watchtower** · [GitHub](https://github.com/djinnbanter/WatchTower) · [Releases](https://github.com/djinnbanter/WatchTower/releases) · [Modrinth](https://modrinth.com/mod/watchtower) · [Contributing](https://github.com/djinnbanter/WatchTower/blob/main/CONTRIBUTING.md) · [GPL-3.0-or-later](https://github.com/djinnbanter/WatchTower/blob/main/LICENSE)

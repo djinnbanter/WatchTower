@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "generated": "2026-06-17T12:00:00.000Z",
+    "hostname": "demo-server",
+    "lookback_hours": 24,
+    "window_start": "2026-06-16T12:00:00.000Z",
+    "incremental": false,
+    "server_dir": "/srv/minecraft",
+    "panel": "none",
+    "loader": "neoforge",
+    "engine": "java",
+    "engine_version": "4.0.5"
+  },
+  "health": {
+    "status": "healthy",
+    "current_status": "healthy",
+    "java_running": true,
+    "panel_running": false
+  },
+  "system": {
+    "mem_available_gb": 14.0,
+    "disk_use_pct": 40
+  },
+  "minecraft": {
+    "cant_keep_up_count": 0,
+    "new_crash_reports": [],
+    "players_online_now": 1,
+    "tps": 20.0
+  },
+  "events": [],
+  "issues": [],
+  "optional": {},
+  "thresholds": {
+    "disk_warn_pct": 85,
+    "mem_warn_avail_gb": 2,
+    "log_stale_minutes": 15
+  }
+}

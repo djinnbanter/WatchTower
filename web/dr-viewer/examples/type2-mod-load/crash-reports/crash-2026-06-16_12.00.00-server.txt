@@ -1,0 +1,22 @@
+---- Minecraft Crash Report ----
+// I just want to play!
+
+Time: 2026-06-16 12:00:00
+Description: Mod loading error has occurred
+
+java.lang.RuntimeException: Mod loading has failed
+Caused by: net.neoforged.fml.ModLoadingException: Mod File pride failed to load
+
+Failure message: File provided by mod pride does not exist!
+
+Mod File: pride-1.0.0.jar
+	Mod ID: pride
+	Mod Version: 1.0.0
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Mod loading issue for: pride --
+Details:
+	Mod File: /mods/pride-1.0.0.jar
+	Mod ID: pride

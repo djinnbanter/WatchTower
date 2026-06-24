@@ -1,0 +1,212 @@
+/* Watchtower UI v3 — Boot & Auth Screens */
+
+.wt-fullscreen {
+  position: fixed;
+  inset: 0;
+  background: var(--wt-surface-0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  transition: opacity 500ms var(--wt-ease-out), transform 500ms var(--wt-ease-spring);
+}
+
+.wt-fullscreen.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.05);
+}
+
+/* Boot Screen (Loading) */
+.wt-boot {
+  text-align: center;
+}
+
+.wt-wordmark {
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: var(--wt-radius-md);
+  outline: 1px solid var(--wt-border);
+  outline-offset: -1px;
+}
+
+.wt-boot__logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--wt-space-6);
+  animation: wt-pulse-glow 2.4s infinite var(--wt-ease-in-out);
+  border-radius: var(--wt-radius-md);
+  box-shadow: 0 0 32px var(--wt-accent-glow);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--wt-accent) 12%, var(--wt-surface-1)) 0%,
+    var(--wt-surface-2) 100%
+  );
+}
+
+.wt-boot__title {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-heading);
+  font-weight: 700;
+  color: var(--wt-text-primary);
+  margin-bottom: var(--wt-space-8);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.wt-boot__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-3);
+  text-align: left;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.wt-boot__step {
+  font-family: var(--wt-font-mono);
+  font-size: 13px;
+  color: var(--wt-text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-3);
+  opacity: 0.5;
+  transition: all 300ms ease;
+}
+
+.wt-boot__step.is-active {
+  color: var(--wt-text-primary);
+  opacity: 1;
+}
+
+.wt-boot__step.is-done {
+  color: var(--wt-healthy);
+  opacity: 1;
+}
+
+.wt-boot__step::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+}
+
+.wt-boot__step.is-active::before {
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: wt-pulse-glow 1.5s infinite;
+}
+
+.wt-boot__step.is-done::before {
+  background: currentColor;
+  border-color: currentColor;
+}
+
+/* Auth / Login Screen */
+.wt-auth {
+  width: 100%;
+  padding: var(--wt-space-4);
+}
+
+.wt-auth__card {
+  /* Extended from wt-panel--glass */
+  padding: var(--wt-space-8) var(--wt-space-6);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  animation: wt-slide-up 500ms var(--wt-ease-spring);
+}
+
+/* Subtle animated background gradient behind the card */
+.wt-fullscreen--auth::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, var(--wt-accent-soft) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  animation: wt-pulse-glow 8s infinite alternate ease-in-out;
+}
+
+.wt-auth__logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--wt-space-4);
+}
+
+.wt-auth__title {
+  font-size: var(--wt-text-heading);
+  font-weight: 700;
+  margin-bottom: var(--wt-space-2);
+}
+
+.wt-auth__desc {
+  font-size: var(--wt-text-body);
+  color: var(--wt-text-secondary);
+  margin-bottom: var(--wt-space-6);
+}
+
+.wt-auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wt-space-4);
+}
+
+/* Floating Label Inputs */
+.wt-input-group {
+  position: relative;
+  text-align: left;
+}
+
+.wt-input-group input {
+  width: 100%;
+  height: 48px;
+  background: var(--wt-surface-0);
+  border: 1px solid var(--wt-border-strong);
+  border-radius: var(--wt-radius-md);
+  padding: 16px 16px 0;
+  color: var(--wt-text-primary);
+  font-size: 16px; /* Prevent iOS zoom */
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.wt-input-group input:focus {
+  outline: none;
+  border-color: var(--wt-accent);
+  box-shadow: 0 0 0 3px var(--wt-accent-soft);
+}
+
+.wt-input-group label {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  color: var(--wt-text-secondary);
+  font-size: var(--wt-text-body);
+  pointer-events: none;
+  transition: all 200ms ease;
+  transform-origin: left top;
+}
+
+/* Float the label when input has value or is focused */
+.wt-input-group input:focus ~ label,
+.wt-input-group input:not(:placeholder-shown) ~ label {
+  transform: translateY(-8px) scale(0.75);
+  color: var(--wt-accent);
+}
+
+.wt-input-group input:not(:focus):not(:placeholder-shown) ~ label {
+  color: var(--wt-text-tertiary);
+}
+
+.wt-auth__submit {
+  margin-top: var(--wt-space-2);
+  width: 100%;
+}

@@ -1,0 +1,27 @@
+================================================================================
+MINECRAFT SERVER — HEALTH REPORT
+Generated: 2026-06-18 12:00:00  |  Host: demo-server
+Window: full 24h since 2026-06-17 12:00:00  |  Overall: WARNING  |  Now: WARNING
+Demo fixture for static dashboard development.
+Server: /srv/minecraft
+Panel: none  |  Loader: neoforge
+================================================================================
+
+TL;DR
+----------------------------------------
+  Server is up and logging normally. A few tick lag warnings in the window; no crashes.
+
+AT A GLANCE
+----------------------------------------
+  Java: RUNNING (up 1.0h)   Panel: stopped   Logs: fresh (1 min ago)
+  Issues: 0 critical, 1 warning, 0 historical
+  Players: 2 online
+
+ISSUES
+----------------------------------------
+  [warning] CANT_KEEP_UP — Can't keep up! appeared 3 times in the lookback window.
+  [info] MEM_PRESSURE — Java RSS is high relative to available memory.
+
+TIMELINE (recent)
+----------------------------------------
+  2026-06-18T08:00:00  Panel command: restart_server for Example Server

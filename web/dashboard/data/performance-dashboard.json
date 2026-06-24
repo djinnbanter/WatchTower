@@ -1,0 +1,1810 @@
+{
+  "window": "7d",
+  "hours": 168,
+  "generated_at": "2026-06-24T13:25:45.111Z",
+  "enabled": true,
+  "sufficient_data": true,
+  "mspt_warn": 50,
+  "tps_warn": 19.5,
+  "busy_quiet": {
+    "busy_hours": [
+      {
+        "hour_utc": 20,
+        "label": "20:00–21:00 UTC",
+        "avg_players": 8.1,
+        "avg_mspt": 27.9,
+        "sample_minutes": 588,
+        "busy": true
+      },
+      {
+        "hour_utc": 21,
+        "label": "21:00–22:00 UTC",
+        "avg_players": 7.5,
+        "avg_mspt": 24.4,
+        "sample_minutes": 588,
+        "busy": true
+      },
+      {
+        "hour_utc": 19,
+        "label": "19:00–20:00 UTC",
+        "avg_players": 6.1,
+        "avg_mspt": 20.9,
+        "sample_minutes": 588,
+        "busy": true
+      }
+    ],
+    "quiet_hours": [
+      {
+        "hour_utc": 5,
+        "label": "05:00–06:00 UTC",
+        "avg_players": 0.2,
+        "avg_mspt": 5.4,
+        "sample_minutes": 588,
+        "busy": false
+      },
+      {
+        "hour_utc": 6,
+        "label": "06:00–07:00 UTC",
+        "avg_players": 0.4,
+        "avg_mspt": 5.7,
+        "sample_minutes": 588,
+        "busy": false
+      },
+      {
+        "hour_utc": 7,
+        "label": "07:00–08:00 UTC",
+        "avg_players": 0.5,
+        "avg_mspt": 5.9,
+        "sample_minutes": 588,
+        "busy": false
+      }
+    ]
+  },
+  "player_bins": [
+    {
+      "players_band": "0",
+      "minutes": 420,
+      "mspt_avg": 8.4,
+      "tps_avg": 19.7
+    },
+    {
+      "players_band": "1-2",
+      "minutes": 280,
+      "mspt_avg": 14.2,
+      "tps_avg": 19.4
+    },
+    {
+      "players_band": "3-5",
+      "minutes": 520,
+      "mspt_avg": 22.8,
+      "tps_avg": 18.6
+    },
+    {
+      "players_band": "6+",
+      "minutes": 220,
+      "mspt_avg": 31.5,
+      "tps_avg": 17.9
+    }
+  ],
+  "outlier_minutes": [
+    {
+      "ts": "2026-06-24T12:40:45.111Z",
+      "players_max": 0,
+      "mspt_avg": 72,
+      "mem_used_gb_avg": 14.1,
+      "reason": "high_mspt_idle"
+    }
+  ],
+  "sticky_lag": [
+    {
+      "started_at": "2026-06-24T11:55:45.111Z",
+      "ended_at": "2026-06-24T12:40:45.111Z",
+      "duration_min": 45,
+      "peak_mspt": 72,
+      "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
+    }
+  ],
+  "insights": [
+    {
+      "id": "sticky_lag",
+      "severity": "warning",
+      "title": "Sticky lag after players left",
+      "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
+      "tab": "overview"
+    },
+    {
+      "id": "busy_hours",
+      "severity": "info",
+      "title": "Typically busy hours (7d)",
+      "detail": "20:00–21:00 (avg 8.1 players); 21:00–22:00 (avg 7.5 players); 19:00–20:00 (avg 6.1 players)",
+      "tab": "overview"
+    },
+    {
+      "id": "outlier_idle",
+      "severity": "warning",
+      "title": "High MSPT with no players",
+      "detail": "1 minute(s) in window had elevated MSPT while idle — check farms, chunk loaders, or background jobs.",
+      "tab": "issues"
+    }
+  ],
+  "summary_extended": {
+    "sample_minutes": 10080,
+    "tps_avg": 19.14,
+    "mspt_avg": 12.4,
+    "mspt_p95": 42,
+    "mspt_jitter_max": 18,
+    "heap_used_gb_avg": 5.75,
+    "mem_used_gb_avg": 13.2,
+    "cpu_pct_avg": 44,
+    "players_peak": 8,
+    "low_tps_minutes": 99,
+    "sticky_episode_count": 1,
+    "outlier_count": 1
+  },
+  "hour_of_week": [
+    {
+      "dow": 0,
+      "hour_utc": 0,
+      "sample_minutes": 84,
+      "avg_players": 3.8,
+      "avg_mspt": 15,
+      "avg_tps": 18.97,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 0,
+      "hour_utc": 1,
+      "sample_minutes": 84,
+      "avg_players": 3.4,
+      "avg_mspt": 14.1,
+      "avg_tps": 19.08,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 0,
+      "hour_utc": 2,
+      "sample_minutes": 84,
+      "avg_players": 2.9,
+      "avg_mspt": 13.1,
+      "avg_tps": 19.22,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 0,
+      "hour_utc": 3,
+      "sample_minutes": 84,
+      "avg_players": 2.4,
+      "avg_mspt": 12,
+      "avg_tps": 19.35,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 0,
+      "hour_utc": 4,
+      "sample_minutes": 84,
+      "avg_players": 2,
+      "avg_mspt": 11.2,
+      "avg_tps": 19.46,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 0,
+      "hour_utc": 5,
+      "sample_minutes": 84,
+      "avg_players": 0.2,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 0,
+      "hour_utc": 6,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 5.7,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 0,
+      "hour_utc": 7,
+      "sample_minutes": 84,
+      "avg_players": 0.5,
+      "avg_mspt": 5.9,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 0,
+      "hour_utc": 8,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.92,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 0,
+      "hour_utc": 9,
+      "sample_minutes": 84,
+      "avg_players": 3.4,
+      "avg_mspt": 14.1,
+      "avg_tps": 19.08,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 0,
+      "hour_utc": 10,
+      "sample_minutes": 84,
+      "avg_players": 3.6,
+      "avg_mspt": 14.6,
+      "avg_tps": 19.03,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 0,
+      "hour_utc": 11,
+      "sample_minutes": 84,
+      "avg_players": 3.8,
+      "avg_mspt": 15,
+      "avg_tps": 18.97,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 0,
+      "hour_utc": 12,
+      "sample_minutes": 84,
+      "avg_players": 3.8,
+      "avg_mspt": 15,
+      "avg_tps": 18.97,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 0,
+      "hour_utc": 13,
+      "sample_minutes": 84,
+      "avg_players": 4.9,
+      "avg_mspt": 17.3,
+      "avg_tps": 18.68,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 0,
+      "hour_utc": 14,
+      "sample_minutes": 84,
+      "avg_players": 6.1,
+      "avg_mspt": 19.8,
+      "avg_tps": 18.35,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 0,
+      "hour_utc": 15,
+      "sample_minutes": 84,
+      "avg_players": 7.3,
+      "avg_mspt": 26.3,
+      "avg_tps": 18.03,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 0,
+      "hour_utc": 16,
+      "sample_minutes": 84,
+      "avg_players": 8.4,
+      "avg_mspt": 28.6,
+      "avg_tps": 17.73,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 0,
+      "hour_utc": 17,
+      "sample_minutes": 84,
+      "avg_players": 4.2,
+      "avg_mspt": 15.8,
+      "avg_tps": 18.87,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 0,
+      "hour_utc": 18,
+      "sample_minutes": 84,
+      "avg_players": 4.2,
+      "avg_mspt": 15.8,
+      "avg_tps": 18.87,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 0,
+      "hour_utc": 19,
+      "sample_minutes": 84,
+      "avg_players": 5.8,
+      "avg_mspt": 19.2,
+      "avg_tps": 18.43,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 0,
+      "hour_utc": 20,
+      "sample_minutes": 84,
+      "avg_players": 8.8,
+      "avg_mspt": 29.5,
+      "avg_tps": 17.62,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 0,
+      "hour_utc": 21,
+      "sample_minutes": 84,
+      "avg_players": 7.6,
+      "avg_mspt": 27,
+      "avg_tps": 17.95,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 0,
+      "hour_utc": 22,
+      "sample_minutes": 84,
+      "avg_players": 5.8,
+      "avg_mspt": 19.2,
+      "avg_tps": 18.43,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 0,
+      "hour_utc": 23,
+      "sample_minutes": 84,
+      "avg_players": 3.4,
+      "avg_mspt": 14.1,
+      "avg_tps": 19.08,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 1,
+      "hour_utc": 0,
+      "sample_minutes": 84,
+      "avg_players": 1.4,
+      "avg_mspt": 9.9,
+      "avg_tps": 19.62,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 1,
+      "sample_minutes": 84,
+      "avg_players": 1.3,
+      "avg_mspt": 9.7,
+      "avg_tps": 19.65,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 2,
+      "sample_minutes": 84,
+      "avg_players": 1.2,
+      "avg_mspt": 9.5,
+      "avg_tps": 19.68,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 3,
+      "sample_minutes": 84,
+      "avg_players": 1.1,
+      "avg_mspt": 9.3,
+      "avg_tps": 19.7,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 4,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 5,
+      "sample_minutes": 84,
+      "avg_players": 0.2,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 6,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 5.7,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 7,
+      "sample_minutes": 84,
+      "avg_players": 0.5,
+      "avg_mspt": 5.9,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 8,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.92,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 9,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 6.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 10,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 11,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 12,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 13,
+      "sample_minutes": 84,
+      "avg_players": 2.1,
+      "avg_mspt": 11.4,
+      "avg_tps": 19.43,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 1,
+      "hour_utc": 14,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 15,
+      "sample_minutes": 84,
+      "avg_players": 0.9,
+      "avg_mspt": 8.9,
+      "avg_tps": 19.76,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 16,
+      "sample_minutes": 84,
+      "avg_players": 1.1,
+      "avg_mspt": 9.3,
+      "avg_tps": 19.7,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 1,
+      "hour_utc": 17,
+      "sample_minutes": 84,
+      "avg_players": 4.5,
+      "avg_mspt": 16.5,
+      "avg_tps": 18.79,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 1,
+      "hour_utc": 18,
+      "sample_minutes": 84,
+      "avg_players": 4.9,
+      "avg_mspt": 17.3,
+      "avg_tps": 18.68,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 1,
+      "hour_utc": 19,
+      "sample_minutes": 84,
+      "avg_players": 5.6,
+      "avg_mspt": 18.8,
+      "avg_tps": 18.49,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 1,
+      "hour_utc": 20,
+      "sample_minutes": 84,
+      "avg_players": 7.2,
+      "avg_mspt": 26.1,
+      "avg_tps": 18.06,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 1,
+      "hour_utc": 21,
+      "sample_minutes": 84,
+      "avg_players": 6.6,
+      "avg_mspt": 20.9,
+      "avg_tps": 18.22,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 1,
+      "hour_utc": 22,
+      "sample_minutes": 84,
+      "avg_players": 4.5,
+      "avg_mspt": 16.5,
+      "avg_tps": 18.79,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 1,
+      "hour_utc": 23,
+      "sample_minutes": 84,
+      "avg_players": 0,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 0,
+      "sample_minutes": 84,
+      "avg_players": 1.4,
+      "avg_mspt": 9.9,
+      "avg_tps": 19.62,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 1,
+      "sample_minutes": 84,
+      "avg_players": 1.3,
+      "avg_mspt": 9.7,
+      "avg_tps": 19.65,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 2,
+      "sample_minutes": 84,
+      "avg_players": 1.2,
+      "avg_mspt": 9.5,
+      "avg_tps": 19.68,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 3,
+      "sample_minutes": 84,
+      "avg_players": 1.1,
+      "avg_mspt": 9.3,
+      "avg_tps": 19.7,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 4,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 5,
+      "sample_minutes": 84,
+      "avg_players": 0.2,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 6,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 5.7,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 7,
+      "sample_minutes": 84,
+      "avg_players": 0.5,
+      "avg_mspt": 5.9,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 8,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.92,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 9,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 6.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 10,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 11,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 12,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 13,
+      "sample_minutes": 84,
+      "avg_players": 2.1,
+      "avg_mspt": 11.4,
+      "avg_tps": 19.43,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 2,
+      "hour_utc": 14,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 15,
+      "sample_minutes": 84,
+      "avg_players": 0.9,
+      "avg_mspt": 8.9,
+      "avg_tps": 19.76,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 16,
+      "sample_minutes": 84,
+      "avg_players": 1.1,
+      "avg_mspt": 9.3,
+      "avg_tps": 19.7,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 2,
+      "hour_utc": 17,
+      "sample_minutes": 84,
+      "avg_players": 4.5,
+      "avg_mspt": 16.5,
+      "avg_tps": 18.79,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 2,
+      "hour_utc": 18,
+      "sample_minutes": 84,
+      "avg_players": 4.9,
+      "avg_mspt": 17.3,
+      "avg_tps": 18.68,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 2,
+      "hour_utc": 19,
+      "sample_minutes": 84,
+      "avg_players": 5.6,
+      "avg_mspt": 18.8,
+      "avg_tps": 18.49,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 2,
+      "hour_utc": 20,
+      "sample_minutes": 84,
+      "avg_players": 7.2,
+      "avg_mspt": 26.1,
+      "avg_tps": 18.06,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 2,
+      "hour_utc": 21,
+      "sample_minutes": 84,
+      "avg_players": 6.6,
+      "avg_mspt": 20.9,
+      "avg_tps": 18.22,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 2,
+      "hour_utc": 22,
+      "sample_minutes": 84,
+      "avg_players": 4.5,
+      "avg_mspt": 16.5,
+      "avg_tps": 18.79,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 2,
+      "hour_utc": 23,
+      "sample_minutes": 84,
+      "avg_players": 0,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 0,
+      "sample_minutes": 84,
+      "avg_players": 1.4,
+      "avg_mspt": 9.9,
+      "avg_tps": 19.62,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 1,
+      "sample_minutes": 84,
+      "avg_players": 1.3,
+      "avg_mspt": 9.7,
+      "avg_tps": 19.65,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 2,
+      "sample_minutes": 84,
+      "avg_players": 1.2,
+      "avg_mspt": 9.5,
+      "avg_tps": 19.68,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 3,
+      "sample_minutes": 84,
+      "avg_players": 1.1,
+      "avg_mspt": 9.3,
+      "avg_tps": 19.7,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 4,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 5,
+      "sample_minutes": 84,
+      "avg_players": 0.2,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 6,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 5.7,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 7,
+      "sample_minutes": 84,
+      "avg_players": 0.5,
+      "avg_mspt": 5.9,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 8,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.92,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 9,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 6.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 10,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 11,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 12,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 13,
+      "sample_minutes": 84,
+      "avg_players": 2.1,
+      "avg_mspt": 11.4,
+      "avg_tps": 19.43,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 3,
+      "hour_utc": 14,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 15,
+      "sample_minutes": 84,
+      "avg_players": 0.9,
+      "avg_mspt": 8.9,
+      "avg_tps": 19.76,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 16,
+      "sample_minutes": 84,
+      "avg_players": 1.1,
+      "avg_mspt": 9.3,
+      "avg_tps": 19.7,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 3,
+      "hour_utc": 17,
+      "sample_minutes": 84,
+      "avg_players": 4.5,
+      "avg_mspt": 16.5,
+      "avg_tps": 18.79,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 3,
+      "hour_utc": 18,
+      "sample_minutes": 84,
+      "avg_players": 4.9,
+      "avg_mspt": 17.3,
+      "avg_tps": 18.68,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 3,
+      "hour_utc": 19,
+      "sample_minutes": 84,
+      "avg_players": 5.6,
+      "avg_mspt": 18.8,
+      "avg_tps": 18.49,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 3,
+      "hour_utc": 20,
+      "sample_minutes": 84,
+      "avg_players": 7.2,
+      "avg_mspt": 26.1,
+      "avg_tps": 18.06,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 3,
+      "hour_utc": 21,
+      "sample_minutes": 84,
+      "avg_players": 6.6,
+      "avg_mspt": 20.9,
+      "avg_tps": 18.22,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 3,
+      "hour_utc": 22,
+      "sample_minutes": 84,
+      "avg_players": 4.5,
+      "avg_mspt": 16.5,
+      "avg_tps": 18.79,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 3,
+      "hour_utc": 23,
+      "sample_minutes": 84,
+      "avg_players": 0,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 0,
+      "sample_minutes": 84,
+      "avg_players": 1.4,
+      "avg_mspt": 9.9,
+      "avg_tps": 19.62,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 1,
+      "sample_minutes": 84,
+      "avg_players": 1.3,
+      "avg_mspt": 9.7,
+      "avg_tps": 19.65,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 2,
+      "sample_minutes": 84,
+      "avg_players": 1.2,
+      "avg_mspt": 9.5,
+      "avg_tps": 19.68,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 3,
+      "sample_minutes": 84,
+      "avg_players": 1.1,
+      "avg_mspt": 9.3,
+      "avg_tps": 19.7,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 4,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 5,
+      "sample_minutes": 84,
+      "avg_players": 0.2,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 6,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 5.7,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 7,
+      "sample_minutes": 84,
+      "avg_players": 0.5,
+      "avg_mspt": 5.9,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 8,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.92,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 9,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 6.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 10,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 11,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 12,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 13,
+      "sample_minutes": 84,
+      "avg_players": 2.1,
+      "avg_mspt": 11.4,
+      "avg_tps": 19.43,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 4,
+      "hour_utc": 14,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 15,
+      "sample_minutes": 84,
+      "avg_players": 0.9,
+      "avg_mspt": 8.9,
+      "avg_tps": 19.76,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 16,
+      "sample_minutes": 84,
+      "avg_players": 1.1,
+      "avg_mspt": 9.3,
+      "avg_tps": 19.7,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 4,
+      "hour_utc": 17,
+      "sample_minutes": 84,
+      "avg_players": 4.5,
+      "avg_mspt": 16.5,
+      "avg_tps": 18.79,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 4,
+      "hour_utc": 18,
+      "sample_minutes": 84,
+      "avg_players": 4.9,
+      "avg_mspt": 17.3,
+      "avg_tps": 18.68,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 4,
+      "hour_utc": 19,
+      "sample_minutes": 84,
+      "avg_players": 5.6,
+      "avg_mspt": 18.8,
+      "avg_tps": 18.49,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 4,
+      "hour_utc": 20,
+      "sample_minutes": 84,
+      "avg_players": 7.2,
+      "avg_mspt": 26.1,
+      "avg_tps": 18.06,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 4,
+      "hour_utc": 21,
+      "sample_minutes": 84,
+      "avg_players": 6.6,
+      "avg_mspt": 20.9,
+      "avg_tps": 18.22,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 4,
+      "hour_utc": 22,
+      "sample_minutes": 84,
+      "avg_players": 4.5,
+      "avg_mspt": 16.5,
+      "avg_tps": 18.79,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 4,
+      "hour_utc": 23,
+      "sample_minutes": 84,
+      "avg_players": 0,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 0,
+      "sample_minutes": 84,
+      "avg_players": 2.8,
+      "avg_mspt": 12.9,
+      "avg_tps": 19.24,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 5,
+      "hour_utc": 1,
+      "sample_minutes": 84,
+      "avg_players": 2.6,
+      "avg_mspt": 12.5,
+      "avg_tps": 19.3,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 5,
+      "hour_utc": 2,
+      "sample_minutes": 84,
+      "avg_players": 2.3,
+      "avg_mspt": 11.8,
+      "avg_tps": 19.38,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 5,
+      "hour_utc": 3,
+      "sample_minutes": 84,
+      "avg_players": 2.6,
+      "avg_mspt": 12.5,
+      "avg_tps": 19.3,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 5,
+      "hour_utc": 4,
+      "sample_minutes": 84,
+      "avg_players": 2.8,
+      "avg_mspt": 12.9,
+      "avg_tps": 19.24,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 5,
+      "hour_utc": 5,
+      "sample_minutes": 84,
+      "avg_players": 0.2,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 6,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 5.7,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 7,
+      "sample_minutes": 84,
+      "avg_players": 0.5,
+      "avg_mspt": 5.9,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 8,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.92,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 9,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 6.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 10,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 11,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 12,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 13,
+      "sample_minutes": 84,
+      "avg_players": 2.1,
+      "avg_mspt": 11.4,
+      "avg_tps": 19.43,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 5,
+      "hour_utc": 14,
+      "sample_minutes": 84,
+      "avg_players": 1,
+      "avg_mspt": 9.1,
+      "avg_tps": 19.73,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 15,
+      "sample_minutes": 84,
+      "avg_players": 0.9,
+      "avg_mspt": 8.9,
+      "avg_tps": 19.76,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 16,
+      "sample_minutes": 84,
+      "avg_players": 1.1,
+      "avg_mspt": 9.3,
+      "avg_tps": 19.7,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 5,
+      "hour_utc": 17,
+      "sample_minutes": 84,
+      "avg_players": 6,
+      "avg_mspt": 19.6,
+      "avg_tps": 18.38,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 5,
+      "hour_utc": 18,
+      "sample_minutes": 84,
+      "avg_players": 6.4,
+      "avg_mspt": 20.4,
+      "avg_tps": 18.27,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 5,
+      "hour_utc": 19,
+      "sample_minutes": 84,
+      "avg_players": 7.1,
+      "avg_mspt": 25.9,
+      "avg_tps": 18.08,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 5,
+      "hour_utc": 20,
+      "sample_minutes": 84,
+      "avg_players": 8.7,
+      "avg_mspt": 29.3,
+      "avg_tps": 17.65,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 5,
+      "hour_utc": 21,
+      "sample_minutes": 84,
+      "avg_players": 8.9,
+      "avg_mspt": 29.7,
+      "avg_tps": 17.6,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 5,
+      "hour_utc": 22,
+      "sample_minutes": 84,
+      "avg_players": 6.8,
+      "avg_mspt": 21.3,
+      "avg_tps": 18.16,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 5,
+      "hour_utc": 23,
+      "sample_minutes": 84,
+      "avg_players": 7.6,
+      "avg_mspt": 27,
+      "avg_tps": 17.95,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 6,
+      "hour_utc": 0,
+      "sample_minutes": 84,
+      "avg_players": 3.8,
+      "avg_mspt": 15,
+      "avg_tps": 18.97,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 6,
+      "hour_utc": 1,
+      "sample_minutes": 84,
+      "avg_players": 3.4,
+      "avg_mspt": 14.1,
+      "avg_tps": 19.08,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 6,
+      "hour_utc": 2,
+      "sample_minutes": 84,
+      "avg_players": 2.9,
+      "avg_mspt": 13.1,
+      "avg_tps": 19.22,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 6,
+      "hour_utc": 3,
+      "sample_minutes": 84,
+      "avg_players": 2.4,
+      "avg_mspt": 12,
+      "avg_tps": 19.35,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 6,
+      "hour_utc": 4,
+      "sample_minutes": 84,
+      "avg_players": 2,
+      "avg_mspt": 11.2,
+      "avg_tps": 19.46,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 6,
+      "hour_utc": 5,
+      "sample_minutes": 84,
+      "avg_players": 0.2,
+      "avg_mspt": 5.4,
+      "avg_tps": 19.88,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 6,
+      "hour_utc": 6,
+      "sample_minutes": 84,
+      "avg_players": 0.4,
+      "avg_mspt": 5.7,
+      "avg_tps": 19.84,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 6,
+      "hour_utc": 7,
+      "sample_minutes": 84,
+      "avg_players": 0.5,
+      "avg_mspt": 5.9,
+      "avg_tps": 19.8,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 6,
+      "hour_utc": 8,
+      "sample_minutes": 84,
+      "avg_players": 0.6,
+      "avg_mspt": 6.2,
+      "avg_tps": 19.92,
+      "low_tps_minutes": 0
+    },
+    {
+      "dow": 6,
+      "hour_utc": 9,
+      "sample_minutes": 84,
+      "avg_players": 3.4,
+      "avg_mspt": 14.1,
+      "avg_tps": 19.08,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 6,
+      "hour_utc": 10,
+      "sample_minutes": 84,
+      "avg_players": 3.6,
+      "avg_mspt": 14.6,
+      "avg_tps": 19.03,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 6,
+      "hour_utc": 11,
+      "sample_minutes": 84,
+      "avg_players": 3.8,
+      "avg_mspt": 15,
+      "avg_tps": 18.97,
+      "low_tps_minutes": 1
+    },
+    {
+      "dow": 6,
+      "hour_utc": 12,
+      "sample_minutes": 84,
+      "avg_players": 4.6,
+      "avg_mspt": 16.7,
+      "avg_tps": 18.76,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 6,
+      "hour_utc": 13,
+      "sample_minutes": 84,
+      "avg_players": 5.8,
+      "avg_mspt": 19.2,
+      "avg_tps": 18.43,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 6,
+      "hour_utc": 14,
+      "sample_minutes": 84,
+      "avg_players": 6.9,
+      "avg_mspt": 21.5,
+      "avg_tps": 18.14,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 6,
+      "hour_utc": 15,
+      "sample_minutes": 84,
+      "avg_players": 8.1,
+      "avg_mspt": 28,
+      "avg_tps": 17.81,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 6,
+      "hour_utc": 16,
+      "sample_minutes": 84,
+      "avg_players": 9.2,
+      "avg_mspt": 30.3,
+      "avg_tps": 17.52,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 6,
+      "hour_utc": 17,
+      "sample_minutes": 84,
+      "avg_players": 5.5,
+      "avg_mspt": 18.6,
+      "avg_tps": 18.52,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 6,
+      "hour_utc": 18,
+      "sample_minutes": 84,
+      "avg_players": 5.5,
+      "avg_mspt": 18.6,
+      "avg_tps": 18.52,
+      "low_tps_minutes": 2
+    },
+    {
+      "dow": 6,
+      "hour_utc": 19,
+      "sample_minutes": 84,
+      "avg_players": 7.2,
+      "avg_mspt": 26.1,
+      "avg_tps": 18.06,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 6,
+      "hour_utc": 20,
+      "sample_minutes": 84,
+      "avg_players": 10.2,
+      "avg_mspt": 32.4,
+      "avg_tps": 17.25,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 6,
+      "hour_utc": 21,
+      "sample_minutes": 84,
+      "avg_players": 9.4,
+      "avg_mspt": 30.7,
+      "avg_tps": 17.46,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 6,
+      "hour_utc": 22,
+      "sample_minutes": 84,
+      "avg_players": 7.2,
+      "avg_mspt": 26.1,
+      "avg_tps": 18.06,
+      "low_tps_minutes": 3
+    },
+    {
+      "dow": 6,
+      "hour_utc": 23,
+      "sample_minutes": 84,
+      "avg_players": 3.4,
+      "avg_mspt": 14.1,
+      "avg_tps": 19.08,
+      "low_tps_minutes": 1
+    }
+  ],
+  "daily_series": [
+    {
+      "date": "2026-06-18",
+      "minutes": 1440,
+      "tps_avg": 19.11,
+      "mspt_avg": 15.7,
+      "mspt_p95": 34.6,
+      "players_peak": 6,
+      "heap_avg": 6.13,
+      "cpu_avg": 49,
+      "low_tps_minutes": 6
+    },
+    {
+      "date": "2026-06-19",
+      "minutes": 1440,
+      "tps_avg": 19.15,
+      "mspt_avg": 15,
+      "mspt_p95": 33,
+      "players_peak": 5,
+      "heap_avg": 6.05,
+      "cpu_avg": 47,
+      "low_tps_minutes": 14
+    },
+    {
+      "date": "2026-06-20",
+      "minutes": 1440,
+      "tps_avg": 19.04,
+      "mspt_avg": 15.6,
+      "mspt_p95": 35.4,
+      "players_peak": 8,
+      "heap_avg": 5.97,
+      "cpu_avg": 51,
+      "low_tps_minutes": 16
+    },
+    {
+      "date": "2026-06-21",
+      "minutes": 1440,
+      "tps_avg": 19.08,
+      "mspt_avg": 14.9,
+      "mspt_p95": 33.8,
+      "players_peak": 11,
+      "heap_avg": 5.89,
+      "cpu_avg": 49,
+      "low_tps_minutes": 15
+    },
+    {
+      "date": "2026-06-22",
+      "minutes": 1440,
+      "tps_avg": 19.27,
+      "mspt_avg": 12.7,
+      "mspt_p95": 28.2,
+      "players_peak": 7,
+      "heap_avg": 5.81,
+      "cpu_avg": 40,
+      "low_tps_minutes": 9
+    },
+    {
+      "date": "2026-06-23",
+      "minutes": 1440,
+      "tps_avg": 19.31,
+      "mspt_avg": 12,
+      "mspt_p95": 26.6,
+      "players_peak": 6,
+      "heap_avg": 5.73,
+      "cpu_avg": 38,
+      "low_tps_minutes": 8
+    },
+    {
+      "date": "2026-06-24",
+      "minutes": 1440,
+      "tps_avg": 19.35,
+      "mspt_avg": 11.2,
+      "mspt_p95": 25,
+      "players_peak": 5,
+      "heap_avg": 5.65,
+      "cpu_avg": 36,
+      "low_tps_minutes": 6
+    }
+  ],
+  "period_compare": {
+    "window": "7d",
+    "deltas": {
+      "mspt_avg": {
+        "current": 12.4,
+        "prior": 10.8,
+        "delta": 1.6
+      },
+      "low_tps_minutes": {
+        "current": 99,
+        "prior": 72,
+        "delta": 27
+      },
+      "players_peak": {
+        "current": 8,
+        "prior": 6,
+        "delta": 2
+      },
+      "outlier_count": {
+        "current": 1,
+        "prior": 0,
+        "delta": 1
+      },
+      "sticky_episode_count": {
+        "current": 1,
+        "prior": 0,
+        "delta": 1
+      }
+    }
+  },
+  "correlations": [
+    {
+      "id": "sticky_sessions",
+      "severity": "warning",
+      "title": "Post-session sticky lag detected",
+      "detail": "1 episode(s) where MSPT stayed high after players left."
+    },
+    {
+      "id": "lag_busy_hours",
+      "severity": "info",
+      "title": "Lag events cluster in busy hours",
+      "detail": "Recent lag-related events align with evening peak load."
+    }
+  ],
+  "related_events": [
+    {
+      "ts": "2026-06-24T13:17:45.111Z",
+      "type": "lag_incident",
+      "title": "Lag spike — MSPT 118ms · TPS 8.4",
+      "detail": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
+      "tab_link": "issues"
+    },
+    {
+      "ts": "2026-06-24T13:17:45.111Z",
+      "type": "tick_lag",
+      "title": "Server tick lag",
+      "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
+      "tab_link": "activity"
+    },
+    {
+      "ts": "2026-06-24T12:40:45.111Z",
+      "type": "performance_spike",
+      "title": "Sticky lag after players left",
+      "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
+      "tab_link": "activity"
+    }
+  ],
+  "related_event_count": 3,
+  "scorecard_perf": {
+    "low_tps_minutes_24h": 12,
+    "low_tps_minutes_7d": 99,
+    "mspt_p95_24h": 42
+  }
+}

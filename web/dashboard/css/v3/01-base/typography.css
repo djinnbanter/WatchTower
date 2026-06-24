@@ -1,0 +1,101 @@
+/* Watchtower UI v3 — Typography System */
+
+:root {
+  --wt-font-ui: "Inter", system-ui, -apple-system, sans-serif;
+  --wt-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+body {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-body);
+  color: var(--wt-text-primary);
+  line-height: 1.5;
+}
+
+/* Typography Scale */
+.wt-text-hero {
+  font-family: var(--wt-font-mono);
+  font-size: var(--wt-text-hero);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.wt-text-heading {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.wt-text-subheading {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-subheading);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.wt-text-body {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-body);
+  font-weight: 400;
+}
+
+.wt-text-label {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--wt-text-secondary);
+}
+
+.wt-text-caption {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-caption);
+  font-weight: 400;
+  color: var(--wt-text-tertiary);
+}
+
+.wt-text-mono {
+  font-family: var(--wt-font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Helpers */
+.wt-text-ghost {
+  color: var(--wt-text-ghost);
+}
+
+.wt-text-danger {
+  color: var(--wt-danger);
+}
+
+.wt-text-warning {
+  color: var(--wt-warning);
+}
+
+.wt-text-healthy {
+  color: var(--wt-healthy);
+}
+
+.wt-text-info {
+  color: var(--wt-info);
+}
+
+strong, b {
+  font-weight: 600;
+  color: var(--wt-text-primary);
+}
+
+code {
+  font-family: var(--wt-font-mono);
+  font-size: 0.9em;
+  background: var(--wt-surface-3);
+  padding: 0.2em 0.4em;
+  border-radius: var(--wt-radius-xs);
+  color: var(--wt-text-primary);
+}

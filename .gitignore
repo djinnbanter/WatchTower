@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Local-only dev data (never publish)
+fixtures/**
+!fixtures/README.md
+
+legacy/
+
+# Local config / IDE
+tools/watchtower.conf
+.vscode/
+.cursor/
+.idea/
+*.iml
+
+# Archived release JARs (local copies)
+releases/**/*
+!releases/**/README.md
+
+# Gradle build output
+build/
+**/build/
+**/.gradle/
+
+# Generated validation output (legacy path)
+samples/validation/
+
+# Node
+**/node_modules/
+
+# Env / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Maintainer-only dev docs (not published — keep local copies)
+docs/dev/

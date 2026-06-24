@@ -1,0 +1,238 @@
+/* Watchtower UI v3 — Issues Tab */
+
+.wt-issues-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--wt-space-4);
+  align-items: stretch;
+}
+
+.wt-issues-summary > .wt-card {
+  min-width: 0;
+}
+
+.wt-issues-summary > .wt-overview-health-card {
+  min-height: 7.5rem;
+}
+
+@media (max-width: 900px) {
+  .wt-issues-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .wt-issues-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wt-tab-issues .wt-issues-attention {
+  margin-top: calc(var(--wt-space-2) * -1);
+}
+
+.wt-issues-tier__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wt-space-4);
+  width: 100%;
+}
+
+.wt-issues-tier__head .wt-card__title {
+  margin: 0;
+}
+
+.wt-issues-tier__count {
+  flex-shrink: 0;
+  background: var(--wt-surface-3);
+  padding: 2px 10px;
+  border-radius: var(--wt-radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--wt-text-secondary);
+  border: 1px solid var(--wt-border);
+}
+
+.wt-tab-issues .wt-queue {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.wt-issues-tier .wt-queue {
+  border-top: 1px solid var(--wt-border);
+}
+
+.wt-issues-ok {
+  padding: var(--wt-space-4) var(--wt-space-5);
+  border-top: 1px solid var(--wt-border);
+}
+
+.wt-issues-ok__line {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-3);
+  margin: 0;
+  color: var(--wt-healthy);
+  font-weight: 600;
+  font-size: var(--wt-text-body);
+}
+
+.wt-issues-tier__collapse {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  border-top: 1px solid var(--wt-border);
+  background: transparent;
+}
+
+.wt-issues-tier__collapse:hover {
+  border-color: var(--wt-border);
+}
+
+.wt-issues-tier__collapse > .wt-accordion__summary {
+  background: var(--wt-surface-2);
+}
+
+.wt-issues-row__details {
+  border: none;
+  background: transparent;
+}
+
+.wt-issues-row__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wt-space-3);
+  cursor: pointer;
+  list-style: none;
+}
+
+.wt-issues-row__summary::-webkit-details-marker {
+  display: none;
+}
+
+.wt-issues-row__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wt-space-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.wt-issues-row__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--wt-radius-md);
+  background: var(--wt-surface-3);
+  border: 1px solid var(--wt-border);
+  color: var(--wt-text-secondary);
+}
+
+.wt-issues-row__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wt-issues-row__copy .wt-queue__title {
+  display: block;
+  line-height: 1.35;
+}
+
+.wt-issues-row__copy .wt-queue__meta {
+  display: block;
+  margin-top: 0;
+  line-height: 1.45;
+}
+
+.wt-issues-row__chevron {
+  flex-shrink: 0;
+  color: var(--wt-text-tertiary);
+  transition: transform 180ms ease;
+}
+
+.wt-issues-row__details[open] .wt-issues-row__chevron,
+.wt-issues-tier__collapse[open] .wt-issues-row__chevron {
+  transform: rotate(180deg);
+}
+
+.wt-issues-row .wt-accordion__body {
+  padding: 0 0 var(--wt-space-2);
+  border-top: none;
+}
+
+.wt-tab-issues .wt-queue__actions {
+  align-self: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wt-lag-findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wt-lag-finding {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.wt-lag-finding--confirmed i {
+  color: var(--wt-color-success, #3dd68c);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.wt-lag-finding--manual i {
+  color: var(--wt-color-warn, #f5a623);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.wt-lag-suspect {
+  margin: 0 0 var(--wt-space-3);
+  padding: 10px 12px;
+  border-radius: var(--wt-radius-md, 8px);
+  background: color-mix(in srgb, var(--wt-color-warn, #f5a623) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--wt-color-warn, #f5a623) 28%, transparent);
+}
+
+.wt-lag-log-tail {
+  max-height: 220px;
+  overflow: auto;
+  font-family: var(--wt-font-mono, monospace);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  padding: 10px;
+  border-radius: var(--wt-radius-md, 8px);
+  background: var(--wt-surface-2, rgba(0, 0, 0, 0.2));
+}
+
+.wt-lag-log-line + .wt-lag-log-line {
+  margin-top: 4px;
+}
+
+.wt-lag-incident-modal__lead {
+  margin-bottom: var(--wt-space-3);
+}
+
+.wt-lag-incident-modal__metrics {
+  margin-bottom: var(--wt-space-3);
+}

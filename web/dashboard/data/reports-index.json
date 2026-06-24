@@ -1,0 +1,24 @@
+{
+  "reports": [
+    {
+      "id": "latest",
+      "label": "2026-06-18 12:00:00",
+      "facts": "facts.json",
+      "brief": "brief.txt",
+      "engine": "4.0.6",
+      "generated": "2026-06-18T12:00:00.000Z",
+      "window_start": "2026-06-17T12:00:00.000Z",
+      "lookback_hours": 24
+    },
+    {
+      "id": "prev",
+      "label": "2026-06-17 12:00:00",
+      "facts": "facts-prev.json",
+      "brief": "brief.txt",
+      "engine": "4.0.5",
+      "generated": "2026-06-17T12:00:00.000Z",
+      "window_start": "2026-06-16T12:00:00.000Z",
+      "lookback_hours": 24
+    }
+  ]
+}

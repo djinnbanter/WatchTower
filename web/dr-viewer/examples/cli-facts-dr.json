@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "generated": "2026-06-18T18:36:54.902Z",
+    "hostname": "local-export",
+    "lookback_hours": 168,
+    "window_start": "2026-06-11T18:36:54.000Z",
+    "incremental": false,
+    "server_dir": "/srv/minecraft",
+    "panel": "dr",
+    "panel_display_name": "Disaster Recovery",
+    "loader": "neoforge",
+    "engine": "dr-browser",
+    "engine_version": "0.1.0",
+    "collection_warnings": [],
+    "report_mode": "dr",
+    "lookback_minutes": 30
+  },
+  "health": {
+    "status": "critical",
+    "current_status": "critical",
+    "java_running": false,
+    "panel_running": false,
+    "status_note": "Analyzed from uploaded export (server was not running)."
+  },
+  "system": {
+    "disk_use_pct": null,
+    "mem_available_gb": null,
+    "note": "Host metrics unavailable in DR mode."
+  },
+  "minecraft": {
+    "clean_shutdown_seen": false,
+    "oom_in_logs": false,
+    "cant_keep_up_count": 0,
+    "new_crash_reports": [],
+    "log_had_activity_in_window": true,
+    "tick_lag_evidence": [],
+    "oom_evidence": [],
+    "worst_tick_lag_ms": 0,
+    "last_log_line": "[16Jun2026 12:00:06.100] [main/ERROR] [net.minecraft.server.Main/]: Failed to start the minecraft server",
+    "last_log_file": "logs/latest.log",
+    "last_log_line_no": 8,
+    "last_log_time": "2026-06-16T11:00:06.100Z",
+    "health_log_gap_minutes": 3336.813383333333,
+    "players_online_now": 0,
+    "tps": null
+  },
+  "events": [],
+  "issues": [
+    {
+      "id": "SERVER_DOWN",
+      "message": "Server did not reach \"Done!\" — likely failed during startup.",
+      "severity": "critical",
+      "historical": false
+    },
+    {
+      "id": "MOD_LOAD_FAILED",
+      "message": "pride may be a bad download — confirm by removing it and testing startup.",
+      "severity": "warning",
+      "historical": false,
+      "mod_id": "pride"
+    }
+  ],
+  "optional": {
+    "mod_log_errors": [
+      {
+        "mod_id": "pride",
+        "total": 1,
+        "by_category": {
+          "mod_corrupt": 1
+        },
+        "sample_line": "[16Jun2026 12:00:06.012] [main/ERROR] [net.neoforged.fml.ModLoader/]: File provided by mod pride does not exist!"
+      }
+    ],
+    "mod_recommendations": [
+      {
+        "mod_id": "pride",
+        "category": "mod_corrupt",
+        "count": 1,
+        "severity": "warning",
+        "by_category": {
+          "mod_corrupt": 1
+        },
+        "sample_line": "[16Jun2026 12:00:06.012] [main/ERROR] [net.neoforged.fml.ModLoader/]: File provided by mod pride does not exist!",
+        "related_mods": [
+          "mod_corrupt"
+        ],
+        "why": "Mod jar for pride appears corrupt or incomplete on disk.",
+        "fix": "pride may be a bad download — confirm by removing it and testing startup.",
+        "fix_steps": [
+          "Remove Pride (pride.jar) from your server mods/ folder.",
+          "Start the server and wait for \"Done!\" — if it boots, that mod was blocking startup.",
+          "Re-download Pride from the official source (Modrinth/CurseForge) and put the jar back in mods/.",
+          "Start again — if it fails the same way, leave the mod out or try a different version; you have confirmed the culprit."
+        ],
+        "action": "remove",
+        "action_detail": "Confirm pride is the problem by removing it, testing startup, then reinstalling if needed."
+      }
+    ],
+    "crash_summaries": []
+  },
+  "thresholds": {
+    "disk_warn_pct": 85,
+    "mem_warn_avail_gb": 2,
+    "log_stale_minutes": 15
+  },
+  "collection_warnings": []
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-06-22T12:00:00+00:00",
+  "report_reconcile_at": null,
+  "ops_cache_seq": 1,
+  "crashes": {
+    "scanned_at": "2026-06-22T12:00:00+00:00",
+    "count": 2,
+    "unreviewed": 1,
+    "latest": {
+      "file": "crash-2026-06-22_11.58.03-server.txt",
+      "mtime": 1719058683,
+      "size": 48291,
+      "display_label": "Watchdog timeout — server stopped responding",
+      "source": "scan"
+    },
+    "entries": [
+      {
+        "file": "crash-2026-06-22_11.58.03-server.txt",
+        "mtime": 1719058683,
+        "size": 48291,
+        "display_label": "Watchdog timeout — server stopped responding",
+        "source": "scan"
+      },
+      {
+        "file": "crash-2026-06-21_08.12.11-server.txt",
+        "mtime": 1718964731,
+        "size": 12004,
+        "display_label": "Mod loading error",
+        "source": "scan"
+      }
+    ]
+  },
+  "scorecard": {
+    "low_tps_minutes_24h": 12,
+    "low_tps_minutes_7d": 48,
+    "mspt_p95_24h": 42.3,
+    "mspt_jitter_max_24h": 18.1
+  }
+}

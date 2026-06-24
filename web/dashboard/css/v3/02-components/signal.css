@@ -1,0 +1,185 @@
+/* Watchtower UI v3 — Signal Cards (Metrics) */
+
+.wt-signal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 140px;
+  transition: transform 300ms var(--wt-ease-spring), box-shadow 300ms var(--wt-ease-out);
+}
+
+.wt-signal:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--wt-shadow-card-hover);
+}
+
+/* Header */
+.wt-signal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--wt-space-2);
+}
+
+.wt-signal__title {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-label);
+  font-weight: 600;
+  color: var(--wt-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Values */
+.wt-signal__value {
+  font-family: var(--wt-font-mono);
+  font-size: var(--wt-text-hero);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--wt-text-primary);
+  margin-top: var(--wt-space-2);
+  position: relative;
+  z-index: 2;
+  /* Will use an inline style for the count-up target */
+}
+
+.wt-signal__unit {
+  font-size: 16px;
+  color: var(--wt-text-tertiary);
+  font-weight: 500;
+  margin-left: 2px;
+}
+
+/* Target count-up trick using CSS property */
+@property --num {
+  syntax: "<integer>";
+  initial-value: 0;
+  inherits: false;
+}
+
+/* Note: JS will set --target-num inline for the animation to work */
+.wt-signal__value--animate {
+  animation: wt-count 1.5s var(--wt-ease-out) forwards;
+  counter-reset: num var(--num);
+}
+.wt-signal__value--animate::before {
+  content: counter(num);
+}
+@keyframes wt-count {
+  from { --num: 0; }
+  to { --num: var(--target-num); }
+}
+
+
+/* Status Ring Glow */
+.wt-signal::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--wt-radius-xl);
+  pointer-events: none;
+  z-index: 10;
+  border: 1px solid transparent;
+  transition: border-color 0.3s ease;
+}
+
+.wt-signal--healthy::after {
+  border-color: var(--wt-healthy);
+  box-shadow: inset 0 0 12px var(--wt-accent-glow);
+}
+.wt-signal--warning::after {
+  border-color: var(--wt-warning);
+  box-shadow: inset 0 0 12px rgba(255, 165, 2, 0.15);
+}
+.wt-signal--danger::after {
+  border-color: var(--wt-danger);
+  box-shadow: inset 0 0 12px rgba(255, 71, 87, 0.15);
+}
+
+/* Sub-text elements */
+.wt-signal__question {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-label);
+  font-weight: 600;
+  color: var(--wt-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--wt-space-1);
+}
+
+.wt-signal__caption {
+  font-size: var(--wt-text-caption);
+  color: var(--wt-text-tertiary);
+  margin-top: var(--wt-space-1);
+  z-index: 2;
+  position: relative;
+}
+
+.wt-signal__readout {
+  font-family: var(--wt-font-mono);
+  font-size: var(--wt-text-caption);
+  color: var(--wt-text-tertiary);
+  margin-top: auto; /* push to bottom above chart */
+  padding-top: var(--wt-space-4);
+  z-index: 2;
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Chart Canvas Area */
+.wt-signal__chart {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 1;
+  opacity: 0.8;
+  border-radius: 0 0 calc(var(--wt-radius-xl) - 1px) calc(var(--wt-radius-xl) - 1px);
+  overflow: hidden;
+  /* Very subtle fade at the very top */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+  transition: opacity 300ms ease;
+}
+
+.wt-chart-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.wt-chart-wrap canvas {
+  touch-action: pan-y !important; /* Fix scrolling on live tab */
+}
+
+.wt-signal:hover .wt-signal__chart {
+  opacity: 1;
+}
+
+/* Tooltip Context */
+.wt-signal__tooltip {
+  position: absolute;
+  top: var(--wt-space-2);
+  right: var(--wt-space-2);
+  background: var(--wt-surface-4);
+  padding: 4px 8px;
+  border-radius: var(--wt-radius-xs);
+  font-family: var(--wt-font-mono);
+  font-size: var(--wt-text-micro);
+  color: var(--wt-text-primary);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: all 0.2s var(--wt-ease-out);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.wt-signal:hover .wt-signal__tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
