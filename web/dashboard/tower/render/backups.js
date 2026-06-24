@@ -536,7 +536,7 @@ const TowerRenderBackups = (function () {
       </div>`).join('');
     return `
       <section class="wt-card wt-card--surface wt-scroll-reveal wt-enter">
-        </div>
+        <h3 class="wt-card__title"><i data-lucide="hard-drive" width="16" height="16"></i> World storage</h3>
         ${worldGb != null ? `<p class="wt-backup-briefing__archive-line"><strong>${worldGb} GB</strong> total world data</p>` : ''}
         ${dimRows ? `<div class="wt-dimension-breakdown">${dimRows}</div>` : ''}
       </section>`;

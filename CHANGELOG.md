@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - **Docs and wiki audit (1.0.0)** — fixed setup wizard vs welcome-screen copy, Settings → Security paths, HTTP API (Insights tab, Spark + onboarding endpoints), README feature table, contributor version refs; DR viewer early-preview caveat; added `tools/audit-docs.mjs` CI check
+- **Backups tab** — fixed broken world-storage card HTML that could break the Backups page layout
+- **README** — Screenshots and Sources sections with dashboard captures from `docs/assets/screenshots/`
 
 ## [1.0.0](https://github.com/djinnbanter/WatchTower/releases/tag/v1.0.0) — 2026-06-24
 

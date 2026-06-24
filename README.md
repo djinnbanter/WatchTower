@@ -11,7 +11,7 @@
 
 [Modrinth](https://modrinth.com/mod/watchtower) · [Wiki](https://github.com/djinnbanter/WatchTower/wiki) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/djinnbanter/WatchTower/issues)
 
-[Quick start](#quick-start) · [Features](#at-a-glance) · [Why](#why-this-exists) · [Roadmap](#where-its-headed) · [Docs](#documentation) · [Contributing](#contributing)
+[Quick start](#quick-start) · [Features](#at-a-glance) · [Screenshots](#screenshots) · [Sources](#sources) · [Why](#why-this-exists) · [Roadmap](#where-its-headed) · [Docs](#documentation) · [Contributing](#contributing)
 
 ---
 
@@ -61,6 +61,62 @@ Build from source: [CONTRIBUTING.md](CONTRIBUTING.md)
 | **Local by default**  | Rule-based analysis on your server. No external API calls to interpret logs or crashes.                                                                                                                                                 |
 | **Secured access**    | Login required; optional 2FA in **Settings → Security**.                                                                                                                                                                                |
 
+
+---
+
+## Screenshots
+
+**Overview** — vitals, health narrative, storage, and recent activity at a glance.
+
+![Overview — dashboard home](docs/assets/screenshots/Overview.png)
+
+**Live** — TPS, MSPT, CPU, heap, and player charts with linked time range.
+
+![Live metrics charts](docs/assets/screenshots/Live-Metrics.png)
+
+**Insights** — busy hours, week-over-week compare, lag patterns, and correlations from minute rollups.
+
+![Insights — patterns and takeaways](docs/assets/screenshots/Insights.png)
+
+![Insights — rollups and scorecard](docs/assets/screenshots/Insights2.png)
+
+**Issues** — prioritized fix list from the latest health report.
+
+![Issues queue](docs/assets/screenshots/Issues.png)
+
+**Crashes** — crash reports with plain-English context.
+
+![Crash reports](docs/assets/screenshots/Crash-Logs.png)
+
+**Mods** — log errors, manifest changes, and mod health from scans and reports.
+
+![Mods tab](docs/assets/screenshots/Mods.png)
+
+**Backups** — local archive inventory and panel backup signals.
+
+![Backups tab](docs/assets/screenshots/Backups.png)
+
+**Session** — who is online now and session stats from reports.
+
+![Session tab](docs/assets/screenshots/session.png)
+
+**Spark** — on-demand profiler capture and hot-path breakdown.
+
+![Spark profiler tab](docs/assets/screenshots/spark.png)
+
+**Activity** — joins, reboots, commands, and other events from log scans.
+
+![Activity ledger](docs/assets/screenshots/Audit-Log.png)
+
+---
+
+## Sources
+
+Watchtower uses three update layers — **Live** (charts while you watch), **Scanned** (background log/crash/mod tail ~every 60s), and **Report** (full audit snapshot). The **Sources** tab shows which layer feeds each dashboard area so you know what still needs a scheduled or manual report.
+
+![Sources — what updates how](docs/assets/screenshots/sources.png)
+
+[Understanding Data Sources →](https://github.com/djinnbanter/WatchTower/wiki/Understanding-Data-Sources)
 
 ---
 

@@ -231,11 +231,12 @@ const WatchtowerWiki = (function () {
 
   function splitMarkdownLead(markdown) {
     const stripped = markdown.replace(/^#\s+.+\n+/, '').trim();
-    const splitIdx = stripped.indexOf('\n---\n');
+    const normalized = stripped.replace(/\r\n/g, '\n');
+    const splitIdx = normalized.indexOf('\n---\n');
     if (splitIdx < 0) return { lead: '', rest: stripped };
     return {
-      lead: stripped.slice(0, splitIdx).trim(),
-      rest: stripped.slice(splitIdx + 5).trim(),
+      lead: normalized.slice(0, splitIdx).trim(),
+      rest: normalized.slice(splitIdx + 5).trim(),
     };
   }
 

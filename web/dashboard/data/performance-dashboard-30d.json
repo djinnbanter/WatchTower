@@ -1,7 +1,7 @@
 {
   "window": "30d",
   "hours": 720,
-  "generated_at": "2026-06-24T13:25:45.111Z",
+  "generated_at": "2026-06-24T17:32:52.430Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -88,35 +88,35 @@
   ],
   "outlier_minutes": [
     {
-      "ts": "2026-06-24T12:40:45.111Z",
+      "ts": "2026-06-24T16:47:52.430Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-06-20T10:25:45.111Z",
+      "ts": "2026-06-20T14:32:52.430Z",
       "players_max": 6,
       "mspt_avg": 48,
       "mem_used_gb_avg": 13.8,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-06-13T08:25:45.111Z",
+      "ts": "2026-06-13T12:32:52.430Z",
       "players_max": 0,
       "mspt_avg": 58,
       "mem_used_gb_avg": 14,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-06-07T11:25:45.111Z",
+      "ts": "2026-06-07T15:32:52.430Z",
       "players_max": 4,
       "mspt_avg": 52,
       "mem_used_gb_avg": 13.5,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-05-31T07:25:45.111Z",
+      "ts": "2026-05-31T11:32:52.430Z",
       "players_max": 7,
       "mspt_avg": 61,
       "mem_used_gb_avg": 14.4,
@@ -125,22 +125,22 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-06-24T11:55:45.111Z",
-      "ended_at": "2026-06-24T12:40:45.111Z",
+      "started_at": "2026-06-24T16:02:52.430Z",
+      "ended_at": "2026-06-24T16:47:52.430Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
     },
     {
-      "started_at": "2026-06-16T11:25:45.111Z",
-      "ended_at": "2026-06-16T11:47:45.111Z",
+      "started_at": "2026-06-16T15:32:52.430Z",
+      "ended_at": "2026-06-16T15:54:52.430Z",
       "duration_min": 22,
       "peak_mspt": 55,
       "narrative": "MSPT stayed above threshold for 22 min after players left (peak 55 ms)"
     },
     {
-      "started_at": "2026-06-03T10:25:45.111Z",
-      "ended_at": "2026-06-03T11:03:45.111Z",
+      "started_at": "2026-06-03T14:32:52.430Z",
+      "ended_at": "2026-06-03T15:10:52.430Z",
       "duration_min": 38,
       "peak_mspt": 64,
       "narrative": "MSPT stayed above threshold for 38 min after players left (peak 64 ms)"
@@ -2087,49 +2087,49 @@
   ],
   "related_events": [
     {
-      "ts": "2026-06-24T13:17:45.111Z",
+      "ts": "2026-06-24T17:24:52.430Z",
       "type": "lag_incident",
       "title": "Lag spike — MSPT 118ms · TPS 8.4",
       "detail": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
       "tab_link": "issues"
     },
     {
-      "ts": "2026-06-24T13:17:45.111Z",
+      "ts": "2026-06-24T17:24:52.430Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-06-24T12:40:45.111Z",
+      "ts": "2026-06-24T16:47:52.430Z",
       "type": "performance_spike",
       "title": "Sticky lag after players left",
       "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-06-21T09:25:45.111Z",
+      "ts": "2026-06-21T13:32:52.430Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "TPS dipped to 17.2 during Saturday evening peak (6 players).",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-06-15T11:25:45.111Z",
+      "ts": "2026-06-15T15:32:52.430Z",
       "type": "performance_spike",
       "title": "Performance spike",
       "detail": "MSPT spike to 54 ms with 5 players online.",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-06-08T08:25:45.111Z",
+      "ts": "2026-06-08T12:32:52.430Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "Sustained low TPS for 8 minutes during mod farm load.",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-05-28T12:25:45.111Z",
+      "ts": "2026-05-28T16:32:52.430Z",
       "type": "performance_spike",
       "title": "Performance spike",
       "detail": "Evening peak MSPT reached 48 ms with 8 players.",

@@ -1,9 +1,9 @@
 {
   "source": "watchtower",
-  "polled_at": "2026-06-24T13:25:45.111Z",
+  "polled_at": "2026-06-24T17:32:52.430Z",
   "overworld": {
-    "tps": 19.73,
-    "mspt": 6.64
+    "tps": 19.65,
+    "mspt": 6.52
   },
   "players_online": 2,
   "entities": 1247,
