@@ -9,7 +9,7 @@
   <a href="https://modrinth.com/mod/watchtower"><img src="https://img.shields.io/modrinth/dt/watchtower?label=Modrinth&style=flat-square" alt="Modrinth downloads"></a>
 </p>
 
-[Modrinth](https://modrinth.com/mod/watchtower) · [Wiki](https://github.com/djinnbanter/WatchTower/wiki) · Roadmap · [Changelog](CHANGELOG.md) · [Issues](https://github.com/djinnbanter/WatchTower/issues)
+[Modrinth](https://modrinth.com/mod/watchtower) · [Wiki](https://github.com/djinnbanter/WatchTower/wiki) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/djinnbanter/WatchTower/issues)
 
 [Quick start](#quick-start) · [Features](#at-a-glance) · [Why](#why-this-exists) · [Roadmap](#where-its-headed) · [Docs](#documentation) · [Contributing](#contributing)
 
