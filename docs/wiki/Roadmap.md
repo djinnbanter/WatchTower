@@ -14,7 +14,7 @@ First public release — the complete ops toolkit:
 
 - Live dashboard (`:8787`) — Overview, Live, Insights, Issues, Crashes, Mods, Backups, Activity, Session, Spark, Sources
 - **Docs** tab — bundled operator wiki with search
-- **Setup wizard** — first-run audit, backups, schedule, optional 2FA
+- **Setup wizard** — first-run audit, backup discovery, schedule, optional 2FA
 - Scheduled health reports (default twice daily) with report retention
 - Always-on background scan (~60s) for logs, crashes, mod errors, activity, lag spikes
 - Performance history and **Insights** tab (busy/quiet hours, heatmaps, CSV export)

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/djinnbanter/WatchTower/compare/v1.0.0...HEAD)
 
+### Documentation
+
+- **Docs and wiki audit (1.0.0)** — fixed setup wizard vs welcome-screen copy, Settings → Security paths, HTTP API (Insights tab, Spark + onboarding endpoints), README feature table, contributor version refs; DR viewer early-preview caveat; added `tools/audit-docs.mjs` CI check
+
 ## [1.0.0](https://github.com/djinnbanter/WatchTower/releases/tag/v1.0.0) — 2026-06-24
 
 First public release for **NeoForge 1.21.x** on Linux dedicated servers — live ops dashboard, scheduled health reports, disaster recovery, Spark profiler integration, setup wizard, and in-app documentation.

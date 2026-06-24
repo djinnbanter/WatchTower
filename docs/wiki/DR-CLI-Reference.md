@@ -1,6 +1,6 @@
 # DR CLI Reference
 
-**When you need this:** the game server **will not boot** and you have SSH access to the Linux host. This command-line tool builds a zip you open in the [[DR Viewer]].
+**When you need this:** the game server **will not boot** and you have SSH access to the Linux host. This command-line tool builds a zip you open in the [[DR Viewer]] *(early preview — may not work fully yet)*.
 
 ---
 

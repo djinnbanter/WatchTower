@@ -44,6 +44,14 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 
 ---
 
+## Onboarding (setup wizard)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/onboarding/audit` | POST | Kick off initial audit scan during setup wizard — parallel ops discovery + 30-day baseline report |
+
+---
+
 ## Live & samples
 
 | Endpoint | Method | Query | Purpose |
@@ -77,17 +85,28 @@ Response shape:
 }
 ```
 
-Reads **L1 local JSON only** — not health-report facts. Also serves `/api/performance/insights`, CSV export, and the Insights tab dashboard.
+Reads **L1 local JSON only** — not health-report facts. Also serves `/api/performance/insights`, CSV export, and the **Insights** tab dashboard.
 
 ---
 
-## Performance insights
+## Performance insights (Insights tab)
 
 | Endpoint | Method | Query | Purpose |
 |----------|--------|-------|---------|
 | `/api/performance/insights` | GET | `window=7d\|30d` | Busy/quiet hours, player bins, outlier minutes, sticky lag episodes, ranked insights (Overview poll) |
-| `/api/performance/dashboard` | GET | `window=7d\|30d` | Full Performance tab payload: insights + `hour_of_week`, `daily_series`, `period_compare`, `correlations`, `related_events`, `scorecard_perf` |
+| `/api/performance/dashboard` | GET | `window=7d\|30d` | Full **Insights** tab payload: insights + `hour_of_week`, `daily_series`, `period_compare`, `correlations`, `related_events`, `scorecard_perf` |
 | `/api/performance/export` | GET | `window=7d`, `format=csv` | Download minute rollup rows as CSV |
+
+---
+
+## Spark profiles
+
+| Endpoint | Method | Query | Purpose |
+|----------|--------|-------|---------|
+| `/api/spark/profiles` | GET | — | List `.sparkprofile` files on disk (newest first, capped) |
+| `/api/spark/profile` | GET | `path=` | Parse one profile on demand — used by Spark tab dropdown |
+
+See [[Using-Spark-with-Watchtower]] for capture workflow.
 
 ---
 
@@ -146,7 +165,7 @@ Reads **L1 local JSON only** — not health-report facts. Also serves `/api/perf
 
 `GET /api/overview/meta` adds `mod_tldr`, `right_now`, `performance_insights_tldr`, `log_stale_tldr`, `mods_changed_tldr`, `disk_jump_tldr`, `backup_mode`, `backup_external_tldr`, `backup_poll_active`, `backups_scanned_at`, and related ops fields.
 
-**Planned — live ops ([WT-024](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md)):**
+**Planned — crash inbox ([Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md)):**
 
 | Endpoint | Method | Purpose | Version |
 |----------|--------|---------|---------|
@@ -166,3 +185,4 @@ Responses include `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, an
 - [[Dashboard Overview]]
 - [[Security and Access]]
 - [[Live Charts]]
+- [[Using-Spark-with-Watchtower]]

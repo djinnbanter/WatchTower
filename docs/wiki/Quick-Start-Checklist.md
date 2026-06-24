@@ -27,8 +27,8 @@ Work through these steps **in order** after Watchtower is installed and the serv
   - **Security** (optional) — enable 2FA if the dashboard is reachable from the internet
   - Reopen anytime: **Help → Run setup wizard again**, or add `?setup=1` to the dashboard URL
 
-- [ ] **5. Set up backups** (if skipped in wizard)
-  - **Settings → Backups** — folder on this server, panel webhook, or hybrid
+- [ ] **5. Set up backups** (if the wizard did not find any)
+  - **Settings → Backups** — folder on this server, panel webhook, or hybrid (panel setup is not part of the first-run wizard)
 
 - [ ] **6. Turn on scheduled reports** (if skipped in wizard) — **Settings** → **General** → e.g. twice daily or every hour
 

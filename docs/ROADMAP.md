@@ -15,7 +15,7 @@ First public release — everything below ships in **1.0.0**:
 
 - Live dashboard (`:8787`) with Overview, Live, Insights, Issues, Crashes, Mods, Backups, Activity, Session, Spark, and Sources tabs
 - **Docs** tab — bundled operator wiki with search
-- **Setup wizard** — first-run audit, backups, schedule, optional 2FA
+- **Setup wizard** — first-run audit, backup discovery, schedule, optional 2FA
 - Scheduled health reports (default twice daily) with report retention
 - Always-on background ops scan (~60s) — logs, crashes, mod errors, activity, lag spikes
 - Performance history and **Insights** (busy/quiet hours, heatmaps, CSV export)

@@ -19,8 +19,9 @@ The dashboard is a website served by Watchtower on your server — usually **`ht
 ## First visit
 
 1. Sign in and change your password
-2. If you have no report yet, the **welcome screen** offers a **30-day baseline** report and a tour
-3. **Run Report** in the top bar runs a full health check (same as `/watchtower run`)
+2. The **setup wizard** opens automatically on first visit — it runs an initial audit (logs, crashes, mods, backups) and a 30-day baseline report, then walks you through scheduled reports and optional security
+3. **Run Report** in the top bar runs a full health check anytime (same as `/watchtower run`)
+4. Optional: start the **guided tour** from **Help → Tour** or **Settings → About**
 
 ---
 

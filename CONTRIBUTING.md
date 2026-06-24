@@ -51,6 +51,7 @@ Before your first push (or when adding fixtures/docs):
 
 ```bash
 node tools/audit-public-tree.mjs
+node tools/audit-docs.mjs
 ```
 
 Do not commit real server paths, hostnames, API tokens, RCON passwords, or production log exports.
@@ -83,5 +84,5 @@ Mod subprojects: see [`mods/README.md`](mods/README.md). Web UI: see [`web/READM
 - **Bugs and feature requests** → [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues). Use labels (`planned`, theme labels, and `WT-###` when tied to the tracker id scheme).
 - **Public roadmap** → [`docs/ROADMAP.md`](docs/ROADMAP.md) (plain English; also on the [wiki](https://github.com/djinnbanter/WatchTower/wiki/Roadmap)).
 - **Maintainer-only extended specs** — optional local `docs/dev/` (gitignored): version plan, issue archive, corpus studies, design notes. Sync GitHub URLs with `node tools/sync-issue-docs.mjs` when those files exist locally.
-- **AI / agent implementation** — when working through planned releases **1.0.6→1.0.18**, start at `docs/dev/roadmap/AI-EXECUTION-GUIDE.md` (checkpoints, verify commands, code anchors). Hub: `docs/dev/roadmap/README.md`.
+- **AI / agent implementation** — when working through planned releases **1.0.1→1.0.7**, start at `docs/dev/roadmap/AI-EXECUTION-GUIDE.md` (checkpoints, verify commands, code anchors). Hub: `docs/dev/roadmap/README.md`.
 - **Import tooling** — outstanding backlog manifest: `tools/issues-outstanding.json`; import: `node tools/import-github-issues.mjs --dry-run` then `--apply --skip-existing` (requires `gh auth login`). On Windows, if `gh` is not on PATH: `"C:\Program Files\GitHub CLI\gh.exe" auth login` or `$env:Path += ";C:\Program Files\GitHub CLI"`.

@@ -6,6 +6,12 @@ Full downloads: [GitHub Releases](https://github.com/djinnbanter/WatchTower/rele
 
 ---
 
+## Unreleased
+
+- **Documentation audit** — setup wizard copy, Settings → Security paths, HTTP API (Insights, Spark, onboarding), README and contributor doc fixes; DR viewer marked as early preview
+
+---
+
 ## [1.0.0] — First public release — 2026-06-24
 
 **Artifacts:** `watchtower-neoforge-1.0.0+mc1.21.jar` · `watchtower-cli-1.0.0.jar`

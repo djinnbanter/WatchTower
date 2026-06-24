@@ -11,7 +11,7 @@ Use this when **Minecraft will not start** — crash loop, mod error on boot, or
 | 1 | SSH to your server, go to the **`mods/`** folder |
 | 2 | Run `java -jar watchtower-cli-1.0.0.jar dr` |
 | 3 | Download the zip file it creates |
-| 4 | Open it in the [[DR Viewer]] in your browser — start on the **Fix** tab |
+| 4 | Open it in the [[DR Viewer]] in your browser — start on the **Fix** tab *(viewer is early preview — may not work fully yet; see [[DR Viewer]])* |
 
 ---
 
@@ -35,7 +35,7 @@ java -jar watchtower-cli-1.0.0.jar dr
 
 Creates **`watchtower-dr-bundle-<timestamp>.zip`** in the current folder.
 
-Upload that zip to the [[DR Viewer]]. Analysis runs **in your browser** — nothing is sent to Watchtower's servers.
+Upload that zip to the [[DR Viewer]]. Analysis runs **in your browser** — nothing is sent to Watchtower's servers. The viewer is still **early preview**; if upload or tabs fail, use the zip contents and logs directly (see [[DR Viewer]]).
 
 ---
 
