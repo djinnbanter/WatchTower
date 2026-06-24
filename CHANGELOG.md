@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Preview / JAR parity** — preview build now runs the same CSS, wiki, and mock-data steps as Gradle; `verifyModJar` checks all shipped dashboard assets; embedded mode uses `data-embedded` only; settings, scan buttons, exports, and wizard chrome match between preview and live; mock fixtures include server icon, crash pre-context, and dynamic report index timestamps (`PREVIEW_PROFILE=fresh` for empty-install demo)
+- **2FA login** — fix `/api/auth/totp` rejecting valid codes with “Authenticator code required” (session gate now allows pending 2FA verification) — preview build now runs the same CSS, wiki, and mock-data steps as Gradle; `verifyModJar` checks all shipped dashboard assets; embedded mode uses `data-embedded` only; settings, scan buttons, exports, and wizard chrome match between preview and live; mock fixtures include server icon, crash pre-context, and dynamic report index timestamps (`PREVIEW_PROFILE=fresh` for empty-install demo)
 - **Setup wizard (embedded dashboard)** — include `setup-wizard.css` in the CSS build so the wizard is styled in the mod JAR (not only in dev preview); serve all dashboard static assets from one path map; inject `data-embedded="true"` when serving `index.html` so API mode works on non-default ports
 - **Initial audit scan** — show Retry / Skip / Continue in background when the baseline report fails, times out, or is already running; expose `report_timeout_minutes` in `/api/config` for client-side poll limits
 

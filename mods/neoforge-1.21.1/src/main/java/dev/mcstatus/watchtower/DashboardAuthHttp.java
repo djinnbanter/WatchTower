@@ -89,7 +89,7 @@ public final class DashboardAuthHttp {
             sendText(ex, 405, "Method not allowed");
             return;
         }
-        SessionManager.SessionState session = requireSession(ex, true, false);
+        SessionManager.SessionState session = requireSession(ex, true, true);
         if (session == null) {
             return;
         }
@@ -108,6 +108,10 @@ public final class DashboardAuthHttp {
             return;
         }
         SessionManager.SessionState updated = DashboardAuthServices.sessions().markTotpVerified(session.sessionId());
+        if (updated == null) {
+            sendJson(ex, 401, errorJson("session_expired", "Session expired — sign in again"));
+            return;
+        }
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
         out.addProperty("username", updated.username());
