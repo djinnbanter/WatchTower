@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/djinnbanter/WatchTower/compare/v1.0.0...HEAD)
 
+### Fixed
+
+- **Preview / JAR parity** — preview build now runs the same CSS, wiki, and mock-data steps as Gradle; `verifyModJar` checks all shipped dashboard assets; embedded mode uses `data-embedded` only; settings, scan buttons, exports, and wizard chrome match between preview and live; mock fixtures include server icon, crash pre-context, and dynamic report index timestamps (`PREVIEW_PROFILE=fresh` for empty-install demo)
+- **Setup wizard (embedded dashboard)** — include `setup-wizard.css` in the CSS build so the wizard is styled in the mod JAR (not only in dev preview); serve all dashboard static assets from one path map; inject `data-embedded="true"` when serving `index.html` so API mode works on non-default ports
+- **Initial audit scan** — show Retry / Skip / Continue in background when the baseline report fails, times out, or is already running; expose `report_timeout_minutes` in `/api/config` for client-side poll limits
+
+### Added
+
+- **`tools/audit-dashboard-parity.mjs`** — CI guard for CSS module coverage, setup-wizard styles, and embedded detection
+
 ### Documentation
 
 - **Docs and wiki audit (1.0.0)** — fixed setup wizard vs welcome-screen copy, Settings → Security paths, HTTP API (Insights tab, Spark + onboarding endpoints), README feature table, contributor version refs; DR viewer early-preview caveat; added `tools/audit-docs.mjs` CI check

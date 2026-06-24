@@ -527,17 +527,17 @@ const TowerRenderLive = (function () {
 
     const statusLine = state.apiMode
       ? `<p class="wt-status-line${state.livePollError ? ' wt-status-line--error' : ''}" id="live-status-line">${state.livePollError ? esc(state.livePollError) : 'Connecting…'}</p>`
-      : '';
-    const toolbar = state.apiMode ? `
-      <button type="button" class="wt-btn wt-btn--ghost wt-btn--sm" id="live-pin-lag-btn"${state.lagPinInFlight ? ' disabled' : ''} title="Save current TPS/MSPT snapshot (same as /watchtower pin)">
+      : '<p class="wt-status-line wt-text-caption" id="live-status-line">Preview — simulated live metrics</p>';
+    const toolbar = `
+      <button type="button" class="wt-btn wt-btn--ghost wt-btn--sm" id="live-pin-lag-btn"${state.lagPinInFlight ? ' disabled' : ''} title="${state.apiMode ? 'Save current TPS/MSPT snapshot (same as /watchtower pin)' : 'Preview — available on server'}">
         <i data-lucide="pin" width="14" height="14"></i> Pin lag moment
       </button>
       <label class="wt-live-toolbar__refresh">Display refresh
-        <select id="live-refresh-select" aria-label="Live display refresh">
+        <select id="live-refresh-select" aria-label="Live display refresh"${state.apiMode ? '' : ' disabled'}>
           <option value="1000">1s</option><option value="5000">5s</option><option value="15000">15s</option>
           <option value="30000">30s</option><option value="60000">60s</option><option value="0">Paused</option>
         </select></label>
-      ${ChartWindow.vitalsSelectHtml('Vitals range', maxRetentionHours(), { preset: 'full' })}` : ChartWindow.vitalsSelectHtml('Vitals range', maxRetentionHours(), { preset: 'full' });
+      ${ChartWindow.vitalsSelectHtml('Vitals range', maxRetentionHours(), { preset: 'full' })}`;
 
     const ramCard = showRam
       ? kpiSparkCard(

@@ -475,11 +475,11 @@ const WatchtowerSetupWizard = (function () {
     showScanScreen();
     SCAN_PHASES.forEach((p) => setScanPhase(p.id, 'pending'));
     updateScanProgress(0, SCAN_PHASES.length, true);
-    updateScanTicker(['Starting demo audit with sample data…']);
+    updateScanTicker(['Starting initial audit…']);
     document.getElementById('setup-scan-actions')?.classList.add('is-hidden');
     document.getElementById('setup-scan-progress')?.classList.remove('is-hidden');
     const statusEl = document.getElementById('setup-scan-status');
-    if (statusEl) statusEl.textContent = 'Static preview — scans use bundled demo fixtures';
+    if (statusEl) statusEl.textContent = 'Static preview — using bundled demo fixtures';
 
     const elapsedTimer = setInterval(() => {
       const elapsed = Math.floor((Date.now() - started) / 1000);
@@ -502,7 +502,7 @@ const WatchtowerSetupWizard = (function () {
 
     setScanPhase('baseline', 'active');
     updateScanProgress(4, SCAN_PHASES.length, true);
-    if (statusEl) statusEl.textContent = 'Building 30-day health baseline from demo report…';
+    if (statusEl) statusEl.textContent = 'Building 30-day health baseline…';
     await sleep(previewDurations.baseline);
     setScanPhase('baseline', 'done');
     updateScanProgress(5, SCAN_PHASES.length, false);
@@ -596,15 +596,40 @@ const WatchtowerSetupWizard = (function () {
     onProgress?.('baseline', 'active');
     let reportOk = false;
     try {
-      await WatchtowerApi.runReport({ lookbackHours: 720, since: null, incremental: false });
+      const runRes = await WatchtowerApi.runReport({ lookbackHours: 720, since: null, incremental: false });
+      if (runRes?.status === 'already_running') {
+        const msgEl = document.getElementById('setup-scan-status');
+        if (msgEl) msgEl.textContent = 'A report is already running — waiting for it to finish…';
+      }
+      const timeoutMin = state.liveConfig?.report_timeout_minutes ?? 15;
+      const pollDeadline = Date.now() + (timeoutMin * 60 * 1000) + 60_000;
+      let showBackgroundAfter = Date.now() + 30_000;
       for (;;) {
         if (auditAbort) break;
+        if (Date.now() > pollDeadline) {
+          const msgEl = document.getElementById('setup-scan-status');
+          if (msgEl) msgEl.textContent = `Report timed out after ${timeoutMin} minutes. You can retry or skip the audit.`;
+          document.getElementById('setup-scan-actions')?.classList.remove('is-hidden');
+          break;
+        }
         await sleep(2000);
         const status = await WatchtowerApi.fetchReportStatus();
         const msgEl = document.getElementById('setup-scan-status');
         if (msgEl) msgEl.textContent = status.message || 'Building baseline report…';
+        if (Date.now() >= showBackgroundAfter) {
+          document.getElementById('setup-scan-background')?.classList.remove('is-hidden');
+          document.getElementById('setup-scan-actions')?.classList.remove('is-hidden');
+        }
         if (!status.running) {
           reportOk = !!status.success;
+          if (!reportOk) {
+            if (msgEl) {
+              msgEl.textContent = status.message
+                ? `Report failed: ${status.message}`
+                : 'Report finished without a successful baseline.';
+            }
+            document.getElementById('setup-scan-actions')?.classList.remove('is-hidden');
+          }
           break;
         }
       }

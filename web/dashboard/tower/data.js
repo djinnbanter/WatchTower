@@ -55,20 +55,29 @@ async function loadData() {
     },
   };
   state.reportCache = {};
-  for (const rep of index.reports) {
-    const [facts, brief] = await Promise.all([
-      fetch(`data/${rep.facts}`).then((r) => r.json()),
-      fetch(`data/${rep.brief}`).then((r) => r.text()),
-    ]);
-    state.reportCache[rep.id] = { facts, brief };
-    if (rep.id === 'latest') state.facts = facts;
-    if (rep.id === 'prev') state.factsPrev = facts;
-    syncReportIndexMeta(rep.id, facts);
+  if (!index.reports?.length) {
+    state.facts = emptyFactsPlaceholder();
+    state.activeFacts = state.facts;
+    state.brief = '';
+    state.noReportYet = true;
+    state.selectedReportId = 'latest';
+  } else {
+    for (const rep of index.reports) {
+      const [facts, brief] = await Promise.all([
+        fetch(`data/${rep.facts}`).then((r) => r.json()),
+        fetch(`data/${rep.brief}`).then((r) => r.text()),
+      ]);
+      state.reportCache[rep.id] = { facts, brief };
+      if (rep.id === 'latest') state.facts = facts;
+      if (rep.id === 'prev') state.factsPrev = facts;
+      syncReportIndexMeta(rep.id, facts);
+    }
+    const savedId = localStorage.getItem(SELECTED_REPORT_KEY);
+    const initialId = savedId && index.reports?.some((r) => r.id === savedId) ? savedId : 'latest';
+    state.selectedReportId = initialId;
+    await loadReport(initialId);
+    state.noReportYet = false;
   }
-  const savedId = localStorage.getItem(SELECTED_REPORT_KEY);
-  const initialId = savedId && index.reports?.some((r) => r.id === savedId) ? savedId : 'latest';
-  state.selectedReportId = initialId;
-  await loadReport(initialId);
   await mergeServerAcks();
   await mergeServerClientModIgnores();
   applySnapshotToLive();
@@ -634,6 +643,7 @@ async function scanCrashes(force = false) {
       await fetchStaticOpsCache();
       state.crashScanAt = Date.now();
       updateTabBadges();
+      if (force) showToast('Preview — refreshed demo crash data', 'info');
       const block = state.opsCache?.crashes;
       return block ? { count: block.count, unreviewed: block.unreviewed } : null;
     }
@@ -664,7 +674,7 @@ async function fetchLagIssuesPeek() {
 
 async function pinLagMoment() {
   if (!state.apiMode) {
-    showToast('Pin lag requires the embedded dashboard on a live server.', 'info');
+    showToast('Preview — pin lag is available on the live server dashboard.', 'info');
     return null;
   }
   if (state.lagPinInFlight) return null;
@@ -702,6 +712,7 @@ async function scanActivity(force = false) {
       await fetchStaticIssuesPeek();
       state.activityScanAt = Date.now();
       updateTabBadges();
+      if (force) showToast('Preview — refreshed demo activity data', 'info');
       const block = state.opsCache?.activity;
       return block ? { new_count: block.new_count ?? block.events?.length ?? 0 } : null;
     }
@@ -732,6 +743,7 @@ async function scanMods(force = false) {
       await fetchStaticIssuesPeek();
       state.modScanAt = Date.now();
       updateTabBadges();
+      if (force) showToast('Preview — refreshed demo mod data', 'info');
       const entries = opsModLogEntries(state.opsCache);
       return entries.length ? { mod_error_count: entries.length } : null;
     }
@@ -772,8 +784,32 @@ async function fetchOverviewMeta() {
   }
 }
 async function loadCrashContexts(files) {
-  if (!state.apiMode || !files?.length) return;
+  if (!files?.length) return;
   let changed = false;
+  if (!state.apiMode) {
+    let map = state._crashContextFixture;
+    if (!map) {
+      try {
+        const r = await fetch('data/crash-contexts.json');
+        map = r.ok ? await r.json() : {};
+        state._crashContextFixture = map;
+      } catch {
+        map = {};
+      }
+    }
+    for (const file of files) {
+      if (!file || state.crashContextCache[file]) continue;
+      if (map[file]) {
+        state.crashContextCache[file] = map[file];
+        changed = true;
+      }
+    }
+    if (changed && state.activeTab === 'crashes') {
+      document.getElementById('main-content').innerHTML = TowerRenderCrashes.renderCrashes();
+      afterRender();
+    }
+    return;
+  }
   for (const file of files) {
     if (!file || state.crashContextCache[file]) continue;
     try {

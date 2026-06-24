@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:css": "node scripts/build-css.mjs",
+    "build:css": "node scripts/verify-css-modules.mjs && node scripts/build-css.mjs",
     "build:favicon": "node scripts/build-favicon.mjs",
     "generate:mock": "node scripts/generate-mock-data.mjs",
-    "preview": "node scripts/build-favicon.mjs && node scripts/preview-server.mjs"
+    "preview": "node scripts/verify-css-modules.mjs && node scripts/build-css.mjs && node scripts/build-wiki.mjs && node scripts/build-favicon.mjs && node scripts/generate-mock-data.mjs && node scripts/preview-server.mjs"
   }
 }

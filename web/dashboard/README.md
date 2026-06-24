@@ -20,12 +20,13 @@ Browse the full v3 UI with mock reports and live-style metrics:
 
 ```bash
 cd web/dashboard
-npm run build:css   # once, or after CSS edits
-npm run preview     # regenerates mock data + serves http://127.0.0.1:8080
+npm run preview     # build:css + wiki + mock data + http://127.0.0.1:8080
 ```
+
+Optional: `PREVIEW_PROFILE=fresh npm run preview` for a no-reports first-install demo. Optional: `PREVIEW_CSP=1 npm run preview` to mirror embedded Content-Security-Policy headers.
 
 **After changing files in `assets/`** (logos, favicon), stop the preview server (`Ctrl+C`) and run `npm run preview` again. Use **http://127.0.0.1:8080** (not `file://`). Favicons are cached aggressively — hard-refresh or use a private window if the tab icon looks stale.
 
-`npm run generate:mock` refreshes `data/live-samples.json`, `data/live-envelope.json`, `data/snapshot.json`, `data/performance-rollups.json`, **`data/ops-cache.json`** (activity ledger + lag issues + live crash scan), **`data/overview-meta.json`** (scorecard, crash/lag TLDR), and **`data/issues-peek.json`** with timestamps relative to now. Overview and Live tabs simulate metric ticks every 3s; Crashes and Activity **Scan** buttons reload the ops-cache fixture.
+`npm run generate:mock` refreshes `data/live-samples.json`, `data/live-envelope.json`, `data/snapshot.json`, `data/performance-rollups.json`, **`data/ops-cache.json`** (activity ledger + lag issues + live crash scan), **`data/overview-meta.json`** (scorecard, crash/lag TLDR), **`data/issues-peek.json`**, **`data/reports-index.json`**, **`data/crash-contexts.json`**, and **`data/server-icon.png`** with timestamps relative to now. Overview and Live tabs simulate metric ticks every 3s; scan buttons reload demo fixtures with a preview toast.
 
 Fixtures live in `data/` (`facts.json`, `reports-index.json`, etc.). No login gate in static mode.

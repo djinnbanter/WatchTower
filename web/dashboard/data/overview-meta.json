@@ -1,17 +1,17 @@
 {
   "version": "1.0.0",
   "stale": false,
-  "last_report_at": "2026-06-24T15:32:52.430Z",
+  "last_report_at": "2026-06-24T19:04:59.035Z",
   "age_hours": 2,
-  "ops_cache_updated_at": "2026-06-24T17:32:52.430Z",
-  "report_reconcile_at": "2026-06-24T15:32:52.430Z",
-  "activity_scanned_at": "2026-06-24T17:32:22.430Z",
-  "mods_scanned_at": "2026-06-24T17:30:52.430Z",
+  "ops_cache_updated_at": "2026-06-24T21:04:59.035Z",
+  "report_reconcile_at": "2026-06-24T19:04:59.035Z",
+  "activity_scanned_at": "2026-06-24T21:04:29.035Z",
+  "mods_scanned_at": "2026-06-24T21:02:59.035Z",
   "running_mod_count": 58,
   "ops_poll_active": false,
   "ops_log_scan_active": true,
   "backup_poll_active": true,
-  "backups_scanned_at": "2026-06-24T17:14:52.430Z",
+  "backups_scanned_at": "2026-06-24T20:46:59.035Z",
   "health_grade": "D",
   "scorecard": {
     "grade": "critical",
@@ -27,19 +27,19 @@
       "unreviewed": 2,
       "latest_label": "Create contraption tick overflow — block entity update took too long",
       "latest_file": "crash-2026-06-22_14-33-07-server.txt",
-      "latest_at": "2026-06-24T16:47:52.000Z"
+      "latest_at": "2026-06-24T20:19:59.000Z"
     }
   },
   "crash_tldr": {
     "label": "Create contraption tick overflow — block entity update took too long",
     "file": "crash-2026-06-22_14-33-07-server.txt",
-    "at": "2026-06-24T16:47:52.000Z",
+    "at": "2026-06-24T20:19:59.000Z",
     "unreviewed": 2
   },
   "lag_tldr": {
     "label": "Lag spike — MSPT 118ms · TPS 8.4",
     "narrative": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
-    "incident_id": "2026-06-24T17-24-52Z",
+    "incident_id": "2026-06-24T20-56-59Z",
     "severity": "critical"
   },
   "mod_tldr": {
@@ -49,7 +49,7 @@
     "count": 6
   },
   "right_now": {
-    "updated_at": "2026-06-24T17:32:22.430Z",
+    "updated_at": "2026-06-24T21:04:29.035Z",
     "signals": [
       {
         "type": "backup_job",
@@ -100,7 +100,7 @@
   "log_stale_tldr": {
     "active": true,
     "gap_minutes": 22.4,
-    "last_mtime": "2026-06-24T17:10:52.430Z"
+    "last_mtime": "2026-06-24T20:42:59.035Z"
   },
   "mods_changed_tldr": {
     "label": "3 added, 2 removed, 4 updated since last report",
@@ -118,7 +118,7 @@
     "grade": "critical",
     "mod_id": "sable",
     "pct": 21,
-    "captured_at": "2026-06-24T16:47:52.430Z",
+    "captured_at": "2026-06-24T20:19:59.035Z",
     "fresh": true
   },
   "rss_hint": {

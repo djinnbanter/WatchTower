@@ -770,9 +770,7 @@ const TowerRenderOverview = (function () {
       ? `<p class="wt-welcome__meta">${esc(Labels.formatReportFreshness(state.overviewMeta))}</p>`
       : `<p class="wt-welcome__meta">Report generated ${fmtTime(f.meta?.generated)}</p>`;
 
-    const supportBundleBtn = state.apiMode
-      ? `<button type="button" class="wt-btn wt-btn--outline wt-btn--sm" id="support-bundle-btn"><i data-lucide="life-buoy" width="14" height="14"></i> Download support bundle</button>`
-      : '';
+    const supportBundleBtn = `<button type="button" class="wt-btn wt-btn--outline wt-btn--sm" id="support-bundle-btn"><i data-lucide="life-buoy" width="14" height="14"></i> Download support bundle</button>`;
 
     return `
       <div class="wt-tab-overview">

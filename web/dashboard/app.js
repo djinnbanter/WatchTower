@@ -1829,12 +1829,19 @@ function bindBackupsEvents() {
 }
 
 async function handleBackupRescan() {
-  if (!state.apiMode) {
-    showToast('Rescan requires the embedded dashboard on a live server.', 'info');
-    return;
-  }
   const btn = document.getElementById('backup-rescan-btn');
   if (btn) btn.disabled = true;
+  if (!state.apiMode) {
+    try {
+      await fetchStaticOpsCache();
+      showToast('Preview — refreshed demo backup data', 'info');
+      refreshBackupsPage();
+      updateTabBadges();
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+    return;
+  }
   try {
     const data = await WatchtowerApi.postBackupScan();
     if (!state.activeFacts.optional) state.activeFacts.optional = {};
@@ -2045,6 +2052,10 @@ async function bindSupportBundle() {
     const exportBtn = e.target.closest('#performance-export-btn');
     if (exportBtn) {
       e.preventDefault();
+      if (!state.apiMode) {
+        showToast('Performance CSV export is available on the live server dashboard.', 'info');
+        return;
+      }
       if (typeof TowerMotion !== 'undefined') TowerMotion.btnLoading(exportBtn, true);
       else {
         exportBtn.classList.add('is-loading');
@@ -2074,6 +2085,10 @@ async function bindSupportBundle() {
     const btn = e.target.closest('#support-bundle-btn');
     if (!btn) return;
     e.preventDefault();
+    if (!state.apiMode) {
+      showToast('Support bundle download is available on the live server dashboard.', 'info');
+      return;
+    }
     if (typeof TowerMotion !== 'undefined') TowerMotion.btnLoading(btn, true);
     else {
       btn.classList.add('is-loading');
@@ -2418,7 +2433,10 @@ async function init() {
     await applyDeepLinks();
   } catch (e) {
     hideBootScreen();
-    document.getElementById('main-content').innerHTML = `<div class="wt-panel"><h2>Load error</h2><p>Run <code>python -m http.server 8080</code> from web/dashboard/</p><pre>${TowerRenderShared.esc(e.message)}</pre></div>`;
+    const hint = isApiMode()
+      ? 'Check server logs for <code>[Watchtower]</code> and confirm <code>/api/config</code> responds.'
+      : 'Run <code>npm run preview</code> from <code>web/dashboard/</code>.';
+    document.getElementById('main-content').innerHTML = `<div class="wt-panel"><h2>Load error</h2><p>${hint}</p><pre>${TowerRenderShared.esc(e.message)}</pre></div>`;
     afterRender();
   }
 }

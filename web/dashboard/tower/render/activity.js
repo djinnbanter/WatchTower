@@ -183,11 +183,9 @@ const TowerRenderActivity = (function () {
   }
 
   function renderActivityChrome(ctx) {
-    const scanBtn = state.apiMode
-      ? `<button type="button" class="wt-btn wt-btn--ghost wt-btn--sm" id="activity-scan-btn"${state.activityScanInFlight ? ' disabled' : ''}>
+    const scanBtn = `<button type="button" class="wt-btn wt-btn--ghost wt-btn--sm" id="activity-scan-btn"${state.activityScanInFlight ? ' disabled' : ''}>
             <i data-lucide="refresh-cw" width="14" height="14"></i> Scan now
-          </button>`
-      : '';
+          </button>`;
     return `
       <div class="wt-card wt-card--surface wt-activity-chrome" id="activity-chrome">
         <div class="wt-activity-chrome__top">

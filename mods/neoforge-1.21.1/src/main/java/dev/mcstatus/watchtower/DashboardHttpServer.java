@@ -71,7 +71,7 @@ import java.util.stream.Stream;
  */
 public final class DashboardHttpServer {
     private static final Gson GSON = new GsonBuilder().create();
-    private static final String WEB_PREFIX = "/assets/watchtower/web/";
+    private static final String WEB_PREFIX = "assets/watchtower/web/";
     private static final String FAVICON_RESOURCE = WEB_PREFIX + "assets/watchtower-icon-simple.png";
 
     private HttpServer server;
@@ -172,33 +172,49 @@ public final class DashboardHttpServer {
             serveResource(ex, FAVICON_RESOURCE, "image/png");
             return;
         }
-        if ("/".equals(path) || path.isEmpty()) {
-            serveResource(ex, WEB_PREFIX + "index.html", "text/html; charset=utf-8");
+        if ("/".equals(path) || path.isEmpty() || path.endsWith(".html")) {
+            serveDashboardIndex(ex);
             return;
         }
-        if (path.endsWith(".css")) {
-            String name = path.startsWith("/") ? path.substring(1) : path;
-            serveResource(ex, WEB_PREFIX + name, "text/css; charset=utf-8");
+        String name = path.startsWith("/") ? path.substring(1) : path;
+        if (name.isEmpty() || name.contains("..")) {
+            send(ex, 404, "text/plain", "Not found");
             return;
         }
-        if (path.endsWith(".js")) {
-            String name = path.startsWith("/") ? path.substring(1) : path;
-            serveResource(ex, WEB_PREFIX + name, "application/javascript; charset=utf-8");
-            return;
-        }
-        if (path.endsWith(".html")) {
-            serveResource(ex, WEB_PREFIX + "index.html", "text/html; charset=utf-8");
-            return;
-        }
-        if (path.startsWith("/assets/")) {
-            String name = path.substring(1);
-            serveResource(ex, WEB_PREFIX + name, contentTypeForAsset(name));
-            return;
-        }
-        send(ex, 404, "text/plain", "Not found");
+        serveResource(ex, WEB_PREFIX + name, contentTypeForWebAsset(name));
     }
 
-    private static String contentTypeForAsset(String name) {
+    private void serveDashboardIndex(HttpExchange ex) throws IOException {
+        try (InputStream in = DashboardHttpServer.class.getClassLoader().getResourceAsStream(WEB_PREFIX + "index.html")) {
+            if (in == null) {
+                send(ex, 404, "text/plain", "Not found: " + WEB_PREFIX + "index.html");
+                return;
+            }
+            String html = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            if (!html.contains("data-embedded=\"true\"")) {
+                html = html.replaceFirst(
+                        "<html lang=\"en\" data-theme=\"dark\">",
+                        "<html lang=\"en\" data-theme=\"dark\" data-embedded=\"true\">"
+                );
+            }
+            byte[] bytes = html.getBytes(StandardCharsets.UTF_8);
+            Headers h = ex.getResponseHeaders();
+            DashboardAuthHttp.applySecurityHeaders(h);
+            h.set("Content-Type", "text/html; charset=utf-8");
+            ex.sendResponseHeaders(200, bytes.length);
+            try (OutputStream os = ex.getResponseBody()) {
+                os.write(bytes);
+            }
+        }
+    }
+
+    private static String contentTypeForWebAsset(String name) {
+        if (name.endsWith(".css")) {
+            return "text/css; charset=utf-8";
+        }
+        if (name.endsWith(".js")) {
+            return "application/javascript; charset=utf-8";
+        }
         if (name.endsWith(".png")) {
             return "image/png";
         }
@@ -207,6 +223,12 @@ public final class DashboardHttpServer {
         }
         if (name.endsWith(".ico")) {
             return "image/x-icon";
+        }
+        if (name.endsWith(".json")) {
+            return "application/json; charset=utf-8";
+        }
+        if (name.endsWith(".woff2")) {
+            return "font/woff2";
         }
         return "application/octet-stream";
     }
@@ -352,6 +374,7 @@ public final class DashboardHttpServer {
                 .map(c -> c.getModInfo().getVersion().toString())
                 .orElse("unknown");
         cfg.addProperty("mod_version", version);
+        cfg.addProperty("report_timeout_minutes", WatchtowerConfig.REPORT_TIMEOUT_MINUTES.get());
         if (minecraftServer != null) {
             Path iconPath = minecraftServer.getServerDirectory().resolve("server-icon.png");
             if (Files.isRegularFile(iconPath)) {
@@ -1135,6 +1158,7 @@ public final class DashboardHttpServer {
             String csv = PerformanceInsightEngine.rowsToCsv(rows);
             String filename = "watchtower-performance-" + window + ".csv";
             Headers h = ex.getResponseHeaders();
+            DashboardAuthHttp.applySecurityHeaders(h);
             h.set("Content-Type", "text/csv; charset=utf-8");
             h.set("Content-Disposition", "attachment; filename=\"" + filename + "\"");
             byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
@@ -1788,6 +1812,13 @@ public final class DashboardHttpServer {
         }
         if (minecraftServer == null) {
             send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        WatchtowerRuntimeState state = WatchtowerBootstrap.getState();
+        if (state.isReportRunning()) {
+            JsonObject busy = new JsonObject();
+            busy.addProperty("status", "already_running");
+            sendJson(ex, 409, busy);
             return;
         }
         String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);

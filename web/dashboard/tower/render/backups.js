@@ -202,15 +202,15 @@ const TowerRenderBackups = (function () {
     const cls = variant === 'primary' ? 'wt-btn--primary' : 'wt-btn--ghost';
     const size = sm ? ' wt-btn--sm' : '';
     const icon = sm ? 14 : 16;
-    return `<button type="button" class="wt-btn ${cls}${size} backup-pick-btn"><i data-lucide="folder-plus" width="${icon}" height="${icon}"></i> ${esc(label)}</button>`;
+    const previewCls = state.apiMode ? '' : ' is-disabled';
+    const title = state.apiMode ? '' : ' title="Preview — available on server"';
+    return `<button type="button" class="wt-btn ${cls}${size} backup-pick-btn${previewCls}"${title}><i data-lucide="folder-plus" width="${icon}" height="${icon}"></i> ${esc(label)}</button>`;
   }
 
   function renderActionButtons(ctx, compact) {
     const sm = compact ? ' wt-btn--sm' : '';
     const pick = renderPickFolderButton(ctx, { sm: compact });
-    const rescan = state.apiMode
-      ? `<button type="button" class="wt-btn wt-btn--primary${sm}" id="backup-rescan-btn"><i data-lucide="refresh-cw" width="14" height="14"></i> Rescan backups</button>`
-      : '';
+    const rescan = `<button type="button" class="wt-btn wt-btn--primary${sm}" id="backup-rescan-btn"><i data-lucide="refresh-cw" width="14" height="14"></i> Rescan backups</button>`;
     return `<div class="wt-backups-chrome__actions">${pick}${rescan}</div>`;
   }
 

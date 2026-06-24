@@ -1,66 +1,66 @@
 {
   "schema_version": 3,
-  "updated_at": "2026-06-24T17:32:52.430Z",
-  "report_reconcile_at": "2026-06-24T15:32:52.430Z",
+  "updated_at": "2026-06-24T21:04:59.035Z",
+  "report_reconcile_at": "2026-06-24T19:04:59.035Z",
   "ops_cache_seq": 4,
   "activity": {
-    "scanned_at": "2026-06-24T17:32:22.430Z",
+    "scanned_at": "2026-06-24T21:04:29.035Z",
     "new_count": 9,
     "events": [
       {
-        "time": "2026-06-24T17:24:52.430Z",
+        "time": "2026-06-24T20:56:59.035Z",
         "type": "lag_incident",
         "detail": "Lag spike captured",
         "source": "scan",
-        "incident_id": "2026-06-24T17-24-52Z"
+        "incident_id": "2026-06-24T20-56-59Z"
       },
       {
-        "time": "2026-06-24T17:24:52.430Z",
+        "time": "2026-06-24T20:56:59.035Z",
         "type": "tick_lag",
         "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
         "source": "scan",
         "ms_behind": 5200
       },
       {
-        "time": "2026-06-24T17:22:52.430Z",
+        "time": "2026-06-24T20:54:59.035Z",
         "type": "command",
         "detail": "/chunky continue",
         "source": "scan",
         "player": "Admin"
       },
       {
-        "time": "2026-06-24T17:20:52.430Z",
+        "time": "2026-06-24T20:52:59.035Z",
         "type": "player_join",
         "detail": "Steve",
         "source": "scan"
       },
       {
-        "time": "2026-06-24T17:18:52.430Z",
+        "time": "2026-06-24T20:50:59.035Z",
         "type": "player_leave",
         "detail": "Alex",
         "source": "scan"
       },
       {
-        "time": "2026-06-24T17:10:52.430Z",
+        "time": "2026-06-24T20:42:59.035Z",
         "type": "command",
         "detail": "/fill ~ ~ ~ ~10 ~10 ~10 stone",
         "source": "scan",
         "player": "Steve"
       },
       {
-        "time": "2026-06-24T17:24:52.430Z",
+        "time": "2026-06-24T20:56:59.035Z",
         "type": "backup_job",
         "detail": "[Crafty] Starting backup for Example Server",
         "source": "scan"
       },
       {
-        "time": "2026-06-24T17:26:52.430Z",
+        "time": "2026-06-24T20:58:59.035Z",
         "type": "restart_scheduled",
         "detail": "Server will restart in 5 minutes",
         "source": "scan"
       },
       {
-        "time": "2026-06-24T16:47:52.430Z",
+        "time": "2026-06-24T20:19:59.035Z",
         "type": "performance_spike",
         "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
         "source": "scan"
@@ -68,14 +68,14 @@
     ]
   },
   "lag_issues": {
-    "updated_at": "2026-06-24T17:24:52.430Z",
+    "updated_at": "2026-06-24T20:56:59.035Z",
     "active_count": 1,
     "entries": [
       {
-        "id": "LAG-2026-06-24T17-24-52Z",
-        "incident_id": "2026-06-24T17-24-52Z",
+        "id": "LAG-2026-06-24T20-56-59Z",
+        "incident_id": "2026-06-24T20-56-59Z",
         "severity": "critical",
-        "time": "2026-06-24T17:24:52.430Z",
+        "time": "2026-06-24T20:56:59.035Z",
         "title": "Lag spike — MSPT 118ms · TPS 8.4",
         "narrative": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
         "hints": [
@@ -123,12 +123,12 @@
     ]
   },
   "crashes": {
-    "scanned_at": "2026-06-24T17:32:07.430Z",
+    "scanned_at": "2026-06-24T21:04:14.035Z",
     "count": 3,
     "unreviewed": 2,
     "latest": {
       "file": "crash-2026-06-22_14-33-07-server.txt",
-      "mtime": 1782319672,
+      "mtime": 1782332399,
       "size": 28410,
       "display_label": "Create contraption tick overflow — block entity update took too long",
       "source": "scan"
@@ -136,21 +136,21 @@
     "entries": [
       {
         "file": "crash-2026-06-22_14-33-07-server.txt",
-        "mtime": 1782319672,
+        "mtime": 1782332399,
         "size": 28410,
         "display_label": "Create contraption tick overflow — block entity update took too long",
         "source": "scan"
       },
       {
         "file": "crash-2026-06-18_08-12-44-server.txt",
-        "mtime": 1782307972,
+        "mtime": 1782320699,
         "size": 48291,
         "display_label": "Watchdog timeout — server stopped responding",
         "source": "scan"
       },
       {
         "file": "crash-2026-06-17_22-18-11-server.txt",
-        "mtime": 1782221572,
+        "mtime": 1782234299,
         "size": 12004,
         "display_label": "Mod loading error",
         "source": "scan"
@@ -164,7 +164,7 @@
     "mspt_jitter_max_24h": 18.1
   },
   "mod_log_errors": {
-    "scanned_at": "2026-06-24T17:30:52.430Z",
+    "scanned_at": "2026-06-24T21:02:59.035Z",
     "new_count": 6,
     "entries": [
       {
@@ -181,7 +181,7 @@
           "[Server thread/WARN] [create/]: Contraption stalled at block pos BlockPos{x=128, y=64, z=-42}"
         ],
         "source": "scan",
-        "last_seen_epoch": 1782322372
+        "last_seen_epoch": 1782335099
       },
       {
         "mod_id": "sable",
@@ -193,7 +193,7 @@
         },
         "sample_line": "[Server thread/ERROR] [sable/]: Tick handler exceeded budget in sublevel overworld_farm",
         "source": "scan",
-        "last_seen_epoch": 1782322372
+        "last_seen_epoch": 1782335099
       },
       {
         "mod_id": "ae2",
@@ -206,7 +206,7 @@
         },
         "sample_line": "[main/WARN] [ae2/]: Unable to resolve ingredient ae2:fluix_crystal in custom pack recipe",
         "source": "scan",
-        "last_seen_epoch": 1782322372
+        "last_seen_epoch": 1782335099
       },
       {
         "mod_id": "kubejs",
@@ -218,7 +218,7 @@
         },
         "sample_line": "[KubeJS Server/ERROR]: scripts/mekanism.js#42 — TypeError: Cannot read property of undefined",
         "source": "scan",
-        "last_seen_epoch": 1782322372
+        "last_seen_epoch": 1782335099
       },
       {
         "mod_id": "examplemod",
@@ -230,7 +230,7 @@
         },
         "sample_line": "[main/WARN] [examplemod/]: Missing registry entry for example:block",
         "source": "scan",
-        "last_seen_epoch": 1782322372
+        "last_seen_epoch": 1782335099
       },
       {
         "mod_id": "botania",
@@ -242,12 +242,12 @@
         },
         "sample_line": "[Server thread/WARN] [botania/]: Failed to match mana infusion recipe botania:mana_diamond",
         "source": "scan",
-        "last_seen_epoch": 1782322372
+        "last_seen_epoch": 1782335099
       }
     ]
   },
   "running_mods": {
-    "scanned_at": "2026-06-24T17:30:57.430Z",
+    "scanned_at": "2026-06-24T21:03:04.035Z",
     "count": 58,
     "mods": [
       {
@@ -543,14 +543,14 @@
     ]
   },
   "mod_issues": {
-    "updated_at": "2026-06-24T17:30:52.430Z",
+    "updated_at": "2026-06-24T21:02:59.035Z",
     "active_count": 4,
     "entries": [
       {
         "id": "MOD-create-0",
         "mod_id": "create",
         "severity": "warning",
-        "time": "2026-06-24T17:30:52.430Z",
+        "time": "2026-06-24T21:02:59.035Z",
         "title": "create — 14 log errors (missing item)",
         "narrative": "create logged 14 error lines in the scan window (missing item).",
         "top_category": "recipe_missing_item",
@@ -570,7 +570,7 @@
         "id": "MOD-sable-1",
         "mod_id": "sable",
         "severity": "info",
-        "time": "2026-06-24T17:30:52.430Z",
+        "time": "2026-06-24T21:02:59.035Z",
         "title": "sable — 3 log errors (error)",
         "narrative": "sable logged 3 error lines in the scan window (error).",
         "top_category": "logger_error",
@@ -584,7 +584,7 @@
         "id": "MOD-ae2-2",
         "mod_id": "ae2",
         "severity": "warning",
-        "time": "2026-06-24T17:30:52.430Z",
+        "time": "2026-06-24T21:02:59.035Z",
         "title": "ae2 — 6 log errors (recipe compat)",
         "narrative": "Applied Energistics 2 logged recipe compatibility errors after the pack update.",
         "top_category": "recipe_compat",
@@ -604,7 +604,7 @@
         "id": "MOD-kubejs-3",
         "mod_id": "kubejs",
         "severity": "warning",
-        "time": "2026-06-24T17:30:52.430Z",
+        "time": "2026-06-24T21:02:59.035Z",
         "title": "kubejs — 8 log errors (script error)",
         "narrative": "KubeJS script errors appeared after updating kubejs-neoforge.",
         "top_category": "logger_error",
@@ -623,7 +623,7 @@
     ]
   },
   "right_now": {
-    "updated_at": "2026-06-24T17:32:22.430Z",
+    "updated_at": "2026-06-24T21:04:29.035Z",
     "signals": [
       {
         "type": "backup_job",
@@ -667,16 +667,16 @@
     ]
   },
   "log_stale": {
-    "checked_at": "2026-06-24T17:32:22.430Z",
+    "checked_at": "2026-06-24T21:04:29.035Z",
     "active": true,
     "gap_minutes": 22.4,
-    "last_mtime": "2026-06-24T17:10:52.430Z"
+    "last_mtime": "2026-06-24T20:42:59.035Z"
   },
   "backups_live": {
-    "scanned_at": "2026-06-24T17:14:52.430Z",
+    "scanned_at": "2026-06-24T20:46:59.035Z",
     "last_backup": {
       "file": "2026-06-23_08-00-00.zip",
-      "mtime": 1782321292,
+      "mtime": 1782334019,
       "size_mb": 842,
       "age_hours": 0.3
     },
@@ -686,7 +686,7 @@
     }
   },
   "mods_inventory": {
-    "scanned_at": "2026-06-24T17:30:52.430Z",
+    "scanned_at": "2026-06-24T21:02:59.035Z",
     "tldr": "3 added, 2 removed, 4 updated since last report",
     "jar_count": 58,
     "diff": {
@@ -740,8 +740,8 @@
           "version": "6.0.1",
           "prev_size": 15234567,
           "size": 15890234,
-          "prev_mtime": 1781544772,
-          "mtime": 1782300772
+          "prev_mtime": 1781557499,
+          "mtime": 1782313499
         },
         {
           "jar": "Mekanism-1.21.1-10.7.9.jar",
@@ -752,7 +752,7 @@
           "prev_size": 8102400,
           "size": 8456192,
           "prev_mtime": 1782000000,
-          "mtime": 1782300772
+          "mtime": 1782313499
         },
         {
           "jar": "Botania-1.20-452.jar",
@@ -762,8 +762,8 @@
           "version": "1.20-452",
           "prev_size": 12884736,
           "size": 12884736,
-          "prev_mtime": 1781544772,
-          "mtime": 1782300772
+          "prev_mtime": 1781557499,
+          "mtime": 1782313499
         },
         {
           "jar": "jei-1.21.1-neoforge-19.21.1.247.jar",
@@ -774,13 +774,13 @@
           "prev_size": 1245952,
           "size": 1312768,
           "prev_mtime": 1782000000,
-          "mtime": 1782300772
+          "mtime": 1782313499
         }
       ]
     }
   },
   "disk_jump": {
-    "scanned_at": "2026-06-24T17:32:22.430Z",
+    "scanned_at": "2026-06-24T21:04:29.035Z",
     "active": true,
     "disk_use_pct": 48.2,
     "baseline_disk_use_pct": 42,

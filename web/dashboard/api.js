@@ -8,8 +8,7 @@ function watchtowerApiFetch(url, options = {}) {
 
 const WatchtowerApi = {
   isEmbedded() {
-    return document.documentElement.dataset.embedded === 'true'
-      || (window.location.port === '8787' && window.location.protocol.startsWith('http'));
+    return document.documentElement.dataset.embedded === 'true';
   },
 
   async fetchConfig() {
@@ -107,8 +106,10 @@ const WatchtowerApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!r.ok) throw new Error('run failed');
-    return r.json();
+    const data = await r.json().catch(() => ({}));
+    if (r.status === 409) return data;
+    if (!r.ok) throw new Error(data.message || data.error || 'run failed');
+    return data;
   },
 
   async fetchCrashAcks() {

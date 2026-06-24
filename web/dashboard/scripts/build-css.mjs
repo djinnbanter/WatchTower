@@ -31,6 +31,7 @@ const V3_ORDER = [
   'css/v3/03-layout/modal.css',
   'css/v3/03-layout/data-sources.css',
   'css/v3/04-surfaces/boot-auth.css',
+  'css/v3/04-surfaces/setup-wizard.css',
   'css/v3/04-surfaces/cmdk.css',
   'css/v3/04-surfaces/toast.css',
   'css/v3/04-surfaces/tour.css',

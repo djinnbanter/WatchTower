@@ -42,8 +42,18 @@ const WatchtowerSettings = (function () {
     }).join('');
   }
 
+  function loadPreviewSettings() {
+    try {
+      return JSON.parse(localStorage.getItem(
+        typeof PREVIEW_SETTINGS_KEY !== 'undefined' ? PREVIEW_SETTINGS_KEY : 'watchtower-preview-settings',
+      ) || '{}');
+    } catch {
+      return {};
+    }
+  }
+
   function renderSettingsForm() {
-    const s = settings || {};
+    const s = settings || state.dashboardSettings || loadPreviewSettings() || {};
     const scheduleMode = s.report_schedule_mode || (s.report_interval_minutes > 0 ? 'interval' : 'wall_clock');
     const interval = s.report_interval_minutes ?? 720;
     const isCustom = scheduleMode === 'interval'
@@ -135,7 +145,13 @@ const WatchtowerSettings = (function () {
     const sess = typeof WatchtowerAuth !== 'undefined' ? WatchtowerAuth.getSession() : null;
     const totpOn = sess?.totp_enabled;
     if (!state.apiMode) {
-      return '<p class="help-settings-intro wt-hub-panel">Security settings are available when connected to the embedded mod dashboard.</p>';
+      return `
+        <div class="wt-hub-panel wt-hub-panel--stack">
+          <article class="wt-card wt-card--surface wt-hub-panel-card">
+            ${sectionHead('Security', 'shield')}
+            <p class="help-settings-intro">Login, password change, and two-factor authentication are configured on the embedded mod dashboard after you deploy the JAR to your server.</p>
+          </article>
+        </div>`;
     }
     return `
       <div class="wt-hub-panel wt-hub-panel--stack">
@@ -404,35 +420,52 @@ const WatchtowerSettings = (function () {
 
     document.getElementById('settings-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!state.apiMode) return;
       const btn = document.getElementById('settings-save-btn');
+      const presetVal = preset?.value ?? 'wall_clock';
+      const payload = {
+        lookbackHours: Number(document.getElementById('settings-lookback')?.value || 24),
+        incremental: document.getElementById('settings-incremental')?.checked ?? true,
+        tpsWarn: Number(document.getElementById('settings-tps-warn')?.value || 19.5),
+        msptWarn: Number(document.getElementById('settings-mspt-warn')?.value || 50),
+      };
+      if (presetVal === 'wall_clock') {
+        payload.reportScheduleMode = 'wall_clock';
+        payload.reportWallClockHours = '0,12';
+      } else if (presetVal === '0') {
+        payload.reportScheduleMode = 'off';
+        payload.reportIntervalMinutes = 0;
+      } else if (presetVal === '-1') {
+        payload.reportScheduleMode = 'interval';
+        payload.reportIntervalMinutes = Math.max(1, Math.min(10080,
+          Number(document.getElementById('settings-schedule-custom')?.value || 60)));
+      } else {
+        payload.reportScheduleMode = 'interval';
+        payload.reportIntervalMinutes = Math.max(1, Math.min(10080, Number(presetVal)));
+      }
+      if (!state.apiMode) {
+        const previewKey = typeof PREVIEW_SETTINGS_KEY !== 'undefined' ? PREVIEW_SETTINGS_KEY : 'watchtower-preview-settings';
+        const saved = {
+          lookback_hours: payload.lookbackHours,
+          incremental: payload.incremental,
+          tps_warn: payload.tpsWarn,
+          mspt_warn: payload.msptWarn,
+          report_schedule_mode: payload.reportScheduleMode,
+          report_interval_minutes: payload.reportIntervalMinutes ?? 720,
+          report_wall_clock_hours: payload.reportWallClockHours || '0,12',
+        };
+        localStorage.setItem(previewKey, JSON.stringify(saved));
+        settings = saved;
+        state.dashboardSettings = { ...(state.dashboardSettings || {}), ...saved };
+        toast('Settings saved (preview)', 'success');
+        renderContent();
+        return;
+      }
       if (typeof TowerMotion !== 'undefined') TowerMotion.btnLoading(btn, true);
       else {
         btn?.classList.add('is-loading');
         if (btn) btn.disabled = true;
       }
       try {
-        const presetVal = preset?.value ?? 'wall_clock';
-        const payload = {
-          lookbackHours: Number(document.getElementById('settings-lookback')?.value || 24),
-          incremental: document.getElementById('settings-incremental')?.checked ?? true,
-          tpsWarn: Number(document.getElementById('settings-tps-warn')?.value || 19.5),
-          msptWarn: Number(document.getElementById('settings-mspt-warn')?.value || 50),
-        };
-        if (presetVal === 'wall_clock') {
-          payload.reportScheduleMode = 'wall_clock';
-          payload.reportWallClockHours = '0,12';
-        } else if (presetVal === '0') {
-          payload.reportScheduleMode = 'off';
-          payload.reportIntervalMinutes = 0;
-        } else if (presetVal === '-1') {
-          payload.reportScheduleMode = 'interval';
-          payload.reportIntervalMinutes = Math.max(1, Math.min(10080,
-            Number(document.getElementById('settings-schedule-custom')?.value || 60)));
-        } else {
-          payload.reportScheduleMode = 'interval';
-          payload.reportIntervalMinutes = Math.max(1, Math.min(10080, Number(presetVal)));
-        }
         const result = await WatchtowerApi.saveSettings(payload);
         settings = result.settings || result;
         state.dashboardSettings = settings;
@@ -555,7 +588,7 @@ const WatchtowerSettings = (function () {
 
   async function loadSettings() {
     if (!state.apiMode) {
-      settings = {};
+      settings = { ...(state.dashboardSettings || {}), ...loadPreviewSettings() };
       return;
     }
     try {

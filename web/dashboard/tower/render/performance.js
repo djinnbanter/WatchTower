@@ -123,9 +123,7 @@ const TowerRenderPerformance = (function () {
         actions: '',
       };
     }
-    const exportBtn = state.apiMode
-      ? '<button type="button" class="wt-btn wt-btn--ghost wt-btn--sm" id="performance-export-btn"><i data-lucide="download" width="14" height="14"></i> Download CSV</button>'
-      : '';
+    const exportBtn = '<button type="button" class="wt-btn wt-btn--ghost wt-btn--sm" id="performance-export-btn"><i data-lucide="download" width="14" height="14"></i> Download CSV</button>';
     const genAt = d?.generated_at ? `Updated ${esc(fmtRelative(d.generated_at))}` : '';
     return {
       lead: `Patterns from saved minute rollups — busy hours, lag vs players, sticky episodes.${genAt ? ` <span class="wt-perf-hero__meta">Updated ${esc(fmtRelative(d.generated_at))}</span>` : ''}`,

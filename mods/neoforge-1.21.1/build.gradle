@@ -131,7 +131,16 @@ tasks.named('jar', Jar).configure {
 def dashboardPocDir = rootProject.file('web/dashboard')
 def dashboardWebOut = layout.buildDirectory.dir('generated/resources/assets/watchtower/web')
 
+tasks.register('verifyDashboardCssModules', Exec) {
+    workingDir dashboardPocDir
+    commandLine 'node', 'scripts/verify-css-modules.mjs'
+    inputs.dir(new File(dashboardPocDir, 'css/v3'))
+    inputs.file(new File(dashboardPocDir, 'scripts/build-css.mjs'))
+    inputs.file(new File(dashboardPocDir, 'scripts/verify-css-modules.mjs'))
+}
+
 tasks.register('buildDashboardCss', Exec) {
+    dependsOn tasks.named('verifyDashboardCssModules')
     workingDir dashboardPocDir
     commandLine 'node', 'scripts/build-css.mjs'
     inputs.dir(new File(dashboardPocDir, 'css/v3'))
@@ -233,11 +242,25 @@ tasks.register('verifyModJar') {
                         "Gson must not be embedded (module conflict on boot): ${gsonEmbedded}"
                 )
             }
-            if (zip.getEntry('assets/watchtower/web/index.html') == null) {
-                throw new GradleException("Missing embedded dashboard assets/watchtower/web/index.html in ${jarFile.name}")
+            def requiredWebAssets = [
+                    'assets/watchtower/web/index.html',
+                    'assets/watchtower/web/styles.css',
+                    'assets/watchtower/web/vendor/chart.umd.min.js',
+                    'assets/watchtower/web/vendor/lucide.min.js',
+                    'assets/watchtower/web/wiki-bundle.js',
+                    'assets/watchtower/web/setup-wizard.js',
+                    'assets/watchtower/web/tower/data.js',
+                    'assets/watchtower/web/app.js',
+            ]
+            requiredWebAssets.each { assetPath ->
+                if (zip.getEntry(assetPath) == null) {
+                    throw new GradleException("Missing embedded dashboard asset ${assetPath} in ${jarFile.name}")
+                }
             }
-            if (zip.getEntry('assets/watchtower/web/vendor/chart.umd.min.js') == null) {
-                throw new GradleException("Missing embedded Chart.js vendor asset in ${jarFile.name}")
+            def stylesEntry = zip.getEntry('assets/watchtower/web/styles.css')
+            def stylesText = new String(zip.getInputStream(stylesEntry).readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
+            if (!stylesText.contains('.wt-setup-wizard')) {
+                throw new GradleException("Embedded styles.css missing setup wizard rules in ${jarFile.name}")
             }
             logger.lifecycle("verifyModJar OK: ${jarFile.name} (${jarFile.length()} bytes)")
             logger.lifecycle("  embedded: ${embedded.join(', ')}")

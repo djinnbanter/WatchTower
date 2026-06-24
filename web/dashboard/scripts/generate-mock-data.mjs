@@ -2,7 +2,7 @@
  * Regenerates static preview fixtures with timestamps relative to now.
  * Run: npm run generate:mock
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +20,8 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(root, 'data');
+const previewProfile = (process.env.PREVIEW_PROFILE || '').trim().toLowerCase();
+const isFreshPreview = previewProfile === 'fresh';
 
 function isoAt(ms) {
   return new Date(ms).toISOString();
@@ -1174,7 +1176,81 @@ const snapshot = {
   mod_count: MOCK_RUNNING_MODS.length,
 };
 
+function writeReportsIndex(nowMs) {
+  const latestGen = new Date(nowMs - 2 * 3600_000);
+  const prevGen = new Date(nowMs - 26 * 3600_000);
+  const fmtLabel = (d) => d.toISOString().replace('T', ' ').slice(0, 19);
+  const index = {
+    reports: [
+      {
+        id: 'latest',
+        label: fmtLabel(latestGen),
+        facts: 'facts.json',
+        brief: 'brief.txt',
+        engine: '4.0.6',
+        generated: latestGen.toISOString(),
+        window_start: new Date(latestGen.getTime() - 24 * 3600_000).toISOString(),
+        lookback_hours: 24,
+      },
+      {
+        id: 'prev',
+        label: fmtLabel(prevGen),
+        facts: 'facts-prev.json',
+        brief: 'brief.txt',
+        engine: '4.0.5',
+        generated: prevGen.toISOString(),
+        window_start: new Date(prevGen.getTime() - 24 * 3600_000).toISOString(),
+        lookback_hours: 24,
+      },
+    ],
+  };
+  writeFileSync(join(dataDir, 'reports-index.json'), `${JSON.stringify(index, null, 2)}\n`);
+  const prevFactsPath = join(dataDir, 'facts-prev.json');
+  try {
+    const prevFacts = JSON.parse(readFileSync(prevFactsPath, 'utf8'));
+    prevFacts.meta = prevFacts.meta || {};
+    prevFacts.meta.generated = prevGen.toISOString();
+    writeFileSync(prevFactsPath, `${JSON.stringify(prevFacts, null, 2)}\n`);
+  } catch { /* keep hand-authored prev facts */ }
+  const factsPath = join(dataDir, 'facts.json');
+  try {
+    const facts = JSON.parse(readFileSync(factsPath, 'utf8'));
+    facts.meta = facts.meta || {};
+    facts.meta.generated = latestGen.toISOString();
+    writeFileSync(factsPath, `${JSON.stringify(facts, null, 2)}\n`);
+  } catch { /* patched later */ }
+}
+
+function writeCrashContextFixtures() {
+  const sample = (n, base, spread) => Array.from({ length: n }, (_, i) => ({
+    t: offsetIso(Date.now(), -(n - i) * 60_000),
+    v: round1(base + spread * Math.sin(i / 2)),
+  }));
+  const contexts = {
+    'crash-2026-06-22_14-33-07-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 18.5, 2),
+      mspt_samples: sample(10, 48, 12),
+      events: [{ t: offsetIso(Date.now(), -8 * 60_000), type: 'tick_lag', detail: "Can't keep up! 12 ticks behind" }],
+    },
+    'crash-2026-06-18_08-12-44-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 12, 4),
+      mspt_samples: sample(10, 85, 20),
+      events: [{ t: offsetIso(Date.now(), -15 * 60_000), type: 'watchdog', detail: 'Server hung on main thread' }],
+    },
+    'crash-2026-06-17_22-18-11-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 19.8, 0.5),
+      mspt_samples: sample(10, 22, 5),
+      events: [{ t: offsetIso(Date.now(), -20 * 60_000), type: 'mod_load', detail: 'Mixin apply failed during startup' }],
+    },
+  };
+  writeFileSync(join(dataDir, 'crash-contexts.json'), `${JSON.stringify(contexts, null, 2)}\n`);
+}
+
 function patchFactsModFixtures() {
+  if (isFreshPreview) return;
   const factsPath = join(dataDir, 'facts.json');
   const facts = JSON.parse(readFileSync(factsPath, 'utf8'));
   if (!facts.optional) facts.optional = {};
@@ -1217,6 +1293,19 @@ writeFileSync(join(dataDir, 'ops-cache.json'), `${JSON.stringify(opsCache, null,
 writeFileSync(join(dataDir, 'issues-peek.json'), `${JSON.stringify(issuesPeek, null, 2)}\n`);
 writeFileSync(join(dataDir, 'overview-meta.json'), `${JSON.stringify(overviewMeta, null, 2)}\n`);
 patchFactsModFixtures();
+if (!isFreshPreview) {
+  writeReportsIndex(now);
+}
+writeCrashContextFixtures();
+copyFileSync(
+  join(root, 'assets', 'watchtower-icon-simple.png'),
+  join(dataDir, 'server-icon.png'),
+);
+
+if (isFreshPreview) {
+  writeFileSync(join(dataDir, 'reports-index.json'), `${JSON.stringify({ reports: [] }, null, 2)}\n`);
+  console.log('  PREVIEW_PROFILE=fresh — empty reports-index.json');
+}
 if (mockIncident?.id) {
   const incidentsDir = join(dataDir, 'incidents');
   mkdirSync(incidentsDir, { recursive: true });
