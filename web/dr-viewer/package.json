@@ -1,0 +1,15 @@
+{
+  "name": "watchtower-dr",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser-local Watchtower disaster recovery concept",
+  "scripts": {
+    "serve": "npx --yes serve . -p 8790",
+    "sync:dashboard": "node scripts/sync-dashboard.mjs",
+    "test": "node ../../tools/test-dr-analyze.mjs && node ../../tools/test-dr-viewer.mjs && node ../../tools/test-dr-bundle.mjs"
+  },
+  "devDependencies": {
+    "fflate": "^0.8.2"
+  }
+}

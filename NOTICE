@@ -1,0 +1,10 @@
+Watchtower
+Copyright (c) mcstatus contributors
+
+This product includes Protocol Buffer schema definitions derived from the
+Spark project (https://github.com/lucko/spark), used under GPLv3 as reference
+for parsing operator-produced .sparkprofile exports. Watchtower does not
+ship Spark bytecode; only independently generated protobuf-lite Java classes
+are included.
+
+Spark proto files: watchtower-core/src/main/proto/spark/

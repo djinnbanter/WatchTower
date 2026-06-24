@@ -1,0 +1,191 @@
+/* Watchtower UI v3 — Session Tab */
+
+.wt-tab-session .wt-live-toolbar {
+  justify-content: flex-start;
+}
+
+.wt-session-roster .wt-card__lead {
+  margin-bottom: var(--wt-space-4);
+}
+
+.wt-session-roster .session-empty {
+  margin-bottom: var(--wt-space-4);
+}
+
+/* Player roster table */
+.wt-roster-player__cell {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-3);
+  min-width: 0;
+}
+
+.wt-roster-player__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wt-roster-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--wt-radius-sm);
+  background: var(--wt-surface-3);
+  border: 1px solid var(--wt-border);
+  overflow: hidden;
+}
+
+.wt-roster-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.wt-roster-avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--wt-text-secondary);
+  text-transform: uppercase;
+}
+
+.wt-roster-avatar__initials {
+  display: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--wt-text-secondary);
+  text-transform: uppercase;
+}
+
+.wt-roster-avatar--placeholder .wt-roster-avatar__initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.wt-roster-name {
+  font-weight: 600;
+  color: var(--wt-text-primary);
+}
+
+.wt-roster-last-seen {
+  font-size: var(--wt-text-caption);
+  color: var(--wt-text-tertiary);
+}
+
+.wt-roster-muted {
+  color: var(--wt-text-tertiary);
+}
+
+/* Ping bars */
+.wt-roster-ping {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+}
+
+.wt-ping {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.wt-ping__bar {
+  width: 3px;
+  background: var(--wt-border-strong);
+  border-radius: 1px;
+}
+
+.wt-ping__bar:nth-child(1) { height: 6px; }
+.wt-ping__bar:nth-child(2) { height: 9px; }
+.wt-ping__bar:nth-child(3) { height: 12px; }
+.wt-ping__bar:nth-child(4) { height: 16px; }
+
+.wt-ping--excellent .wt-ping__bar { background: var(--wt-healthy); }
+.wt-ping--good .wt-ping__bar:nth-child(-n+3) { background: var(--wt-healthy); }
+.wt-ping--fair .wt-ping__bar:nth-child(-n+2) { background: var(--wt-warning); }
+.wt-ping--poor .wt-ping__bar:nth-child(1) { background: var(--wt-danger); }
+
+.wt-roster-ping-ms {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Row status pills (scoped to avoid clashing with global pills) */
+.wt-tab-session .wt-status-pill {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: var(--wt-radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.wt-tab-session .wt-status-pill--online {
+  background: var(--wt-accent-soft);
+  color: var(--wt-healthy);
+}
+
+.wt-tab-session .wt-status-pill--offline {
+  background: var(--wt-surface-3);
+  color: var(--wt-text-secondary);
+}
+
+.wt-session-search {
+  min-width: 200px;
+  flex: 1;
+  max-width: 280px;
+}
+
+.wt-session-sort-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--wt-text-caption-size);
+  color: var(--wt-text-secondary);
+}
+
+.wt-session-sort-label select {
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--wt-radius-sm);
+  border: 1px solid var(--wt-border-strong);
+  background: var(--wt-surface-0);
+  color: var(--wt-text-primary);
+}
+
+.wt-session-spark-wrap {
+  height: 120px;
+}
+
+.wt-session-recent__list,
+.wt-session-top-active__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wt-session-recent__item,
+.wt-session-top-active__list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--wt-border-subtle);
+  font-size: var(--wt-text-caption-size);
+}
+
+.wt-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}

@@ -1,0 +1,59 @@
+# Watchtower — local engine configuration
+# Copy to tools/watchtower.conf (same directory as validate-poc.py) or ~/.config/watchtower.conf
+#
+# Most installs only need auto-discovery. Uncomment overrides if detection fails.
+
+# --- Server path (auto-detected if unset) ---
+# SERVER_DIR=/path/to/minecraft/server
+
+# --- Report window and output ---
+LOOKBACK_HOURS=24
+REPORT_DIR=./reports
+
+# --- Panel integration: auto | none | crafty | pterodactyl ---
+PANEL=auto
+# CRAFTY_ROOT=/var/opt/minecraft/crafty
+# CRAFTY_APP=/var/opt/minecraft/crafty/crafty-4
+
+# --- Crafty API (fallback when RCON is disabled) ---
+# CRAFTY_URL=https://your-panel:8443
+# CRAFTY_API_TOKEN=your-api-token
+# CRAFTY_SERVER_UUID=00000000-0000-0000-0000-000000000001
+
+# --- RCON (recommended for live TPS/MSPT — set enable-rcon=true in server.properties) ---
+# RCON_HOST=127.0.0.1
+# RCON_PORT=25575
+# RCON_PASSWORD=rcon-password-here
+# RCON_TPS_COMMAND=neoforge tps
+# RCON_SPARK_TPS=false
+# RCON_ENTITY_POLL=false
+
+# --- Java process detection (extended regex, case-insensitive) ---
+JAVA_PATTERN=forge|neoforge|fabric|minecraft.*jar|unix_args
+
+# --- Optional systemd unit for panel or server ---
+# SYSTEMD_UNIT=crafty.service
+
+# --- Thresholds (used by rule engine) ---
+DISK_WARN_PCT=85
+MEM_WARN_AVAIL_GB=2
+LOG_STALE_MINUTES=15
+CANT_KEEP_UP_WARN=5
+MSPT_WARN=50
+TPS_WARN=19.5
+CPU_THROTTLE_PCT=95
+TICK_LAG_THROTTLE_MS=5000
+
+# --- Log analytics ---
+# ERROR_IGNORE_PATTERNS=Known spam pattern|Another pattern
+
+# --- Collection tuning ---
+LOG_TAIL_LINES=80
+LOG_GZIP_COUNT=5
+
+# --- Backups ---
+# BACKUP_DIR=/var/opt/minecraft/crafty/crafty-4/backups
+
+# --- Incremental collection (since last successful run) ---
+INCREMENTAL=false
+OVERLAP_MINUTES=5

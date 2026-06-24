@@ -1,0 +1,44 @@
+{
+  "bundle_version": 1,
+  "report_mode": "dr",
+  "fallback_minutes": 1440,
+  "window_start": "2026-06-19T23:37:35Z",
+  "selection_policy": "since_last_successful_start",
+  "anchor_status": "found",
+  "anchor": {
+    "found": true,
+    "time": "2026-06-19T23:37:35.785Z",
+    "file": "logs/regular/latest.log",
+    "line": 2023
+  },
+  "facts": "watchtower-facts-2026-06-20_06-59-07.json",
+  "brief": "watchtower-brief-2026-06-20_06-59-07.txt",
+  "file_counts": {
+    "regular": 1,
+    "debug": 1,
+    "crash": 1
+  },
+  "sessions": [
+    {
+      "attempt": 1,
+      "started_at": "2026-06-20T06:53:30+01:00",
+      "regular_logs": [
+        "logs/regular/latest.log"
+      ],
+      "debug_logs": [
+        "logs/debug/debug.log"
+      ],
+      "crash_reports": [
+        "crash-reports/crash-2026-06-20_06.53.26-server.txt"
+      ],
+      "correlation_status": "complete",
+      "user_message": "Attempt #1 (06:53) includes failure signals with matched crash report.",
+      "failure_signals": true,
+      "failure_line": {
+        "file": "logs/regular/latest.log",
+        "line": 38008,
+        "quote": "[20Jun2026 06:49:36.723] [c2me-worker-0/ERROR] [net.minecraft.world.entity.decoration.BlockAttachedEntity/]: Block-attached entity at invalid position: BlockPos{x\u003d-21, y\u003d-51, z\u003d186}"
+      }
+    }
+  ]
+}

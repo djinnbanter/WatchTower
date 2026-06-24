@@ -1,0 +1,19 @@
+---- Minecraft Crash Report ----
+
+Time: 2026-06-17 09:15:08
+Description: Mod loading error has occurred
+
+java.lang.RuntimeException: Mod loading has failed
+Caused by: net.neoforged.fml.ModLoadingException: Mod create has failed to load correctly
+
+Failure message: Mod create requires flywheel 1.0.0 or above. Currently, flywheel is 0.11.3
+
+Mod File: create-6.0.0.jar
+	Mod ID: create
+	Mod Version: 6.0.0
+
+-- Mod loading issue for: create --
+Details:
+	Mod File: /mods/create-6.0.0.jar
+	Mod ID: create
+	Dependency: flywheel version 1.0.0 or above

@@ -1,0 +1,55 @@
+{
+  "spark_enabled": true,
+  "search_dirs": [
+    "watchtower/spark-upload/",
+    "config/spark/"
+  ],
+  "report_profile_path": "watchtower/spark-upload/VBK9P8wiBc.sparkprofile",
+  "profiles": [
+    {
+      "source_path": "watchtower/spark-upload/VBK9P8wiBc.sparkprofile",
+      "source_file": "VBK9P8wiBc.sparkprofile",
+      "source_kind": "spark_upload",
+      "captured_at": "2026-06-20T22:07:01.231+01:00",
+      "mtime": "2026-06-23T09:00:53.785Z",
+      "size_bytes": 4915074,
+      "fresh": true
+    },
+    {
+      "source_path": "watchtower/spark-upload/CXrvhrNd1R.sparkprofile",
+      "source_file": "CXrvhrNd1R.sparkprofile",
+      "source_kind": "spark_upload",
+      "captured_at": "2026-06-20T00:23:40.972+01:00",
+      "mtime": "2026-06-23T09:00:50.810Z",
+      "size_bytes": 5196321,
+      "fresh": true
+    },
+    {
+      "source_path": "watchtower/spark-upload/uUrbLpnMju.sparkprofile",
+      "source_file": "uUrbLpnMju.sparkprofile",
+      "source_kind": "spark_upload",
+      "captured_at": "2026-06-19T23:56:15.378+01:00",
+      "mtime": "2026-06-23T09:00:47.571Z",
+      "size_bytes": 4118024,
+      "fresh": true
+    },
+    {
+      "source_path": "watchtower/spark-upload/ZSz5E2HnRb.sparkprofile",
+      "source_file": "ZSz5E2HnRb.sparkprofile",
+      "source_kind": "spark_upload",
+      "captured_at": "2026-06-17T18:55:48.333+01:00",
+      "mtime": "2026-06-23T09:00:44.201Z",
+      "size_bytes": 4660497,
+      "fresh": true
+    },
+    {
+      "source_path": "watchtower/spark-upload/H5BVV4Annz.sparkprofile",
+      "source_file": "H5BVV4Annz.sparkprofile",
+      "source_kind": "spark_upload",
+      "captured_at": "2026-06-05T23:30:05.148+01:00",
+      "mtime": "2026-06-23T09:00:40.280Z",
+      "size_bytes": 3854141,
+      "fresh": true
+    }
+  ]
+}

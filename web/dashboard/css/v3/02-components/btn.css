@@ -1,0 +1,230 @@
+/* Watchtower UI v3 — Button System */
+
+.wt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wt-space-2);
+  height: 36px;
+  padding: 0 var(--wt-space-4);
+  border-radius: var(--wt-radius-md);
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-body);
+  font-weight: 600;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 200ms var(--wt-ease-out);
+  will-change: transform, box-shadow, background-color;
+  position: relative;
+  overflow: hidden;
+  color: var(--wt-text-primary);
+  background: var(--wt-surface-2);
+  border: 1px solid var(--wt-border);
+}
+
+.wt-btn:hover:not(:disabled) {
+  background: var(--wt-surface-3);
+  border-color: var(--wt-border-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wt-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition-duration: 50ms;
+}
+
+.wt-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(100%);
+}
+
+.wt-btn:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 2px;
+}
+
+/* Primary Button */
+.wt-btn--primary {
+  background: var(--wt-accent);
+  color: var(--wt-accent-on);
+  border: 1px solid color-mix(in srgb, var(--wt-accent) 80%, #000);
+  box-shadow: 0 4px 12px var(--wt-accent-glow), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.wt-btn--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--wt-accent) 90%, #fff);
+  box-shadow: 0 6px 16px var(--wt-accent-glow), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  border-color: color-mix(in srgb, var(--wt-accent) 70%, #fff);
+}
+
+/* Ghost Button */
+.wt-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.wt-btn--accent-text {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--wt-accent);
+  font-weight: 700;
+}
+
+.wt-btn--accent-text:hover:not(:disabled) {
+  background: var(--wt-accent-soft);
+  color: var(--wt-accent);
+  transform: none;
+}
+
+.wt-btn--outline {
+  background: transparent;
+  border: 1px solid var(--wt-border-strong);
+  box-shadow: none;
+}
+
+.wt-btn--outline:hover:not(:disabled) {
+  background: var(--wt-surface-2);
+  transform: none;
+}
+
+.wt-btn--ghost:hover:not(:disabled) {
+  background: var(--wt-surface-2);
+  border-color: var(--wt-border);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Danger Button */
+.wt-btn--danger {
+  background: var(--wt-danger);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+}
+
+.wt-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--wt-danger) 85%, #fff);
+  box-shadow: 0 6px 16px rgba(255, 71, 87, 0.4);
+}
+
+/* Icon Button */
+.wt-btn--icon {
+  width: 36px;
+  padding: 0;
+  border-radius: var(--wt-radius-full);
+}
+
+.wt-btn--icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Sizes */
+.wt-btn--sm {
+  height: 28px;
+  padding: 0 var(--wt-space-3);
+  font-size: var(--wt-text-label);
+  border-radius: var(--wt-radius-sm);
+}
+
+.wt-btn--sm.wt-btn--icon {
+  width: 28px;
+}
+
+.wt-btn--lg {
+  height: 48px;
+  padding: 0 var(--wt-space-6);
+  font-size: var(--wt-text-subheading);
+  border-radius: var(--wt-radius-lg);
+}
+
+/* Loading State */
+.wt-btn--loading {
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.wt-btn--loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: wt-spin 800ms linear infinite;
+}
+
+@keyframes wt-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.wt-btn--primary.wt-btn--loading::after {
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #000;
+}
+
+/* Keyboard Shortcut Badge */
+.wt-btn-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: 8px;
+  border-radius: 4px;
+  background: var(--wt-surface-4);
+  color: var(--wt-text-secondary);
+  font-family: var(--wt-font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2), 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.wt-btn--primary .wt-btn-kbd {
+  background: rgba(0, 0, 0, 0.15);
+  color: rgba(0, 0, 0, 0.7);
+  box-shadow: none;
+}
+
+/* Button Group */
+.wt-segment {
+  display: inline-flex;
+  background: var(--wt-surface-1);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-full);
+  padding: 2px;
+  position: relative;
+}
+
+.wt-segment__btn {
+  height: 28px;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--wt-radius-full);
+  color: var(--wt-text-secondary);
+  transition: color 200ms var(--wt-ease-out), background-color 200ms var(--wt-ease-out);
+  position: relative;
+  z-index: 1;
+}
+
+.wt-segment__btn:hover {
+  color: var(--wt-text-primary);
+}
+
+.wt-segment__btn.active {
+  color: var(--wt-text-primary);
+  background: var(--wt-surface-3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}

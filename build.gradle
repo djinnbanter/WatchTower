@@ -1,0 +1,64 @@
+// Root aggregator — subprojects: watchtower-core, watchtower-cli, neoforge-1.21.1
+
+def modVersion = rootProject.findProperty('mod_version') ?: '1.0.0'
+def releasesRoot = layout.projectDirectory.dir('releases')
+def versionedReleaseDir = releasesRoot.dir(modVersion)
+def latestReleaseDir = releasesRoot.dir('latest')
+
+tasks.register('copyReleaseJars') {
+    group = 'distribution'
+    description = 'Build and copy mod + CLI JARs to releases/<version>/ and releases/latest/'
+    dependsOn ':neoforge-1.21.1:build', ':watchtower-cli:fatJar'
+}
+
+tasks.register('copyModReleaseJar', Copy) {
+    group = 'distribution'
+    dependsOn tasks.named('copyReleaseJars')
+    dependsOn ':neoforge-1.21.1:jar'
+    from(project(':neoforge-1.21.1').tasks.named('jar', Jar).get().archiveFile)
+    into(versionedReleaseDir)
+    doLast {
+        logger.lifecycle("Copied mod JAR to ${versionedReleaseDir.asFile}")
+    }
+}
+
+tasks.register('copyCliReleaseJar', Copy) {
+    group = 'distribution'
+    dependsOn tasks.named('copyReleaseJars')
+    dependsOn ':watchtower-cli:fatJar'
+    from(project(':watchtower-cli').tasks.named('fatJar', Jar).get().archiveFile)
+    into(versionedReleaseDir)
+    doLast {
+        logger.lifecycle("Copied CLI JAR to ${versionedReleaseDir.asFile}")
+    }
+}
+
+tasks.register('copyReleaseLicense', Copy) {
+    group = 'distribution'
+    dependsOn tasks.named('copyModReleaseJar'), tasks.named('copyCliReleaseJar')
+    from(layout.projectDirectory.file('LICENSE'))
+    into(versionedReleaseDir)
+    doLast {
+        logger.lifecycle("Copied LICENSE to ${versionedReleaseDir.asFile}")
+    }
+}
+
+tasks.register('copyLatestReleaseJars', Copy) {
+    group = 'distribution'
+    dependsOn tasks.named('copyReleaseLicense')
+    doFirst {
+        latestReleaseDir.asFile.mkdirs()
+        latestReleaseDir.asFile.eachFileMatch(~/.*\.(jar|txt)$/) { it.delete() }
+        def licenseFile = latestReleaseDir.file('LICENSE').asFile
+        if (licenseFile.exists()) licenseFile.delete()
+    }
+    from(versionedReleaseDir)
+    into(latestReleaseDir)
+    doLast {
+        logger.lifecycle("Copied release artifacts to ${latestReleaseDir.asFile}")
+    }
+}
+
+tasks.named('copyReleaseJars') {
+    finalizedBy tasks.named('copyLatestReleaseJars')
+}

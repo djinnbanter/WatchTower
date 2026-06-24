@@ -1,0 +1,79 @@
+/* Watchtower UI v3 — Main Canvas */
+
+.wt-canvas {
+  width: 100%;
+  max-width: var(--wt-max-content);
+  margin: 0 auto;
+  padding: var(--wt-space-8) var(--wt-space-8);
+  background: var(--wt-surface-0);
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .wt-canvas {
+    padding: var(--wt-space-4);
+  }
+}
+
+/* Section Rhythm */
+.wt-canvas > section {
+  margin-bottom: var(--wt-space-10);
+  scroll-margin-top: calc(var(--wt-header-height) + var(--wt-space-6));
+}
+
+.wt-canvas > section:last-child {
+  margin-bottom: 0;
+}
+
+/* Section Headers */
+.wt-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--wt-space-4);
+  padding-bottom: var(--wt-space-2);
+  border-bottom: 1px solid var(--wt-border);
+}
+
+.wt-section-title {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-heading);
+  font-weight: 700;
+  color: var(--wt-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+}
+
+.wt-section-desc {
+  font-size: var(--wt-text-body);
+  color: var(--wt-text-secondary);
+  margin-top: var(--wt-space-1);
+}
+
+/* Grid Layouts inside Canvas */
+
+/* 12-column grid for standard layouts */
+.wt-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--wt-space-6);
+}
+
+/* Responsive utility grids */
+.wt-grid-cols-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--wt-space-4); }
+.wt-grid-cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--wt-space-4); }
+.wt-grid-cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--wt-space-4); }
+
+@media (max-width: 1024px) {
+  .wt-grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
+  .wt-grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .wt-grid-cols-4,
+  .wt-grid-cols-3,
+  .wt-grid-cols-2 { grid-template-columns: 1fr; }
+  
+  .wt-grid { display: flex; flex-direction: column; gap: var(--wt-space-4); }
+}

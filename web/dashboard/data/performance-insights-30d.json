@@ -1,0 +1,172 @@
+{
+  "window": "30d",
+  "hours": 720,
+  "generated_at": "2026-06-24T13:25:45.111Z",
+  "enabled": true,
+  "sufficient_data": true,
+  "mspt_warn": 50,
+  "tps_warn": 19.5,
+  "busy_quiet": {
+    "busy_hours": [
+      {
+        "hour_utc": 20,
+        "label": "20:00–21:00 UTC",
+        "avg_players": 8.1,
+        "avg_mspt": 27.9,
+        "sample_minutes": 2520,
+        "busy": true
+      },
+      {
+        "hour_utc": 21,
+        "label": "21:00–22:00 UTC",
+        "avg_players": 7.5,
+        "avg_mspt": 24.4,
+        "sample_minutes": 2520,
+        "busy": true
+      },
+      {
+        "hour_utc": 19,
+        "label": "19:00–20:00 UTC",
+        "avg_players": 6.1,
+        "avg_mspt": 20.9,
+        "sample_minutes": 2520,
+        "busy": true
+      }
+    ],
+    "quiet_hours": [
+      {
+        "hour_utc": 5,
+        "label": "05:00–06:00 UTC",
+        "avg_players": 0.2,
+        "avg_mspt": 5.4,
+        "sample_minutes": 2520,
+        "busy": false
+      },
+      {
+        "hour_utc": 6,
+        "label": "06:00–07:00 UTC",
+        "avg_players": 0.4,
+        "avg_mspt": 5.7,
+        "sample_minutes": 2520,
+        "busy": false
+      },
+      {
+        "hour_utc": 7,
+        "label": "07:00–08:00 UTC",
+        "avg_players": 0.5,
+        "avg_mspt": 5.9,
+        "sample_minutes": 2520,
+        "busy": false
+      }
+    ]
+  },
+  "player_bins": [
+    {
+      "players_band": "0",
+      "minutes": 1806,
+      "mspt_avg": 8.4,
+      "tps_avg": 19.7
+    },
+    {
+      "players_band": "1-2",
+      "minutes": 1204,
+      "mspt_avg": 14.2,
+      "tps_avg": 19.4
+    },
+    {
+      "players_band": "3-5",
+      "minutes": 2236,
+      "mspt_avg": 22.8,
+      "tps_avg": 18.6
+    },
+    {
+      "players_band": "6+",
+      "minutes": 946,
+      "mspt_avg": 31.5,
+      "tps_avg": 17.9
+    }
+  ],
+  "outlier_minutes": [
+    {
+      "ts": "2026-06-24T12:40:45.111Z",
+      "players_max": 0,
+      "mspt_avg": 72,
+      "mem_used_gb_avg": 14.1,
+      "reason": "high_mspt_idle"
+    },
+    {
+      "ts": "2026-06-20T10:25:45.111Z",
+      "players_max": 6,
+      "mspt_avg": 48,
+      "mem_used_gb_avg": 13.8,
+      "reason": "high_mspt_vs_hour_median"
+    },
+    {
+      "ts": "2026-06-13T08:25:45.111Z",
+      "players_max": 0,
+      "mspt_avg": 58,
+      "mem_used_gb_avg": 14,
+      "reason": "high_mspt_idle"
+    },
+    {
+      "ts": "2026-06-07T11:25:45.111Z",
+      "players_max": 4,
+      "mspt_avg": 52,
+      "mem_used_gb_avg": 13.5,
+      "reason": "high_mspt_vs_hour_median"
+    },
+    {
+      "ts": "2026-05-31T07:25:45.111Z",
+      "players_max": 7,
+      "mspt_avg": 61,
+      "mem_used_gb_avg": 14.4,
+      "reason": "high_mspt_vs_hour_median"
+    }
+  ],
+  "sticky_lag": [
+    {
+      "started_at": "2026-06-24T11:55:45.111Z",
+      "ended_at": "2026-06-24T12:40:45.111Z",
+      "duration_min": 45,
+      "peak_mspt": 72,
+      "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
+    },
+    {
+      "started_at": "2026-06-16T11:25:45.111Z",
+      "ended_at": "2026-06-16T11:47:45.111Z",
+      "duration_min": 22,
+      "peak_mspt": 55,
+      "narrative": "MSPT stayed above threshold for 22 min after players left (peak 55 ms)"
+    },
+    {
+      "started_at": "2026-06-03T10:25:45.111Z",
+      "ended_at": "2026-06-03T11:03:45.111Z",
+      "duration_min": 38,
+      "peak_mspt": 64,
+      "narrative": "MSPT stayed above threshold for 38 min after players left (peak 64 ms)"
+    }
+  ],
+  "insights": [
+    {
+      "id": "sticky_lag",
+      "severity": "warning",
+      "title": "3 sticky lag episodes",
+      "detail": "3 episode(s) where MSPT stayed high after players left. Latest: MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
+      "tab": "overview"
+    },
+    {
+      "id": "busy_hours",
+      "severity": "info",
+      "title": "Typically busy hours (30d)",
+      "detail": "20:00–21:00 (avg 8.1 players); 21:00–22:00 (avg 7.5 players); 19:00–20:00 (avg 6.1 players)",
+      "tab": "overview"
+    },
+    {
+      "id": "outlier_idle",
+      "severity": "warning",
+      "title": "High MSPT with no players",
+      "detail": "2 minute(s) in window had elevated MSPT while idle — check farms, chunk loaders, or background jobs.",
+      "tab": "issues"
+    }
+  ]
+}

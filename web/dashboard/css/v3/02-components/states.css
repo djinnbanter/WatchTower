@@ -1,0 +1,134 @@
+/* Watchtower UI v3 — Empty, Loading & Error States */
+
+.wt-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--wt-space-10) var(--wt-space-6);
+  height: 100%;
+  min-height: 200px;
+}
+
+.wt-state__icon {
+  margin-bottom: var(--wt-space-4);
+  color: var(--wt-text-tertiary);
+  animation: wt-slide-up 300ms var(--wt-ease-spring);
+}
+
+.wt-state__icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.wt-state__title {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-subheading);
+  font-weight: 600;
+  color: var(--wt-text-primary);
+  margin-bottom: var(--wt-space-2);
+  animation: wt-slide-up 300ms var(--wt-ease-spring) 50ms both;
+}
+
+.wt-state__desc {
+  font-size: var(--wt-text-body);
+  color: var(--wt-text-secondary);
+  max-width: 400px;
+  margin-bottom: var(--wt-space-6);
+  animation: wt-slide-up 300ms var(--wt-ease-spring) 100ms both;
+}
+
+.wt-state__action {
+  animation: wt-slide-up 300ms var(--wt-ease-spring) 150ms both;
+}
+
+/* All Clear (Celebration) State */
+.wt-state--clear .wt-state__icon {
+  color: var(--wt-healthy);
+  position: relative;
+}
+
+.wt-state--clear .wt-state__icon::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--wt-healthy);
+  animation: wt-pulse-glow 2s infinite ease-out;
+  z-index: -1;
+}
+
+/* Error State */
+.wt-state--error .wt-state__icon {
+  color: var(--wt-danger);
+  animation: wt-shake 400ms var(--wt-ease-out);
+}
+
+.wt-state-card--error {
+  border-color: var(--wt-danger) !important;
+  box-shadow: 0 0 12px rgba(255, 71, 87, 0.1);
+  animation: wt-shake 400ms var(--wt-ease-out);
+}
+
+/* Skeleton Loading Framework */
+.wt-skeleton {
+  background: var(--wt-surface-2);
+  border-radius: var(--wt-radius-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.wt-skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: wt-shimmer 1.5s infinite linear;
+}
+
+[data-theme="light"] .wt-skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.04) 50%,
+    transparent 100%
+  );
+}
+
+/* Specific skeleton shapes */
+.wt-skeleton-text {
+  height: 14px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+.wt-skeleton-text:last-child { margin-bottom: 0; }
+.wt-skeleton-text.short { width: 40%; }
+.wt-skeleton-text.medium { width: 70%; }
+
+.wt-skeleton-title {
+  height: 24px;
+  width: 50%;
+  margin-bottom: 16px;
+}
+
+.wt-skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.wt-skeleton-card {
+  height: 120px;
+  border-radius: var(--wt-radius-xl);
+}

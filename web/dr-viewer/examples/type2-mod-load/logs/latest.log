@@ -1,0 +1,8 @@
+[16Jun2026 12:00:01.123] [main/INFO] [net.neoforged.fml.loading.FMLLoader/]: NeoForge 21.1.0 loading
+[16Jun2026 12:00:02.456] [main/INFO] [net.minecraft.server.Main/]: Starting minecraft server version 1.21.1
+[16Jun2026 12:00:05.789] [modloading-worker-0/INFO] [pride/]: Initializing pride mod
+[16Jun2026 12:00:06.012] [main/ERROR] [net.neoforged.fml.ModLoader/]: File provided by mod pride does not exist!
+[16Jun2026 12:00:06.045] [main/ERROR] [net.neoforged.fml.ModLoader/]: Mod loading has failed
+[16Jun2026 12:00:06.046] [main/FATAL] [net.neoforged.fml.ModLoader/]: Mod (pride) failed to load correctly
+net.neoforged.fml.ModLoadingException: Mod pride has failed to load correctly
+[16Jun2026 12:00:06.100] [main/ERROR] [net.minecraft.server.Main/]: Failed to start the minecraft server

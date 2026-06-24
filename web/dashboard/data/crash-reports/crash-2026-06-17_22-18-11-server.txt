@@ -1,0 +1,12 @@
+---- Minecraft Crash Report ----
+Time: 2026-06-17 22:18:11
+Description: Exception in server tick loop
+
+java.lang.NullPointerException: Cannot invoke "examplemod.TickHandler.onTick()" because "this.handler" is null
+	at TRANSFORMER/examplemod@1.0.0/examplemod.ExampleMod.onServerTick(ExampleMod.java:42)
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventBus.post(EventBus.java:350)
+	at net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:917)
+
+-- System Details --
+	Mod List:
+		examplemod-1.0.0.jar                    |Example Mod                   |examplemod                    |1.0.0               |DONE      |

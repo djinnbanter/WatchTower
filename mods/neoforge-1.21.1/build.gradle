@@ -1,0 +1,252 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.141'
+    id 'idea'
+}
+
+version = mod_version
+group = mod_group_id
+
+sourceSets.main.resources {
+    srcDir layout.buildDirectory.dir('generated/resources')
+}
+
+repositories {
+    mavenCentral()
+}
+
+base {
+    archivesName = "watchtower-neoforge-${mod_version}+mc1.21"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        server {
+            server()
+            programArgument '--nogui'
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+    implementation project(':watchtower-core')
+
+    jarJar project(':watchtower-core')
+
+    jarJar('dev.samstevens.totp:totp:1.7.1') {
+        version {
+            strictly '[1.7,1.8)'
+            prefer '1.7.1'
+        }
+    }
+    jarJar('com.google.zxing:core:3.4.0') {
+        version {
+            strictly '[3.4,3.5)'
+            prefer '3.4.0'
+        }
+    }
+    jarJar('com.google.zxing:javase:3.4.0') {
+        version {
+            strictly '[3.4,3.5)'
+            prefer '3.4.0'
+        }
+    }
+    jarJar('commons-codec:commons-codec:1.13') {
+        version {
+            strictly '[1.13,1.14)'
+            prefer '1.13'
+        }
+    }
+
+    // Gson is already on the NeoForge module path (gml, YACL, etc.) — do not jarJar it
+    // or boot fails: ResolutionException: reads more than one module named com.google.gson
+
+    additionalRuntimeClasspath project(':watchtower-core')
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
+}
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('jar', Jar).configure {
+    archiveFileName = "watchtower-neoforge-${mod_version}+mc1.21.jar"
+    manifest {
+        attributes('Implementation-Version': mod_version)
+    }
+    dependsOn tasks.named('syncDashboard')
+}
+
+def dashboardPocDir = rootProject.file('web/dashboard')
+def dashboardWebOut = layout.buildDirectory.dir('generated/resources/assets/watchtower/web')
+
+tasks.register('buildDashboardCss', Exec) {
+    workingDir dashboardPocDir
+    commandLine 'node', 'scripts/build-css.mjs'
+    inputs.dir(new File(dashboardPocDir, 'css/v3'))
+    inputs.file(new File(dashboardPocDir, 'scripts/build-css.mjs'))
+    outputs.file(new File(dashboardPocDir, 'styles.css'))
+}
+
+tasks.register('buildWiki', Exec) {
+    workingDir dashboardPocDir
+    commandLine 'node', 'scripts/build-wiki.mjs'
+    inputs.dir(rootProject.file('docs/wiki'))
+    inputs.file(new File(dashboardPocDir, 'scripts/build-wiki.mjs'))
+    outputs.file(new File(dashboardPocDir, 'wiki-bundle.js'))
+}
+
+tasks.register('syncDashboard', Copy) {
+    dependsOn tasks.named('buildDashboardCss'), tasks.named('buildWiki')
+    from(dashboardPocDir) {
+        include '*.html', '*.js', '*.css'
+        include 'favicon.ico'
+        include 'assets/**'
+        include 'vendor/**'
+        include 'tower/**'
+    }
+    into dashboardWebOut
+    outputs.dir(dashboardWebOut)
+}
+
+tasks.named('processResources') {
+    dependsOn tasks.named('syncDashboard')
+}
+
+tasks.register('verifyModJar') {
+    def jarArchive = tasks.named('jar', Jar).flatMap { it.archiveFile }
+    dependsOn tasks.named('jar')
+    inputs.file(jarArchive)
+    doLast {
+        def jarFile = jarArchive.get().asFile
+        if (!jarFile.isFile()) {
+            throw new GradleException("Mod JAR not found: ${jarFile}")
+        }
+        if (jarFile.length() < 150_000) {
+            throw new GradleException(
+                    "Mod JAR too small (${jarFile.length()} bytes) — watchtower-core likely not embedded: ${jarFile.name}"
+            )
+        }
+
+        def nestedJarContains = { java.util.zip.ZipFile outerZip, java.util.zip.ZipEntry nestedEntry, String classPath ->
+            outerZip.getInputStream(nestedEntry).withCloseable { input ->
+                def nestedZip = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(input.readAllBytes()))
+                def found = false
+                def entry
+                while ((entry = nestedZip.nextEntry) != null) {
+                    if (entry.name == classPath) {
+                        found = true
+                        break
+                    }
+                }
+                nestedZip.close()
+                found
+            }
+        }
+
+        def zip = new java.util.zip.ZipFile(jarFile)
+        try {
+            if (zip.getEntry('META-INF/jarjar/metadata.json') == null) {
+                throw new GradleException("Missing META-INF/jarjar/metadata.json in ${jarFile.name}")
+            }
+
+            def embeddedEntries = zip.entries().findAll { it.name.startsWith('META-INF/jarjar/') && it.name.endsWith('.jar') }
+            def embedded = embeddedEntries.collect { it.name }
+
+            def coreEntry = embeddedEntries.find { e -> e.name.contains('watchtower-core') }
+            if (coreEntry == null) {
+                throw new GradleException("No nested watchtower-core JAR in META-INF/jarjar/ of ${jarFile.name}")
+            }
+            if (!nestedJarContains(zip, coreEntry, 'dev/mcstatus/watchtower/core/report/ReportEngine.class')) {
+                throw new GradleException("Nested watchtower-core JAR missing ReportEngine.class")
+            }
+
+            def totpEntry = embeddedEntries.find { e -> e.name.toLowerCase().contains('totp') }
+            if (totpEntry == null) {
+                throw new GradleException("No nested TOTP JAR in META-INF/jarjar/ of ${jarFile.name}")
+            }
+            if (!nestedJarContains(zip, totpEntry, 'dev/samstevens/totp/qr/QrGenerator.class')) {
+                throw new GradleException("Nested TOTP JAR missing QrGenerator.class")
+            }
+
+            def zxingEntry = embeddedEntries.find { e ->
+                nestedJarContains(zip, e, 'com/google/zxing/Writer.class')
+            }
+            if (zxingEntry == null) {
+                throw new GradleException("No nested ZXing JAR with Writer.class in META-INF/jarjar/ of ${jarFile.name}")
+            }
+
+            def gsonEmbedded = embedded.find { it.toLowerCase().contains('gson') }
+            if (gsonEmbedded != null) {
+                throw new GradleException(
+                        "Gson must not be embedded (module conflict on boot): ${gsonEmbedded}"
+                )
+            }
+            if (zip.getEntry('assets/watchtower/web/index.html') == null) {
+                throw new GradleException("Missing embedded dashboard assets/watchtower/web/index.html in ${jarFile.name}")
+            }
+            if (zip.getEntry('assets/watchtower/web/vendor/chart.umd.min.js') == null) {
+                throw new GradleException("Missing embedded Chart.js vendor asset in ${jarFile.name}")
+            }
+            logger.lifecycle("verifyModJar OK: ${jarFile.name} (${jarFile.length()} bytes)")
+            logger.lifecycle("  embedded: ${embedded.join(', ')}")
+        } finally {
+            zip.close()
+        }
+    }
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('verifyModJar')
+}

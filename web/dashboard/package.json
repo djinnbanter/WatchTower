@@ -1,0 +1,11 @@
+{
+  "name": "watchtower-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:css": "node scripts/build-css.mjs",
+    "build:favicon": "node scripts/build-favicon.mjs",
+    "generate:mock": "node scripts/generate-mock-data.mjs",
+    "preview": "node scripts/build-favicon.mjs && node scripts/preview-server.mjs"
+  }
+}

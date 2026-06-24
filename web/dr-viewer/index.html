@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="black" data-app="dr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watchtower DR — Disaster Recovery</title>
+  <link rel="icon" href="assets/watchtower-icon-simple.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="assets/watchtower-icon-simple.png" type="image/png" sizes="16x16">
+  <link rel="shortcut icon" href="assets/watchtower-icon-simple.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="dr-overrides.css">
+  <script src="vendor/lucide.min.js" defer></script>
+</head>
+<body>
+  <div class="dr-mode-banner" id="dr-mode-banner">
+    <img src="assets/watchtower-logo.png" alt="" class="dr-banner-logo" width="18" height="18">
+    Everything runs in your browser — your logs are never uploaded to us.
+  </div>
+
+  <div class="page-wrap">
+    <div id="view-loading" class="view-hidden wt-fullscreen wt-boot" aria-live="polite" aria-busy="true">
+      <div class="wt-boot__card dr-loading-card">
+        <img src="assets/watchtower-logo.png" alt="" class="wt-boot__logo dr-loading-logo" width="56" height="56">
+        <div class="dr-spinner" aria-hidden="true"></div>
+        <h2 class="wt-boot__title" id="loading-title">Working on your bundle…</h2>
+        <p class="wt-text-caption wt-text-tertiary" id="loading-message">Hang on — this usually takes a few seconds.</p>
+        <p class="wt-text-caption wt-text-tertiary hidden" id="loading-detail"></p>
+      </div>
+    </div>
+
+    <section id="view-ingest">
+      <div class="dr-rescue">
+        <div class="dr-rescue-glow" aria-hidden="true"></div>
+
+        <header class="dr-rescue-hero">
+          <img src="assets/watchtower-logo.png" alt="Watchtower" class="dr-logo" width="88" height="88">
+          <div class="dr-rescue-intro">
+            <p class="dr-rescue-kicker">Watchtower disaster recovery</p>
+            <h1 class="dr-rescue-title">Server won&rsquo;t start?<br><span class="dr-rescue-title-accent">We&rsquo;ll help you fix it.</span></h1>
+            <p class="dr-rescue-lead">Two quick steps — run one command on your host, then drop the zip here. No running mod required.</p>
+          </div>
+        </header>
+
+        <ol class="dr-rescue-steps">
+          <li class="dr-rescue-step">
+            <div class="dr-step-marker" aria-hidden="true"><span>1</span></div>
+            <div class="dr-step-content">
+              <h2 class="dr-step-heading">Run this on your game server</h2>
+              <p class="dr-step-lead">SSH into the <strong>host</strong> (the machine that runs Minecraft). Open a terminal in your server&rsquo;s <code>mods</code> folder.</p>
+
+              <div class="dr-terminal-panel">
+                <div class="dr-terminal-chrome">
+                  <span class="dr-terminal-dot red"></span>
+                  <span class="dr-terminal-dot amber"></span>
+                  <span class="dr-terminal-dot green"></span>
+                  <span class="dr-terminal-label">your host</span>
+                </div>
+                <pre class="dr-terminal-body" id="dr-cli-display"><code><span class="dr-cmd-comment"># go to your server mods folder</span>
+cd /path/to/your/server/mods
+
+<span class="dr-cmd-comment"># build the recovery zip (one file)</span>
+java -jar watchtower-cli-1.0.0.jar dr</code></pre>
+                <div class="dr-terminal-actions">
+                  <button type="button" class="wt-btn wt-btn--primary wt-btn--sm" id="btn-copy-cli">
+                    <i data-lucide="copy" width="14" height="14"></i> Copy commands
+                  </button>
+                  <button type="button" class="wt-btn wt-btn--ghost wt-btn--sm" id="btn-copy-cli-tmp">
+                    <i data-lucide="folder-output" width="14" height="14"></i> Copy with <code>--out /tmp</code>
+                  </button>
+                </div>
+              </div>
+
+              <div class="dr-help-card">
+                <h3 class="dr-help-title"><i data-lucide="map-pin" width="16" height="16"></i> Where does the zip go?</h3>
+                <ul class="dr-help-list">
+                  <li><strong>Normal:</strong> saved in the folder you ran the command from — usually <code>mods/</code>.</li>
+                  <li><strong>Look for:</strong> <code>watchtower-dr-bundle-&lt;timestamp&gt;.zip</code> — that&rsquo;s the only file you need.</li>
+                </ul>
+              </div>
+
+              <details class="dr-panel-help">
+                <summary class="dr-panel-help-toggle">
+                  <span class="dr-panel-help-icon" aria-hidden="true">
+                    <i data-lucide="folder-output" width="16" height="16"></i>
+                  </span>
+                  <span class="dr-panel-help-label">
+                    <span class="dr-panel-help-title">My panel won&rsquo;t let me save files here</span>
+                    <span class="dr-panel-help-hint">Click to show the <code>--out /tmp</code> workaround</span>
+                  </span>
+                  <span class="dr-panel-help-chevron" aria-hidden="true">
+                    <i data-lucide="chevron-down" width="18" height="18"></i>
+                  </span>
+                </summary>
+                <div class="dr-panel-help-body">
+                  <p>Add <code>--out /tmp</code> to write on the <strong>host</strong>, not inside your Minecraft server folder:</p>
+                  <pre class="dr-inline-code"><code>java -jar watchtower-cli-1.0.0.jar dr --out /tmp</code></pre>
+                  <p class="dr-panel-help-note"><strong>/tmp</strong> is the Linux temp folder on the same machine as your SSH session. Grab the zip from <code>/tmp</code> with SFTP or your panel&rsquo;s file manager. On Windows hosts, try <code>--out %TEMP%</code> instead.</p>
+                </div>
+              </details>
+            </div>
+          </li>
+
+          <li class="dr-rescue-step">
+            <div class="dr-step-marker" aria-hidden="true"><span>2</span></div>
+            <div class="dr-step-content">
+              <h2 class="dr-step-heading">Upload that zip here</h2>
+              <p class="dr-step-lead">We&rsquo;ll read the crash loop and show you what to fix first.</p>
+
+              <div class="dr-upload-hero" id="dropzone-main">
+                <div class="dr-upload-inner">
+                  <div class="dr-upload-icon-wrap">
+                    <i data-lucide="file-archive" width="40" height="40" class="dr-upload-icon"></i>
+                  </div>
+                  <p class="dr-upload-title">Drop <code>watchtower-dr-bundle-*.zip</code></p>
+                  <p class="dr-upload-sub">or choose the file from your computer</p>
+                  <label class="wt-btn wt-btn--primary dr-upload-btn">
+                    <i data-lucide="upload" width="18" height="18"></i> Choose zip file
+                    <input type="file" id="input-dr-bundle" class="dr-file-input" accept=".zip,application/zip,.json,application/json">
+                  </label>
+                </div>
+                <p class="dr-trust-line" id="ingest-status">
+                  <i data-lucide="shield-check" width="14" height="14"></i>
+                  Analysis stays on your device — nothing is sent to a server
+                </p>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <p class="dr-rescue-reassure">
+          <i data-lucide="heart-pulse" width="16" height="16"></i>
+          Take a breath — most crash loops are a bad mod or config. We&rsquo;ll point you at the line in the log.
+        </p>
+
+        <details class="dr-other-options dr-other-ghost">
+          <summary>No CLI? Upload logs manually instead</summary>
+          <div class="dr-other-inner">
+            <label class="wt-btn wt-btn--ghost">
+              <i data-lucide="file-json" width="14" height="14"></i> Upload facts JSON
+              <input type="file" id="input-facts-json" class="dr-file-input" accept=".json,application/json">
+            </label>
+            <label class="wt-btn wt-btn--ghost">
+              <i data-lucide="file-text" width="14" height="14"></i> Optional brief (.txt)
+              <input type="file" id="input-facts-brief" class="dr-file-input" accept=".txt,text/plain">
+            </label>
+            <div class="dr-dropzone" id="dropzone">
+              <p class="wt-text-caption wt-text-tertiary"><strong>Advanced:</strong> drop folder, zip, or files</p>
+            </div>
+            <div class="dr-ingest-actions">
+              <label class="wt-btn wt-btn--ghost">
+                <i data-lucide="folder" width="14" height="14"></i> Folder
+                <input type="file" id="input-folder" class="dr-file-input" webkitdirectory multiple>
+              </label>
+              <label class="wt-btn wt-btn--ghost">
+                <i data-lucide="file-archive" width="14" height="14"></i> Zip
+                <input type="file" id="input-zip" class="dr-file-input" accept=".zip,application/zip">
+              </label>
+              <select id="input-example" class="dr-ingest-select" aria-label="Load example">
+                <option value="">Load example…</option>
+                <option value="type2-mod-load">Corrupt mod (pride)</option>
+                <option value="type2-missing-dep">Missing dependency (create)</option>
+              </select>
+              <select id="input-loader" class="dr-ingest-select" aria-label="Mod loader">
+                <option value="neoforge">NeoForge</option>
+                <option value="fabric">Fabric</option>
+              </select>
+              <button type="button" class="wt-btn wt-btn--primary" id="btn-analyze" disabled>
+                <i data-lucide="search" width="14" height="14"></i> Analyze files
+              </button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <div id="view-results" class="view-hidden">
+      <div class="wt-shell wt-shell--dr">
+        <aside class="wt-rail wt-shell__nav" id="tab-nav" aria-label="DR sections">
+          <div class="wt-rail__header">
+            <img src="assets/watchtower-logo.png" alt="" class="wt-rail__logo" width="36" height="36">
+            <span class="wt-rail__title">Watchtower DR</span>
+          </div>
+          <nav class="wt-rail__nav" role="tablist">
+            <div class="wt-rail__group">
+              <div class="wt-rail__label">Recovery</div>
+              <a href="#" class="wt-rail__link is-active" data-tab="fix" role="tab" aria-selected="true">
+                <span class="wt-rail__icon"><i data-lucide="wrench"></i></span>
+                <span class="wt-rail__text">Fix</span>
+              </a>
+              <a href="#" class="wt-rail__link" data-tab="attempts" role="tab" aria-selected="false">
+                <span class="wt-rail__icon"><i data-lucide="refresh-cw"></i></span>
+                <span class="wt-rail__text">Attempts</span>
+                <span class="wt-rail__badge hidden" data-tab-badge="attempts"></span>
+              </a>
+              <a href="#" class="wt-rail__link" data-tab="logs" role="tab" aria-selected="false">
+                <span class="wt-rail__icon"><i data-lucide="scroll-text"></i></span>
+                <span class="wt-rail__text">Logs</span>
+              </a>
+              <a href="#" class="wt-rail__link" data-tab="mods" role="tab" aria-selected="false">
+                <span class="wt-rail__icon"><i data-lucide="package"></i></span>
+                <span class="wt-rail__text">Mods</span>
+              </a>
+              <a href="#" class="wt-rail__link" data-tab="report" role="tab" aria-selected="false">
+                <span class="wt-rail__icon"><i data-lucide="file-text"></i></span>
+                <span class="wt-rail__text">Report</span>
+              </a>
+            </div>
+          </nav>
+          <div class="wt-rail__bottom">
+            <div class="wt-rail__footer">
+              <button type="button" class="wt-btn wt-btn--icon" id="theme-toggle" aria-label="Cycle theme">
+                <i data-lucide="circle-dot" id="theme-icon"></i>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <header class="wt-cmdbar wt-shell__cmd">
+          <div class="wt-cmdbar__left">
+            <h1 class="wt-cmdbar__title">
+              <span id="tower-host-name">—</span>
+            </h1>
+            <p class="wt-text-caption wt-text-tertiary wt-cmdbar__path" id="tower-server-path" title=""></p>
+          </div>
+          <div class="wt-cmdbar__center">
+            <div class="wt-cmdbar__context">
+              <span id="tower-report-window">—</span>
+            </div>
+          </div>
+          <div class="wt-cmdbar__right">
+            <button type="button" class="wt-btn wt-btn--ghost wt-btn--sm" id="btn-new-analysis">
+              <i data-lucide="folder-open" width="14" height="14"></i> New analysis
+            </button>
+          </div>
+        </header>
+
+        <main class="wt-shell__main">
+          <div id="main-content" class="wt-canvas" role="main"></div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <div class="wt-toast-container" id="toast-stack" aria-live="polite"></div>
+
+  <script src="dashboard/client-mod-ignores-stub.js"></script>
+  <script src="dashboard/labels.js"></script>
+  <script src="dashboard/acks.js"></script>
+  <script src="dashboard/health.js"></script>
+  <script src="dashboard/toast.js"></script>
+  <script>window.WatchtowerToast = typeof WatchtowerToast !== 'undefined' ? WatchtowerToast : null;</script>
+  <script src="tower/motion.js"></script>
+  <script src="dashboard/dr-dashboard.js"></script>
+  <script type="module" src="dr-app.js"></script>
+</body>
+</html>

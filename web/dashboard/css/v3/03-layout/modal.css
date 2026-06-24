@@ -1,0 +1,122 @@
+/* Watchtower UI v3 — Modal System */
+
+.wt-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--wt-space-4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 250ms var(--wt-ease-out);
+}
+
+.wt-modal-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Modal Card */
+.wt-modal {
+  background: var(--wt-surface-1);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-xl);
+  box-shadow: var(--wt-shadow-modal);
+  width: 100%;
+  max-width: 500px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  transition: all 300ms var(--wt-ease-spring);
+  will-change: transform, opacity;
+  overflow: hidden; /* For header/footer radius */
+}
+
+.wt-modal-backdrop.is-open .wt-modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* Modal Header */
+.wt-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--wt-space-4) var(--wt-space-6);
+  border-bottom: 1px solid var(--wt-border);
+  background: var(--wt-surface-2);
+}
+
+.wt-modal__title {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-subheading);
+  font-weight: 700;
+  color: var(--wt-text-primary);
+  margin: 0;
+}
+
+.wt-modal__close {
+  color: var(--wt-text-secondary);
+  transition: color 200ms ease;
+}
+
+.wt-modal__close:hover {
+  color: var(--wt-text-primary);
+}
+
+/* Modal Body */
+.wt-modal__body {
+  padding: var(--wt-space-6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Modal Footer */
+.wt-modal__footer {
+  padding: var(--wt-space-4) var(--wt-space-6);
+  border-top: 1px solid var(--wt-border);
+  background: var(--wt-surface-0);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--wt-space-3);
+}
+
+/* Focus Trap Visuals */
+.wt-modal:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 2px;
+}
+
+/* Specific Modals */
+.wt-modal--wide { max-width: 800px; }
+.wt-modal--narrow { max-width: 400px; }
+
+/* Progress Indicator (for Run Report) */
+.wt-modal-progress {
+  display: flex;
+  gap: var(--wt-space-1);
+  margin-bottom: var(--wt-space-6);
+}
+
+.wt-modal-progress__step {
+  height: 4px;
+  flex: 1;
+  background: var(--wt-surface-3);
+  border-radius: 2px;
+  transition: background-color 300ms ease;
+}
+
+.wt-modal-progress__step.is-active {
+  background: var(--wt-accent);
+}
+.wt-modal-progress__step.is-error {
+  background: var(--wt-danger);
+}

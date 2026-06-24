@@ -1,0 +1,64 @@
+plugins {
+    id 'java-library'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+group = 'dev.mcstatus.watchtower'
+version = '2.0.6'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+repositories {
+    mavenCentral()
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.25.5'
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option 'lite'
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    api 'com.google.code.gson:gson:2.10.1'
+    api 'com.google.protobuf:protobuf-javalite:3.25.5'
+    api 'dev.samstevens.totp:totp:1.7.1'
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
+}
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes(
+                'FMLModType': 'LIBRARY',
+                'Automatic-Module-Name': 'dev.mcstatus.watchtower.core'
+        )
+    }
+}
+
+tasks.register('sparkAuditFixtures', JavaExec) {
+    group = 'verification'
+    description = 'Parse Spark example fixtures and write expected-*.json golden files'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.mcstatus.watchtower.core.collect.SparkFixtureAuditor'
+    args = [rootProject.projectDir.absolutePath]
+    systemProperty 'spark.audit.write', 'true'
+}

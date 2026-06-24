@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "updated_at": "2026-06-22T14:05:00+00:00",
+  "report_reconcile_at": null,
+  "ops_cache_seq": 3,
+  "activity": {
+    "scanned_at": "2026-06-22T14:05:00+00:00",
+    "new_count": 4,
+    "events": [
+      {
+        "time": "2026-06-22T14:05:00+00:00",
+        "type": "tick_lag",
+        "detail": "Can't keep up! Running 5000ms or 100 ticks behind",
+        "source": "scan",
+        "ms_behind": 5000
+      },
+      {
+        "time": "2026-06-22T14:03:15+00:00",
+        "type": "command",
+        "detail": "/chunky continue",
+        "source": "scan",
+        "player": "Admin"
+      },
+      {
+        "time": "2026-06-22T14:03:12+00:00",
+        "type": "player_join",
+        "detail": "Steve",
+        "source": "scan"
+      },
+      {
+        "time": "2026-06-22T14:03:12+00:00",
+        "type": "lag_incident",
+        "detail": "Lag spike captured",
+        "source": "scan",
+        "incident_id": "2026-06-22T14-03-12Z"
+      }
+    ]
+  },
+  "lag_issues": {
+    "updated_at": "2026-06-22T14:03:12+00:00",
+    "active_count": 1,
+    "entries": [
+      {
+        "id": "LAG-2026-06-22T14-03-12Z",
+        "incident_id": "2026-06-22T14-03-12Z",
+        "severity": "critical",
+        "time": "2026-06-22T14:03:12+00:00",
+        "title": "Lag spike — MSPT 120ms · TPS 8.2",
+        "narrative": "MSPT hit 120ms with TPS 8.2 and 4 players online. World pregen was active.",
+        "hints": [
+          "4 players online — lag may be player-driven (entities, chunk loading)",
+          "World pregen running — competes with tick time; consider pausing during peak hours"
+        ],
+        "metrics": { "tps": 8.2, "mspt": 120.4, "players_online": 4 },
+        "players": ["Steve", "Alex"],
+        "resolved": false
+      }
+    ]
+  },
+  "crashes": {
+    "scanned_at": "2026-06-22T12:00:00+00:00",
+    "count": 0,
+    "unreviewed": 0,
+    "entries": []
+  },
+  "scorecard": {
+    "low_tps_minutes_24h": 12,
+    "low_tps_minutes_7d": 48,
+    "mspt_p95_24h": 42.3,
+    "mspt_jitter_max_24h": 18.1
+  }
+}

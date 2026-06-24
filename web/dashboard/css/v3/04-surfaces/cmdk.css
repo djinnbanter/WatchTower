@@ -1,0 +1,167 @@
+/* Watchtower UI v3 — Command Palette (cmdk) */
+
+/* The backdrop blur is handled by wt-modal-backdrop, 
+   but cmdk needs a bit more blur for focus */
+.wt-cmdk-backdrop {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.6);
+  align-items: flex-start; /* Align near top, not center */
+  padding-top: 10vh;
+}
+
+.wt-cmdk {
+  width: 100%;
+  max-width: 640px;
+  background: var(--wt-surface-1);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-xl);
+  box-shadow: var(--wt-shadow-card-hover);
+  overflow: hidden;
+  transform: translateY(-20px) scale(0.98);
+  opacity: 0;
+  transition: all 250ms var(--wt-ease-spring);
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.wt-cmdk-backdrop.is-open .wt-cmdk {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* Search Input Area */
+.wt-cmdk__header {
+  padding: var(--wt-space-4) var(--wt-space-6);
+  border-bottom: 1px solid var(--wt-border);
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-3);
+  background: var(--wt-surface-2);
+}
+
+.wt-cmdk__icon {
+  color: var(--wt-text-secondary);
+}
+
+.wt-cmdk__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--wt-text-primary);
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-subheading);
+  outline: none;
+  padding: 0;
+}
+
+.wt-cmdk__input::placeholder {
+  color: var(--wt-text-tertiary);
+}
+
+.wt-cmdk__kbd {
+  background: var(--wt-surface-3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--wt-font-mono);
+  color: var(--wt-text-secondary);
+  border: 1px solid var(--wt-border);
+}
+
+/* Results Area */
+.wt-cmdk__body {
+  overflow-y: auto;
+  padding: var(--wt-space-2) 0;
+  scroll-behavior: smooth;
+  /* Hide scrollbar for cleaner look, but keep functionality */
+  scrollbar-width: none;
+}
+.wt-cmdk__body::-webkit-scrollbar {
+  display: none;
+}
+
+.wt-cmdk__group {
+  margin-bottom: var(--wt-space-2);
+}
+
+.wt-cmdk__group-label {
+  padding: var(--wt-space-2) var(--wt-space-6);
+  font-size: var(--wt-text-micro);
+  font-weight: 700;
+  color: var(--wt-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: sticky;
+  top: 0;
+  background: var(--wt-surface-1);
+  z-index: 2;
+}
+
+/* Result Items */
+.wt-cmdk__item {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-3);
+  padding: var(--wt-space-3) var(--wt-space-6);
+  cursor: pointer;
+  transition: all 100ms ease;
+  color: var(--wt-text-secondary);
+  border-left: 3px solid transparent;
+}
+
+.wt-cmdk__item[aria-selected="true"],
+.wt-cmdk__item:hover {
+  background: var(--wt-surface-2);
+  color: var(--wt-text-primary);
+  border-left-color: var(--wt-accent);
+}
+
+.wt-cmdk__item-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wt-text-tertiary);
+  transition: color 100ms ease;
+}
+
+.wt-cmdk__item[aria-selected="true"] .wt-cmdk__item-icon {
+  color: var(--wt-accent);
+}
+
+.wt-cmdk__item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.wt-cmdk__item-title {
+  font-weight: 500;
+}
+
+.wt-cmdk__item-desc {
+  font-size: var(--wt-text-caption);
+  color: var(--wt-text-tertiary);
+}
+
+.wt-cmdk__item-action {
+  font-size: var(--wt-text-micro);
+  color: var(--wt-text-tertiary);
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.wt-cmdk__item[aria-selected="true"] .wt-cmdk__item-action {
+  opacity: 1;
+}
+
+/* Empty State */
+.wt-cmdk__empty {
+  padding: var(--wt-space-10) var(--wt-space-6);
+  text-align: center;
+  color: var(--wt-text-tertiary);
+  font-size: var(--wt-text-body);
+}

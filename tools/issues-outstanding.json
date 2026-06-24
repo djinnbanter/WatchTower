@@ -1,0 +1,307 @@
+{
+  "repo": "djinnbanter/WatchTower",
+  "trackerBase": "https://github.com/djinnbanter/WatchTower/issues",
+  "milestones": [
+    {
+      "title": "1.0.1 — NeoForge 1.21.x line (+mc1.21 artifact)",
+      "description": "Widen minecraft_version_range; docs + smoke test"
+    },
+    {
+      "title": "1.0.1a — Hosted panels & operator settings",
+      "description": "WT-003, WT-004, WT-006, WT-025 update notification"
+    },
+    {
+      "title": "1.0.10 — Backups beyond panels",
+      "description": "WT-014"
+    },
+    {
+      "title": "1.0.3 — Live ops foundation",
+      "description": "WT-024 — ops cache, live crashes, master refresh UX"
+    },
+    {
+      "title": "1.0.8 — Performance insights",
+      "description": "WT-023 — L1 insights, busy/quiet, sticky lag, export"
+    },
+    {
+      "title": "1.0.12 — Mod intelligence v2",
+      "description": "WT-007 through WT-011"
+    },
+    {
+      "title": "1.0.13 — Crash intelligence v2",
+      "description": "WT-022"
+    },
+    {
+      "title": "1.0.14 — Crash inbox and notifications",
+      "description": "WT-012, WT-013"
+    },
+    {
+      "title": "1.0.0 — Initial public release",
+      "description": "Shipped — WT-001, WT-002, WT-015–WT-021"
+    },
+    {
+      "title": "Backlog",
+      "description": "Unscheduled items"
+    }
+  ],
+  "labels": [
+    {
+      "name": "planned",
+      "color": "1d76db",
+      "description": "Scheduled in roadmap"
+    },
+    {
+      "name": "open",
+      "color": "e99695",
+      "description": "Acknowledged, not yet scheduled"
+    },
+    {
+      "name": "tester-feedback",
+      "color": "7057ff",
+      "description": "Raised by operator/tester"
+    },
+    {
+      "name": "metrics",
+      "color": "0e8a16",
+      "description": "Host/container metrics"
+    },
+    {
+      "name": "panel",
+      "color": "5319e7",
+      "description": "Hosting panel integration"
+    },
+    {
+      "name": "hosted-panel",
+      "color": "006b75",
+      "description": "bloom.host, Ptero, Wings containers"
+    },
+    {
+      "name": "dashboard",
+      "color": "fbca04",
+      "description": "Embedded dashboard UI"
+    },
+    {
+      "name": "mods",
+      "color": "d876e3",
+      "description": "Mod classification and health"
+    },
+    {
+      "name": "crashes",
+      "color": "b60205",
+      "description": "Crash inbox and review"
+    },
+    {
+      "name": "backups",
+      "color": "cfd3d7",
+      "description": "Backup visibility"
+    },
+    {
+      "name": "performance",
+      "color": "1d76db",
+      "description": "Live metrics, rollups, performance insights"
+    },
+    {
+      "name": "shipped",
+      "color": "0e8a16",
+      "description": "Released — see milestone"
+    }
+  ],
+  "issues": [
+    {
+      "id": "WT-003",
+      "title": "Container metrics (bloom.host)",
+      "milestone": "1.0.1a — Hosted panels & operator settings",
+      "labels": [
+        "WT-003",
+        "planned",
+        "tester-feedback",
+        "metrics",
+        "hosted-panel"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.1a — Hosted panels & operator settings |\n| **Source** | Tester feedback — memory/network look like host, not container |\n\n**Problem:** `HostMetricsCollector` reads `/proc` from inside the container. On bloom.host and similar hosts, memory and network can reflect the **host** or cgroup limits inconsistently.\n\n**Acceptance:** Detect bloom/Wings/Pterodactyl-style containers; prefer cgroup v2 memory limit + container network counters when available; label metrics \"container\" vs \"host\" in UI."
+    },
+    {
+      "id": "WT-004",
+      "title": "False panel down (bloom.host)",
+      "milestone": "1.0.1a — Hosted panels & operator settings",
+      "labels": [
+        "WT-004",
+        "planned",
+        "tester-feedback",
+        "panel",
+        "hosted-panel"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.1a |\n| **Source** | Tester feedback — panel status erroneously down |\n\n**Problem:** Auto panel detection may match Docker/Wings heuristics; panel daemon is not visible from inside the game container → `PANEL_DOWN` false positive.\n\n**Workaround today:** `PANEL=none` in `watchtower/watchtower.conf`.\n\n**Acceptance:** bloom.host profile; suppress panel-down when `PANEL=none` or hosted-container mode; document override in wiki/INSTALL."
+    },
+    {
+      "id": "WT-005",
+      "title": "CPU display scale",
+      "milestone": "Backlog",
+      "labels": [
+        "WT-005",
+        "open",
+        "tester-feedback",
+        "metrics",
+        "dashboard"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | open |\n| **Roadmap** | Evaluate with 1.0.1a metrics work |\n| **Source** | Tester feedback — aggregate 0–100% vs 0–800% on 8-core host |\n\n**Problem:** Live CPU is normalized utilization (0–100%), not \"sum of all cores\" (e.g. 0–800% on 8 threads). Both are valid; preference varies.\n\n**Acceptance:** Optional `CPU_DISPLAY_MODE=normalized|multicore` or show both core count + normalized with tooltip."
+    },
+    {
+      "id": "WT-006",
+      "title": "TPS threshold in Settings UI",
+      "milestone": "1.0.1a — Hosted panels & operator settings",
+      "labels": [
+        "WT-006",
+        "planned",
+        "tester-feedback",
+        "dashboard"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.1a |\n| **Source** | Tester feedback — Issues tab permanently warning on modded TPS |\n\n**Problem:** `TPS_WARN` exists in `watchtower.conf` (default `19.5`) but **not** in dashboard Settings (only schedule / lookback / incremental). Heavy modpacks need ~17.5–18.0.\n\n**Workaround today:** Edit `watchtower/watchtower.conf` → `TPS_WARN=17.5` (and `MSPT_WARN` if needed).\n\n**Acceptance:** Settings API + Help expose `TPS_WARN` / `MSPT_WARN`; scorecard and Issues respect updated values without restart where possible."
+    },
+    {
+      "id": "WT-007",
+      "title": "Mod classification false positives",
+      "milestone": "1.0.12 — Mod intelligence v2",
+      "labels": [
+        "WT-007",
+        "planned",
+        "tester-feedback",
+        "mods"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.12 |\n| **Source** | Tester feedback — Create flagged as client; Xaero's hybrid confusion |\n\n**Problem:** `ModSideScorer` uses static lists, TOML text, log attribution, and optional bytecode scan. Known pain points:\n\n- **Create** in `UNCERTAIN_IDS` but still surfaces in client-mod suggestions when log noise hits Flywheel/Ponder.\n- **Ponder** in `LIKELY_REMOVABLE_IDS` but required by Create ecosystem on server.\n- **Xaero's** — client-heavy jars with optional server components.\n- Fuzzy log attribution can blame the wrong mod id.\n\n**Workaround today:** Per-mod ignore in Mods tab (`client_mod_ignores`).\n\n**Acceptance:** Fewer false \"remove from server\" suggestions for server-required gameplay mods; hybrid mods land in `uncertain` / `test_remove` with clear copy, not `likely_removable`.\n\n**Related:** WT-008, WT-010"
+    },
+    {
+      "id": "WT-008",
+      "title": "Two-layer mod side scoring",
+      "milestone": "1.0.12 — Mod intelligence v2",
+      "labels": [
+        "WT-008",
+        "planned",
+        "mods"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.12 |\n| **Source** | Design — local heuristics + Modrinth validation |\n\n**Problem:** Local-only scoring cannot authoritatively resolve long-tail mods; static lists require constant maintenance.\n\n**Design:** Layer 1 (local ModSideScorer) → Layer 2 optional Modrinth API (SHA-512 hash lookup) → combined score in facts JSON.\n\n**Acceptance:** `MODRINTH_LOOKUP=true` in `watchtower.conf`; cache in `watchtower/modrinth-cache.json`; DR/offline skips network; UI shows signal e.g. `modrinth:server_required`.\n\n**Related:** WT-011, WT-007"
+    },
+    {
+      "id": "WT-009",
+      "title": "Mod dependency tree UI",
+      "milestone": "1.0.12 — Mod intelligence v2",
+      "labels": [
+        "WT-009",
+        "planned",
+        "mods",
+        "dashboard"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.12 |\n| **Source** | Design — dependency tree when evaluating removals |\n\n**Problem:** `ModDependencyGraph` exists in core but dashboard only shows flat `dependents[]` on flagged mods. Operators cannot see why a mod is protected or what breaks if removed.\n\n**Acceptance:** Mods tab expandable tree (required / optional / embedded deps from `mods.toml`); highlight nodes implicated in client-mod scoring; DR viewer parity for offline facts."
+    },
+    {
+      "id": "WT-010",
+      "title": "Server-required allowlist",
+      "milestone": "1.0.12 — Mod intelligence v2",
+      "labels": [
+        "WT-010",
+        "planned",
+        "mods"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.12 |\n| **Source** | Mod classification review |\n\n**Problem:** No `SERVER_REQUIRED_IDS` denylist for \"never flag as client-only.\" Create ecosystem and common gameplay mods need hard guards independent of network.\n\n**Acceptance:** `SERVER_REQUIRED_IDS` (create, flywheel, …); Ponder removed from `LIKELY_REMOVABLE_IDS` or gated when Create present; dependents of server-required mods inherit protection."
+    },
+    {
+      "id": "WT-011",
+      "title": "Modrinth opt-in network",
+      "milestone": "1.0.12 — Mod intelligence v2",
+      "labels": [
+        "WT-011",
+        "planned",
+        "mods"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.12 |\n| **Source** | Design — privacy / \"no cloud\" positioning |\n\n**Problem:** Modrinth calls send jar hashes or slugs off-box; must not run by default.\n\n**Acceptance:** `MODRINTH_LOOKUP=false` default; `MODRINTH_LOOKUP_ON_REPORT=true` optional; rate-limit + cache; disclose in docs; skip in `report_mode: dr`."
+    },
+    {
+      "id": "WT-012",
+      "title": "Group similar watchdog crashes",
+      "milestone": "1.0.14 — Crash inbox and notifications",
+      "labels": [
+        "WT-012",
+        "planned",
+        "tester-feedback",
+        "crashes",
+        "dashboard"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.13 |\n| **Source** | Tester feedback — most crashes are \"server thread stopped responding\" |\n\n**Problem:** Each watchdog stall is a separate Crashes row; no fingerprint grouping by stall duration / MSPT context / repeat count.\n\n**Acceptance:** Crashes tab groups `ServerHangWatchdog` (and similar) by signature; show count + first/last seen; expand for individual files."
+    },
+    {
+      "id": "WT-013",
+      "title": "Mark all crashes reviewed",
+      "milestone": "1.0.14 — Crash inbox and notifications",
+      "labels": [
+        "WT-013",
+        "planned",
+        "tester-feedback",
+        "crashes",
+        "dashboard"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.13 |\n| **Source** | Tester feedback |\n\n**Problem:** Only per-crash acknowledge exists; long watchdog runs clutter Issues/Crashes badges.\n\n**Acceptance:** Bulk acknowledge API endpoint; dashboard button \"Mark all reviewed\"; persists in state like single acks."
+    },
+    {
+      "id": "WT-014",
+      "title": "External backups unusable",
+      "milestone": "1.0.10 — Backups beyond panels",
+      "labels": [
+        "WT-014",
+        "shipped",
+        "tester-feedback",
+        "backups",
+        "hosted-panel"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | shipped |\n| **Roadmap** | 1.0.10 – 1.0.10.3 |\n| **Source** | Tester feedback — bloom.host stores backups outside container |\n\n**Shipped:** Panel backup marker file + webhook (`BACKUP_WEBHOOK_TOKEN`); `optional.backup_external` on facts; suppress false `BACKUP_NOT_FOUND` when signal is fresh. Dashboard setup in **Settings → Backups** (2-step fast track as of 1.0.10.3)."
+    },
+    {
+      "id": "WT-022",
+      "title": "Crash reports misclassified as unknown",
+      "milestone": "1.0.13 — Crash intelligence v2",
+      "labels": [
+        "WT-022",
+        "planned",
+        "crashes",
+        "dashboard"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md#1013--better-crash-and-dr-advice) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.13 — Crash intelligence v2 |\n| **Source** | Crash corpus study — 147 local crash reports |\n\n**Problem:** ~35% of crashes classify as `unknown` despite clear stacks; DR can blame wrong mod on watchdog stalls.\n\n**Acceptance:** `unknown` <10% on corpus; correct narratives + DR parity; session-gated mod errors; reference DR bundle 2026-06-20 fixture.\n\n**Related:** WT-012/WT-013 ship in 1.0.14 after fingerprints exist."
+    },
+    {
+      "id": "WT-023",
+      "title": "Performance insights from saved live data",
+      "milestone": "1.0.8 — Performance insights",
+      "labels": [
+        "WT-023",
+        "planned",
+        "tester-feedback",
+        "dashboard",
+        "metrics",
+        "performance"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md#108--performance-insights) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.8 — Performance insights (L1 prerequisite 1.0.2) |\n| **Source** | MYTH server admin feedback — use saved live history instead of Plan or another agent |\n\n**Problem:** Watchtower saves long-term live metrics but operators must interpret sparklines manually or run other tools for busy/quiet hours, performance-vs-player outliers, and sticky lag (MSPT stays high after players leave). Activity tab shows report events, not performance patterns.\n\n**Acceptance:** Busy/quiet hours on Overview; outlier minutes with timestamp + players + MSPT + mem; sticky lag on synthetic fixture; CSV export via `/api/performance/export`; Help clarifies Activity vs Overview insights. L1 rollups + `mem_used_gb_avg` in 1.0.2."
+    },
+    {
+      "id": "WT-024",
+      "title": "Live ops dashboard — tabs without full report",
+      "milestone": "1.0.3 — Live ops foundation",
+      "labels": [
+        "WT-024",
+        "planned",
+        "tester-feedback",
+        "dashboard",
+        "crashes"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md#planned-releases-1021014) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.3 (crashes) → 1.0.4 (Activity + poll) → 1.0.6 (mod peek) → 1.0.11 (read paths) → 1.0.14 (inbox) |\n| **Source** | Operator UX — dashboard should feel live; report = master audit |\n\n**Problem:** Crashes, Mods, Activity, Issues mostly read last L3 facts until Run report. Live tab and backup rescan already work.\n\n**Acceptance:** L2.5 ops cache; live scan APIs; session-gated poll (1.0.4); Issues peek not full engine; master report reconciles cache; inbox in 1.0.14."
+    },
+    {
+      "id": "WT-025",
+      "title": "Update available notification (not auto-update)",
+      "milestone": "1.0.1a — Hosted panels & operator settings",
+      "labels": [
+        "WT-025",
+        "planned",
+        "dashboard"
+      ],
+      "body": "**Links:** [Roadmap](https://github.com/djinnbanter/WatchTower/blob/main/docs/ROADMAP.md#coming-next--version-101a) · [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)\n\n| Field | Value |\n|-------|-------|\n| **Status** | planned |\n| **Roadmap** | 1.0.1a |\n| **Source** | Maintainer / operator UX — frequent 1.0.x patches |\n\n**Problem:** No in-dashboard signal when a newer Watchtower exists on GitHub/Modrinth. JAR replace always requires restart.\n\n**Acceptance:** Banner when latest > current; links to GitHub Releases + Modrinth; copy for both JARs + restart; UPDATE_CHECK=false disables; no auto-download."
+    }
+  ]
+}

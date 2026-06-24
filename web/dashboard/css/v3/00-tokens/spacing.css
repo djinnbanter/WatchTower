@@ -1,0 +1,44 @@
+/* Watchtower UI v3 — Spacing, Layout & Radius Tokens */
+
+:root {
+  /* Spacing Scale */
+  --wt-space-0: 2px;
+  --wt-space-1: 4px;
+  --wt-space-2: 8px;
+  --wt-space-3: 12px;
+  --wt-space-4: 16px;
+  --wt-space-5: 20px;
+  --wt-space-6: 24px;
+  --wt-space-8: 32px;
+  --wt-space-10: 40px;
+  --wt-space-12: 48px;
+  --wt-space-16: 64px;
+
+  /* Border Radius Scale */
+  --wt-radius-xs: 4px;
+  --wt-radius-sm: 6px;
+  --wt-radius-md: 8px;
+  --wt-radius-lg: 12px;
+  --wt-radius-xl: 16px;
+  --wt-radius-2xl: 24px;
+  --wt-radius-3xl: 28px;
+  --wt-radius-bento: 20px;
+  --wt-radius-full: 9999px;
+
+  /* Layout Constants */
+  --wt-sidebar-width: 260px;
+  --wt-sidebar-collapsed: 72px;
+  --wt-header-height: 64px;
+  /* Main canvas grows with window; soft cap on ultra-wide displays */
+  --wt-max-content: min(100%, 2000px);
+
+  /* Typography Scale */
+  --wt-text-hero: 48px;
+  --wt-text-display: 40px;
+  --wt-text-heading: 24px;
+  --wt-text-subheading: 18px;
+  --wt-text-body: 15px;
+  --wt-text-label: 14px;
+  --wt-text-caption: 13px;
+  --wt-text-micro: 12px;
+}

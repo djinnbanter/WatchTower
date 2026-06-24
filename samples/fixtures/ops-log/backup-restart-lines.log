@@ -1,0 +1,3 @@
+[23Jun2026 10:15:02] [Server thread/INFO]: [Crafty] Starting backup for Example Server
+[23Jun2026 10:30:00] [Server thread/INFO]: restart_server scheduled by panel API
+[23Jun2026 10:45:12] [Server thread/WARN]: Server will restart in 5 minutes

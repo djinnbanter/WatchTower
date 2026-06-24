@@ -1,0 +1,139 @@
+/* Watchtower UI v3 — Health Verdict Bento */
+
+.wt-verdict {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Health Beacon */
+.wt-verdict__beacon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wt-verdict__beacon-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--wt-healthy);
+  position: relative;
+  z-index: 2;
+}
+
+.wt-verdict__beacon-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--wt-healthy);
+  opacity: 0;
+  z-index: 1;
+}
+
+.wt-verdict--healthy .wt-verdict__beacon-dot { background: var(--wt-healthy); }
+.wt-verdict--healthy .wt-verdict__beacon-ring { border-color: var(--wt-healthy); animation: wt-pulse-glow 2.4s infinite var(--wt-ease-in-out); }
+
+.wt-verdict--warning .wt-verdict__beacon-dot { background: var(--wt-warning); }
+.wt-verdict--warning .wt-verdict__beacon-ring { border-color: var(--wt-warning); animation: wt-pulse-glow 1.5s infinite var(--wt-ease-in-out); }
+
+.wt-verdict--danger .wt-verdict__beacon-dot { background: var(--wt-danger); }
+.wt-verdict--danger .wt-verdict__beacon-ring { border-color: var(--wt-danger); animation: wt-pulse-glow 1s infinite var(--wt-ease-in-out); }
+
+
+/* Main Verdict Card Background Shift */
+.wt-verdict-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.wt-verdict-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  transition: background 0.5s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.wt-verdict--healthy.wt-verdict-card::before {
+  background: radial-gradient(circle at top right, var(--wt-healthy) 0%, transparent 70%);
+}
+.wt-verdict--warning.wt-verdict-card::before {
+  background: radial-gradient(circle at top right, var(--wt-warning) 0%, transparent 70%);
+}
+.wt-verdict--danger.wt-verdict-card::before {
+  background: radial-gradient(circle at top right, var(--wt-danger) 0%, transparent 70%);
+}
+
+.wt-verdict-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header Text */
+.wt-verdict__title {
+  font-size: var(--wt-text-hero);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: var(--wt-space-4) 0 var(--wt-space-2);
+}
+
+.wt-verdict__desc {
+  font-size: var(--wt-text-subheading);
+  color: var(--wt-text-secondary);
+}
+
+/* Brief Card Accent (Left Bar + Top Edge Glow) */
+.wt-brief-card {
+  position: relative;
+  border-left: 3px solid var(--wt-border);
+}
+
+.wt-brief-card::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  box-shadow: 0 1px 12px rgba(255,255,255,0);
+  transition: box-shadow 0.3s ease;
+}
+
+.wt-verdict--healthy .wt-brief-card { border-left-color: var(--wt-healthy); }
+.wt-verdict--healthy .wt-brief-card::after { box-shadow: 0 1px 12px var(--wt-accent-glow); }
+
+.wt-verdict--warning .wt-brief-card { border-left-color: var(--wt-warning); }
+.wt-verdict--warning .wt-brief-card::after { box-shadow: 0 1px 12px rgba(255, 165, 2, 0.2); }
+
+.wt-verdict--danger .wt-brief-card { border-left-color: var(--wt-danger); }
+.wt-verdict--danger .wt-brief-card::after { box-shadow: 0 1px 12px rgba(255, 71, 87, 0.2); }
+
+
+/* Session Chip (Live Players) */
+.wt-session-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+  padding: var(--wt-space-1) var(--wt-space-3);
+  background: var(--wt-surface-3);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-full);
+  font-family: var(--wt-font-mono);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.wt-session-chip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--wt-healthy);
+}
+
+.wt-session-chip--active .wt-session-chip__dot {
+  animation: wt-pulse-glow 2s infinite;
+}

@@ -1,0 +1,102 @@
+/* Watchtower UI v3 — App Shell Grid Layout */
+
+.wt-shell {
+  display: grid;
+  /* Columns: Sidebar | Content */
+  grid-template-columns: var(--wt-sidebar-collapsed) 1fr;
+  /* Rows: Command Bar | Content */
+  grid-template-rows: var(--wt-header-height) 1fr;
+  /* Areas:
+     nav  cmd
+     nav  main
+  */
+  grid-template-areas:
+    "nav cmd"
+    "nav main";
+  
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--wt-surface-0);
+  transition: grid-template-columns 300ms var(--wt-ease-spring);
+}
+
+/* Sidebar expanded state (desktop toggle only — no hover expand) */
+.wt-shell.wt-shell--sidebar-expanded {
+  grid-template-columns: var(--wt-sidebar-width) 1fr;
+}
+
+/* Mobile Layout (< 768px) */
+@media (max-width: 768px) {
+  .wt-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--wt-header-height) 1fr;
+    grid-template-areas:
+      "cmd"
+      "main";
+  }
+
+  .wt-shell.wt-shell--sidebar-expanded {
+    grid-template-columns: 1fr; /* Sidebar overlays on mobile */
+  }
+}
+
+/* Assign Grid Areas */
+.wt-shell__nav { grid-area: nav; z-index: 40; }
+.wt-shell__cmd { grid-area: cmd; z-index: 30; }
+.wt-shell__main { grid-area: main; z-index: 10; }
+
+/* Main Content Area */
+.wt-shell__main {
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  /* Custom scrollbar for main area */
+  scrollbar-width: thin;
+  scrollbar-color: var(--wt-border-strong) transparent;
+}
+
+.wt-shell__main::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.wt-shell__main::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wt-shell__main::-webkit-scrollbar-thumb {
+  background: var(--wt-border-strong);
+  border-radius: var(--wt-radius-full);
+}
+.wt-shell__main::-webkit-scrollbar-thumb:hover {
+  background: var(--wt-text-tertiary);
+}
+
+/* Global Banners (Top of main area) */
+.wt-global-banners {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+}
+
+.wt-banner {
+  padding: var(--wt-space-3) var(--wt-space-6);
+  font-size: var(--wt-text-body);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wt-space-3);
+}
+
+.wt-banner--warning {
+  background: var(--wt-warning);
+  color: #000;
+}
+
+.wt-banner--danger {
+  background: var(--wt-danger);
+  color: #fff;
+}

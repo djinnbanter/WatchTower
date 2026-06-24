@@ -1,0 +1,121 @@
+/* Watchtower UI v3 — Command Bar (CloudGuard) */
+
+.wt-cmdbar {
+  display: grid;
+  grid-template-columns: 1fr minmax(200px, 420px) 1fr;
+  align-items: center;
+  height: var(--wt-header-height);
+  padding: 0 var(--wt-space-5);
+  background: var(--wt-surface-0);
+  border-bottom: 1px solid var(--wt-border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  gap: var(--wt-space-4);
+}
+
+.wt-cmdbar__left {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+  min-width: 0;
+}
+
+.wt-cmdbar__center {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.wt-cmdbar__search {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-3);
+  width: 100%;
+  max-width: 420px;
+  height: 40px;
+  padding: 0 var(--wt-space-4);
+  border-radius: var(--wt-radius-full);
+  border: 1px solid var(--wt-border);
+  background: var(--wt-surface-1);
+  color: var(--wt-text-tertiary);
+  font-family: var(--wt-font-ui);
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.wt-cmdbar__search:hover {
+  border-color: var(--wt-border-strong);
+  background: var(--wt-surface-2);
+  color: var(--wt-text-secondary);
+}
+
+.wt-cmdbar__search svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.wt-cmdbar__search span {
+  flex: 1;
+  text-align: left;
+}
+
+.wt-cmdbar__kbd {
+  font-family: var(--wt-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--wt-radius-sm);
+  background: var(--wt-surface-2);
+  border: 1px solid var(--wt-border);
+  color: var(--wt-text-tertiary);
+}
+
+.wt-cmdbar__title-block {
+  display: none;
+}
+
+.wt-cmdbar__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--wt-space-2);
+  flex-shrink: 0;
+}
+
+.wt-cmdbar__cluster {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-1);
+}
+
+.wt-cmdbar__menu-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .wt-cmdbar {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .wt-cmdbar__menu-btn {
+    display: inline-flex;
+  }
+
+  #sidebar-toggle-btn {
+    display: none;
+  }
+
+  .wt-cmdbar__search span,
+  .wt-cmdbar__kbd {
+    display: none;
+  }
+
+  .wt-cmdbar__search {
+    max-width: 44px;
+    justify-content: center;
+    padding: 0;
+  }
+}

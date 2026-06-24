@@ -1,0 +1,123 @@
+/* Watchtower UI v3 — Panel/Card System */
+
+.wt-panel {
+  background: var(--wt-surface-1);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius-xl);
+  padding: var(--wt-space-6);
+  box-shadow: var(--wt-shadow-card);
+  position: relative;
+  overflow: hidden;
+  transition: transform 300ms var(--wt-ease-spring), box-shadow 300ms var(--wt-ease-out), border-color 300ms ease;
+  will-change: transform, box-shadow;
+}
+
+/* Glassmorphism variant (Liquid Glass) */
+.wt-panel--glass {
+  background: var(--wt-glass-bg);
+  backdrop-filter: blur(var(--wt-glass-blur));
+  -webkit-backdrop-filter: blur(var(--wt-glass-blur));
+  border: 1px solid var(--wt-glass-border);
+}
+
+.wt-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--wt-shadow-card-hover);
+  border-color: var(--wt-border-strong);
+}
+
+/* Nested panels */
+.wt-panel--nested {
+  background: var(--wt-surface-2);
+  box-shadow: none;
+  border-radius: var(--wt-radius-lg);
+  padding: var(--wt-space-4);
+}
+
+.wt-panel--nested:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Flat variant (no elevation) */
+.wt-panel--flat {
+  background: transparent;
+  border: 1px dashed var(--wt-border-strong);
+  box-shadow: none;
+}
+
+.wt-panel--flat:hover {
+  transform: none;
+  box-shadow: none;
+  border-style: solid;
+  border-color: var(--wt-border);
+}
+
+/* Bento cards: depth at rest, no hover lift on overview tiles */
+.wt-card {
+  transition: border-color 200ms ease;
+}
+
+.wt-bento .wt-card:hover {
+  transform: none;
+}
+
+/* Panel Header */
+.wt-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--wt-space-4);
+  gap: var(--wt-space-4);
+  flex-wrap: wrap;
+}
+
+.wt-panel__title {
+  font-family: var(--wt-font-ui);
+  font-size: var(--wt-text-subheading);
+  font-weight: 700;
+  color: var(--wt-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+}
+
+.wt-panel__title svg {
+  color: var(--wt-text-secondary);
+}
+
+.wt-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--wt-space-2);
+}
+
+/* Border glows for categorization */
+.wt-panel--glow-danger {
+  border-left: 3px solid var(--wt-danger);
+}
+.wt-panel--glow-warning {
+  border-left: 3px solid var(--wt-warning);
+}
+.wt-panel--glow-healthy {
+  border-left: 3px solid var(--wt-healthy);
+}
+
+/* Survey dot background (animated on mount) */
+.wt-panel--survey::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(var(--wt-text-primary) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  animation: wt-fade-in 1s var(--wt-ease-out) 300ms forwards;
+}
+
+/* Ensure content sits above survey background */
+.wt-panel--survey > * {
+  position: relative;
+  z-index: 1;
+}

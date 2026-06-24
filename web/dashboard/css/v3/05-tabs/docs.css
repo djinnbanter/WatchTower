@@ -1,0 +1,28 @@
+/* Documentation tab — full-width in-app wiki */
+.wt-tab-docs {
+  min-height: 60vh;
+}
+
+.wt-tab-docs .wt-bento {
+  gap: var(--wt-space-4);
+}
+
+.wt-tab-docs__wiki {
+  width: 100%;
+  min-width: 0;
+}
+
+.wt-tab-docs .wt-wiki {
+  min-height: 55vh;
+}
+
+.wt-tab-docs .wt-wiki-body {
+  max-width: 78ch;
+}
+
+@media (min-width: 1200px) {
+  .wt-tab-docs .wt-wiki-shell__layout,
+  .wt-tab-docs .wt-wiki__layout {
+    grid-template-columns: 240px 1fr;
+  }
+}
