@@ -12,6 +12,7 @@ const ROOT = join(fileURLToPath(import.meta.url), '..', '..');
 const SKIP_DIRS = new Set([
   'node_modules', 'build', '.gradle', '.git', 'fixtures', 'legacy',
   'releases', '.idea', '.vscode', '.cursor', 'docs/dev',
+  '.tmp-support-bundle',
 ]);
 
 const SKIP_FILES = new Set(['audit-public-tree.mjs', 'watchtower.conf', 'mc-status.conf']);

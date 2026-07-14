@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CI audit-public-tree** — removed accidentally committed `.tmp-support-bundle/` (real hostname / player data) and gitignored local support-bundle extracts
 - **Missing --ui-sp-14 token** — invalid spacing vars dropped whole padding/gap shorthands (Overview dimension rows + backup banner looked flush)
 - **Overview By dimension** — grid layout fixes squashed label/GB text; share shown only via bar width (no duplicate % pill); row + backup banner padding
 - **Sidebar logo size** — brand PNG is forced to 24/28px so the 1024px asset no longer blows out the rail
