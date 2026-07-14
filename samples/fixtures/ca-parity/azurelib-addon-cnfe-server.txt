@@ -1,0 +1,5 @@
+---- Minecraft Crash Report ----
+// AzureLib addon CNFE (synthetic CA-10)
+
+java.lang.NoClassDefFoundError: mod/azure/azurelib/common/api/AzureLib
+	at com.example.addon.AzureHook.init(AzureHook.java:12)

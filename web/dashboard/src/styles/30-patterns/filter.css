@@ -1,0 +1,24 @@
+/* FilterBar */
+
+.ui-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-8);
+  flex-wrap: wrap;
+}
+
+.ui-filter-bar__search {
+  flex: 1;
+  min-width: 160px;
+}
+
+.ui-filter-bar__filters {
+  flex-shrink: 0;
+}
+
+.ui-filter-bar__count {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

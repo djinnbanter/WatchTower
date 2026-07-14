@@ -48,7 +48,8 @@ public final class OverviewMetaBuilder {
                 ? systemBasics.get("disk_free_gb").getAsDouble()
                 : null;
         meta.add("disk_nudge", DiskNudgeEvaluator.evaluateDisk(diskFreeGb, lastBackup));
-        meta.add("backup_nudge", DiskNudgeEvaluator.evaluateBackup(lastBackup, backupExternal, config.backupWarnDays()));
+        meta.add("backup_nudge", DiskNudgeEvaluator.evaluateBackup(
+                lastBackup, backupExternal, config.backupWarnDays(), config.backupTrackingEnabled()));
 
         JsonObject environment = HostEnvironmentDetector.detect(panelId, systemBasics);
         meta.add("environment", environment);

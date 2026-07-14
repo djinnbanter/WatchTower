@@ -59,6 +59,60 @@ class StateManagerAckTest {
     }
 
     @Test
+    void dismissInboxItemPersists() throws Exception {
+        Path statePath = temp.resolve(WatchtowerFiles.STATE_FILENAME);
+        Instant when = Instant.parse("2026-06-16T21:00:00Z");
+
+        StateManager.dismissInboxItem(statePath, "crash:watchdog|-|java.lang.Error|-", when, "dashboard");
+
+        JsonObject dismissals = StateManager.getInboxDismissals(statePath);
+        assertTrue(dismissals.has("crash:watchdog|-|java.lang.Error|-"));
+        assertEquals("dashboard", dismissals.getAsJsonObject("crash:watchdog|-|java.lang.Error|-").get("by").getAsString());
+    }
+
+    @Test
+    void acknowledgeIssuePersistsAndUnacks() throws Exception {
+        Path statePath = temp.resolve(WatchtowerFiles.STATE_FILENAME);
+        Instant when = Instant.parse("2026-07-13T14:00:00Z");
+
+        StateManager.acknowledgeIssue(statePath, "issue:DISK_HIGH", when, "dashboard");
+        StateManager.acknowledgeAllIssues(
+                statePath,
+                java.util.List.of("lag:inc-1", "mod:create", "issue:DISK_HIGH"),
+                when,
+                "dashboard");
+
+        JsonObject acks = StateManager.getAcknowledgedIssues(statePath);
+        assertTrue(acks.has("issue:DISK_HIGH"));
+        assertTrue(acks.has("lag:inc-1"));
+        assertTrue(acks.has("mod:create"));
+        assertEquals("dashboard", acks.getAsJsonObject("mod:create").get("by").getAsString());
+
+        StateManager.unacknowledgeIssue(statePath, "lag:inc-1");
+        JsonObject after = StateManager.getAcknowledgedIssues(statePath);
+        assertFalse(after.has("lag:inc-1"));
+        assertTrue(after.has("issue:DISK_HIGH"));
+    }
+
+    @Test
+    void acknowledgeAllCrashesPersistsEachFile() throws Exception {
+        Path statePath = temp.resolve(WatchtowerFiles.STATE_FILENAME);
+        Instant when = Instant.parse("2026-06-16T21:00:00Z");
+
+        StateManager.acknowledgeAllCrashes(
+                statePath,
+                java.util.List.of("crash-a.txt", "crash-reports/crash-b.txt"),
+                when,
+                "dashboard");
+
+        JsonObject acks = StateManager.getAcknowledgedCrashes(statePath);
+        assertTrue(acks.has("crash-a.txt"));
+        assertTrue(acks.has("crash-reports/crash-a.txt"));
+        assertTrue(acks.has("crash-b.txt"));
+        assertTrue(acks.has("crash-reports/crash-b.txt"));
+    }
+
+    @Test
     void ignoreClientModPersistsInState() throws Exception {
         Path statePath = temp.resolve(WatchtowerFiles.STATE_FILENAME);
         Instant when = Instant.parse("2026-06-16T21:00:00Z");

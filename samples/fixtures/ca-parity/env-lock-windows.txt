@@ -1,0 +1,4 @@
+---- Minecraft Crash Report ----
+// Windows file lock (synthetic CA-15)
+
+java.nio.file.FileSystemException: config/create-server.toml: The process cannot access the file because it is being used by another process

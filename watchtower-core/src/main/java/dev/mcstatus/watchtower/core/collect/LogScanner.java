@@ -31,7 +31,8 @@ public final class LogScanner {
         List<Path> logFiles = GzipLineReader.iterLogFiles(serverDir, config.logGzipCount(), cutoff);
         ZonedDateTime now = ZonedDateTime.now();
 
-        ScanState state = new ScanState(now, config.errorIgnorePatterns());
+        Set<String> knownModIds = knownModIdsFromJars(serverDir);
+        ScanState state = new ScanState(now, config.errorIgnorePatterns(), knownModIds);
 
         for (Path logPath : logFiles) {
             String rel = CollectSupport.relLogPath(serverDir, logPath);
@@ -174,6 +175,92 @@ public final class LogScanner {
         if (!clientWarnings.isEmpty()) {
             staging.getAsJsonObject("optional").add("client_class_warnings_by_mod", clientWarnings);
         }
+        if (state.mapRenderActive && state.mapRenderSource != null) {
+            JsonObject mapRender = new JsonObject();
+            mapRender.addProperty("active", true);
+            mapRender.addProperty("source", state.mapRenderSource);
+            if (state.mapRenderLastLine != null) {
+                mapRender.addProperty("last_line", state.mapRenderLastLine);
+            }
+            staging.getAsJsonObject("optional").add("map_render", mapRender);
+        }
+        if (state.fmlBlockBuf.length() > 0 || state.fmlAccumulating) {
+            if (state.fmlAccumulating && state.fmlBlockBuf.length() > 0) {
+                // flush open block
+            }
+            JsonArray fmlIssues = FmlIssueParser.parse(state.fmlBlockBuf.toString());
+            if (!fmlIssues.isEmpty()) {
+                staging.getAsJsonObject("optional").add("fml_issues", fmlIssues);
+            }
+        }
+        // CA-31: merge stderr; prefer last Done! boot from latest.log (outside incremental cutoff)
+        {
+            StderrBootMerger.Result stderr = StderrBootMerger.merge(
+                    Path.of(serverDir),
+                    config.forensicsStderrPaths() != null
+                            ? config.forensicsStderrPaths()
+                            : "logs/stderr.log,logs/stderr_stream.log");
+            if (!stderr.lines().isEmpty()) {
+                List<String> merged = new ArrayList<>(stderr.lines());
+                merged.addAll(state.bootLines);
+                state.bootLines.clear();
+                state.bootLines.addAll(merged);
+            }
+            Double prevBoot = null;
+            JsonObject optional = staging.getAsJsonObject("optional");
+            if (optional.has("startup_profile_prev_total_sec")
+                    && !optional.get("startup_profile_prev_total_sec").isJsonNull()) {
+                prevBoot = optional.get("startup_profile_prev_total_sec").getAsDouble();
+            }
+
+            JsonObject profile = null;
+            Path latestLog = Path.of(serverDir, "logs", "latest.log");
+            if (Files.isRegularFile(latestLog)) {
+                try {
+                    profile = StartupProfileScanner.scanLastBootFromLog(latestLog, prevBoot);
+                } catch (Exception e) {
+                    profile = null;
+                }
+            }
+            // Fall back to in-window bootLines only when latest.log has no Done!
+            if (profile == null
+                    || "unknown".equals(CollectSupport.getString(profile, "status"))
+                    || "latest_log_no_done".equals(CollectSupport.getString(profile, "source"))) {
+                if (!state.bootLines.isEmpty()) {
+                    JsonObject fromWindow = StartupProfileScanner.scan(state.bootLines, prevBoot);
+                    if (fromWindow != null && fromWindow.size() > 0
+                            && !"unknown".equals(CollectSupport.getString(fromWindow, "status"))) {
+                        profile = fromWindow;
+                    } else if (profile == null || profile.size() == 0) {
+                        profile = fromWindow;
+                    }
+                }
+            }
+
+            if (profile != null && profile.size() > 0) {
+                if (!stderr.excerpt().isEmpty()) {
+                    JsonArray excerpt = new JsonArray();
+                    stderr.excerpt().forEach(excerpt::add);
+                    profile.add("stderr_excerpt", excerpt);
+                }
+                if (!stderr.sources().isEmpty()) {
+                    JsonArray sources = new JsonArray();
+                    stderr.sources().forEach(sources::add);
+                    profile.add("stderr_sources", sources);
+                }
+                optional.add("startup_profile", profile);
+            } else if (!stderr.sources().isEmpty()) {
+                JsonObject stderrOnly = new JsonObject();
+                JsonArray excerpt = new JsonArray();
+                stderr.excerpt().forEach(excerpt::add);
+                stderrOnly.add("stderr_excerpt", excerpt);
+                JsonArray sources = new JsonArray();
+                stderr.sources().forEach(sources::add);
+                stderrOnly.add("stderr_sources", sources);
+                stderrOnly.addProperty("status", "unknown");
+                optional.add("startup_profile", stderrOnly);
+            }
+        }
     }
 
     private static JsonArray toJsonArray(List<JsonObject> items) {
@@ -201,8 +288,16 @@ public final class LogScanner {
         if (ts != null && CollectSupport.epochSeconds(ts) < cutoff) {
             return;
         }
-        state.modLogAnalyzer.processLine(stripped);
+
+        boolean inBootWindow = !state.bootComplete;
+        if (inBootWindow) {
+            state.bootLines.add(stripped);
+        }
+
+        state.modLogAnalyzer.processLine(stripped, inBootWindow);
         state.clientLogAttributor.processLine(stripped);
+        accumulateFml(stripped, state);
+
         if (ts != null && CollectSupport.epochSeconds(ts) >= cutoff) {
             mc.addProperty("log_had_activity_in_window", true);
         }
@@ -213,7 +308,9 @@ public final class LogScanner {
             state.maxLineNo = lineNo;
         }
 
-        if (stripped.contains("Done (") && stripped.contains("/INFO]")) {
+        if (StartupProfileScanner.isDoneBootLine(stripped)) {
+            state.bootComplete = true;
+            state.modLogAnalyzer.setBootComplete(true);
             if (ts != null && (state.serverStarted == null || ts.isAfter(state.serverStarted))) {
                 state.serverStarted = ts;
                 state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "server_start", ""));
@@ -279,11 +376,17 @@ public final class LogScanner {
             }
         }
 
-        if (stripped.contains("Can't keep up")) {
+        if (stripped.contains("Can't keep up")
+                || LogPatterns.SHTREIMEL_LAG.matcher(stripped).find()
+                || LogPatterns.TABTPS_MSPT.matcher(stripped).find()
+                || LogPatterns.WATCHDOG_FATAL_LOG.matcher(stripped).find()) {
+            int msBehind = 0;
             Matcher m = LogPatterns.TICK_LAG_MS.matcher(stripped);
-            int msBehind = m.find() ? Integer.parseInt(m.group(1)) : 0;
+            if (m.find()) {
+                msBehind = Integer.parseInt(m.group(1));
+            }
             String lagKey = (ts != null ? CollectSupport.iso(ts) : stripped.substring(0, Math.min(40, stripped.length())))
-                    + "|" + msBehind;
+                    + "|" + msBehind + "|" + stripped.hashCode();
             if (!state.tickLagSeen.contains(lagKey)) {
                 state.tickLagSeen.add(lagKey);
                 if (msBehind > 0) {
@@ -312,14 +415,93 @@ public final class LogScanner {
             updateChunkyEntry(cm, ts, rel, lineNo, state);
         }
 
+        if (LogPatterns.SQUAREMAP_RUNTIME.matcher(stripped).find()
+                && !stripped.toLowerCase().contains("moddiscoverer")
+                && !stripped.contains(" SCAN")) {
+            state.mapRenderActive = true;
+            state.mapRenderSource = "squaremap";
+            state.mapRenderLastLine = stripped.length() > 300 ? stripped.substring(0, 300) : stripped;
+        } else if (LogPatterns.BLUEMAP_RUNTIME.matcher(stripped).find()
+                && !stripped.toLowerCase().contains("moddiscoverer")
+                && !stripped.contains(" SCAN")) {
+            state.mapRenderActive = true;
+            state.mapRenderSource = "bluemap";
+            state.mapRenderLastLine = stripped.length() > 300 ? stripped.substring(0, 300) : stripped;
+        }
+
         if (ts != null) {
             Matcher jm = LogPatterns.PLAYER_JOIN.matcher(stripped);
             if (jm.find()) {
                 state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "join", jm.group(1).strip()));
+            } else {
+                Matcher jmb = LogPatterns.PLAYER_JOIN_BRACKET.matcher(stripped);
+                if (jmb.find()) {
+                    state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "join", jmb.group(1).strip()));
+                } else {
+                    Matcher jme = LogPatterns.PLAYER_JOIN_ENTITY.matcher(stripped);
+                    if (jme.find()) {
+                        state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "join", jme.group(1).strip()));
+                    }
+                }
             }
             Matcher lm = LogPatterns.PLAYER_LEAVE.matcher(stripped);
             if (lm.find()) {
-                state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "leave", lm.group(1).strip()));
+                recordLeave(staging, state, ts, lm.group(1).strip(), rel, lineNo, stripped);
+            } else {
+                Matcher lmb = LogPatterns.PLAYER_LEAVE_BRACKET.matcher(stripped);
+                if (lmb.find()) {
+                    recordLeave(staging, state, ts, lmb.group(1).strip(), rel, lineNo, stripped);
+                } else if (LogPatterns.PLAYER_DISCONNECT.matcher(stripped).find()) {
+                    recordLeave(staging, state, ts, "?", rel, lineNo, stripped);
+                }
+            }
+        }
+    }
+
+    private static void recordLeave(
+            JsonObject staging,
+            ScanState state,
+            ZonedDateTime ts,
+            String player,
+            String rel,
+            int lineNo,
+            String stripped) {
+        state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "leave", player));
+        long epoch = (long) CollectSupport.epochSeconds(ts);
+        state.recentLeaveEpochs.add(epoch);
+        state.recentLeaveEpochs.removeIf(e -> epoch - e > 60);
+        if (state.recentLeaveEpochs.size() >= 5 && !state.disconnectStormEmitted) {
+            state.disconnectStormEmitted = true;
+            JsonObject ev = new JsonObject();
+            ev.addProperty("time", CollectSupport.iso(ts));
+            ev.addProperty("type", "disconnect_storm");
+            ev.addProperty("source", "log");
+            ev.addProperty("detail", state.recentLeaveEpochs.size() + " disconnects in 60s");
+            ev.addProperty("importance", 7);
+            JsonArray evArr = new JsonArray();
+            evArr.add(CollectSupport.evidence(rel, lineNo, stripped, CollectSupport.iso(ts)));
+            ev.add("evidence", evArr);
+            CollectSupport.appendEvent(staging, ev);
+        }
+    }
+
+    private static void accumulateFml(String stripped, ScanState state) {
+        String s = stripped.strip();
+        if (LogPatterns.FML_ISSUE_HEADER.matcher(s).matches()
+                || s.startsWith("-- Mod loading issue")) {
+            state.fmlAccumulating = true;
+            if (state.fmlBlockBuf.length() > 0) {
+                state.fmlBlockBuf.append('\n');
+            }
+            state.fmlBlockBuf.append(stripped).append('\n');
+            return;
+        }
+        if (state.fmlAccumulating) {
+            state.fmlBlockBuf.append(stripped).append('\n');
+            if (s.startsWith("-- ") && s.endsWith(" --") && !s.contains("Mod loading issue")) {
+                state.fmlAccumulating = false;
+            } else if (s.isEmpty() && state.fmlBlockBuf.toString().contains("Failure message:")) {
+                // keep accumulating through blank lines inside a block
             }
         }
     }
@@ -390,12 +572,52 @@ public final class LogScanner {
         int fatalCount;
         final Map<String, Integer> startupWarnCounts = StartupWarnings.newCounter();
         final ModLogAnalyzer modLogAnalyzer = new ModLogAnalyzer();
-        final ClientLogAttributor clientLogAttributor = new ClientLogAttributor();
+        final ClientLogAttributor clientLogAttributor;
+        boolean bootComplete;
+        final List<String> bootLines = new ArrayList<>();
+        boolean mapRenderActive;
+        String mapRenderSource;
+        String mapRenderLastLine;
+        final StringBuilder fmlBlockBuf = new StringBuilder();
+        boolean fmlAccumulating;
+        final List<Long> recentLeaveEpochs = new ArrayList<>();
+        boolean disconnectStormEmitted;
 
-        ScanState(ZonedDateTime now, List<Pattern> errorIgnore) {
+        ScanState(ZonedDateTime now, List<Pattern> errorIgnore, Set<String> knownModIds) {
             this.now = now;
             this.players = new PlayerTracker(now);
             this.errorIgnore = errorIgnore;
+            this.clientLogAttributor = new ClientLogAttributor(knownModIds);
+            this.bootComplete = false;
+            this.mapRenderActive = false;
+            this.mapRenderSource = null;
+            this.mapRenderLastLine = null;
+            this.fmlAccumulating = false;
+            this.disconnectStormEmitted = false;
+        }
+    }
+
+    private static Set<String> knownModIdsFromJars(String serverDir) {
+        if (serverDir == null || serverDir.isBlank()) {
+            return null;
+        }
+        try {
+            JsonArray mods = ModJarMetadataReader.listModsFromDir(serverDir);
+            if (mods == null || mods.isEmpty()) {
+                return null;
+            }
+            Set<String> ids = new HashSet<>();
+            for (var el : mods) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                if (el.getAsJsonObject().has("id") && !el.getAsJsonObject().get("id").isJsonNull()) {
+                    ids.add(el.getAsJsonObject().get("id").getAsString());
+                }
+            }
+            return ids.isEmpty() ? null : ids;
+        } catch (Exception ignored) {
+            return null;
         }
     }
 }

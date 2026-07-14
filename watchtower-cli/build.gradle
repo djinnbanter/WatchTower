@@ -28,7 +28,7 @@ tasks.register('fatJar', Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from sourceSets.main.output
     dependsOn classes
-    dependsOn project(':watchtower-core').tasks.named('jar')
+    dependsOn project(':watchtower-core').tasks.named('shadowJar')
     from {
         configurations.runtimeClasspath.collect { entry ->
             entry.isDirectory() ? entry : zipTree(entry)

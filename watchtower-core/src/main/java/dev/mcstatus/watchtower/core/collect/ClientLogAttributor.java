@@ -29,6 +29,16 @@ public final class ClientLogAttributor {
             "RuntimeDistCleaner.*?\\b([a-z][\\w-]*)\\b", Pattern.CASE_INSENSITIVE);
 
     private final Map<String, ModWarnings> byMod = new HashMap<>();
+    /** When non-null, regex-extracted ids not in this set become {@code unknown} (not invented). */
+    private final Set<String> knownModIds;
+
+    public ClientLogAttributor() {
+        this(null);
+    }
+
+    public ClientLogAttributor(Set<String> knownModIds) {
+        this.knownModIds = knownModIds;
+    }
 
     public void processLine(String line) {
         ModErrorCategory.Hit hit = ModErrorCategory.classify(line);
@@ -36,8 +46,17 @@ public final class ClientLogAttributor {
             return;
         }
         String modId = extractModId(line, hit);
-        if (modId == null || modId.isBlank() || "unknown".equals(modId)) {
+        if (modId == null || modId.isBlank()) {
             return;
+        }
+        if (knownModIds != null && !"unknown".equals(modId) && !knownModIds.contains(modId)) {
+            modId = "unknown";
+        }
+        if ("unknown".equals(modId)) {
+            // Count under unknown only when filtering is active; otherwise skip as before.
+            if (knownModIds == null) {
+                return;
+            }
         }
         byMod.computeIfAbsent(modId, ModWarnings::new).record(line);
     }

@@ -1,0 +1,3 @@
+[13Jul2026 12:40:01.000] [main/ERROR] [ne.ne.fm.lo.ModDiscoverer/]: Mod File mods/foo-1.0.jar needs language provider javafml
+We have found 0 language providers
+[13Jul2026 12:40:02.000] [main/FATAL] [ne.ne.fm.ModLoader/]: Aborting server start

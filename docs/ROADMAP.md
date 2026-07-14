@@ -3,9 +3,25 @@
 **What's happening on your server — and what to do next.**  
 Live dashboard, health reports, disaster recovery — **all on your machine**. No cloud account, no analytics database.
 
-Releases ship when they're ready (no fixed dates). **Latest:** **1.0.0** · [Modrinth](https://modrinth.com/mod/watchtower) · [Changelog](../CHANGELOG.md)
+Releases ship when they're ready (no fixed dates). **Latest:** **1.1.0** · [Modrinth](https://modrinth.com/mod/watchtower) · [Changelog](../CHANGELOG.md)
 
 **Platform:** NeoForge **1.21.x** now · Fabric **1.21** + NeoForge **1.20.x** later.
+
+---
+
+## 1.1.0 — Shipped
+
+Ops intelligence and dashboard polish since **1.0.0** / **1.0.0a** — former planned **1.0.1–1.0.8** themes landed here:
+
+- Smarter mod list (Create protection, Modrinth lookup, dependency tree)
+- Crash & DR intelligence, Startup boot profile, crash inbox groups
+- Mod forensics + declarative crash rule packs
+- Glass UI, Run Report stage progress, Backups setup + **Not tracking**
+- Overview welcome, Insights Patterns sub-panels, Session roster polish
+- Issues acknowledge / Reviewed, Logs viewer, Live chart windows
+- Setup wizard discovery audit + guided tour (one card per rail page)
+
+Artifacts: `watchtower-neoforge-1.1.0+mc1.21.jar` · `watchtower-cli-1.1.0.jar`
 
 ---
 
@@ -15,7 +31,7 @@ First public release — everything below ships in **1.0.0**:
 
 - Live dashboard (`:8787`) with Overview, Live, Insights, Issues, Crashes, Mods, Backups, Activity, Session, Spark, and Sources tabs
 - **Docs** tab — bundled operator wiki with search
-- **Setup wizard** — first-run audit, backups, schedule, optional 2FA
+- **Setup wizard** — first-run audit, backup discovery, schedule, optional 2FA
 - Scheduled health reports (default twice daily) with report retention
 - Always-on background ops scan (~60s) — logs, crashes, mod errors, activity, lag spikes
 - Performance history and **Insights** (busy/quiet hours, heatmaps, CSV export)
@@ -50,74 +66,18 @@ Watchtower uses **three update kinds** — you do not need a full health report 
 
 ## Planned releases
 
-One theme per patch, in order. Details may shift slightly before ship.
+One theme per release, in order. Details may shift slightly before ship.
 
-### 1.0.1 — Smarter mod list
-
-- **Stop flagging Create** (and similar server mods) as removable
-- Optional **Modrinth lookup** for ambiguous jars — off by default
-- **Dependency tree** — see why a mod is protected before removing it
-
-### 1.0.2 — Crash & DR intelligence
-
-The big modpack release — informed by **250 real crash reports** and server logs.
-
-- **Fewer “unknown” crashes** — real NeoForge stack attribution
-- **Watchdog stalls explained** — pregen, contraptions, map render — not unrelated boot warnings
-- **DR Fix tab matches the crash** — same advice in-game, CLI bundle, and DR viewer
-- **Startup boot profile** — how long did boot take, slowest phase, warnings/errors even when `Done!` printed — trend vs last restart
-
-### 1.0.3 — Crash inbox
-
-- **Group identical crashes** — dozens of watchdog reports → one row
-- **Mark all reviewed** in one click
-- **Notification bell** on Overview (precursor to Discord alerts in **1.2.0**)
-
-### 1.0.4 — Release engineering
-
-Internal only — shared mod module so multiple Minecraft JARs ship from one codebase. **No operator-facing changes.**
-
-### 1.0.5 — Boot & mixin intelligence
-
-After **1.0.2** crash corpus work, this release names **boot-time failures** that today show as generic mod/loader errors — mixin, loader, and ecosystem patterns surfaced as facts and brief text only (no launcher UI).
-
-- **Mixin boot failures** — names the mod owning the `.mixins.json`, not “SpongePowered ASM error”
-- **Conflicting mixins** — cites both mod ids when resolvable
-- **Duplicate mod jars**, **corrupt SERVER TOML**, **ResourceLocationException**, language-provider mismatch, worldgen feature cycles
-- **Create 6 / Epic Fight / AzureLib** ecosystem fingerprint rules with semver gates
-- **Connector + Fabric-native mod** hygiene warnings; **security backdoor** mod alerts
-- **KubeJS datapack** parse vs startup script; Java version mismatch; Windows file locks; heap vs native OOM split
-- Extended **FML multi-block** dependency narrative — secondary issues don't override active crash Fix advice
-
-### 1.0.6 — Mod forensics
-
-Server-side mod forensics for headless hosts — read-only, no jar deletion.
-
-- **Find owning jar** from a stack trace class or package (`/api/mods/forensics/*`)
-- **Corrupt jar** detection from logs + optional zip walk
-- **Broken serverconfig** health scan on full report
-- **MCreator** and **Fabric-in-jar** badges on Mods tab
-- Merge **pre-log4j stderr** into boot timeline when `logs/stderr.log` exists
-
-### 1.0.7 — Custom crash rules
-
-Pack-tunable matchers without recompiling the mod — no JEXL or auto-fix scripts.
-
-- **YAML rule packs** under `config/watchtower/rules/` with strict predicate allowlist
-- **Builtin corpus** ships in the JAR; common community rule patterns included out of the box
-- **Issue suppressions** — hide noisy warnings (e.g. client-on-server) from the Issues inbox
-- Settings **Rules** list + `watchtower rules validate` CLI
-
-### 1.1.0 — Fleet hub
+### 1.2.0 — Fleet hub
 
 One view across **many servers** — compare TPS, issues, and backups without opening every `:8787` port.
 
-### 1.2.0 — Fabric & alerts
+### 1.3.0 — Fabric & alerts
 
 - **Fabric 1.21** mod JAR — same dashboard and reports
 - Optional **Discord / webhook alerts** for crashes, lag, stale backups, pregen stalls
 
-### 1.3.0 — NeoForge 1.20.x
+### 1.4.0 — NeoForge 1.20.x
 
 Second mod JAR for **1.20.x packs** — pick **`+mc1.20`** or **`+mc1.21`** at download. Same CLI and DR workflow.
 

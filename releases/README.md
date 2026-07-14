@@ -11,7 +11,7 @@ See [../docs/end-user/RELEASES.md](../docs/end-user/RELEASES.md) for the full bu
 ```text
 releases/
   latest/                          ← convenience copy of current version pair
-  <version>/                       ← e.g. 1.0.0/ — mod + CLI for that release
+  <version>/                       ← e.g. 1.1.0/ — mod + CLI for that release
   archive/
     legacy-pre-1.0.0/              ← pre-public internal builds
     internal-dev/                  ← optional non-public dev JAR stash

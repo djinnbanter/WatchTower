@@ -1,0 +1,13 @@
+{
+  "id": "create-class-lookup",
+  "description": "TRANSFORMER-style class resolves to Create jar via JarClassIndex",
+  "query": {
+    "class": "com.simibubi.create.content.kinetics.ContraptionHandler",
+    "include_nested": true
+  },
+  "expected": {
+    "min_matches": 1,
+    "mod_id": "create",
+    "jar_contains": "create"
+  }
+}

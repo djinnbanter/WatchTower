@@ -1,0 +1,12 @@
+import { registerPage } from '../../app/registry.js';
+import { PageView } from './view.js';
+
+registerPage({
+  id: 'settings',
+  title: 'Settings',
+  icon: 'settings',
+  group: 'system',
+  order: 2,
+  subtitle: 'Server and dashboard configuration',
+  render: PageView,
+});

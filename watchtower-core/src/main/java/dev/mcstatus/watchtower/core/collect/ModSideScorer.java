@@ -16,7 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Scores mods for client-only likelihood using TOML, logs, heuristics, dependencies, and optional jar scan.
+ * Scores mods for client-only likelihood using TOML, logs, heuristics, dependencies,
+ * optional jar scan, and optional Modrinth Layer-2 signals.
  */
 public final class ModSideScorer {
 
@@ -24,7 +25,8 @@ public final class ModSideScorer {
         LIKELY_REMOVABLE("likely_removable"),
         CLIENT_LIBRARY("client_library"),
         UNCERTAIN("uncertain"),
-        TEST_REMOVE("test_remove");
+        TEST_REMOVE("test_remove"),
+        SERVER_REQUIRED("server_required");
 
         private final String id;
 
@@ -63,18 +65,36 @@ public final class ModSideScorer {
     );
 
     private static final Set<String> UNCERTAIN_IDS = Set.of(
-            "emi", "jade", "jei", "rei", "create", "flywheel"
+            "emi", "jade", "jei", "rei"
+    );
+
+    /** Hard denylist — never suggest remove. */
+    public static final Set<String> SERVER_REQUIRED_IDS = Set.of(
+            "create", "flywheel", "registrate"
+    );
+
+    /** Protected whenever Create is present. */
+    public static final Set<String> CREATE_ECOSYSTEM_IDS = Set.of(
+            "ponder", "flywheel", "registrate"
+    );
+
+    /** Client-heavy but may have optional server components. */
+    public static final Set<String> HYBRID_IDS = Set.of(
+            "xaerominimap", "xaeroworldmap", "xaerotrainmap"
     );
 
     private static final Set<String> LIKELY_REMOVABLE_IDS = Set.of(
-            "modmenu", "appleskin", "xaerominimap", "xaeroworldmap", "xaerotrainmap",
-            "lambdynlights", "veil", "ponder", "spruceui", "yeetusexperimentus",
+            "modmenu", "appleskin",
+            "lambdynlights", "veil", "spruceui", "yeetusexperimentus",
             "sound_physics_remastered", "statuemenus", "trashslot"
     );
 
     private static final double BYTECODE_CLIENT_RATIO = 0.15;
+    private static final int PROTECTION_DEPTH = 6;
     private static final String TEST_REMOVE_ADVICE =
             "We're not sure — remove from server mods/ one at a time, restart, and watch for errors before deleting from the pack.";
+    private static final String HYBRID_REASON =
+            "Client map UI — some packs sync waypoints via an optional server component. Verify before removing.";
 
     private ModSideScorer() {
     }
@@ -86,10 +106,12 @@ public final class ModSideScorer {
         JsonArray mods = optional.getAsJsonArray("mods");
         Map<String, Integer> logWarnings = logWarningsByMod(optional);
         ModDependencyGraph graph = ModDependencyGraph.fromMods(mods);
+        Set<String> ignored = ignoredIds(optional);
+        Set<String> protectedIds = protectedIds(mods, graph);
         int scanBudget = config.modSideScanMaxJars();
         int scanned = 0;
 
-        List<JsonObject> detected = new ArrayList<>();
+        Map<String, Score> layer1Scores = new HashMap<>();
         Set<String> candidateIds = new HashSet<>();
 
         for (JsonElement el : mods) {
@@ -101,11 +123,106 @@ public final class ModSideScorer {
             if (id == null || id.isBlank() || isExcluded(id)) {
                 continue;
             }
+            if (protectedIds.contains(id)) {
+                continue;
+            }
             Score score = scoreMod(id, mod, logWarnings, graph, null);
             if (score.bucket() != null) {
                 candidateIds.add(id);
+                layer1Scores.put(id, score);
             }
         }
+
+        Map<String, ModrinthLookupService.SideInfo> modrinthById = Map.of();
+        if (config.modrinthLookup() && config.modrinthLookupOnReport() && !config.disasterRecovery()) {
+            Set<String> crashSuspects = crashSuspectModIds(optional);
+            Set<String> priorityIds = new HashSet<>(crashSuspects);
+            priorityIds.addAll(SERVER_REQUIRED_IDS);
+            priorityIds.add("chunky");
+            priorityIds.add("squaremap");
+            priorityIds.add("bluemap");
+
+            // Crash suspects first, then Layer-1 ambiguous, then known ops-relevant ids.
+            List<String> candidateOrder = new ArrayList<>();
+            for (String id : crashSuspects) {
+                if (!candidateOrder.contains(id)) {
+                    candidateOrder.add(id);
+                }
+            }
+            for (String id : layer1Scores.keySet()) {
+                if (!candidateOrder.contains(id) && !protectedIds.contains(id)) {
+                    candidateOrder.add(id);
+                }
+            }
+            for (String id : List.of("create", "flywheel", "chunky", "squaremap", "bluemap", "spark")) {
+                if (modPresent(mods, id) && !candidateOrder.contains(id)) {
+                    candidateOrder.add(id);
+                }
+            }
+
+            List<ModrinthLookupService.Candidate> candidates = new ArrayList<>();
+            Set<String> added = new HashSet<>();
+            for (String id : candidateOrder) {
+                if (candidates.size() >= ModrinthLookupService.maxJarsPerReport()) {
+                    break;
+                }
+                if (!added.add(id)) {
+                    continue;
+                }
+                Path jar = resolveModJar(mods, id, serverDir);
+                if (jar != null) {
+                    candidates.add(new ModrinthLookupService.Candidate(id, jar));
+                }
+            }
+
+            Path cacheFile = serverDir != null && !serverDir.isBlank()
+                    ? Path.of(serverDir, "watchtower", "modrinth-cache.json")
+                    : null;
+            Map<String, ModrinthLookupService.SideInfo> byHash =
+                    ModrinthLookupService.lookup(candidates, cacheFile, config);
+            Map<String, ModrinthLookupService.SideInfo> byId = new HashMap<>();
+            Map<String, String> hashById = new HashMap<>();
+            for (ModrinthLookupService.Candidate c : candidates) {
+                try {
+                    String hash = ModrinthLookupService.sha512Hex(c.jarPath());
+                    hashById.put(c.modId(), hash);
+                    ModrinthLookupService.SideInfo info = byHash.get(hash);
+                    if (info != null && !info.miss()) {
+                        byId.put(c.modId(), info);
+                    }
+                } catch (Exception ex) {
+                    // never block scoring
+                }
+            }
+
+            String mcVersion = ModrinthLookupService.minecraftVersionFromMods(mods);
+            ModrinthLookupService.enrichCompatibleUpdates(
+                    byId,
+                    hashById,
+                    priorityIds,
+                    config.loader(),
+                    mcVersion,
+                    config.modrinthRateLimit());
+
+            ModrinthLookupService.applyIdentityToMods(mods, byId);
+            JsonArray updates = ModrinthLookupService.buildUpdatesSummary(mods);
+            if (updates.size() > 0) {
+                optional.add("modrinth_updates", updates);
+            }
+            // Refresh disk cache with compatible-update fields
+            if (cacheFile != null) {
+                for (Map.Entry<String, ModrinthLookupService.SideInfo> e : byId.entrySet()) {
+                    String hash = hashById.get(e.getKey());
+                    if (hash != null) {
+                        byHash.put(hash, e.getValue());
+                    }
+                }
+                ModrinthLookupService.persistCache(cacheFile, byHash);
+            }
+            modrinthById = byId;
+        }
+
+        List<JsonObject> detected = new ArrayList<>();
 
         for (JsonElement el : mods) {
             if (!el.isJsonObject()) {
@@ -116,17 +233,31 @@ public final class ModSideScorer {
             if (id == null || id.isBlank() || isExcluded(id)) {
                 continue;
             }
+
+            if (protectedIds.contains(id)) {
+                List<String> signals = new ArrayList<>();
+                if (SERVER_REQUIRED_IDS.contains(id)) {
+                    signals.add("SERVER_REQUIRED_IDS");
+                } else if (CREATE_ECOSYSTEM_IDS.contains(id) && modPresent(mods, "create")) {
+                    signals.add("ecosystem:create");
+                } else {
+                    signals.add("dependent_of:create");
+                }
+                writeModFields(mod, Bucket.SERVER_REQUIRED, signals, graph.dependentsCount(id));
+                continue;
+            }
+
             ModJarSideScanner.ScanResult scan = null;
             if (config.modSideScan() && scanned < scanBudget) {
-                Score prelim = scoreMod(id, mod, logWarnings, graph, null);
-                if (prelim.bucket() == null || prelim.confidence() == Confidence.LOW
+                Score prelim = layer1Scores.get(id);
+                if (prelim == null || prelim.confidence() == Confidence.LOW
                         || prelim.bucket() == Bucket.UNCERTAIN || prelim.bucket() == Bucket.TEST_REMOVE) {
                     Path jar = ModJarSideScanner.modJarPath(serverDir, id);
                     if (jar != null) {
                         try {
                             scan = ModJarSideScanner.scan(jar);
                             scanned++;
-                        } catch (Exception ignored) {
+                        } catch (Exception ex) {
                             // optional scan — never block report
                         }
                     }
@@ -134,6 +265,7 @@ public final class ModSideScorer {
             }
             Score score = scoreMod(id, mod, logWarnings, graph, scan);
             if (score.bucket() == null) {
+                writeModFields(mod, null, List.of(), graph.dependentsCount(id));
                 continue;
             }
             if (score.bucket() == Bucket.LIKELY_REMOVABLE
@@ -141,40 +273,112 @@ public final class ModSideScorer {
                 score = score.withBucket(Bucket.UNCERTAIN, Confidence.MEDIUM,
                         "Other mods depend on this jar — review dependents before removing.");
             }
+
+            ModrinthLookupService.SideInfo mr = modrinthById.get(id);
+            if (mr != null) {
+                score = mergeModrinth(score, mr);
+            }
+
+            writeModFields(mod, score.bucket(), score.signals(), graph.dependentsCount(id));
+
+            if (ignored.contains(id)) {
+                continue;
+            }
+            if (score.bucket() == Bucket.SERVER_REQUIRED) {
+                continue;
+            }
             detected.add(toEntry(id, mod, score, graph));
         }
 
-        if (detected.isEmpty()) {
-            return;
-        }
-        detected.sort(Comparator.comparing(o -> o.get("mod_id").getAsString()));
-        JsonArray arr = new JsonArray();
-        detected.forEach(arr::add);
-        optional.add("client_only_mods", arr);
+        if (!detected.isEmpty()) {
+            detected.sort(Comparator.comparing(o -> o.get("mod_id").getAsString()));
+            JsonArray arr = new JsonArray();
+            detected.forEach(arr::add);
+            optional.add("client_only_mods", arr);
 
-        int removable = 0;
-        int testRemove = 0;
-        for (JsonObject d : detected) {
-            if (Bucket.LIKELY_REMOVABLE.id().equals(str(d, "bucket"))) {
-                removable++;
-            } else if (Bucket.TEST_REMOVE.id().equals(str(d, "bucket"))) {
-                testRemove++;
+            int removable = 0;
+            int testRemove = 0;
+            for (JsonObject d : detected) {
+                if (Bucket.LIKELY_REMOVABLE.id().equals(str(d, "bucket"))) {
+                    removable++;
+                } else if (Bucket.TEST_REMOVE.id().equals(str(d, "bucket"))) {
+                    testRemove++;
+                }
             }
+            int clientWarnings = clientWarningCount(optional);
+            JsonObject summary = new JsonObject();
+            summary.addProperty("detected", detected.size());
+            summary.addProperty("likely_removable_count", removable);
+            summary.addProperty("test_remove_count", testRemove);
+            summary.addProperty("client_warning_count", clientWarnings);
+            optional.add("client_only_mods_summary", summary);
         }
-        int clientWarnings = clientWarningCount(optional);
-        JsonObject summary = new JsonObject();
-        summary.addProperty("detected", detected.size());
-        summary.addProperty("likely_removable_count", removable);
-        summary.addProperty("test_remove_count", testRemove);
-        summary.addProperty("client_warning_count", clientWarnings);
-        optional.add("client_only_mods_summary", summary);
     }
 
-    private record Score(Bucket bucket, Confidence confidence, List<String> signals, String reason,
-                         String removalAdvice) {
+    /** Pure Layer-1 + Modrinth merge for unit tests. */
+    public static Score mergeModrinth(Score layer1, ModrinthLookupService.SideInfo info) {
+        if (layer1 == null || info == null || info.miss()) {
+            return layer1;
+        }
+        String server = normalizeSide(info.serverSide());
+        String client = normalizeSide(info.clientSide());
+        List<String> signals = new ArrayList<>(layer1.signals());
+
+        if ("required".equals(server) && "unsupported".equals(client)) {
+            signals.add("modrinth:server_required");
+            return new Score(Bucket.SERVER_REQUIRED, Confidence.HIGH, signals,
+                    "Modrinth marks this mod as server-required",
+                    "Do not remove — required on dedicated servers.");
+        }
+        if ("required".equals(client) && "unsupported".equals(server)) {
+            if (layer1.bucket() == Bucket.SERVER_REQUIRED) {
+                return layer1;
+            }
+            signals.add("modrinth:client_only");
+            return new Score(Bucket.LIKELY_REMOVABLE, Confidence.HIGH, signals,
+                    layer1.reason(),
+                    removalAdviceFor(Bucket.LIKELY_REMOVABLE));
+        }
+        if ("optional".equals(server) && "optional".equals(client)) {
+            signals.add("modrinth:optional_both");
+            return new Score(layer1.bucket(), layer1.confidence(), signals, layer1.reason(), layer1.removalAdvice());
+        }
+        return layer1;
+    }
+
+    public record Score(Bucket bucket, Confidence confidence, List<String> signals, String reason,
+                        String removalAdvice) {
         Score withBucket(Bucket bucket, Confidence confidence, String reason) {
             return new Score(bucket, confidence, signals, reason, removalAdvice);
         }
+    }
+
+    static Set<String> protectedIds(JsonArray mods, ModDependencyGraph graph) {
+        Set<String> seeds = new HashSet<>();
+        for (JsonElement el : mods) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            String id = str(el.getAsJsonObject(), "id");
+            if (id == null) {
+                continue;
+            }
+            if (SERVER_REQUIRED_IDS.contains(id)) {
+                seeds.add(id);
+            }
+        }
+        if (modPresent(mods, "create")) {
+            for (JsonElement el : mods) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                String id = str(el.getAsJsonObject(), "id");
+                if (id != null && CREATE_ECOSYSTEM_IDS.contains(id)) {
+                    seeds.add(id);
+                }
+            }
+        }
+        return graph.expandProtected(seeds, PROTECTION_DEPTH);
     }
 
     private static Score scoreMod(
@@ -185,6 +389,13 @@ public final class ModSideScorer {
             ModJarSideScanner.ScanResult scan) {
         List<String> signals = new ArrayList<>();
         int points = 0;
+
+        if (HYBRID_IDS.contains(id)) {
+            signals.add("heuristic");
+            return new Score(Bucket.UNCERTAIN, Confidence.MEDIUM, signals, HYBRID_REASON,
+                    removalAdviceFor(Bucket.UNCERTAIN));
+        }
+
         Bucket heuristicBucket = heuristicBucket(id, mod);
         if (heuristicBucket != null) {
             signals.add("heuristic");
@@ -242,18 +453,80 @@ public final class ModSideScorer {
             confidence = Confidence.MEDIUM;
         } else {
             confidence = Confidence.LOW;
-            bucket = Bucket.TEST_REMOVE;
         }
 
-        if (confidence == Confidence.LOW) {
+        // Known uncertain / library heuristics should not collapse into test_remove.
+        if (confidence == Confidence.LOW
+                && heuristicBucket != Bucket.UNCERTAIN
+                && heuristicBucket != Bucket.CLIENT_LIBRARY) {
             bucket = Bucket.TEST_REMOVE;
             advice = TEST_REMOVE_ADVICE;
         } else {
+            if (confidence == Confidence.LOW && heuristicBucket != null) {
+                bucket = heuristicBucket;
+                confidence = Confidence.MEDIUM;
+            }
             advice = removalAdviceFor(bucket);
         }
 
         reason = reasonFor(id, bucket, mod, warnCount);
         return new Score(bucket, confidence, signals, reason, advice);
+    }
+
+    private static Path resolveModJar(JsonArray mods, String id, String serverDir) {
+        if (id == null || serverDir == null || serverDir.isBlank()) {
+            return ModJarSideScanner.modJarPath(serverDir, id);
+        }
+        for (JsonElement el : mods) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject mod = el.getAsJsonObject();
+            if (!id.equals(str(mod, "id"))) {
+                continue;
+            }
+            String jarFile = str(mod, "jar_file");
+            if (jarFile != null && !jarFile.isBlank()) {
+                Path jar = Path.of(serverDir, "mods", jarFile);
+                if (java.nio.file.Files.isRegularFile(jar)) {
+                    return jar;
+                }
+            }
+            break;
+        }
+        return ModJarSideScanner.modJarPath(serverDir, id);
+    }
+
+    private static Set<String> crashSuspectModIds(JsonObject optional) {
+        Set<String> ids = new HashSet<>();
+        if (optional == null || !optional.has("crash_summaries") || !optional.get("crash_summaries").isJsonArray()) {
+            return ids;
+        }
+        for (JsonElement el : optional.getAsJsonArray("crash_summaries")) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            for (String key : List.of("primary_mod_id", "stall_mod_id", "suspect_mod_id", "linked_mod_id")) {
+                String v = str(row, key);
+                if (v != null && !v.isBlank()) {
+                    ids.add(v.toLowerCase(Locale.ROOT));
+                }
+            }
+        }
+        return ids;
+    }
+
+    private static void writeModFields(JsonObject mod, Bucket bucket, List<String> signals, int dependentsCount) {
+        if (bucket != null) {
+            mod.addProperty("side_score", bucket.id());
+        }
+        if (signals != null && !signals.isEmpty()) {
+            JsonArray arr = new JsonArray();
+            signals.forEach(arr::add);
+            mod.add("side_signals", arr);
+        }
+        mod.addProperty("dependents_count", dependentsCount);
     }
 
     private static JsonObject toEntry(String id, JsonObject mod, Score score, ModDependencyGraph graph) {
@@ -278,6 +551,21 @@ public final class ModSideScorer {
             entry.add("dependents", depArr);
         }
         return entry;
+    }
+
+    private static Set<String> ignoredIds(JsonObject optional) {
+        Set<String> ignored = new HashSet<>();
+        if (!optional.has("ignored_client_mods") || !optional.get("ignored_client_mods").isJsonObject()) {
+            return ignored;
+        }
+        JsonObject map = optional.getAsJsonObject("ignored_client_mods");
+        for (String key : map.keySet()) {
+            JsonElement el = map.get(key);
+            if (el != null && !el.isJsonNull() && el.getAsBoolean()) {
+                ignored.add(key);
+            }
+        }
+        return ignored;
     }
 
     private static Map<String, Integer> logWarningsByMod(JsonObject optional) {
@@ -318,7 +606,7 @@ public final class ModSideScorer {
         if (LIBRARY_IDS.contains(id)) {
             return Bucket.CLIENT_LIBRARY;
         }
-        if (UNCERTAIN_IDS.contains(id)) {
+        if (UNCERTAIN_IDS.contains(id) || "ponder".equals(id)) {
             return Bucket.UNCERTAIN;
         }
         String low = id.toLowerCase(Locale.ROOT);
@@ -346,7 +634,7 @@ public final class ModSideScorer {
         if (LIBRARY_IDS.contains(id)) {
             return Bucket.CLIENT_LIBRARY;
         }
-        if (UNCERTAIN_IDS.contains(id)) {
+        if (UNCERTAIN_IDS.contains(id) || HYBRID_IDS.contains(id) || "ponder".equals(id)) {
             return Bucket.UNCERTAIN;
         }
         return Bucket.LIKELY_REMOVABLE;
@@ -363,6 +651,9 @@ public final class ModSideScorer {
     }
 
     private static String reasonFor(String id, Bucket bucket, JsonObject mod, int warnCount) {
+        if (bucket == Bucket.UNCERTAIN && HYBRID_IDS.contains(id)) {
+            return HYBRID_REASON;
+        }
         String desc = str(mod, "description");
         if (desc != null && !desc.isBlank() && desc.length() <= 120) {
             return desc;
@@ -371,12 +662,8 @@ public final class ModSideScorer {
             case LIKELY_REMOVABLE -> switch (id) {
                 case "modmenu" -> "Mod list menu — client UI only";
                 case "appleskin" -> "Hunger/saturation HUD — client only";
-                case "xaerominimap" -> "Minimap UI — client only on dedicated servers";
-                case "xaeroworldmap" -> "World map UI — client only on dedicated servers";
-                case "xaerotrainmap" -> "Train map UI — client only";
                 case "lambdynlights" -> "Dynamic lights — client rendering";
                 case "veil" -> "Client rendering/shaders";
-                case "ponder" -> "Create ponder scenes — client UI";
                 default -> warnCount > 0
                         ? "Client classes referenced in logs (" + warnCount + " warnings)"
                         : "Typically client-only on a dedicated server";
@@ -384,6 +671,7 @@ public final class ModSideScorer {
             case CLIENT_LIBRARY -> "Client-oriented library — may be required by other mods";
             case UNCERTAIN -> "May provide server features — review before removing";
             case TEST_REMOVE -> "Insufficient signals — test removal one mod at a time";
+            case SERVER_REQUIRED -> "Server-required gameplay or library mod";
         };
     }
 
@@ -393,6 +681,7 @@ public final class ModSideScorer {
             case CLIENT_LIBRARY -> "Do not remove unless you know no other mods need it.";
             case UNCERTAIN -> "Check mod documentation; some features may run on dedicated servers.";
             case TEST_REMOVE -> TEST_REMOVE_ADVICE;
+            case SERVER_REQUIRED -> "Do not remove — required on dedicated servers.";
         };
     }
 
@@ -402,6 +691,19 @@ public final class ModSideScorer {
         }
         String low = id.toLowerCase(Locale.ROOT);
         return low.startsWith("fabric_") && !low.contains("bridge");
+    }
+
+    private static boolean modPresent(JsonArray mods, String id) {
+        for (JsonElement el : mods) {
+            if (el.isJsonObject() && id.equals(str(el.getAsJsonObject(), "id"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String normalizeSide(String side) {
+        return side == null ? "unknown" : side.strip().toLowerCase(Locale.ROOT);
     }
 
     private static String str(JsonObject o, String key) {

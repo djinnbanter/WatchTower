@@ -1,0 +1,6 @@
+---- Minecraft Crash Report ----
+// Create 6 + old Railways CNFE (synthetic CA-09)
+
+java.lang.NoClassDefFoundError: com/simibubi/create/content/kinetics/base/KineticBlockEntity
+	at com.railwayteam.railways.mixin.MixinSomething.redirect(MixinSomething.java:40)
+Caused by: java.lang.ClassNotFoundException: com.simibubi.create.content.kinetics.base.KineticBlockEntity

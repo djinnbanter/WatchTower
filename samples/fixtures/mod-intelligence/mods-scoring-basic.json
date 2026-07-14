@@ -1,0 +1,66 @@
+{
+  "input": {
+    "mods": [
+      {
+        "id": "create",
+        "version": "6.0.0",
+        "display_name": "Create",
+        "dependencies": [
+          { "modId": "somecorelib", "mandatory": true }
+        ]
+      },
+      {
+        "id": "flywheel",
+        "version": "1.0.0",
+        "display_name": "Flywheel"
+      },
+      {
+        "id": "ponder",
+        "version": "1.0.0",
+        "display_name": "Ponder"
+      },
+      {
+        "id": "railways",
+        "version": "1.6.0",
+        "display_name": "Create: Steam 'n' Rails",
+        "dependencies": [
+          { "modId": "create", "mandatory": true }
+        ]
+      },
+      {
+        "id": "somecorelib",
+        "version": "1.0.0",
+        "display_name": "Some Core Lib"
+      },
+      {
+        "id": "modmenu",
+        "version": "11.0.0",
+        "display_name": "Mod Menu"
+      },
+      {
+        "id": "xaerominimap",
+        "version": "24.0.0",
+        "display_name": "Xaero's Minimap"
+      },
+      {
+        "id": "appleskin",
+        "version": "3.0.0",
+        "display_name": "AppleSkin"
+      }
+    ],
+    "client_class_warnings_by_mod": [],
+    "ignored_client_mods": {
+      "appleskin": true
+    }
+  },
+  "expected_side_scores": {
+    "create": "server_required",
+    "flywheel": "server_required",
+    "ponder": "server_required",
+    "railways": "server_required",
+    "modmenu": "likely_removable",
+    "xaerominimap": "uncertain"
+  },
+  "expected_client_only_mod_ids": ["modmenu", "xaerominimap"],
+  "expected_excluded_from_client_only": ["create", "flywheel", "ponder", "railways", "appleskin"]
+}

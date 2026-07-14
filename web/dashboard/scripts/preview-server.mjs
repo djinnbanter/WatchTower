@@ -30,7 +30,23 @@ const NO_CACHE = {
   Expires: '0',
 };
 
-await import('./generate-mock-data.mjs');
+const EMBEDDED_CSP = {
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self'; img-src 'self' data: https://crafthead.net; "
+    + "style-src 'self' 'unsafe-inline'; "
+    + "font-src 'self'",
+};
+
+const usePreviewCsp = process.env.PREVIEW_CSP === '1';
+
+try {
+  await import('./generate-mock-data.mjs');
+} catch (err) {
+  console.warn('Mock regenerate skipped:', err.message || err);
+  console.warn('Serving existing data/ fixtures.');
+}
 
 const server = createServer(async (req, res) => {
   try {
@@ -39,7 +55,7 @@ const server = createServer(async (req, res) => {
 
     if (path === '/favicon.ico' || path === '/favicon.png') {
       const body = await readFile(faviconPath);
-      res.writeHead(200, { ...NO_CACHE, 'Content-Type': 'image/png' });
+      res.writeHead(200, { ...NO_CACHE, 'Content-Type': 'image/png', ...(usePreviewCsp ? EMBEDDED_CSP : {}) });
       res.end(body);
       return;
     }
@@ -53,7 +69,8 @@ const server = createServer(async (req, res) => {
     }
     const body = await readFile(filePath);
     const type = MIME[extname(filePath)] || 'application/octet-stream';
-    res.writeHead(200, { ...NO_CACHE, 'Content-Type': type });
+    const headers = { ...NO_CACHE, 'Content-Type': type, ...(usePreviewCsp ? EMBEDDED_CSP : {}) };
+    res.writeHead(200, headers);
     res.end(body);
   } catch {
     res.writeHead(404);

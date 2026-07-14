@@ -2,6 +2,8 @@
 
 A **web page you open in your browser** to understand a recovery zip when the server will not boot. No login, no live dashboard — just diagnosis from the bundle.
 
+> **Early preview:** The DR viewer is in **very early development**. Tabs, upload flows, and Fix-tab guidance may be incomplete or behave unexpectedly. Prefer the **DR CLI** bundle and manual log review when you need a reliable path; report issues on [GitHub](https://github.com/djinnbanter/WatchTower/issues).
+
 ---
 
 ## At a glance

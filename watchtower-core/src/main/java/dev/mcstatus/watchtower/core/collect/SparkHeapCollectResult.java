@@ -1,6 +1,6 @@
 package dev.mcstatus.watchtower.core.collect;
 
-import me.lucko.spark.proto.SparkHeapProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkHeapProtos;
 
 import java.nio.file.Path;
 import java.time.Instant;

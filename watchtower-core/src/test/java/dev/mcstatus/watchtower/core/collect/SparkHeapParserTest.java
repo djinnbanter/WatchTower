@@ -1,8 +1,8 @@
 package dev.mcstatus.watchtower.core.collect;
 
 import com.google.gson.JsonObject;
-import me.lucko.spark.proto.SparkHeapProtos;
-import me.lucko.spark.proto.SparkProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkHeapProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkProtos;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

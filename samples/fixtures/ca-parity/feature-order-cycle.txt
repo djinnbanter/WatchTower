@@ -1,0 +1,5 @@
+---- Minecraft Crash Report ----
+// Feature order cycle (synthetic CA-07)
+
+java.lang.IllegalStateException: Feature order cycle found
+Caused by: com.alcatrazescapee.cyanide.codec.FeatureCycleDetector$FeatureCycleException: A feature cycle was found.

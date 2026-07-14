@@ -1,0 +1,10 @@
+{
+  "mods": [
+    {
+      "id": "create",
+      "version": "6.0.0",
+      "jar_file": "create-6.0.0.jar",
+      "mixin_configs": ["create.mixins.json"]
+    }
+  ]
+}

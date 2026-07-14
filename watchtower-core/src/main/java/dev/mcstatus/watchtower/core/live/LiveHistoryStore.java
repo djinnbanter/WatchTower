@@ -39,6 +39,8 @@ public final class LiveHistoryStore {
     private final List<LiveSeriesRetention.Point> netTxMbpsSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> diskReadMbSSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> diskWriteMbSSeries = new ArrayList<>();
+    private final List<LiveSeriesRetention.Point> thermalPackageSeries = new ArrayList<>();
+    private final List<LiveSeriesRetention.Point> thermalAmbientSeries = new ArrayList<>();
 
     private JsonObject latest = new JsonObject();
     private int sampleIntervalSec = 1;
@@ -90,6 +92,8 @@ public final class LiveHistoryStore {
             loadSeries(series, "net_tx_mbps", netTxMbpsSeries);
             loadSeries(series, "disk_read_mb_s", diskReadMbSSeries);
             loadSeries(series, "disk_write_mb_s", diskWriteMbSSeries);
+            loadSeries(series, "thermal_package", thermalPackageSeries);
+            loadSeries(series, "thermal_ambient", thermalAmbientSeries);
         } finally {
             lock.writeLock().unlock();
         }
@@ -156,6 +160,23 @@ public final class LiveHistoryStore {
             appendOptionalPoint(snapshot, "disk_read_mb_s", diskReadMbSSeries, epoch);
             appendOptionalPoint(snapshot, "disk_write_mb_s", diskWriteMbSSeries, epoch);
             maybeFlush(epoch);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Record host thermal readings (sampled ~every 60s on the server).
+     */
+    public void appendThermal(long epoch, Double packageC, Double ambientC) {
+        lock.writeLock().lock();
+        try {
+            if (packageC != null) {
+                LiveSeriesRetention.appendPoint(thermalPackageSeries, epoch, packageC, retentionHours, MAX_SERIES_POINTS);
+            }
+            if (ambientC != null) {
+                LiveSeriesRetention.appendPoint(thermalAmbientSeries, epoch, ambientC, retentionHours, MAX_SERIES_POINTS);
+            }
         } finally {
             lock.writeLock().unlock();
         }
@@ -272,6 +293,8 @@ public final class LiveHistoryStore {
             out.add("net_tx_mbps", cappedSeriesArray(netTxMbpsSeries, cutoff, cap));
             out.add("disk_read_mb_s", cappedSeriesArray(diskReadMbSSeries, cutoff, cap));
             out.add("disk_write_mb_s", cappedSeriesArray(diskWriteMbSSeries, cutoff, cap));
+            out.add("thermal_package", cappedSeriesArray(thermalPackageSeries, cutoff, cap));
+            out.add("thermal_ambient", cappedSeriesArray(thermalAmbientSeries, cutoff, cap));
             out.addProperty("max_points", cap);
             if (minutesLabel != null) {
                 out.addProperty("minutes", minutesLabel);
@@ -435,6 +458,8 @@ public final class LiveHistoryStore {
         series.add("net_tx_mbps", seriesArray(netTxMbpsSeries, 0));
         series.add("disk_read_mb_s", seriesArray(diskReadMbSSeries, 0));
         series.add("disk_write_mb_s", seriesArray(diskWriteMbSSeries, 0));
+        series.add("thermal_package", seriesArray(thermalPackageSeries, 0));
+        series.add("thermal_ambient", seriesArray(thermalAmbientSeries, 0));
         root.add("series", series);
         return root;
     }

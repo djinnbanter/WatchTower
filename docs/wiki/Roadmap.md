@@ -2,9 +2,22 @@
 
 **What Watchtower does today and what is planned next** — in plain terms. Everything runs on your server; no cloud account required.
 
-Releases ship when ready (no fixed dates). **Latest:** **1.0.0** · [[Downloads and Releases]] · [[Changelog]]
+Releases ship when ready (no fixed dates). **Latest:** **1.1.0** · [[Downloads and Releases]] · [[Changelog]]
 
 **Platform today:** NeoForge **1.21.x**. Fabric and older NeoForge lines are planned later.
+
+---
+
+## 1.1.0 — Shipped
+
+Ops intelligence and dashboard polish since **1.0.0** / **1.0.0a** (former planned **1.0.1–1.0.8** themes):
+
+- Smarter mod list, crash/DR intelligence, Startup profile, crash inbox
+- Mod forensics, crash rule packs, glass UI, Backups setup + **Not tracking**
+- Overview welcome, Insights Patterns sub-panels, Session roster polish
+- Issues Reviewed tab, Logs viewer, setup wizard audit, short guided tour
+
+Artifacts: `watchtower-neoforge-1.1.0+mc1.21.jar` · `watchtower-cli-1.1.0.jar`
 
 ---
 
@@ -14,7 +27,7 @@ First public release — the complete ops toolkit:
 
 - Live dashboard (`:8787`) — Overview, Live, Insights, Issues, Crashes, Mods, Backups, Activity, Session, Spark, Sources
 - **Docs** tab — bundled operator wiki with search
-- **Setup wizard** — first-run audit, backups, schedule, optional 2FA
+- **Setup wizard** — first-run audit, backup discovery, schedule, optional 2FA
 - Scheduled health reports (default twice daily) with report retention
 - Always-on background scan (~60s) for logs, crashes, mod errors, activity, lag spikes
 - Performance history and **Insights** tab (busy/quiet hours, heatmaps, CSV export)
@@ -49,50 +62,15 @@ Open the **Sources** tab to see when each layer last updated. See [[Understandin
 
 ## Planned releases
 
-### 1.0.1 — Smarter mod list
-
-- Stop flagging Create (and similar server mods) as removable
-- Optional Modrinth lookup for ambiguous jars — off by default
-- Dependency tree — see why a mod is protected
-
-### 1.0.2 — Crash & DR intelligence
-
-- Fewer “unknown” crashes — real NeoForge stack attribution
-- Watchdog stalls explained — pregen, contraptions, map render
-- DR Fix tab matches the crash across dashboard, CLI, and DR viewer
-- Startup boot profile — boot time, slowest phase, warnings trend
-
-### 1.0.3 — Crash inbox
-
-- Group identical crashes into one row
-- Mark all reviewed in one click
-- Notification bell on Overview (precursor to Discord alerts in **1.2.0**)
-
-### 1.0.4 — Release engineering
-
-Internal only — shared mod module for multiple Minecraft JARs. No operator-facing changes.
-
-### 1.0.5 — Boot & mixin intelligence
-
-Names boot-time failures (mixin, loader, ecosystem patterns) as facts and brief text — mixin owner, conflicting mixins, duplicate jars, corrupt TOML, Create/Epic Fight/AzureLib fingerprints, and more.
-
-### 1.0.6 — Mod forensics
-
-Find owning jar from stack trace, corrupt jar detection, broken serverconfig scan, MCreator/Fabric-in-jar badges.
-
-### 1.0.7 — Custom crash rules
-
-YAML rule packs under `config/watchtower/rules/`, builtin corpus, issue suppressions, `watchtower rules validate` CLI.
-
-### 1.1.0 — Fleet hub
+### 1.2.0 — Fleet hub
 
 One view across many servers — compare TPS, issues, and backups.
 
-### 1.2.0 — Fabric & alerts
+### 1.3.0 — Fabric & alerts
 
 Fabric 1.21 mod JAR; optional Discord/webhook alerts for crashes, lag, stale backups.
 
-### 1.3.0 — NeoForge 1.20.x
+### 1.4.0 — NeoForge 1.20.x
 
 Second mod JAR for **1.20.x packs** — pick `+mc1.20` or `+mc1.21` at download.
 

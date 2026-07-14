@@ -1,31 +1,45 @@
-# Watchtower dashboard
+# Watchtower dashboard (Lantern UI)
 
-Embedded in the NeoForge mod JAR. **Documentation:** [GitHub Wiki — Dashboard](https://github.com/djinnbanter/WatchTower/wiki/Dashboard-Overview)
+Embedded in the NeoForge mod JAR and served at `:8787`.  
+**Documentation:** [GitHub Wiki — Dashboard](https://github.com/djinnbanter/WatchTower/wiki/Dashboard-Overview)
 
-Source synced at build: `web/dashboard/` → mod assets.
+Source synced at build: `web/dashboard/` → mod assets (`src/**`, `vendor/**`, `assets/**`, `styles.css`, `index.html`).
 
-## CSS build
+## Architecture
 
-Edit modules under `css/v3/`, then:
+Framework-first **Lantern** UI (`ui-` / `--ui-*`):
 
-```bash
-npm run build:css
-```
+- `src/styles/` — design tokens, themes, primitives, patterns, features CSS
+- `src/ui/primitives` → `src/ui/patterns` → `src/features/*`
+- `src/state/` — Preact signals stores + poll scheduler
+- `src/api/` — live HTTP source or static fixture source
+- Vendored Preact + signals + HTM + uPlot (no npm runtime deps, no bundler)
 
-Gradle `syncDashboard` copies the built `styles.css` into the mod JAR. Run `npm run build:css` after editing `css/` or `css/v3/`.
-
-## Static preview (no Minecraft server)
-
-Browse the full v3 UI with mock reports and live-style metrics:
+## Build
 
 ```bash
 cd web/dashboard
-npm run build:css   # once, or after CSS edits
-npm run preview     # regenerates mock data + serves http://127.0.0.1:8080
+npm run build          # CSS concat + wiki ES module + modulepreload inject
+npm run vendor         # (rare) re-download Preact/uPlot/fonts into vendor/ + assets/fonts/
 ```
 
-**After changing files in `assets/`** (logos, favicon), stop the preview server (`Ctrl+C`) and run `npm run preview` again. Use **http://127.0.0.1:8080** (not `file://`). Favicons are cached aggressively — hard-refresh or use a private window if the tab icon looks stale.
+Gradle `syncDashboard` runs `node scripts/build.mjs` then copies the shipped tree into the mod JAR.
 
-`npm run generate:mock` refreshes `data/live-samples.json`, `data/live-envelope.json`, `data/snapshot.json`, `data/performance-rollups.json`, **`data/ops-cache.json`** (activity ledger + lag issues + live crash scan), **`data/overview-meta.json`** (scorecard, crash/lag TLDR), and **`data/issues-peek.json`** with timestamps relative to now. Overview and Live tabs simulate metric ticks every 3s; Crashes and Activity **Scan** buttons reload the ops-cache fixture.
+## Static preview (no Minecraft server)
 
-Fixtures live in `data/` (`facts.json`, `reports-index.json`, etc.). No login gate in static mode.
+```bash
+cd web/dashboard
+npm run preview        # build + mock data + http://127.0.0.1:8080
+```
+
+Optional:
+
+- `PREVIEW_PROFILE=fresh npm run preview` — empty-install / no-reports demo
+- `PREVIEW_CSP=1 npm run preview` — mirror embedded Content-Security-Policy
+- `OPEN_BROWSER=0` — skip auto-open
+
+Fixtures live in `data/`. Preview mode has no login gate and simulates live metric ticks.
+
+## Extending
+
+See the rebuild plan cookbook: register pages via `src/app/registry.js`, compose `Page`/`Section`/`MetricTile` patterns, use `--ui-*` tokens only (no magic colors/durations in feature CSS).

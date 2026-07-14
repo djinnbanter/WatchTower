@@ -1,0 +1,95 @@
+/* Toast host */
+
+.ui-toast-host {
+  position: fixed;
+  bottom: var(--ui-sp-24);
+  right: var(--ui-sp-24);
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-8);
+  pointer-events: none;
+  max-width: 360px;
+  width: calc(100vw - var(--ui-sp-48));
+}
+
+.ui-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ui-sp-8);
+  padding: var(--ui-sp-12) var(--ui-sp-16);
+  background-color: var(--ui-bg3);
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-rad-l);
+  box-shadow: var(--ui-shadow-pop);
+  pointer-events: all;
+  font-size: var(--ui-text-sm);
+  line-height: var(--ui-lh-base);
+  min-width: 0;
+}
+
+.ui-toast__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ui-toast--ok .ui-toast__icon { color: var(--ui-ok); }
+.ui-toast--warn .ui-toast__icon { color: var(--ui-warn); }
+.ui-toast--error .ui-toast__icon { color: var(--ui-danger); }
+.ui-toast--info .ui-toast__icon { color: var(--ui-info); }
+.ui-toast--success .ui-toast__icon { color: var(--ui-ok); }
+
+.ui-toast__message {
+  flex: 1;
+  min-width: 0;
+  color: var(--ui-text-hi);
+  word-break: break-word;
+}
+
+.ui-toast__dismiss {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ui-text-low);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  border-radius: var(--ui-rad-s);
+  transition: color var(--ui-dur-1) var(--ui-ease-out);
+}
+
+.ui-toast__dismiss:hover {
+  color: var(--ui-text-hi);
+}
+
+.ui-toast__dismiss:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ui-toast {
+    animation: ui-toast-enter var(--ui-dur-3) var(--ui-ease-out) both;
+  }
+
+  @keyframes ui-toast-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .ui-toast--exit {
+    animation: ui-toast-exit var(--ui-dur-2) var(--ui-ease-inout) both;
+  }
+
+  @keyframes ui-toast-exit {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.94); }
+  }
+}

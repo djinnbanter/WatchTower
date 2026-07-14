@@ -1,0 +1,26 @@
+[20Jun2026 00:30:01.000] [main/INFO] [net.neoforged.fml.loading.FMLServiceProvider/]: NeoForge mod loading starting
+[20Jun2026 00:30:02.100] [main/ERROR] [net.neoforged.fml.ModLoader/]: Mod loading has failed
+[20Jun2026 00:30:02.200] [main/ERROR] [net.neoforged.fml.ModLoader/]: Detected 3 mod loading issues
+
+-- Mod loading issue for: examplemod --
+Details:
+	Mod File: /mods/examplemod-1.0.jar
+	Mod ID: examplemod
+	Failure message: Missing dependency: cloth_config
+	Issue kind: mod_load_dependency
+
+-- Mod loading issue for: othermod --
+Details:
+	Mod File: /mods/othermod-2.1.jar
+	Mod ID: othermod
+	Failure message: Missing dependency: architectury version 13.0.0 or above
+	Issue kind: mod_load_dependency
+
+-- Mod loading issue for: thirdmod --
+Details:
+	Mod File: /mods/thirdmod-0.9.jar
+	Mod ID: thirdmod
+	Failure message: File provided by mod thirdmod does not exist! (corrupt or incomplete jar)
+	Issue kind: mod_corrupt
+
+[20Jun2026 00:30:03.000] [main/FATAL] [net.neoforged.fml.ModLoader/]: Aborting server start due to mod loading failures

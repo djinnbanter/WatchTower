@@ -1,0 +1,6 @@
+---- Minecraft Crash Report ----
+Time: 2026-07-05 14:01:55
+Description: Mod loading has failed
+
+net.neoforged.fml.ModLoadingException: Duplicate mods found: create
+	Found jars: create-6.0.0.jar, create-6.0.0-copy.jar

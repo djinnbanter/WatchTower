@@ -22,6 +22,7 @@
 - [[Disaster Recovery]]
 - [[DR CLI Reference]]
 - [[DR Viewer]]
+- [[Crash Rule Packs]]
 
 **Reference**
 - [[Dashboard Tabs#Admin — Docs|Docs tab (in-app)]]

@@ -57,3 +57,9 @@ LOG_GZIP_COUNT=5
 # --- Incremental collection (since last successful run) ---
 INCREMENTAL=false
 OVERLAP_MINUTES=5
+
+# --- Crash rule packs (1.0.18) — YAML under config/watchtower/rules/ ---
+# CRASH_RULE_PACKS=true
+# CRASH_RULE_BUILTIN=true
+# ISSUE_SUPPRESSIONS=CLIENT_ON_SERVER,LOOT_PARSE_SPAM
+# ISSUE_SUPPRESSION_REGEX=

@@ -1,5 +1,6 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.core.report.ReportConfig;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.concurrent.Executors;
@@ -68,7 +69,8 @@ public final class BackupPollScheduler {
             return;
         }
         try {
-            if (!ModReportConfig.forServer(server).hasBackupDirs()) {
+            ReportConfig config = ModReportConfig.forServer(server);
+            if (!config.hasBackupDirs() || !config.backupTrackingEnabled()) {
                 return;
             }
         } catch (Exception e) {

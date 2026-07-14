@@ -1,0 +1,180 @@
+{
+  "schema": "ca-parity-v1",
+  "cases": [
+    {
+      "id": "ca01-mixin-init",
+      "file": "mixin-config-init-server.txt",
+      "mods_file": "mixin-config-init-mods.json",
+      "exception": "org.spongepowered.asm.mixin.throwables.MixinInitialisationError: Error initialising mixin config create.mixins.json",
+      "boot_failed": true,
+      "expected": {
+        "failure_kind": "mod_load_mixin",
+        "primary_mod_id": "create",
+        "suspect_mod_id": "create"
+      }
+    },
+    {
+      "id": "ca02-mixin-conflict",
+      "file": "mixin-conflict-server.txt",
+      "mods_file": "mixin-conflict-mods.json",
+      "exception": "MixinTransformerError",
+      "boot_failed": true,
+      "expected": {
+        "failure_kind": "mod_load_mixin_conflict",
+        "primary_mod_id": "examplemod"
+      }
+    },
+    {
+      "id": "ca03-duplicate-mods-boot",
+      "file": "duplicate-mods-boot.log",
+      "exception": "EarlyLoadingException: Duplicate mods found",
+      "boot_failed": true,
+      "expected": {
+        "failure_kind": "mod_load_duplicate",
+        "primary_mod_id": "create"
+      }
+    },
+    {
+      "id": "ca04-server-config",
+      "file": "server-config-corrupt-server.txt",
+      "exception": "ConfigLoadingException",
+      "boot_failed": false,
+      "expected": {
+        "failure_kind": "mod_load_config",
+        "suspect_mod_id": "create",
+        "primary_mod_id": "create"
+      }
+    },
+    {
+      "id": "ca05-invalid-resource",
+      "file": "invalid-resource-location.txt",
+      "exception": "ResourceLocationException",
+      "boot_failed": false,
+      "expected": {
+        "failure_kind": "mod_load_asset",
+        "primary_mod_id": "coolmod"
+      }
+    },
+    {
+      "id": "ca06-language-provider",
+      "file": "language-provider-mismatch.log",
+      "exception": "Mod File foo.jar needs language provider javafml",
+      "boot_failed": true,
+      "expected": {
+        "failure_kind": "mod_load_dependency"
+      }
+    },
+    {
+      "id": "ca07-feature-order-cycle",
+      "file": "feature-order-cycle.txt",
+      "exception": "IllegalStateException: Feature order cycle found",
+      "boot_failed": false,
+      "expected": {
+        "failure_kind": "mod_load_worldgen"
+      }
+    },
+    {
+      "id": "ca08-ferrite-neighbor",
+      "file": "ferrite-neighbor-table.txt",
+      "exception": "UnsupportedOperationException",
+      "boot_failed": false,
+      "expected": {
+        "failure_kind": "mod_load_compat",
+        "primary_mod_id": "ferritecore"
+      }
+    },
+    {
+      "id": "ca09-create-missing-class",
+      "file": "create6-missing-class.txt",
+      "exception": "NoClassDefFoundError",
+      "boot_failed": false,
+      "mods": [{ "id": "create", "version": "6.0.4" }],
+      "expected": {
+        "failure_kind": "mod_load_ecosystem",
+        "primary_mod_id": "create"
+      }
+    },
+    {
+      "id": "ca09-create-railways",
+      "file": "create6-railways-cnfe-server.txt",
+      "mods_file": "create6-railways-mods.json",
+      "exception": "NoClassDefFoundError",
+      "boot_failed": true,
+      "expected": {
+        "failure_kind": "mod_load_ecosystem",
+        "primary_mod_id": "create"
+      }
+    },
+    {
+      "id": "ca10-epicfight",
+      "file": "epicfight-addon-cnfe-server.txt",
+      "exception": "ClassNotFoundException",
+      "boot_failed": false,
+      "mods": [{ "id": "epicfight", "version": "20.0" }],
+      "expected": {
+        "failure_kind": "mod_load_ecosystem",
+        "primary_mod_id": "epicfight"
+      }
+    },
+    {
+      "id": "ca10-azurelib",
+      "file": "azurelib-addon-cnfe-server.txt",
+      "exception": "NoClassDefFoundError",
+      "boot_failed": false,
+      "mods": [{ "id": "azurelib", "version": "2.0" }],
+      "expected": {
+        "failure_kind": "mod_load_ecosystem",
+        "primary_mod_id": "azurelib"
+      }
+    },
+    {
+      "id": "ca12-kubejs-datapack",
+      "file": "kubejs-datapack.txt",
+      "exception": "IllegalStateException",
+      "boot_failed": false,
+      "mods": [{ "id": "kubejs", "version": "2101.7" }],
+      "expected": {
+        "failure_kind": "mod_load_script",
+        "primary_mod_id": "kubejs"
+      }
+    },
+    {
+      "id": "ca14-unsupported-class-version",
+      "file": "unsupported-class-version.txt",
+      "exception": "UnsupportedClassVersionError",
+      "boot_failed": false,
+      "expected": {
+        "failure_kind": "platform_mismatch"
+      }
+    },
+    {
+      "id": "ca15-env-lock",
+      "file": "env-lock-windows.txt",
+      "exception": "FileSystemException",
+      "boot_failed": false,
+      "expected": {
+        "failure_kind": "env_lock"
+      }
+    },
+    {
+      "id": "ca16-oom-heap",
+      "file": "oom-heap.txt",
+      "exception": "OutOfMemoryError",
+      "boot_failed": false,
+      "expected": {
+        "failure_kind": "host_resource",
+        "oom_kind": "heap"
+      }
+    },
+    {
+      "id": "ca16-oom-native",
+      "file": "oom-native.txt",
+      "exception": "OutOfMemoryError",
+      "boot_failed": false,
+      "expected": {
+        "failure_kind": "host_resource",
+        "oom_kind": "native"
+      }
+    }
+  ]
+}

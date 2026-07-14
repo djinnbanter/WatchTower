@@ -1,12 +1,12 @@
 {
   "source": "watchtower",
-  "polled_at": "2026-06-24T13:25:45.111Z",
+  "polled_at": "2026-07-13T18:38:02.265Z",
   "overworld": {
-    "tps": 19.73,
-    "mspt": 6.64
+    "tps": 20,
+    "mspt": 19.6
   },
-  "players_online": 2,
-  "entities": 1247,
-  "chunks": 3842,
+  "players_online": 5,
+  "entities": 1219,
+  "chunks": 3869,
   "mod_count": 58
 }

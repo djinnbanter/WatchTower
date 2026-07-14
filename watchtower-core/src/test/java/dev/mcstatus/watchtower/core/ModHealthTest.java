@@ -122,6 +122,70 @@ class ModHealthTest {
     }
 
     @Test
+    void bootOnlyModErrorsDemotedWhenRuntimeCrashPresent() {
+        ModLogAnalyzer analyzer = new ModLogAnalyzer();
+        analyzer.processLine("[main/ERROR] provided by mod pride does not exist", true);
+        JsonObject optional = new JsonObject();
+        optional.add("mod_log_errors", analyzer.toJsonArray());
+        assertTrue(optional.getAsJsonArray("mod_log_errors").get(0).getAsJsonObject()
+                .get("boot_only").getAsBoolean());
+
+        JsonArray crashes = new JsonArray();
+        JsonObject crash = new JsonObject();
+        crash.addProperty("failure_kind", "mod_runtime");
+        crash.addProperty("historical", false);
+        crash.addProperty("acknowledged", false);
+        crashes.add(crash);
+        optional.add("crash_summaries", crashes);
+
+        ModIssueAdvisor.AdvisorResult result = ModIssueAdvisor.analyze(optional);
+        assertFalse(result.recommendations().isEmpty());
+        JsonObject rec = result.recommendations().get(0).getAsJsonObject();
+        assertEquals("info", rec.get("severity").getAsString());
+        assertTrue(rec.get("demoted").getAsBoolean());
+        assertEquals("boot_hygiene", rec.get("demotion_reason").getAsString());
+        assertFalse(rec.get("blocking").getAsBoolean());
+    }
+
+    @Test
+    void fmlRankTwoDoesNotStealWatchdogFix() {
+        ModLogAnalyzer analyzer = new ModLogAnalyzer();
+        analyzer.processLine("[main/ERROR] provided by mod pride does not exist", true);
+        JsonObject optional = new JsonObject();
+        optional.add("mod_log_errors", analyzer.toJsonArray());
+
+        JsonArray hits = new JsonArray();
+        JsonObject hit = new JsonObject();
+        hit.addProperty("id", "fml_unsupported_optional_dependencies");
+        hit.addProperty("priority", 40);
+        hit.addProperty("message_key", "fml.unsupported_optional_dependencies");
+        JsonArray mods = new JsonArray();
+        mods.add("optionalmod");
+        hit.add("mod_ids", mods);
+        hits.add(hit);
+        optional.add("known_pattern_hits", hits);
+
+        JsonArray crashes = new JsonArray();
+        JsonObject crash = new JsonObject();
+        crash.addProperty("failure_kind", "watchdog");
+        crash.addProperty("stall_mod_id", "squaremap");
+        crash.addProperty("historical", false);
+        crash.addProperty("acknowledged", false);
+        crashes.add(crash);
+        optional.add("crash_summaries", crashes);
+
+        ModIssueAdvisor.AdvisorResult result = ModIssueAdvisor.analyze(optional);
+        assertFalse(result.recommendations().isEmpty());
+        JsonObject rec = result.recommendations().get(0).getAsJsonObject();
+        // G-05: FML/boot hygiene stays demoted when an active watchdog crash exists
+        assertTrue(rec.get("demoted").getAsBoolean());
+        assertEquals("boot_hygiene", rec.get("demotion_reason").getAsString());
+        assertEquals("info", rec.get("severity").getAsString());
+        assertEquals(40, optional.getAsJsonArray("known_pattern_hits").get(0).getAsJsonObject()
+                .get("priority").getAsInt());
+    }
+
+    @Test
     void historicalWatchtowerCrashSkippedWhenVersionSufficient() {
         JsonObject optional = new JsonObject();
         JsonArray crashes = new JsonArray();

@@ -62,6 +62,9 @@ public final class ReportConfig {
     private final String hostname;
     private final boolean modSideScan;
     private final int modSideScanMaxJars;
+    private final boolean modrinthLookup;
+    private final boolean modrinthLookupOnReport;
+    private final int modrinthRateLimit;
     private final int chunkyStallMinutes;
     private final double chunkyDegradedCps;
     private final int chunkGenFailThreshold;
@@ -78,6 +81,7 @@ public final class ReportConfig {
     private final String backupExternalMarker;
     private final String backupWebhookToken;
     private final boolean backupSuppressLocalMissing;
+    private final boolean backupTrackingEnabled;
     private final int lagIncidentCooldownSec;
     private final boolean lagIncidentEnabled;
     private final int incidentMaxFiles;
@@ -86,6 +90,14 @@ public final class ReportConfig {
     private final String sparkUploadDir;
     private final int reportRetentionCount;
     private final int reportRetentionDays;
+    private final boolean modForensicsScan;
+    private final boolean forensicsCorruptJarWalk;
+    private final boolean forensicsIndexOnReport;
+    private final String forensicsStderrPaths;
+    private final boolean crashRulePacks;
+    private final boolean crashRuleBuiltin;
+    private final String issueSuppressions;
+    private final String issueSuppressionRegex;
 
     private ReportConfig(Builder b) {
         this.serverDir = b.serverDir;
@@ -128,6 +140,9 @@ public final class ReportConfig {
         this.hostname = b.hostname;
         this.modSideScan = b.modSideScan;
         this.modSideScanMaxJars = b.modSideScanMaxJars;
+        this.modrinthLookup = b.modrinthLookup;
+        this.modrinthLookupOnReport = b.modrinthLookupOnReport;
+        this.modrinthRateLimit = b.modrinthRateLimit;
         this.chunkyStallMinutes = b.chunkyStallMinutes;
         this.chunkyDegradedCps = b.chunkyDegradedCps;
         this.chunkGenFailThreshold = b.chunkGenFailThreshold;
@@ -144,6 +159,7 @@ public final class ReportConfig {
         this.backupExternalMarker = b.backupExternalMarker;
         this.backupWebhookToken = b.backupWebhookToken;
         this.backupSuppressLocalMissing = b.backupSuppressLocalMissing;
+        this.backupTrackingEnabled = b.backupTrackingEnabled;
         this.lagIncidentCooldownSec = b.lagIncidentCooldownSec;
         this.lagIncidentEnabled = b.lagIncidentEnabled;
         this.incidentMaxFiles = b.incidentMaxFiles;
@@ -152,6 +168,14 @@ public final class ReportConfig {
         this.sparkUploadDir = b.sparkUploadDir;
         this.reportRetentionCount = b.reportRetentionCount;
         this.reportRetentionDays = b.reportRetentionDays;
+        this.modForensicsScan = b.modForensicsScan;
+        this.forensicsCorruptJarWalk = b.forensicsCorruptJarWalk;
+        this.forensicsIndexOnReport = b.forensicsIndexOnReport;
+        this.forensicsStderrPaths = b.forensicsStderrPaths;
+        this.crashRulePacks = b.crashRulePacks;
+        this.crashRuleBuiltin = b.crashRuleBuiltin;
+        this.issueSuppressions = b.issueSuppressions;
+        this.issueSuppressionRegex = b.issueSuppressionRegex;
     }
 
     public static Builder builder() {
@@ -204,6 +228,9 @@ public final class ReportConfig {
         b.hostname = resolveHostname();
         b.modSideScan = isTruthy(env.get("MOD_SIDE_SCAN"), false);
         b.modSideScanMaxJars = parseInt(env.get("MOD_SIDE_SCAN_MAX_JARS"), 50);
+        b.modrinthLookup = isTruthy(env.get("MODRINTH_LOOKUP"), false);
+        b.modrinthLookupOnReport = isTruthy(env.get("MODRINTH_LOOKUP_ON_REPORT"), true);
+        b.modrinthRateLimit = parseInt(env.get("MODRINTH_RATE_LIMIT"), 4);
         b.chunkyStallMinutes = parseInt(env.get("CHUNKY_STALL_MINUTES"), 10);
         b.chunkyDegradedCps = parseDouble(env.get("CHUNKY_DEGRADED_CPS"), 5.0);
         b.chunkGenFailThreshold = parseInt(env.get("CHUNK_GEN_FAIL_THRESHOLD"), 3);
@@ -225,6 +252,7 @@ public final class ReportConfig {
         }
         b.backupWebhookToken = env.getOrDefault("BACKUP_WEBHOOK_TOKEN", "");
         b.backupSuppressLocalMissing = isTruthy(env.get("BACKUP_SUPPRESS_LOCAL_MISSING"), true);
+        b.backupTrackingEnabled = isTruthy(env.get("BACKUP_TRACKING_ENABLED"), true);
         b.lagIncidentCooldownSec = parseInt(env.get("LAG_INCIDENT_COOLDOWN_SEC"), 180);
         b.lagIncidentEnabled = isTruthy(env.get("LAG_INCIDENT_ENABLED"), true);
         b.incidentMaxFiles = parseInt(env.get("INCIDENT_MAX_FILES"), 50);
@@ -233,6 +261,15 @@ public final class ReportConfig {
         b.sparkUploadDir = env.getOrDefault("SPARK_UPLOAD_DIR", "");
         b.reportRetentionCount = parseInt(env.get("REPORT_RETENTION_COUNT"), ReportRetentionPolicy.DEFAULT_RETENTION_COUNT);
         b.reportRetentionDays = parseInt(env.get("REPORT_RETENTION_DAYS"), ReportRetentionPolicy.DEFAULT_RETENTION_DAYS);
+        b.modForensicsScan = isTruthy(env.get("MOD_FORENSICS_SCAN"), true);
+        b.forensicsCorruptJarWalk = isTruthy(env.get("FORENSICS_CORRUPT_JAR_WALK"), false);
+        b.forensicsIndexOnReport = isTruthy(env.get("FORENSICS_INDEX_ON_REPORT"), false);
+        b.forensicsStderrPaths = env.getOrDefault("FORENSICS_STDERR_PATHS",
+                "logs/stderr.log,logs/stderr_stream.log");
+        b.crashRulePacks = isTruthy(env.get("CRASH_RULE_PACKS"), true);
+        b.crashRuleBuiltin = isTruthy(env.get("CRASH_RULE_BUILTIN"), true);
+        b.issueSuppressions = env.getOrDefault("ISSUE_SUPPRESSIONS", "");
+        b.issueSuppressionRegex = env.getOrDefault("ISSUE_SUPPRESSION_REGEX", "");
         return b.build();
     }
 
@@ -400,6 +437,9 @@ public final class ReportConfig {
     public String hostname() { return hostname; }
     public boolean modSideScan() { return modSideScan; }
     public int modSideScanMaxJars() { return modSideScanMaxJars; }
+    public boolean modrinthLookup() { return modrinthLookup; }
+    public boolean modrinthLookupOnReport() { return modrinthLookupOnReport; }
+    public int modrinthRateLimit() { return modrinthRateLimit; }
     public int chunkyStallMinutes() { return chunkyStallMinutes; }
     public double chunkyDegradedCps() { return chunkyDegradedCps; }
     public int chunkGenFailThreshold() { return chunkGenFailThreshold; }
@@ -416,6 +456,7 @@ public final class ReportConfig {
     public String backupExternalMarker() { return backupExternalMarker; }
     public String backupWebhookToken() { return backupWebhookToken; }
     public boolean backupSuppressLocalMissing() { return backupSuppressLocalMissing; }
+    public boolean backupTrackingEnabled() { return backupTrackingEnabled; }
     public boolean isExternalBackupConfigured() {
         if (backupWebhookToken != null && !backupWebhookToken.isBlank()) {
             return true;
@@ -436,6 +477,14 @@ public final class ReportConfig {
     public String sparkUploadDir() { return sparkUploadDir; }
     public int reportRetentionCount() { return reportRetentionCount; }
     public int reportRetentionDays() { return reportRetentionDays; }
+    public boolean modForensicsScan() { return modForensicsScan; }
+    public boolean forensicsCorruptJarWalk() { return forensicsCorruptJarWalk; }
+    public boolean forensicsIndexOnReport() { return forensicsIndexOnReport; }
+    public String forensicsStderrPaths() { return forensicsStderrPaths; }
+    public boolean crashRulePacks() { return crashRulePacks; }
+    public boolean crashRuleBuiltin() { return crashRuleBuiltin; }
+    public String issueSuppressions() { return issueSuppressions; }
+    public String issueSuppressionRegex() { return issueSuppressionRegex; }
 
     public static final class Builder {
         private String serverDir = "";
@@ -478,6 +527,9 @@ public final class ReportConfig {
         private String hostname = "unknown";
         private boolean modSideScan;
         private int modSideScanMaxJars = 50;
+        private boolean modrinthLookup;
+        private boolean modrinthLookupOnReport = true;
+        private int modrinthRateLimit = 4;
         private int chunkyStallMinutes = 10;
         private double chunkyDegradedCps = 5.0;
         private int chunkGenFailThreshold = 3;
@@ -494,6 +546,7 @@ public final class ReportConfig {
         private String backupExternalMarker = ExternalBackupDetector.DEFAULT_MARKER_REL;
         private String backupWebhookToken = "";
         private boolean backupSuppressLocalMissing = true;
+        private boolean backupTrackingEnabled = true;
         private int lagIncidentCooldownSec = 180;
         private boolean lagIncidentEnabled = true;
         private int incidentMaxFiles = 50;
@@ -502,6 +555,14 @@ public final class ReportConfig {
         private String sparkUploadDir = "";
         private int reportRetentionCount = ReportRetentionPolicy.DEFAULT_RETENTION_COUNT;
         private int reportRetentionDays = ReportRetentionPolicy.DEFAULT_RETENTION_DAYS;
+        private boolean modForensicsScan = true;
+        private boolean forensicsCorruptJarWalk;
+        private boolean forensicsIndexOnReport;
+        private String forensicsStderrPaths = "logs/stderr.log,logs/stderr_stream.log";
+        private boolean crashRulePacks = true;
+        private boolean crashRuleBuiltin = true;
+        private String issueSuppressions = "";
+        private String issueSuppressionRegex = "";
 
         public Builder serverDir(String v) { this.serverDir = v; return this; }
         public Builder lookbackHours(int v) { this.lookbackHours = v; return this; }
@@ -526,6 +587,7 @@ public final class ReportConfig {
         public Builder backupExternalMarker(String v) { this.backupExternalMarker = v != null ? v : ""; return this; }
         public Builder backupWebhookToken(String v) { this.backupWebhookToken = v != null ? v : ""; return this; }
         public Builder backupSuppressLocalMissing(boolean v) { this.backupSuppressLocalMissing = v; return this; }
+        public Builder backupTrackingEnabled(boolean v) { this.backupTrackingEnabled = v; return this; }
         public Builder stateFile(String v) { this.stateFile = v; return this; }
         public Builder cpuSampleIntervalMs(int v) { this.cpuSampleIntervalMs = v; return this; }
         public Builder panelDetected(String v) { this.panelDetected = v; return this; }
@@ -552,11 +614,28 @@ public final class ReportConfig {
         public Builder hostname(String v) { this.hostname = v; return this; }
         public Builder modSideScan(boolean v) { this.modSideScan = v; return this; }
         public Builder modSideScanMaxJars(int v) { this.modSideScanMaxJars = v; return this; }
+        public Builder modrinthLookup(boolean v) { this.modrinthLookup = v; return this; }
+        public Builder modrinthLookupOnReport(boolean v) { this.modrinthLookupOnReport = v; return this; }
+        public Builder modrinthRateLimit(int v) { this.modrinthRateLimit = v; return this; }
         public Builder sparkEnabled(boolean v) { this.sparkEnabled = v; return this; }
         public Builder sparkFreshHours(int v) { this.sparkFreshHours = v; return this; }
         public Builder sparkUploadDir(String v) { this.sparkUploadDir = v; return this; }
         public Builder reportRetentionCount(int v) { this.reportRetentionCount = v; return this; }
         public Builder reportRetentionDays(int v) { this.reportRetentionDays = v; return this; }
+        public Builder modForensicsScan(boolean v) { this.modForensicsScan = v; return this; }
+        public Builder forensicsCorruptJarWalk(boolean v) { this.forensicsCorruptJarWalk = v; return this; }
+        public Builder forensicsIndexOnReport(boolean v) { this.forensicsIndexOnReport = v; return this; }
+        public Builder forensicsStderrPaths(String v) {
+            this.forensicsStderrPaths = v != null ? v : "logs/stderr.log,logs/stderr_stream.log";
+            return this;
+        }
+        public Builder crashRulePacks(boolean v) { this.crashRulePacks = v; return this; }
+        public Builder crashRuleBuiltin(boolean v) { this.crashRuleBuiltin = v; return this; }
+        public Builder issueSuppressions(String v) { this.issueSuppressions = v != null ? v : ""; return this; }
+        public Builder issueSuppressionRegex(String v) {
+            this.issueSuppressionRegex = v != null ? v : "";
+            return this;
+        }
 
         public Builder from(ReportConfig c) {
             this.serverDir = c.serverDir();
@@ -577,6 +656,7 @@ public final class ReportConfig {
             this.backupExternalMarker = c.backupExternalMarker();
             this.backupWebhookToken = c.backupWebhookToken();
             this.backupSuppressLocalMissing = c.backupSuppressLocalMissing();
+            this.backupTrackingEnabled = c.backupTrackingEnabled();
             this.stateFile = c.stateFile();
             this.cpuSampleIntervalMs = c.cpuSampleIntervalMs();
             this.panelDetected = c.panelDetected();
@@ -603,6 +683,9 @@ public final class ReportConfig {
             this.hostname = c.hostname();
             this.modSideScan = c.modSideScan();
             this.modSideScanMaxJars = c.modSideScanMaxJars();
+            this.modrinthLookup = c.modrinthLookup();
+            this.modrinthLookupOnReport = c.modrinthLookupOnReport();
+            this.modrinthRateLimit = c.modrinthRateLimit();
             this.chunkyStallMinutes = c.chunkyStallMinutes();
             this.chunkyDegradedCps = c.chunkyDegradedCps();
             this.chunkGenFailThreshold = c.chunkGenFailThreshold();
@@ -623,6 +706,14 @@ public final class ReportConfig {
             this.sparkUploadDir = c.sparkUploadDir();
             this.reportRetentionCount = c.reportRetentionCount();
             this.reportRetentionDays = c.reportRetentionDays();
+            this.modForensicsScan = c.modForensicsScan();
+            this.forensicsCorruptJarWalk = c.forensicsCorruptJarWalk();
+            this.forensicsIndexOnReport = c.forensicsIndexOnReport();
+            this.forensicsStderrPaths = c.forensicsStderrPaths();
+            this.crashRulePacks = c.crashRulePacks();
+            this.crashRuleBuiltin = c.crashRuleBuiltin();
+            this.issueSuppressions = c.issueSuppressions();
+            this.issueSuppressionRegex = c.issueSuppressionRegex();
             return this;
         }
 

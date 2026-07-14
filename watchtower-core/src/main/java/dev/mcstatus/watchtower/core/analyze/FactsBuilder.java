@@ -5,10 +5,20 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.brief.BriefFormatters;
 import dev.mcstatus.watchtower.core.collect.CrashDetails;
+import dev.mcstatus.watchtower.core.collect.FmlIssueParser;
+import dev.mcstatus.watchtower.core.collect.JarClassIndex;
+import dev.mcstatus.watchtower.core.collect.MixinConfigIndex;
+import dev.mcstatus.watchtower.core.collect.ModForensicsCollector;
+import dev.mcstatus.watchtower.core.collect.ModrinthLookupService;
 import dev.mcstatus.watchtower.core.collect.SparkRecommendationBuilder;
 import dev.mcstatus.watchtower.core.panel.PanelLabels;
+import dev.mcstatus.watchtower.core.report.ReportConfig;
+import dev.mcstatus.watchtower.core.rules.CrashRuleEvaluator;
+import dev.mcstatus.watchtower.core.rules.CrashRuleRegistry;
+import dev.mcstatus.watchtower.core.rules.IssueSuppressionStore;
 import dev.mcstatus.watchtower.core.util.TimeParse;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -49,6 +59,18 @@ public final class FactsBuilder {
             Map.entry("OOM", List.of(
                     "Review JVM heap (-Xmx) and reduce chunk loaders / pregen aggressiveness.",
                     "Check for OutOfMemoryError or kernel OOM lines in the full report."
+            )),
+            Map.entry("OOM_HEAP", List.of(
+                    "Increase Java heap (-Xmx) if headroom is low.",
+                    "Find memory leaks or oversized modpacks; run Spark heap analysis if it repeats."
+            )),
+            Map.entry("OOM_NATIVE", List.of(
+                    "Native/direct memory exhausted — check MaxDirectMemorySize, OS RAM, and page file.",
+                    "Review mods that allocate off-heap buffers; prefer FerriteCore / ModernFix guidance."
+            )),
+            Map.entry("SECURITY_BACKDOOR_MOD", List.of(
+                    "Remove the listed backdoor mod from mods/ immediately and restart.",
+                    "Rotate operator credentials if the mod was ever loaded on a public server."
             )),
             Map.entry("MOD_LOAD_FAILED", List.of(
                     "Mod load issues detected — see MOD LOG HEALTH and latest.log."
@@ -404,6 +426,10 @@ public final class FactsBuilder {
             optional = new JsonObject();
         }
         addCrashSummaries(optional, crashReports, serverStarted, acknowledgedCrashFiles(optional), meta, events);
+        mergeFmlIssues(optional, crashReports);
+        applyCaParityScanners(optional, ctx, crashReports);
+        applyModForensics(optional, ctx, meta, crashReports);
+        enrichModrinthCrashSuspects(optional, meta);
         ModIssueAdvisor.AdvisorResult modAdvice = ModIssueAdvisor.analyze(optional, meta);
         JsonArray modRecs = modAdvice.recommendations();
         if (optional.has("client_only_mods_summary")) {
@@ -461,6 +487,7 @@ public final class FactsBuilder {
         }
         JsonObject backup = obj(optional, "last_backup");
         JsonObject backupExternal = obj(optional, "backup_external");
+        boolean trackingEnabled = bool(meta, "backup_tracking_enabled", true);
         boolean localConfigured = bool(meta, "backup_local_configured", false);
         boolean externalConfigured = backupExternal != null && bool(backupExternal, "configured", false)
                 || bool(meta, "backup_external_configured", false);
@@ -468,48 +495,50 @@ public final class FactsBuilder {
         BackupStatusResolver.Resolved resolved = BackupStatusResolver.resolve(
                 backup, backupExternal, localConfigured, externalConfigured, suppressLocal);
 
-        if ((meta.has("backup_local_configured") || meta.has("backup_external_configured"))
-                && resolved.mode() == BackupStatusResolver.Mode.NONE) {
-            ctx.addIssue("BACKUP_NOT_CONFIGURED",
-                    "No backup folder or external heartbeat configured.",
-                    "warning", null, false);
-        }
-        if (backup != null && "not_found".equals(str(backup, "status")) && !resolved.suppressLocalNotFound()) {
-            ctx.addIssue("BACKUP_NOT_FOUND",
-                    "No backup archive found in the lookback window.",
-                    "warning", null, false);
-        }
-        if (backupExternal != null && bool(backupExternal, "configured", false)) {
-            String extStatus = str(backupExternal, "status");
-            if ("missing".equals(extStatus) && resolved.mode() == BackupStatusResolver.Mode.EXTERNAL_ONLY) {
-                ctx.addIssue("BACKUP_NOT_FOUND",
-                        "No external backup heartbeat received yet.",
+        if (trackingEnabled) {
+            if ((meta.has("backup_local_configured") || meta.has("backup_external_configured"))
+                    && resolved.mode() == BackupStatusResolver.Mode.NONE) {
+                ctx.addIssue("BACKUP_NOT_CONFIGURED",
+                        "No backup folder or external heartbeat configured.",
                         "warning", null, false);
-            } else if ("failed".equals(extStatus)) {
+            }
+            if (backup != null && "not_found".equals(str(backup, "status")) && !resolved.suppressLocalNotFound()) {
                 ctx.addIssue("BACKUP_NOT_FOUND",
-                        strOr(backupExternal, "detail", "External backup reported failure."),
+                        "No backup archive found in the lookback window.",
                         "warning", null, false);
-            } else if (bool(backupExternal, "stale", false) || "stale".equals(extStatus)) {
-                Double age = dbl(backupExternal, "age_days");
-                String ageStr = age != null ? String.format(Locale.US, "%.1f", age) : "?";
+            }
+            if (backupExternal != null && bool(backupExternal, "configured", false)) {
+                String extStatus = str(backupExternal, "status");
+                if ("missing".equals(extStatus) && resolved.mode() == BackupStatusResolver.Mode.EXTERNAL_ONLY) {
+                    ctx.addIssue("BACKUP_NOT_FOUND",
+                            "No external backup heartbeat received yet.",
+                            "warning", null, false);
+                } else if ("failed".equals(extStatus)) {
+                    ctx.addIssue("BACKUP_NOT_FOUND",
+                            strOr(backupExternal, "detail", "External backup reported failure."),
+                            "warning", null, false);
+                } else if (bool(backupExternal, "stale", false) || "stale".equals(extStatus)) {
+                    Double age = dbl(backupExternal, "age_days");
+                    String ageStr = age != null ? String.format(Locale.US, "%.1f", age) : "?";
+                    int warnDays = integer(backup, "warn_days", 7);
+                    ctx.addIssue("BACKUP_STALE",
+                            String.format("External backup is %s days old (warn > %d days)%s",
+                                    ageStr, warnDays,
+                                    str(backupExternal, "source") != null ? ": " + str(backupExternal, "source") : ""),
+                            "warning", null, false);
+                }
+            }
+            if (backup != null && bool(backup, "stale", false)) {
+                String age = str(backup, "age_days");
+                if (age == null) {
+                    age = "?";
+                }
                 int warnDays = integer(backup, "warn_days", 7);
                 ctx.addIssue("BACKUP_STALE",
-                        String.format("External backup is %s days old (warn > %d days)%s",
-                                ageStr, warnDays,
-                                str(backupExternal, "source") != null ? ": " + str(backupExternal, "source") : ""),
+                        String.format("Newest backup is %s days old (warn > %d days): %s",
+                                age, warnDays, strOr(backup, "path", "?")),
                         "warning", null, false);
             }
-        }
-        if (backup != null && bool(backup, "stale", false)) {
-            String age = str(backup, "age_days");
-            if (age == null) {
-                age = "?";
-            }
-            int warnDays = integer(backup, "warn_days", 7);
-            ctx.addIssue("BACKUP_STALE",
-                    String.format("Newest backup is %s days old (warn > %d days): %s",
-                            age, warnDays, strOr(backup, "path", "?")),
-                    "warning", null, false);
         }
 
         JsonObject dh = optional != null ? obj(optional, "dh_pregen") : null;
@@ -658,6 +687,24 @@ public final class FactsBuilder {
 
         String statusNote = BriefFormatters.buildStatusNote(overallStatus[0], currentStatus, issues);
 
+        // CA-27: filter suppressed Issues (queue only — crash groups untouched)
+        IssueSuppressionStore suppressions = IssueSuppressionStore.load(
+                statePathFromMeta(meta),
+                str(meta, "issue_suppressions"),
+                str(meta, "issue_suppression_regex"));
+        JsonArray suppressedIssues = suppressions.filterSuppressedOnly(issues);
+        JsonArray activeIssues = suppressions.filterActive(issues);
+        if (optional != null) {
+            optional.add("active_suppressions", suppressions.snapshot());
+            if (!suppressedIssues.isEmpty()) {
+                optional.add("suppressed_issues", suppressedIssues);
+            }
+        }
+        issues = activeIssues;
+        // Recompute status notes against filtered issues
+        currentStatus = BriefFormatters.computeCurrentStatus(issues, javaRunning);
+        statusNote = BriefFormatters.buildStatusNote(overallStatus[0], currentStatus, issues);
+
         JsonObject health = new JsonObject();
         health.addProperty("status", overallStatus[0]);
         health.addProperty("current_status", currentStatus);
@@ -687,6 +734,42 @@ public final class FactsBuilder {
         return facts;
     }
 
+    private static Path statePathFromMeta(JsonObject meta) {
+        String serverDir = str(meta, "server_dir");
+        if (serverDir == null || serverDir.isBlank()) {
+            return null;
+        }
+        String stateFile = str(meta, "state_file");
+        if (stateFile != null && !stateFile.isBlank()) {
+            return Path.of(stateFile);
+        }
+        return Path.of(serverDir, "watchtower", ".watchtower-state.json");
+    }
+
+    /**
+     * Prefer existing forensics cache for UCVE owning-jar attribution. Full rebuild only when
+     * {@code forensics_index_on_report} is set — never jar-walk solely for classify.
+     */
+    private static JarClassIndex resolveClassIndexForClassify(JsonObject meta, JsonArray mods) {
+        if (!bool(meta, "mod_forensics_scan", true)) {
+            return null;
+        }
+        String serverDir = str(meta, "server_dir");
+        if (serverDir == null || serverDir.isBlank()) {
+            return null;
+        }
+        Path modsDir = Path.of(serverDir, "mods");
+        Path cache = JarClassIndex.defaultCachePath(serverDir);
+        try {
+            if (bool(meta, "forensics_index_on_report", false)) {
+                return JarClassIndex.build(modsDir, mods != null ? mods : new JsonArray(), cache);
+            }
+            return JarClassIndex.loadCached(modsDir, cache);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static void addCrashSummaries(JsonObject optional, JsonArray crashReports, Instant serverStarted,
                                           Set<String> ackedCrashes, JsonObject meta, JsonArray events) {
         if (crashReports == null || crashReports.isEmpty()) {
@@ -694,6 +777,30 @@ public final class FactsBuilder {
         }
         String serverDir = str(meta, "server_dir");
         Path logPath = serverDir != null ? Path.of(serverDir, "logs", "latest.log") : null;
+        JsonArray mods = optional.has("mods") && optional.get("mods").isJsonArray()
+                ? optional.getAsJsonArray("mods") : new JsonArray();
+        MixinConfigIndex mixinIndex = MixinConfigIndex.fromMods(mods);
+        boolean bootFailed = isBootFailed(optional);
+        JarClassIndex classIndex = resolveClassIndexForClassify(meta, mods);
+        CrashClassifier.ClassifyContext classifyCtx =
+                new CrashClassifier.ClassifyContext(mods, mixinIndex, bootFailed, classIndex);
+        boolean loadBuiltin = bool(meta, "crash_rule_builtin", true);
+        boolean loadOperator = bool(meta, "crash_rule_packs", true);
+        CrashRuleRegistry ruleRegistry = CrashRuleRegistry.load(
+                serverDir != null ? Path.of(serverDir) : null, loadBuiltin, loadOperator);
+        if (!ruleRegistry.warnings().isEmpty()) {
+            JsonArray warns = optional.has("crash_rule_warnings")
+                    ? optional.getAsJsonArray("crash_rule_warnings") : new JsonArray();
+            for (String w : ruleRegistry.warnings()) {
+                warns.add(w);
+            }
+            optional.add("crash_rule_warnings", warns);
+        }
+        String logLatest = readLogTail(logPath, 256_000);
+        String logStderr = readStderrTail(serverDir, meta, 128_000);
+        JsonArray fmlIssues = optional.has("fml_issues") && optional.get("fml_issues").isJsonArray()
+                ? optional.getAsJsonArray("fml_issues") : new JsonArray();
+        JsonArray allRuleHits = new JsonArray();
         JsonArray summaries = new JsonArray();
         for (JsonElement el : crashReports) {
             JsonObject c = el.getAsJsonObject();
@@ -713,6 +820,18 @@ public final class FactsBuilder {
             if (str(c, "exception") != null) {
                 row.addProperty("exception", str(c, "exception"));
             }
+            if (str(c, "description") != null) {
+                row.addProperty("description", str(c, "description"));
+            }
+            if (c.has("watchdog_tick_ms") && !c.get("watchdog_tick_ms").isJsonNull()) {
+                row.addProperty("watchdog_tick_ms", c.get("watchdog_tick_ms").getAsInt());
+            }
+            if (str(c, "primary_mod_id") != null) {
+                row.addProperty("primary_mod_id", str(c, "primary_mod_id"));
+            }
+            if (c.has("stack_frames") && c.get("stack_frames").isJsonArray()) {
+                row.add("stack_frames", c.getAsJsonArray("stack_frames").deepCopy());
+            }
             boolean historical = false;
             if (serverStarted != null) {
                 Instant ct = TimeParse.parseTime(str(c, "time"));
@@ -722,22 +841,262 @@ public final class FactsBuilder {
             if (isCrashAcked(c, ackedCrashes)) {
                 row.addProperty("acknowledged", true);
             }
-            CrashClassifier.Classification classification = CrashClassifier.classify(c);
+            CrashClassifier.Classification classification = CrashClassifier.classify(c, classifyCtx);
+            String preCrashText = "";
+            long crashEpoch = crashEpochSec(c, serverDir);
+            if (crashEpoch > 0 && logPath != null) {
+                JsonObject preCrash = PreCrashContextBuilder.build(
+                        crashEpoch, 10, null, logPath, optional, events);
+                row.add("pre_crash", preCrash);
+                preCrashText = preCrashExcerpt(preCrash);
+                if (!row.has("stall_mod_id") || row.get("stall_mod_id").isJsonNull()) {
+                    String stallFromPre = stallModFromPreCrash(preCrash);
+                    if (stallFromPre != null && CrashClassifier.FK_WATCHDOG.equals(classification.failureKind())) {
+                        JsonObject details = classification.details() != null
+                                ? classification.details().deepCopy() : new JsonObject();
+                        classification = new CrashClassifier.Classification(
+                                classification.category(),
+                                CrashClassifier.FK_WATCHDOG_PREGEN,
+                                classification.suspectModId(),
+                                classification.primaryModId(),
+                                stallFromPre,
+                                classification.fixHints(),
+                                details);
+                    }
+                }
+            }
+
+            CrashRuleEvaluator.EvalContext evalCtx = CrashRuleEvaluator.EvalContext.of(
+                    c, row, mods, fmlIssues, logLatest, logStderr, preCrashText);
+            CrashRuleEvaluator.EvalResult eval =
+                    CrashRuleEvaluator.evaluate(ruleRegistry, evalCtx, classification);
+            classification = eval.merged() != null ? eval.merged() : classification;
+            for (CrashRuleEvaluator.Hit hit : eval.hits()) {
+                JsonObject hj = hit.toJson();
+                hj.addProperty("crash_file", strOr(c, "file", "?"));
+                allRuleHits.add(hj);
+                row.addProperty("matched_rule_id", hit.ruleId());
+                row.addProperty("matched_pack_id", hit.packId());
+            }
+
             row.addProperty("category", classification.category());
+            if (classification.failureKind() != null) {
+                row.addProperty("failure_kind", classification.failureKind());
+            }
             if (classification.suspectModId() != null) {
                 row.addProperty("suspect_mod_id", classification.suspectModId());
             }
-            JsonArray mods = optional.has("mods") ? optional.getAsJsonArray("mods") : new JsonArray();
-            CrashNarrator.Narrative narrative = CrashNarrator.narrate(c, mods);
+            if (classification.primaryModId() != null) {
+                row.addProperty("primary_mod_id", classification.primaryModId());
+            }
+            if (classification.stallModId() != null) {
+                row.addProperty("stall_mod_id", classification.stallModId());
+            }
+            if (classification.details() != null) {
+                for (String key : classification.details().keySet()) {
+                    if (!row.has(key)) {
+                        row.add(key, classification.details().get(key).deepCopy());
+                    }
+                }
+            }
+            CrashNarrator.Narrative narrative = CrashNarrator.narrate(c, mods, classifyCtx);
             CrashNarrator.enrichSummary(row, narrative);
-            long crashEpoch = crashEpochSec(c, serverDir);
-            if (crashEpoch > 0 && logPath != null) {
-                row.add("pre_crash", PreCrashContextBuilder.build(
-                        crashEpoch, 10, null, logPath, optional, events));
+            if (classification.fixHints() != null && classification.fixHints().size() > 0) {
+                JsonArray mergedHints = classification.fixHints().deepCopy();
+                if (row.has("fix_hints") && row.get("fix_hints").isJsonArray() && !eval.kindChanged()) {
+                    Set<String> seen = new HashSet<>();
+                    for (JsonElement h : mergedHints) {
+                        if (h.isJsonPrimitive()) {
+                            seen.add(h.getAsString());
+                        }
+                    }
+                    for (JsonElement h : row.getAsJsonArray("fix_hints")) {
+                        if (h.isJsonPrimitive() && seen.add(h.getAsString())) {
+                            mergedHints.add(h.getAsString());
+                        }
+                    }
+                }
+                row.add("fix_hints", mergedHints);
             }
             summaries.add(row);
         }
+        IncidentChainBuilder.link(summaries);
         optional.add("crash_summaries", summaries);
+        if (!allRuleHits.isEmpty()) {
+            optional.add("crash_rule_hits", allRuleHits);
+        }
+    }
+
+    private static String preCrashExcerpt(JsonObject preCrash) {
+        if (preCrash == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        if (preCrash.has("lines") && preCrash.get("lines").isJsonArray()) {
+            for (JsonElement el : preCrash.getAsJsonArray("lines")) {
+                sb.append(el.isJsonPrimitive() ? el.getAsString() : el.toString()).append('\n');
+            }
+        }
+        if (preCrash.has("excerpt") && !preCrash.get("excerpt").isJsonNull()) {
+            try {
+                sb.append(preCrash.get("excerpt").getAsString());
+            } catch (Exception ignored) {
+                // ignore
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String readLogTail(Path path, int maxBytes) {
+        if (path == null || !Files.isRegularFile(path)) {
+            return "";
+        }
+        try {
+            byte[] all = Files.readAllBytes(path);
+            if (all.length <= maxBytes) {
+                return new String(all, StandardCharsets.UTF_8);
+            }
+            return new String(all, all.length - maxBytes, maxBytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static String readStderrTail(String serverDir, JsonObject meta, int maxBytes) {
+        if (serverDir == null) {
+            return "";
+        }
+        String paths = str(meta, "forensics_stderr_paths");
+        if (paths == null || paths.isBlank()) {
+            paths = "logs/stderr.log,logs/stderr_stream.log";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String rel : paths.split(",")) {
+            String t = rel.trim();
+            if (t.isEmpty()) {
+                continue;
+            }
+            sb.append(readLogTail(Path.of(serverDir, t), maxBytes)).append('\n');
+        }
+        return sb.toString();
+    }
+
+    private static void mergeFmlIssues(JsonObject optional, JsonArray crashReports) {
+        JsonArray merged = new JsonArray();
+        Set<String> seen = new HashSet<>();
+        JsonArray patternHits = new JsonArray();
+        Set<String> hitKeys = new HashSet<>();
+        if (optional.has("fml_issues") && optional.get("fml_issues").isJsonArray()) {
+            for (JsonElement el : optional.getAsJsonArray("fml_issues")) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject row = el.getAsJsonObject();
+                String key = fmlIssueKey(row);
+                if (seen.add(key)) {
+                    merged.add(row.deepCopy());
+                }
+            }
+        }
+        if (optional.has("fml_log_text") && !optional.get("fml_log_text").isJsonNull()) {
+            String text = optional.get("fml_log_text").getAsString();
+            appendParsedFml(merged, seen, text);
+            appendKnownPatternHits(patternHits, hitKeys, text);
+        }
+        if (crashReports != null) {
+            for (JsonElement el : crashReports) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject c = el.getAsJsonObject();
+                StringBuilder blob = new StringBuilder();
+                appendField(blob, str(c, "quote"));
+                appendField(blob, str(c, "exception"));
+                appendField(blob, str(c, "failure_message"));
+                appendField(blob, str(c, "description"));
+                appendField(blob, str(c, "summary"));
+                String blobText = blob.toString();
+                if (blobText.contains("Mod loading issue")
+                        || blobText.toLowerCase(Locale.ROOT).contains("mandatory dependencies")
+                        || blobText.toLowerCase(Locale.ROOT).contains("conflicts between mods")) {
+                    appendParsedFml(merged, seen, blobText);
+                    appendKnownPatternHits(patternHits, hitKeys, blobText);
+                }
+            }
+        }
+        if (!merged.isEmpty()) {
+            optional.add("fml_issues", merged);
+        }
+        if (!patternHits.isEmpty()) {
+            optional.add("known_pattern_hits", patternHits);
+        }
+    }
+
+    private static void appendParsedFml(JsonArray merged, Set<String> seen, String text) {
+        JsonArray parsed = FmlIssueParser.parse(text);
+        for (JsonElement el : parsed) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            String key = fmlIssueKey(row);
+            if (seen.add(key)) {
+                merged.add(row.deepCopy());
+            }
+        }
+    }
+
+    private static void appendKnownPatternHits(JsonArray hits, Set<String> seen, String text) {
+        JsonArray parsed = FmlIssueParser.parseKnownPatternHits(text);
+        for (JsonElement el : parsed) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            String key = strOr(row, "id", "") + "|" + strOr(row, "message_key", "");
+            if (seen.add(key)) {
+                hits.add(row.deepCopy());
+            }
+        }
+    }
+
+    private static String fmlIssueKey(JsonObject row) {
+        return strOr(row, "mod_id", "") + "|" + strOr(row, "kind", "") + "|" + strOr(row, "message", "");
+    }
+
+    private static void appendField(StringBuilder sb, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        if (sb.length() > 0) {
+            sb.append('\n');
+        }
+        sb.append(value);
+    }
+
+    private static String stallModFromPreCrash(JsonObject preCrash) {
+        if (preCrash == null || !preCrash.has("chunk_gen") || !preCrash.get("chunk_gen").isJsonObject()) {
+            return null;
+        }
+        JsonObject cg = preCrash.getAsJsonObject("chunk_gen");
+        if (!cg.has("active") || !cg.get("active").getAsBoolean()) {
+            return null;
+        }
+        String source = str(cg, "source");
+        if (source == null) {
+            return null;
+        }
+        String s = source.toLowerCase(Locale.ROOT);
+        if (s.contains("squaremap")) {
+            return "squaremap";
+        }
+        if (s.contains("bluemap")) {
+            return "bluemap";
+        }
+        if (s.contains("chunky")) {
+            return "chunky";
+        }
+        return null;
     }
 
     private static long crashEpochSec(JsonObject c, String serverDir) {
@@ -756,14 +1115,46 @@ public final class FactsBuilder {
         }
     }
 
+    private static void enrichModrinthCrashSuspects(JsonObject optional, JsonObject meta) {
+        if (optional == null || meta == null) {
+            return;
+        }
+        boolean lookup = bool(meta, "modrinth_lookup", false);
+        boolean onReport = bool(meta, "modrinth_lookup_on_report", true);
+        boolean dr = bool(meta, "disaster_recovery", false)
+                || "dr".equalsIgnoreCase(str(meta, "report_mode"));
+        if (!lookup || !onReport || dr) {
+            return;
+        }
+        String serverDir = str(meta, "server_dir");
+        int rate = integer(meta, "modrinth_rate_limit", 4);
+        String loader = str(meta, "loader");
+        ReportConfig cfg = ReportConfig.builder()
+                .modrinthLookup(true)
+                .modrinthLookupOnReport(true)
+                .modrinthRateLimit(rate)
+                .loader(loader != null ? loader : "neoforge")
+                .serverDir(serverDir != null ? serverDir : "")
+                .build();
+        ModrinthLookupService.enrichCrashSuspects(optional, cfg, serverDir);
+    }
+
     private static void enrichCrashModLinks(JsonObject optional, JsonArray modRecs) {
         if (!optional.has("crash_summaries")) {
             return;
         }
         JsonArray summaries = optional.getAsJsonArray("crash_summaries");
+        JsonArray mods = optional.has("mods") && optional.get("mods").isJsonArray()
+                ? optional.getAsJsonArray("mods") : new JsonArray();
         for (JsonElement el : summaries) {
             JsonObject row = el.getAsJsonObject();
             String suspect = str(row, "suspect_mod_id");
+            if (suspect == null) {
+                suspect = str(row, "primary_mod_id");
+            }
+            if (suspect == null) {
+                suspect = str(row, "stall_mod_id");
+            }
             if (suspect == null) {
                 suspect = str(row, "mod_file");
                 if (suspect != null) {
@@ -784,8 +1175,150 @@ public final class FactsBuilder {
             if (rec.has("related_mods")) {
                 fix.add("related_mods", rec.getAsJsonArray("related_mods").deepCopy());
             }
+            String linkedId = str(rec, "mod_id");
+            attachModrinthToFix(fix, linkedId, mods);
+            if (fix.has("related_mods") && fix.get("related_mods").isJsonArray()) {
+                JsonArray relatedOut = new JsonArray();
+                for (JsonElement relEl : fix.getAsJsonArray("related_mods")) {
+                    String rid = relEl.isJsonPrimitive() ? relEl.getAsString()
+                            : (relEl.isJsonObject() ? str(relEl.getAsJsonObject(), "id") : null);
+                    if (rid == null && relEl.isJsonObject()) {
+                        rid = str(relEl.getAsJsonObject(), "mod_id");
+                    }
+                    if (rid == null) {
+                        continue;
+                    }
+                    JsonObject rel = new JsonObject();
+                    rel.addProperty("id", rid);
+                    JsonObject modRow = findModById(mods, rid);
+                    if (modRow != null) {
+                        attachModrinthFields(rel, modRow);
+                    }
+                    relatedOut.add(rel);
+                }
+                if (relatedOut.size() > 0) {
+                    fix.add("related_mods", relatedOut);
+                }
+            }
+            if (shouldPairCreateFlywheel(fix, mods, linkedId, row)) {
+                ensurePairRelated(fix, mods, linkedId);
+            }
             row.add("mod_fix", fix);
         }
+    }
+
+    /**
+     * Pair Create↔Flywheel only with evidence: advisor already said pair_update, flywheel on
+     * the crash, ecosystem mismatch, or both marked Modrinth-outdated.
+     */
+    private static boolean shouldPairCreateFlywheel(
+            JsonObject fix, JsonArray mods, String linkedId, JsonObject crashRow) {
+        if (!"create".equalsIgnoreCase(linkedId) && !"flywheel".equalsIgnoreCase(linkedId)) {
+            return false;
+        }
+        if ("pair_update".equals(str(fix, "action"))) {
+            return findModById(mods, "create".equalsIgnoreCase(linkedId) ? "flywheel" : "create") != null;
+        }
+        String partner = "create".equalsIgnoreCase(linkedId) ? "flywheel" : "create";
+        if (findModById(mods, partner) == null) {
+            return false;
+        }
+        String kind = str(crashRow, "failure_kind");
+        if ("mod_load_ecosystem".equals(kind)) {
+            return true;
+        }
+        String blob = ((crashRow.has("fix_hints") ? crashRow.get("fix_hints").toString() : "")
+                + " "
+                + (str(crashRow, "plain_english") != null ? str(crashRow, "plain_english") : "")
+                + " "
+                + (crashRow.has("stack_frames") ? crashRow.get("stack_frames").toString() : ""))
+                .toLowerCase(Locale.ROOT);
+        if (blob.contains("flywheel")) {
+            return true;
+        }
+        JsonObject create = findModById(mods, "create");
+        JsonObject fly = findModById(mods, "flywheel");
+        return isModrinthOutdated(create) && isModrinthOutdated(fly);
+    }
+
+    private static boolean isModrinthOutdated(JsonObject modRow) {
+        return modRow != null
+                && modRow.has("modrinth_outdated")
+                && !modRow.get("modrinth_outdated").isJsonNull()
+                && modRow.get("modrinth_outdated").getAsBoolean();
+    }
+
+    private static void attachModrinthToFix(JsonObject fix, String modId, JsonArray mods) {
+        JsonObject modRow = findModById(mods, modId);
+        if (modRow == null) {
+            return;
+        }
+        attachModrinthFields(fix, modRow);
+    }
+
+    private static void attachModrinthFields(JsonObject target, JsonObject modRow) {
+        copyIfPresent(modRow, target, "modrinth_url");
+        copyIfPresent(modRow, target, "modrinth_slug");
+        copyIfPresent(modRow, target, "modrinth_version_url");
+        copyIfPresent(modRow, target, "modrinth_compatible_url");
+        copyIfPresent(modRow, target, "modrinth_compatible_version_number");
+        copyIfPresent(modRow, target, "modrinth_cta_url");
+        if (modRow.has("modrinth_outdated") && !modRow.get("modrinth_outdated").isJsonNull()) {
+            target.addProperty("modrinth_outdated", modRow.get("modrinth_outdated").getAsBoolean());
+        }
+        copyIfPresent(modRow, target, "modrinth_update_label");
+    }
+
+    private static void ensurePairRelated(JsonObject fix, JsonArray mods, String linkedId) {
+        String partner = "create".equalsIgnoreCase(linkedId) ? "flywheel"
+                : "flywheel".equalsIgnoreCase(linkedId) ? "create" : null;
+        if (partner == null || findModById(mods, partner) == null) {
+            return;
+        }
+        if (!"pair_update".equals(str(fix, "action"))) {
+            fix.addProperty("action", "pair_update");
+            if (!fix.has("action_detail")) {
+                fix.addProperty("action_detail",
+                        "Align Create and Flywheel — remove conflicting separate Flywheel jars; Create bundles a matching build.");
+            }
+        }
+        JsonArray related = fix.has("related_mods") && fix.get("related_mods").isJsonArray()
+                ? fix.getAsJsonArray("related_mods") : new JsonArray();
+        boolean found = false;
+        for (JsonElement el : related) {
+            String rid = el.isJsonPrimitive() ? el.getAsString()
+                    : (el.isJsonObject() ? str(el.getAsJsonObject(), "id") : null);
+            if (partner.equalsIgnoreCase(rid)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            JsonObject rel = new JsonObject();
+            rel.addProperty("id", partner);
+            JsonObject modRow = findModById(mods, partner);
+            if (modRow != null) {
+                attachModrinthFields(rel, modRow);
+            }
+            related.add(rel);
+            fix.add("related_mods", related);
+        }
+    }
+
+    private static JsonObject findModById(JsonArray mods, String id) {
+        if (mods == null || id == null) {
+            return null;
+        }
+        for (JsonElement el : mods) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject mod = el.getAsJsonObject();
+            if (id.equalsIgnoreCase(str(mod, "id"))) {
+                return mod;
+            }
+        }
+        return null;
     }
 
     private static JsonObject findModRec(JsonArray modRecs, String suspect, JsonObject crash) {
@@ -868,6 +1401,197 @@ public final class FactsBuilder {
             return key.substring("crash-reports/".length());
         }
         return key;
+    }
+
+    private static void applyCaParityScanners(JsonObject optional, IssueContext ctx, JsonArray crashReports) {
+        if (optional == null) {
+            return;
+        }
+        JsonArray mods = optional.has("mods") && optional.get("mods").isJsonArray()
+                ? optional.getAsJsonArray("mods") : new JsonArray();
+        JsonArray connectorWarnings = ConnectorHygieneScanner.scan(mods);
+        if (!connectorWarnings.isEmpty()) {
+            optional.add("connector_warnings", connectorWarnings);
+        }
+        JsonArray securityFlags = SecurityModScanner.scan(mods);
+        if (!securityFlags.isEmpty()) {
+            optional.add("security_flags", securityFlags);
+            for (JsonElement el : securityFlags) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject flag = el.getAsJsonObject();
+                ctx.addIssue("SECURITY_BACKDOOR_MOD",
+                        strOr(flag, "message", "Known backdoor mod detected in mods/."),
+                        "critical", null, false);
+            }
+        }
+        // CA-16: OOM_HEAP / OOM_NATIVE + memory_diagnostics (kind stays host_resource on crash rows)
+        String oomKind = null;
+        if (crashReports != null) {
+            for (JsonElement el : crashReports) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject c = el.getAsJsonObject();
+                String blob = (strOr(c, "exception", "") + " " + strOr(c, "summary", "")
+                        + " " + strOr(c, "description", "")).toLowerCase(Locale.ROOT);
+                if (blob.contains("outofmemory") || blob.contains("java heap space")
+                        || blob.contains("direct buffer") || blob.contains("gc overhead")
+                        || blob.contains("insufficient memory for the java runtime")) {
+                    oomKind = CrashClassifier.resolveOomKind(blob, blob);
+                    break;
+                }
+            }
+        }
+        if (optional.has("crash_summaries") && optional.get("crash_summaries").isJsonArray()) {
+            for (JsonElement el : optional.getAsJsonArray("crash_summaries")) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject row = el.getAsJsonObject();
+                if (row.has("oom_kind") && !row.get("oom_kind").isJsonNull()) {
+                    oomKind = row.get("oom_kind").getAsString();
+                }
+                if (row.has("java_mismatch") && row.get("java_mismatch").isJsonObject()) {
+                    optional.add("java_mismatch", row.get("java_mismatch").deepCopy());
+                }
+            }
+        }
+        if (oomKind != null) {
+            JsonObject mem = new JsonObject();
+            mem.addProperty("oom_kind", oomKind);
+            mem.addProperty("source", "crash_classifier");
+            enrichMemoryDiagnosticsFromCrashes(mem, crashReports, optional);
+            optional.add("memory_diagnostics", mem);
+            if ("native".equals(oomKind)) {
+                ctx.addIssue("OOM_NATIVE",
+                        "Native/direct out-of-memory detected (crash kind remains host_resource).",
+                        "critical", null, false);
+            } else {
+                ctx.addIssue("OOM_HEAP",
+                        "Java heap out-of-memory detected (crash kind remains host_resource).",
+                        "critical", null, false);
+            }
+        }
+    }
+
+    private static void applyModForensics(
+            JsonObject optional, IssueContext ctx, JsonObject meta, JsonArray crashReports) {
+        String serverDir = str(meta, "server_dir");
+        ReportConfig.Builder b = ReportConfig.builder()
+                .serverDir(serverDir != null ? serverDir : "")
+                .modForensicsScan(bool(meta, "mod_forensics_scan", true))
+                .forensicsCorruptJarWalk(bool(meta, "forensics_corrupt_jar_walk", false))
+                .forensicsIndexOnReport(bool(meta, "forensics_index_on_report", false));
+        if (meta != null && meta.has("forensics_stderr_paths")
+                && !meta.get("forensics_stderr_paths").isJsonNull()) {
+            b.forensicsStderrPaths(meta.get("forensics_stderr_paths").getAsString());
+        }
+        ReportConfig cfg = b.build();
+        StringBuilder logBlob = new StringBuilder();
+        if (crashReports != null) {
+            for (JsonElement el : crashReports) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject c = el.getAsJsonObject();
+                appendField(logBlob, str(c, "exception"));
+                appendField(logBlob, str(c, "description"));
+                appendField(logBlob, str(c, "summary"));
+            }
+        }
+        boolean activeRuntime = false;
+        if (optional.has("crash_summaries") && optional.get("crash_summaries").isJsonArray()) {
+            for (JsonElement el : optional.getAsJsonArray("crash_summaries")) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject row = el.getAsJsonObject();
+                if (bool(row, "historical", false) || bool(row, "acknowledged", false)) {
+                    continue;
+                }
+                String kind = str(row, "failure_kind");
+                if (kind != null && (kind.startsWith("watchdog") || "mod_runtime".equals(kind))) {
+                    activeRuntime = true;
+                    break;
+                }
+            }
+        }
+        List<JsonObject> extra = ModForensicsCollector.applyToOptional(
+                optional, cfg, serverDir, logBlob.toString(), activeRuntime);
+        for (JsonObject issue : extra) {
+            ctx.addIssue(str(issue, "id"), str(issue, "message"),
+                    strOr(issue, "severity", "warning"), null, false);
+        }
+    }
+
+    private static void enrichMemoryDiagnosticsFromCrashes(
+            JsonObject mem, JsonArray crashReports, JsonObject optional) {
+        StringBuilder blob = new StringBuilder();
+        if (crashReports != null) {
+            for (JsonElement el : crashReports) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject c = el.getAsJsonObject();
+                appendField(blob, str(c, "exception"));
+                appendField(blob, str(c, "description"));
+                appendField(blob, str(c, "summary"));
+                appendField(blob, str(c, "quote"));
+            }
+        }
+        if (optional != null && optional.has("crash_summaries") && optional.get("crash_summaries").isJsonArray()) {
+            for (JsonElement el : optional.getAsJsonArray("crash_summaries")) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject c = el.getAsJsonObject();
+                appendField(blob, str(c, "exception"));
+                appendField(blob, str(c, "description"));
+                appendField(blob, str(c, "summary"));
+            }
+        }
+        String text = blob.toString();
+        String lower = text.toLowerCase(Locale.ROOT);
+        if (lower.contains("page file is disabled") || lower.contains("pagefile is disabled")) {
+            mem.addProperty("page_file_disabled", true);
+        }
+        java.util.regex.Matcher phys = java.util.regex.Pattern.compile(
+                "Physical Memory:\\s*(\\d+)M\\s+total", java.util.regex.Pattern.CASE_INSENSITIVE)
+                .matcher(text);
+        if (phys.find()) {
+            mem.addProperty("physical_mb", Integer.parseInt(phys.group(1)));
+        }
+        java.util.regex.Matcher args = java.util.regex.Pattern.compile(
+                "JVM args:\\s*(.+)", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(text);
+        if (args.find()) {
+            mem.addProperty("jvm_args", args.group(1).strip());
+        }
+    }
+
+    private static boolean isBootFailed(JsonObject optional) {
+        if (optional == null || !optional.has("startup_profile") || !optional.get("startup_profile").isJsonObject()) {
+            // No profile: treat as unknown (not boot-failed) unless callers set bootFailed explicitly
+            return false;
+        }
+        JsonObject profile = optional.getAsJsonObject("startup_profile");
+        String status = str(profile, "status");
+        if ("ok".equals(status) || "warnings".equals(status) || "unknown".equals(status)) {
+            return false;
+        }
+        if ("failed".equals(status)) {
+            return true;
+        }
+        if (profile.has("done_at") && !profile.get("done_at").isJsonNull()
+                && !str(profile, "done_at").isBlank()) {
+            return false;
+        }
+        if (profile.has("reached_done") && profile.get("reached_done").isJsonPrimitive()
+                && profile.get("reached_done").getAsBoolean()) {
+            return false;
+        }
+        return true;
     }
 
     private static boolean isCrashAcked(JsonObject c, Set<String> ackedCrashes) {

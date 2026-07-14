@@ -1,0 +1,39 @@
+/* Skeleton shimmer */
+
+.ui-skeleton {
+  background-color: var(--ui-bg2);
+  border-radius: var(--ui-rad-s);
+  overflow: hidden;
+  position: relative;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ui-skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.04) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: ui-skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+
+  @keyframes ui-skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
+
+html[data-theme="light"] .ui-skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.04) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}

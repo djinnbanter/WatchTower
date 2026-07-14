@@ -91,6 +91,17 @@ Restart the Minecraft server after editing TOML.
 
 `TPS_WARN`, `MSPT_WARN`, `DISK_WARN_PCT`, `LOG_STALE_MINUTES`, and others — see [watchtower.conf.example](https://github.com/djinnbanter/WatchTower/blob/main/tools/watchtower.conf.example).
 
+### Crash rule packs & issue suppressions
+
+| Key | Default | Purpose |
+|-----|---------|---------|
+| `CRASH_RULE_PACKS` | `true` | Load operator YAML from `config/watchtower/rules/` |
+| `CRASH_RULE_BUILTIN` | `true` | Load JAR builtin packs |
+| `ISSUE_SUPPRESSIONS` | _(empty)_ | Comma-separated Issues ids to hide (e.g. `CLIENT_ON_SERVER`) |
+| `ISSUE_SUPPRESSION_REGEX` | _(empty)_ | Optional regex matched against issue ids |
+
+Authoring guide: [[Crash Rule Packs]]. Validate with `java -jar watchtower-cli.jar rules validate <file.yaml>`.
+
 Full TOML table: see previous maintainer docs in repository `watchtower-server.toml` defaults.
 
 ---

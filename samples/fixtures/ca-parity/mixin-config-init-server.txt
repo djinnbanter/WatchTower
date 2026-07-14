@@ -1,0 +1,15 @@
+---- Minecraft Crash Report ----
+// Mixin config init failure (synthetic CA-01 fixture)
+
+Time: 2026-07-13 12:00:00
+Description: Mod loading has failed
+
+java.lang.RuntimeException: Mod loading has failed
+Caused by: org.spongepowered.asm.mixin.throwables.MixinInitialisationError: Error initialising mixin config create.mixins.json
+	at org.spongepowered.asm.mixin.transformer.Config.create(Config.java:120)
+Caused by: java.lang.IllegalArgumentException: Unsupported Java/ASM compatibility level
+	at org.spongepowered.asm.service.MixinService.boot(MixinService.java:40)
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+-- System Details --
+Minecraft Version: 1.21.1

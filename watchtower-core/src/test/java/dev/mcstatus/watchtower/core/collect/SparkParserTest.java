@@ -3,7 +3,7 @@ package dev.mcstatus.watchtower.core.collect;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
-import me.lucko.spark.proto.SparkSamplerProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkSamplerProtos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

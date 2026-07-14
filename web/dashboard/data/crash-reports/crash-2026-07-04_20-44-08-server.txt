@@ -1,0 +1,5 @@
+---- Minecraft Crash Report ----
+Time: 2026-07-04 20:44:08
+Description: Exception in server tick loop
+
+java.nio.file.FileSystemException: world/session.lock: The process cannot access the file because it is being used by another process

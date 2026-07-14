@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package spark;
 
-option java_package = "me.lucko.spark.proto";
+option java_package = "dev.mcstatus.watchtower.core.spark.proto";
 option java_outer_classname = "SparkProtos";
 
 message PlatformMetadata {

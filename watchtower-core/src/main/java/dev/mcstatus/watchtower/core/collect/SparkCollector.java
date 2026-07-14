@@ -1,7 +1,7 @@
 package dev.mcstatus.watchtower.core.collect;
 
 import dev.mcstatus.watchtower.core.report.ReportConfig;
-import me.lucko.spark.proto.SparkSamplerProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkSamplerProtos;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -164,7 +164,7 @@ public final class SparkCollector {
                     mtime.toInstant(),
                     size,
                     fresh);
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             return null;
         }
     }
@@ -184,7 +184,7 @@ public final class SparkCollector {
                     sourceKind,
                     captured,
                     data));
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             return Optional.empty();
         }
     }

@@ -1,0 +1,11 @@
+---- Minecraft Crash Report ----
+Time: 2026-06-22 14:33:07
+Description: Exception in server tick loop
+
+java.lang.NullPointerException: Cannot invoke "ContraptionCollision.mf()" because "mf.axis" is null
+	at TRANSFORMER/create@6.0.0/com.simibubi.create.content.contraptions.ContraptionCollision.tick(ContraptionCollision.java:118)
+	at net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:917)
+
+-- System Details --
+	Mod List:
+		create-6.0.0.jar |Create |create |6.0.0 |DONE |

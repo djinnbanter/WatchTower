@@ -9,24 +9,13 @@
   <a href="https://modrinth.com/mod/watchtower"><img src="https://img.shields.io/modrinth/dt/watchtower?label=Modrinth&style=flat-square" alt="Modrinth downloads"></a>
 </p>
 
-[Modrinth](https://modrinth.com/mod/watchtower) · [Wiki](https://github.com/djinnbanter/WatchTower/wiki) · Roadmap · [Changelog](CHANGELOG.md) · [Issues](https://github.com/djinnbanter/WatchTower/issues)
+[Modrinth](https://modrinth.com/mod/watchtower) · [Wiki](https://github.com/djinnbanter/WatchTower/wiki) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/djinnbanter/WatchTower/issues)
 
-[Quick start](#quick-start) · [Features](#at-a-glance) · [Why](#why-this-exists) · [Roadmap](#where-its-headed) · [Docs](#documentation) · [Contributing](#contributing)
+[Quick start](#quick-start) · [Features](#at-a-glance) · [Screenshots](#screenshots) · [Sources](#sources) · [Why](#why-this-exists) · [Roadmap](#where-its-headed) · [Docs](#documentation) · [Contributing](#contributing)
 
 ---
 
 Watchtower is a **NeoForge mod for Linux dedicated servers** — a live ops dashboard, scheduled health reports, and a disaster-recovery toolkit in one install. Built for **modpack admins and self-hosters** who need incident triage, not player analytics. Everything stays on your machine: no cloud account, no telemetry service, no database to run.
-
-```mermaid
-flowchart LR
-  MC[Minecraft + mods] --> WT[Watchtower]
-  WT --> Dash["Dashboard :8787"]
-  WT --> Disk["watchtower/ reports"]
-  CLI[watchtower-cli JAR] --> DR[DR bundle + viewer]
-  MC -.->|server won't boot| CLI
-```
-
-
 
 ## Quick start
 
@@ -34,7 +23,7 @@ flowchart LR
   - `watchtower-neoforge-1.0.0+mc1.21.jar` — required
   - `watchtower-cli-1.0.0.jar` — optional (DR when the server will not boot)
 2. Copy both JARs into your server `**mods/`** folder.
-3. Start the server, then open `**http://<server-ip>:8787**`, sign in, change your password, and run your first report.
+3. Start the server, then open `**http://<server-ip>:8787**`, sign in, change your password, and complete the **setup wizard** (initial audit + scheduled reports). Use **Run Report** anytime for a full health check.
 
 Full walkthrough: [Wiki — Quick Start Checklist](https://github.com/djinnbanter/WatchTower/wiki/Quick-Start-Checklist) · [Installation](https://github.com/djinnbanter/WatchTower/wiki/Installation)
 
@@ -64,12 +53,70 @@ Build from source: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 |                       |                                                                                                                                                                                                                                         |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Live dashboard**    | TPS, MSPT, players, heap, CPU, RAM, disk, bandwidth — history from ~1 minute to 90 days. Issues, crashes, mods, backups, activity, and session views in one UI at `:8787`.                                                              |
+| **Live dashboard**    | TPS, MSPT, players, heap, CPU, RAM, disk, bandwidth — history from ~1 minute to 90 days. Overview, Live, Insights, Issues, Crashes, Mods, Backups, Activity, Session, Spark, and Sources at `:8787`. |
+| **Setup wizard**      | First-run audit, backup discovery, scheduled reports, optional 2FA — reopen from Help anytime |
 | **Health reports**    | On demand or on a schedule — plain-English **brief** + structured **facts** JSON under `watchtower/`. Log and crash analysis, backup age, mod load errors, panel-aware paths. In-game: `/watchtower run`, `status`, `issues`, and more. |
-| **Disaster recovery** | When the JVM will not stay up, the CLI builds a local DR bundle zip and a static browser viewer — no dashboard required.                                                                                                                |
+| **In-app Docs**       | Full operator wiki built into the dashboard — search, categories, same content as GitHub Wiki |
+| **Disaster recovery** | When the JVM will not stay up, the CLI builds a local DR bundle zip; optional browser **DR viewer** (early preview — may not work fully yet). No dashboard required. |
 | **Local by default**  | Rule-based analysis on your server. No external API calls to interpret logs or crashes.                                                                                                                                                 |
-| **Secured access**    | Login required; optional 2FA in Help → Security.                                                                                                                                                                                        |
+| **Secured access**    | Login required; optional 2FA in **Settings → Security**.                                                                                                                                                                                |
 
+
+---
+
+## Screenshots
+
+**Overview** — vitals, health narrative, storage, and recent activity at a glance.
+
+![Overview — dashboard home](docs/assets/screenshots/Overview.png)
+
+**Live** — TPS, MSPT, CPU, heap, and player charts with linked time range.
+
+![Live metrics charts](docs/assets/screenshots/Live-Metrics.png)
+
+**Insights** — busy hours, week-over-week compare, lag patterns, and correlations from minute rollups.
+
+![Insights — patterns and takeaways](docs/assets/screenshots/Insights.png)
+
+![Insights — rollups and scorecard](docs/assets/screenshots/Insights2.png)
+
+**Issues** — prioritized fix list from the latest health report.
+
+![Issues queue](docs/assets/screenshots/Issues.png)
+
+**Crashes** — crash reports with plain-English context.
+
+![Crash reports](docs/assets/screenshots/Crash-Logs.png)
+
+**Mods** — log errors, manifest changes, and mod health from scans and reports.
+
+![Mods tab](docs/assets/screenshots/Mods.png)
+
+**Backups** — local archive inventory and panel backup signals.
+
+![Backups tab](docs/assets/screenshots/Backups.png)
+
+**Session** — who is online now and session stats from reports.
+
+![Session tab](docs/assets/screenshots/session.png)
+
+**Spark** — on-demand profiler capture and hot-path breakdown.
+
+![Spark profiler tab](docs/assets/screenshots/spark.png)
+
+**Activity** — joins, reboots, commands, and other events from log scans.
+
+![Activity ledger](docs/assets/screenshots/Audit-Log.png)
+
+---
+
+## Sources
+
+Watchtower uses three update layers — **Live** (charts while you watch), **Scanned** (background log/crash/mod tail ~every 60s), and **Report** (full audit snapshot). The **Sources** tab shows which layer feeds each dashboard area so you know what still needs a scheduled or manual report.
+
+![Sources — what updates how](docs/assets/screenshots/sources.png)
+
+[Understanding Data Sources →](https://github.com/djinnbanter/WatchTower/wiki/Understanding-Data-Sources)
 
 ---
 

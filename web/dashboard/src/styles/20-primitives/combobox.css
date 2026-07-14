@@ -1,0 +1,122 @@
+/* === Combobox === */
+
+.ui-combo {
+  position: relative;
+  width: 100%;
+}
+
+.ui-combo__trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--ui-row-md);
+  padding: 0 var(--ui-sp-8) 0 var(--ui-sp-12);
+  background: var(--ui-bg2);
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-rad-m);
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-text-base);
+  color: var(--ui-text-hi);
+  outline: none;
+  cursor: text;
+  gap: var(--ui-sp-8);
+  transition: border-color var(--ui-dur-1) var(--ui-ease-out);
+}
+
+.ui-combo__trigger:hover {
+  border-color: var(--ui-text-low);
+}
+
+.ui-combo__trigger:focus-within,
+.ui-combo[aria-expanded="true"] .ui-combo__trigger {
+  border-color: var(--ui-accent);
+  background: var(--ui-bg1);
+  outline: 2px solid var(--ui-accent);
+  outline-offset: -1px;
+}
+
+.ui-combo__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  min-width: 0;
+}
+
+.ui-combo__input::placeholder {
+  color: var(--ui-text-low);
+}
+
+.ui-combo__chevron {
+  color: var(--ui-text-low);
+  flex-shrink: 0;
+  transition: transform var(--ui-dur-2) var(--ui-ease-out);
+}
+
+.ui-combo[aria-expanded="true"] .ui-combo__chevron {
+  transform: rotate(180deg);
+}
+
+/* Dropdown menu */
+.ui-combo__menu {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + var(--ui-sp-4));
+  left: 0;
+  right: 0;
+  background: var(--ui-bg2);
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-rad-m);
+  box-shadow: var(--ui-shadow-pop);
+  overflow: hidden auto;
+  max-height: 260px;
+  animation: ui-enter var(--ui-dur-2) var(--ui-ease-exp) both;
+}
+
+.ui-combo__empty {
+  padding: var(--ui-sp-12);
+  font-size: var(--ui-text-sm);
+  color: var(--ui-text-low);
+  text-align: center;
+}
+
+/* Option */
+.ui-combo__option {
+  display: flex;
+  flex-direction: column;
+  padding: var(--ui-sp-8) var(--ui-sp-12);
+  cursor: pointer;
+  font-size: var(--ui-text-base);
+  color: var(--ui-text-hi);
+  transition: background var(--ui-dur-1) var(--ui-ease-out);
+}
+
+.ui-combo__option:hover,
+.ui-combo__option--active {
+  background: var(--ui-bg3);
+}
+
+.ui-combo__option--selected {
+  color: var(--ui-accent);
+}
+
+.ui-combo__opt-label {
+  line-height: var(--ui-lh-base);
+}
+
+.ui-combo__opt-hint {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  line-height: var(--ui-lh-xs);
+  margin-top: var(--ui-sp-2);
+}
+
+/* Disabled combo */
+.ui-combo--disabled .ui-combo__trigger {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

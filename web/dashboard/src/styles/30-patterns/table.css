@@ -1,0 +1,115 @@
+/* DataTable — panel surface so tables don’t blend into the page */
+
+.ui-data-table {
+  width: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-rad-l);
+  background: var(--ui-bg1);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+}
+
+.ui-data-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ui-text-sm);
+  line-height: var(--ui-lh-sm);
+}
+
+.ui-data-table thead th {
+  position: relative;
+  padding: var(--ui-sp-12) var(--ui-sp-16);
+  text-align: left;
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  color: var(--ui-text-mid);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--ui-line-strong);
+  white-space: nowrap;
+  background-color: var(--ui-bg2);
+  user-select: none;
+}
+
+.ui-data-table--sticky-header thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ui-data-table thead th[aria-sort] {
+  cursor: pointer;
+}
+
+.ui-data-table thead th[aria-sort]:hover {
+  color: var(--ui-text-hi);
+  background-color: var(--ui-bg3);
+}
+
+.ui-data-table__sort-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--ui-sp-4);
+  opacity: 0.4;
+}
+
+.ui-data-table thead th[aria-sort="ascending"] .ui-data-table__sort-icon,
+.ui-data-table thead th[aria-sort="descending"] .ui-data-table__sort-icon {
+  opacity: 1;
+  color: var(--ui-accent);
+}
+
+.ui-data-table tbody tr {
+  border-bottom: 1px solid var(--ui-line);
+  transition: background-color var(--ui-dur-1) var(--ui-ease-out);
+}
+
+.ui-data-table tbody tr:nth-child(even) {
+  background-color: color-mix(in srgb, var(--ui-bg2) 55%, transparent);
+}
+
+.ui-data-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ui-data-table tbody tr:hover {
+  background-color: var(--ui-bg2);
+}
+
+.ui-data-table tbody tr.ui-data-table__row--clickable {
+  cursor: pointer;
+}
+
+.ui-data-table tbody tr.ui-data-table__row--clickable:hover {
+  background-color: var(--ui-accent-soft);
+}
+
+.ui-data-table tbody td {
+  padding: var(--ui-sp-12) var(--ui-sp-16);
+  color: var(--ui-text-hi);
+  vertical-align: middle;
+}
+
+.ui-data-table--density-compact tbody td,
+.ui-data-table--density-compact thead th {
+  padding-top: var(--ui-sp-6);
+  padding-bottom: var(--ui-sp-6);
+}
+
+.ui-data-table td.ui-align-right,
+.ui-data-table th.ui-align-right {
+  text-align: right;
+}
+
+.ui-data-table td.ui-align-center,
+.ui-data-table th.ui-align-center {
+  text-align: center;
+}
+
+.ui-data-table__empty {
+  padding: var(--ui-sp-40) var(--ui-sp-16);
+  text-align: center;
+  color: var(--ui-text-low);
+  font-size: var(--ui-text-sm);
+}

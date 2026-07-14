@@ -27,6 +27,8 @@ public final class WatchtowerSetup {
             # BACKUP_EXTERNAL_MARKER=watchtower/backup-heartbeat.json
             # BACKUP_WEBHOOK_TOKEN=your-secret-token
             # BACKUP_SUPPRESS_LOCAL_MISSING=true
+            # Set false to opt out of backup tracking (no BACKUP_* issues / Overview nudges)
+            # BACKUP_TRACKING_ENABLED=true
             """;
 
     private WatchtowerSetup() {
@@ -43,6 +45,8 @@ public final class WatchtowerSetup {
     public static void ensureReady(MinecraftServer server) throws IOException {
         Path watchtowerRoot = WatchtowerPaths.watchtowerRoot(server);
         Files.createDirectories(watchtowerRoot);
+        Path rulesDir = server.getServerDirectory().resolve("config").resolve("watchtower").resolve("rules");
+        Files.createDirectories(rulesDir);
         ensureUserConfig(server);
         EngineProbe.verify();
         if (EngineProbe.isAvailable()) {
@@ -131,6 +135,20 @@ public final class WatchtowerSetup {
                 LOG_GZIP_COUNT=12
                 BACKUP_WARN_DAYS=7
                 BACKUP_POLL_MIN=0
+                # Opt-in Modrinth side lookup (SHA-512 hashes only; off by default)
+                # MODRINTH_LOOKUP=false
+                # MODRINTH_LOOKUP_ON_REPORT=true
+                # MODRINTH_RATE_LIMIT=4
+                # Mod forensics toolbox (1.0.17) — master on; zip walk / index-on-report off by default
+                # MOD_FORENSICS_SCAN=true
+                # FORENSICS_CORRUPT_JAR_WALK=false
+                # FORENSICS_INDEX_ON_REPORT=false
+                # FORENSICS_STDERR_PATHS=logs/stderr.log,logs/stderr_stream.log
+                # Crash rule packs (1.0.18) — YAML under config/watchtower/rules/; no JEXL/exec
+                # CRASH_RULE_PACKS=true
+                # CRASH_RULE_BUILTIN=true
+                # ISSUE_SUPPRESSIONS=CLIENT_ON_SERVER
+                # ISSUE_SUPPRESSION_REGEX=
                 """.formatted(lookback, liveRetention, incremental ? "true" : "false") + BACKUP_CONF_SECTION;
     }
 }

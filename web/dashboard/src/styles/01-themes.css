@@ -1,0 +1,224 @@
+/* Lantern themes — neo-Frutiger Aero: sky glass, soft aqua, scarce coral CTAs */
+
+:root,
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Twilight navy canvas + translucent glass ladder */
+  --ui-bg0: #0a1220;
+  --ui-bg1: rgba(18, 32, 52, 0.72);
+  --ui-bg2: rgba(28, 46, 72, 0.78);
+  --ui-bg3: rgba(40, 62, 92, 0.85);
+
+  --ui-line: rgba(140, 200, 255, 0.12);
+  --ui-line-strong: rgba(160, 210, 255, 0.22);
+
+  --ui-text-hi: #eef6fc;
+  --ui-text-mid: #9bb4c9;
+  --ui-text-low: #6a849c;
+
+  /* Scarce coral CTA on sky glass */
+  --ui-accent: #f0733a;
+  --ui-accent-hover: #ff8a52;
+  --ui-accent-press: #d85f2a;
+  --ui-accent-soft: rgba(240, 115, 58, 0.16);
+  --ui-accent-glow: rgba(240, 115, 58, 0.32);
+
+  /* Sky / Frutiger */
+  --ui-sky: #5eb8ef;
+  --ui-sky-soft: rgba(94, 184, 239, 0.16);
+  --ui-glass: rgba(22, 40, 64, 0.55);
+  --ui-glass-border: rgba(160, 210, 255, 0.18);
+  --ui-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 42%);
+  --ui-mesh-a: rgba(64, 160, 220, 0.22);
+  --ui-mesh-b: rgba(40, 120, 180, 0.12);
+  --ui-blur: 16px;
+
+  --ui-ok: #3ecf8a;
+  --ui-ok-soft: rgba(62, 207, 138, 0.16);
+  --ui-warn: #e0b03a;
+  --ui-warn-soft: rgba(224, 176, 58, 0.16);
+  --ui-danger: #f25a5a;
+  --ui-danger-soft: rgba(242, 90, 90, 0.16);
+  --ui-info: var(--ui-sky);
+  --ui-info-soft: var(--ui-sky-soft);
+
+  --ui-text1: var(--ui-text-hi);
+  --ui-text2: var(--ui-text-mid);
+  --ui-text3: var(--ui-text-low);
+  --ui-tone-success: var(--ui-ok);
+  --ui-tone-warn: var(--ui-warn);
+  --ui-tone-danger: var(--ui-danger);
+  --ui-tone-info: var(--ui-info);
+  --ui-green: var(--ui-ok);
+  --ui-red: var(--ui-danger);
+
+  --ui-src-live: var(--ui-ok);
+  --ui-src-scan: var(--ui-info);
+  --ui-src-report: #8b9eb0;
+  --ui-src-stale: var(--ui-warn);
+
+  --ui-ch-tps: #3ecf8a;
+  --ui-ch-mspt: #e0b03a;
+  --ui-ch-cpu: #5eb8ef;
+  --ui-ch-heap: #7ec8f5;
+  --ui-ch-players: #2dd4bf;
+  --ui-ch-disk: #fb923c;
+  --ui-ch-rx: #5eb8ef;
+  --ui-ch-tx: #7ec8f5;
+  --ui-ch-grid: rgba(140, 200, 255, 0.08);
+
+  --ui-shadow-rest: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 16px rgba(0, 12, 28, 0.35);
+  --ui-shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 12px 32px rgba(0, 16, 40, 0.45), 0 2px 8px rgba(0, 20, 48, 0.28);
+  --ui-shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --ui-shadow-pop: 0 8px 24px rgba(0, 16, 40, 0.4), 0 2px 6px rgba(0, 12, 32, 0.25);
+  --ui-shadow-overlay: 0 28px 72px rgba(0, 8, 24, 0.6), 0 10px 28px rgba(0, 12, 32, 0.4);
+  --ui-shadow-glow: 0 0 0 1px color-mix(in srgb, var(--ui-sky) 35%, transparent),
+    0 0 28px color-mix(in srgb, var(--ui-sky) 18%, transparent);
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+
+  --ui-bg0: #e8f4fb;
+  --ui-bg1: rgba(255, 255, 255, 0.72);
+  --ui-bg2: rgba(248, 252, 255, 0.85);
+  --ui-bg3: rgba(230, 242, 250, 0.92);
+
+  --ui-line: rgba(40, 100, 140, 0.12);
+  --ui-line-strong: rgba(30, 90, 130, 0.2);
+
+  --ui-text-hi: #0f2433;
+  --ui-text-mid: #3d5a70;
+  --ui-text-low: #6a879c;
+
+  --ui-accent: #e05a22;
+  --ui-accent-hover: #c94c18;
+  --ui-accent-press: #a83e12;
+  --ui-accent-soft: rgba(224, 90, 34, 0.12);
+  --ui-accent-glow: rgba(224, 90, 34, 0.22);
+
+  --ui-sky: #1a9fd9;
+  --ui-sky-soft: rgba(26, 159, 217, 0.14);
+  --ui-glass: rgba(255, 255, 255, 0.62);
+  --ui-glass-border: rgba(80, 150, 190, 0.22);
+  --ui-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 48%);
+  --ui-mesh-a: rgba(120, 200, 240, 0.35);
+  --ui-mesh-b: rgba(180, 230, 255, 0.25);
+  --ui-blur: 18px;
+
+  --ui-ok: #0d9f5a;
+  --ui-ok-soft: rgba(13, 159, 90, 0.12);
+  --ui-warn: #b8860b;
+  --ui-warn-soft: rgba(184, 134, 11, 0.12);
+  --ui-danger: #d93848;
+  --ui-danger-soft: rgba(217, 56, 72, 0.12);
+  --ui-info: var(--ui-sky);
+  --ui-info-soft: var(--ui-sky-soft);
+
+  --ui-text1: var(--ui-text-hi);
+  --ui-text2: var(--ui-text-mid);
+  --ui-text3: var(--ui-text-low);
+  --ui-tone-success: var(--ui-ok);
+  --ui-tone-warn: var(--ui-warn);
+  --ui-tone-danger: var(--ui-danger);
+  --ui-tone-info: var(--ui-info);
+  --ui-green: var(--ui-ok);
+  --ui-red: var(--ui-danger);
+
+  --ui-src-live: var(--ui-ok);
+  --ui-src-scan: var(--ui-info);
+  --ui-src-report: #5a7286;
+  --ui-src-stale: var(--ui-warn);
+
+  --ui-ch-tps: #0d9f5a;
+  --ui-ch-mspt: #b8860b;
+  --ui-ch-cpu: #1a9fd9;
+  --ui-ch-heap: #3db4e6;
+  --ui-ch-players: #1b8a8f;
+  --ui-ch-disk: #d97706;
+  --ui-ch-rx: #1a9fd9;
+  --ui-ch-tx: #3db4e6;
+  --ui-ch-grid: rgba(40, 100, 140, 0.1);
+
+  --ui-shadow-rest: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 4px 16px rgba(40, 100, 140, 0.1);
+  --ui-shadow-lift: 0 1px 0 #fff inset, 0 12px 28px rgba(40, 100, 140, 0.14), 0 2px 8px rgba(40, 100, 140, 0.08);
+  --ui-shadow-inset: inset 0 1px 2px rgba(40, 80, 120, 0.08);
+  --ui-shadow-pop: 0 8px 20px rgba(40, 100, 140, 0.12), 0 2px 6px rgba(40, 100, 140, 0.06);
+  --ui-shadow-overlay: 0 24px 64px rgba(20, 60, 100, 0.18), 0 8px 24px rgba(20, 60, 100, 0.1);
+  --ui-shadow-glow: 0 0 0 1px color-mix(in srgb, var(--ui-sky) 30%, transparent),
+    0 0 20px color-mix(in srgb, var(--ui-sky) 16%, transparent);
+}
+
+html[data-theme="black"] {
+  color-scheme: dark;
+
+  --ui-bg0: #000000;
+  --ui-bg1: rgba(8, 16, 28, 0.85);
+  --ui-bg2: rgba(14, 24, 40, 0.9);
+  --ui-bg3: rgba(22, 36, 56, 0.95);
+
+  --ui-line: rgba(120, 190, 255, 0.1);
+  --ui-line-strong: rgba(140, 200, 255, 0.18);
+
+  --ui-text-hi: #f0f6fb;
+  --ui-text-mid: #9bb0c4;
+  --ui-text-low: #667a90;
+
+  --ui-accent: #f0733a;
+  --ui-accent-hover: #ff8a52;
+  --ui-accent-press: #d85f2a;
+  --ui-accent-soft: rgba(240, 115, 58, 0.16);
+  --ui-accent-glow: rgba(240, 115, 58, 0.36);
+
+  --ui-sky: #4aa8e0;
+  --ui-sky-soft: rgba(74, 168, 224, 0.14);
+  --ui-glass: rgba(10, 18, 32, 0.7);
+  --ui-glass-border: rgba(100, 180, 240, 0.14);
+  --ui-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 40%);
+  --ui-mesh-a: rgba(40, 100, 160, 0.18);
+  --ui-mesh-b: rgba(20, 60, 100, 0.1);
+  --ui-blur: 14px;
+
+  --ui-ok: #3ecf8a;
+  --ui-ok-soft: rgba(62, 207, 138, 0.14);
+  --ui-warn: #e0b03a;
+  --ui-warn-soft: rgba(224, 176, 58, 0.14);
+  --ui-danger: #f25a5a;
+  --ui-danger-soft: rgba(242, 90, 90, 0.14);
+  --ui-info: var(--ui-sky);
+  --ui-info-soft: var(--ui-sky-soft);
+
+  --ui-text1: var(--ui-text-hi);
+  --ui-text2: var(--ui-text-mid);
+  --ui-text3: var(--ui-text-low);
+  --ui-tone-success: var(--ui-ok);
+  --ui-tone-warn: var(--ui-warn);
+  --ui-tone-danger: var(--ui-danger);
+  --ui-tone-info: var(--ui-info);
+  --ui-green: var(--ui-ok);
+  --ui-red: var(--ui-danger);
+
+  --ui-src-live: var(--ui-ok);
+  --ui-src-scan: var(--ui-info);
+  --ui-src-report: #8b9eb0;
+  --ui-src-stale: var(--ui-warn);
+
+  --ui-ch-tps: #3ecf8a;
+  --ui-ch-mspt: #e0b03a;
+  --ui-ch-cpu: #4aa8e0;
+  --ui-ch-heap: #6bb8e8;
+  --ui-ch-players: #2dd4bf;
+  --ui-ch-disk: #fb923c;
+  --ui-ch-rx: #4aa8e0;
+  --ui-ch-tx: #6bb8e8;
+  --ui-ch-grid: rgba(100, 180, 240, 0.06);
+
+  --ui-shadow-rest: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 4px 18px rgba(0, 0, 0, 0.55);
+  --ui-shadow-lift: 0 12px 36px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --ui-shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.55);
+  --ui-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --ui-shadow-overlay: 0 28px 72px rgba(0, 0, 0, 0.75);
+  --ui-shadow-glow: 0 0 0 1px color-mix(in srgb, var(--ui-sky) 30%, transparent),
+    0 0 28px color-mix(in srgb, var(--ui-sky) 16%, transparent);
+}

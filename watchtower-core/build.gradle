@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'com.google.protobuf' version '0.9.4'
+    id 'com.gradleup.shadow' version '9.0.2'
 }
 
 group = 'dev.mcstatus.watchtower'
@@ -27,10 +28,24 @@ protobuf {
     }
 }
 
+configurations {
+    // Dedicated config so shadowJar only embeds protobuf (never gson/totp).
+    protobufRuntime
+    // SnakeYAML for crash rule packs — shaded to avoid JPMS clashes.
+    yamlRuntime
+}
+
 dependencies {
     api 'com.google.code.gson:gson:2.10.1'
-    api 'com.google.protobuf:protobuf-javalite:3.25.5'
     api 'dev.samstevens.totp:totp:1.7.1'
+    // Compile against protobuf; runtime is shaded+relocated into this module's JAR
+    // so JPMS mods that shadow com.google.protobuf (e.g. GriefLogger via MySQL) do not break Spark parse.
+    compileOnly 'com.google.protobuf:protobuf-javalite:3.25.5'
+    protobufRuntime 'com.google.protobuf:protobuf-javalite:3.25.5'
+    testImplementation 'com.google.protobuf:protobuf-javalite:3.25.5'
+    compileOnly 'org.yaml:snakeyaml:2.2'
+    yamlRuntime 'org.yaml:snakeyaml:2.2'
+    testImplementation 'org.yaml:snakeyaml:2.2'
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -45,12 +60,53 @@ tasks.named('test', Test).configure {
 }
 
 tasks.named('jar', Jar) {
+    // Consumers (NeoForge jarJar, CLI) use the shadowed artifact instead.
+    enabled = false
     manifest {
         attributes(
                 'FMLModType': 'LIBRARY',
                 'Automatic-Module-Name': 'dev.mcstatus.watchtower.core'
         )
     }
+}
+
+tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    archiveClassifier.set('')
+    configurations = [project.configurations.protobufRuntime, project.configurations.yamlRuntime]
+    relocate 'com.google.protobuf', 'dev.mcstatus.watchtower.core.internal.protobuf'
+    relocate 'org.yaml.snakeyaml', 'dev.mcstatus.watchtower.core.internal.yaml'
+    exclude 'module-info.class'
+    mergeServiceFiles()
+    manifest {
+        attributes(
+                'FMLModType': 'LIBRARY',
+                'Automatic-Module-Name': 'dev.mcstatus.watchtower.core'
+        )
+    }
+}
+
+// Make shadowJar the default jar artifact for project dependencies / jarJar.
+configurations {
+    apiElements {
+        outgoing.artifacts.clear()
+        outgoing.artifact(tasks.named('shadowJar'))
+    }
+    runtimeElements {
+        outgoing.artifacts.clear()
+        outgoing.artifact(tasks.named('shadowJar'))
+    }
+}
+
+artifacts {
+    archives tasks.named('shadowJar')
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('shadowJar')
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('shadowJar')
 }
 
 tasks.register('sparkAuditFixtures', JavaExec) {

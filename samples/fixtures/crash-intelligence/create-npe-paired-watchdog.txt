@@ -1,0 +1,13 @@
+---- Minecraft Crash Report ----
+// Hi. I'm Minecraft, and I'm a crash report.
+
+Time: 2026-04-21 21:36:03
+Description: Watching Server
+
+java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds (should be max 0.05)
+	at TRANSFORMER/create@6.0.10/com.simibubi.create.content.contraptions.ContraptionCollision.tick(ContraptionCollision.java:42)
+	at TRANSFORMER/create@6.0.10/com.simibubi.create.content.contraptions.ControlledContraptionEntity.tick(ControlledContraptionEntity.java:88)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.tick(Level.java:100)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.tickChildren(MinecraftServer.java:200)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:180)
+	at java.base/java.lang.Thread.run(Thread.java:840)

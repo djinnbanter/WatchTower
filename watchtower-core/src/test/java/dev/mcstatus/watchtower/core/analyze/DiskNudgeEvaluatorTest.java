@@ -28,6 +28,15 @@ class DiskNudgeEvaluatorTest {
     }
 
     @Test
+    void backupNudgeInactiveWhenTrackingDisabled() {
+        JsonObject backup = new JsonObject();
+        backup.addProperty("status", "not_found");
+
+        JsonObject nudge = DiskNudgeEvaluator.evaluateBackup(backup, null, 7, false);
+        assertFalse(nudge.get("active").getAsBoolean());
+    }
+
+    @Test
     void backupNudgeWhenStale() {
         JsonObject backup = new JsonObject();
         backup.addProperty("status", "success");

@@ -1,0 +1,12 @@
+---- Minecraft Crash Report ----
+// Mixin conflict (synthetic CA-02 fixture)
+
+Time: 2026-07-13 12:10:00
+Description: Mixin apply failure
+
+org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered
+Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure
+[23:00:00] [main/ERROR] [mixin]: mixins.examplemod.json: ExampleMixin from mod examplemod -> mixins.othermod.json conflict. Skipping mixins.othermod.json
+
+-- System Details --
+Minecraft Version: 1.21.1

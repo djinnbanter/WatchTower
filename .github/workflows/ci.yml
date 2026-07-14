@@ -39,3 +39,6 @@ jobs:
 
       - name: Public tree audit
         run: node tools/audit-public-tree.mjs
+
+      - name: Public docs audit
+        run: node tools/audit-docs.mjs

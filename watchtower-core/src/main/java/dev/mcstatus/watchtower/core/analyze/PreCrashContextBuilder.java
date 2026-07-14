@@ -88,6 +88,22 @@ public final class PreCrashContextBuilder {
     }
 
     private static JsonObject buildChunkGen(long startEpoch, long endEpoch, Path logPath, JsonObject optional) {
+        if (optional != null && optional.has("map_render") && optional.get("map_render").isJsonObject()) {
+            JsonObject mr = optional.getAsJsonObject("map_render");
+            if (bool(mr, "active", false)) {
+                String source = str(mr, "source");
+                if (source != null && (source.toLowerCase(Locale.ROOT).contains("squaremap")
+                        || source.toLowerCase(Locale.ROOT).contains("bluemap"))) {
+                    JsonObject out = new JsonObject();
+                    out.addProperty("active", true);
+                    out.addProperty("source", source);
+                    if (str(mr, "last_line") != null) {
+                        out.addProperty("last_line", str(mr, "last_line"));
+                    }
+                    return out;
+                }
+            }
+        }
         JsonObject fromLog = chunkGenFromLog(startEpoch, endEpoch, logPath);
         if (fromLog != null) {
             return fromLog;
@@ -122,6 +138,8 @@ public final class PreCrashContextBuilder {
         if (logPath == null || !Files.isRegularFile(logPath)) {
             return null;
         }
+        JsonObject bestMap = null;
+        long bestMapEpoch = 0;
         JsonObject bestDh = null;
         long bestDhEpoch = 0;
         JsonObject bestChunky = null;
@@ -136,6 +154,27 @@ public final class PreCrashContextBuilder {
                 long epoch = ts.toEpochSecond();
                 if (epoch < startEpoch || epoch > endEpoch) {
                     continue;
+                }
+                if (LogPatterns.SQUAREMAP_RUNTIME.matcher(line).find()
+                        && !line.toLowerCase(Locale.ROOT).contains("moddiscoverer")
+                        && !line.contains(" SCAN")) {
+                    if (epoch >= bestMapEpoch) {
+                        bestMapEpoch = epoch;
+                        bestMap = new JsonObject();
+                        bestMap.addProperty("active", true);
+                        bestMap.addProperty("source", "squaremap");
+                        bestMap.addProperty("last_line", line.strip());
+                    }
+                } else if (LogPatterns.BLUEMAP_RUNTIME.matcher(line).find()
+                        && !line.toLowerCase(Locale.ROOT).contains("moddiscoverer")
+                        && !line.contains(" SCAN")) {
+                    if (epoch >= bestMapEpoch) {
+                        bestMapEpoch = epoch;
+                        bestMap = new JsonObject();
+                        bestMap.addProperty("active", true);
+                        bestMap.addProperty("source", "bluemap");
+                        bestMap.addProperty("last_line", line.strip());
+                    }
                 }
                 Matcher dh = LogPatterns.PREGEN.matcher(line);
                 if (dh.find()) {
@@ -153,8 +192,8 @@ public final class PreCrashContextBuilder {
                         }
                     }
                 }
-                Matcher chunky = LogPatterns.CHUNKY_PROGRESS.matcher(line);
-                if (chunky.find()) {
+                Matcher chunkyTask = LogPatterns.CHUNKY_TASK.matcher(line);
+                if (chunkyTask.find()) {
                     if (epoch >= bestChunkyEpoch) {
                         bestChunkyEpoch = epoch;
                         bestChunky = new JsonObject();
@@ -162,14 +201,32 @@ public final class PreCrashContextBuilder {
                         bestChunky.addProperty("source", "chunky");
                         bestChunky.addProperty("last_line", line.strip());
                         try {
-                            bestChunky.addProperty("pct", Double.parseDouble(chunky.group(1)));
+                            bestChunky.addProperty("pct", Double.parseDouble(chunkyTask.group(3)));
                         } catch (NumberFormatException ignored) {
+                        }
+                    }
+                } else {
+                    Matcher chunky = LogPatterns.CHUNKY_PROGRESS.matcher(line);
+                    if (chunky.find()) {
+                        if (epoch >= bestChunkyEpoch) {
+                            bestChunkyEpoch = epoch;
+                            bestChunky = new JsonObject();
+                            bestChunky.addProperty("active", true);
+                            bestChunky.addProperty("source", "chunky");
+                            bestChunky.addProperty("last_line", line.strip());
+                            try {
+                                bestChunky.addProperty("pct", Double.parseDouble(chunky.group(1)));
+                            } catch (NumberFormatException ignored) {
+                            }
                         }
                     }
                 }
             }
         } catch (IOException ignored) {
             return null;
+        }
+        if (bestMap != null) {
+            return bestMap;
         }
         if (bestDh != null) {
             return bestDh;

@@ -1,0 +1,4 @@
+---- Minecraft Crash Report ----
+// Heap OOM (synthetic CA-16)
+
+java.lang.OutOfMemoryError: Java heap space

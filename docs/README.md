@@ -1,6 +1,6 @@
 # Watchtower documentation
 
-Watchtower is a NeoForge **1.21.x** server mod for rule-based health monitoring — live TPS/MSPT, host metrics, structured reports, and an embedded dashboard. No AI, no cloud. Loader range **`[1.21.1,1.22)`** from **1.0.1**.
+Watchtower is a NeoForge **1.21.x** server mod for rule-based health monitoring — live TPS/MSPT, host metrics, structured reports, and an embedded dashboard. No AI, no cloud. Loader range **`[1.21.1,1.22)`** from **1.0.0**.
 
 ## Operators (server owners)
 

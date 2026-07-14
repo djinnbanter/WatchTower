@@ -9,7 +9,7 @@ Build from **repo root** (canonical):
 ./gradlew copyReleaseJars
 ```
 
-From **1.0.1**, `copyReleaseJars` emits **`watchtower-neoforge-<version>+mc1.21.jar`**. After **1.0.15** platform engineering, the 1.21 project renames to `:neoforge-1.21:`.
+From **1.0.0**, `copyReleaseJars` emits **`watchtower-neoforge-<version>+mc1.21.jar`**. After **1.0.4** release engineering, the 1.21 project renames to `:neoforge-1.21:`.
 
 See [../CONTRIBUTING.md](../CONTRIBUTING.md) and [../docs/ROADMAP.md](../docs/ROADMAP.md).
 

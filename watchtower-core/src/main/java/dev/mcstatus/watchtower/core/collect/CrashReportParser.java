@@ -13,6 +13,9 @@ import java.util.regex.Pattern;
 
 /**
  * Deep parse of Minecraft crash report text for narrative generation.
+ *
+ * <p>1.0.13 additions: TRANSFORMER/mod@version stack → {@code primary_mod_id} (G-01);
+ * watchdog duration in seconds → ms (G-03).
  */
 public final class CrashReportParser {
 
@@ -23,9 +26,19 @@ public final class CrashReportParser {
             "^([a-z][\\w.$]*(?:Exception|Error)):\\s*(.+)", Pattern.MULTILINE);
     private static final Pattern WATCHDOG_MS = Pattern.compile(
             "single server tick took (\\d+) milliseconds", Pattern.CASE_INSENSITIVE);
+    private static final Pattern WATCHDOG_SEC = Pattern.compile(
+            "single server tick took ([\\d.]+)\\s*seconds", Pattern.CASE_INSENSITIVE);
+    /** NeoForge/Fabric stack frame: {@code TRANSFORMER/modid@version/...}. */
+    private static final Pattern TRANSFORMER_MOD = Pattern.compile(
+            "TRANSFORMER/([a-z][\\w-]*)@[\\w.+-]+/", Pattern.CASE_INSENSITIVE);
     private static final Pattern STACK_FRAME = Pattern.compile("^\\tat\\s+(\\S+)\\((.+?)\\)");
     private static final Pattern MOD_FILE = Pattern.compile("Mod File:\\s*(.+)", Pattern.CASE_INSENSITIVE);
     private static final int MAX_FRAMES = 8;
+    /** Corrupted watchdog counters exceed ~41 days in ms; fall back to nominal 60s. */
+    private static final double WATCHDOG_SEC_CORRUPT_THRESHOLD = 3_600_000_000d;
+    private static final int WATCHDOG_NOMINAL_MS = 60_000;
+    private static final Set<String> VANILLA_TRANSFORMER_IDS = Set.of(
+            "minecraft", "neoforge", "forge", "fabricloader", "java");
 
     private CrashReportParser() {
     }
@@ -39,7 +52,8 @@ public final class CrashReportParser {
             String rootException,
             String causedBy,
             JsonArray stackFrames,
-            Integer watchdogTickMs) {
+            Integer watchdogTickMs,
+            String primaryModId) {
 
         public void applyTo(JsonObject report) {
             if (summary != null && !summary.isBlank()) {
@@ -69,6 +83,9 @@ public final class CrashReportParser {
             if (watchdogTickMs != null) {
                 report.addProperty("watchdog_tick_ms", watchdogTickMs);
             }
+            if (primaryModId != null && !primaryModId.isBlank()) {
+                report.addProperty("primary_mod_id", primaryModId);
+            }
         }
     }
 
@@ -85,12 +102,22 @@ public final class CrashReportParser {
         String exception = causedBy != null && !causedBy.isBlank() ? causedBy : rootException;
         Integer watchdogMs = extractWatchdogMs(text, exception, summary);
         JsonArray frames = extractStackFrames(text, knownModIds);
+        String primaryModId = extractPrimaryModId(text, frames);
         return new ParsedCrash(summary, modFile, exception, description, failureMessage,
-                rootException, causedBy, frames, watchdogMs);
+                rootException, causedBy, frames, watchdogMs, primaryModId);
+    }
+
+    /**
+     * Parse watchdog stall duration to milliseconds (G-03).
+     * Prefers an explicit milliseconds match; otherwise converts seconds.
+     * Implausibly large second counters (e.g. {@code 60000004.00 seconds}) map to a nominal 60s.
+     */
+    public static Integer extractWatchdogMs(String text) {
+        return extractWatchdogMs(text, null, null);
     }
 
     private static ParsedCrash empty() {
-        return new ParsedCrash("", "", "", "", "", "", "", new JsonArray(), null);
+        return new ParsedCrash("", "", "", "", "", "", "", new JsonArray(), null, null);
     }
 
     private static String extractModFile(String text) {
@@ -131,12 +158,96 @@ public final class CrashReportParser {
 
     private static Integer extractWatchdogMs(String text, String exception, String summary) {
         String combined = (exception != null ? exception : "") + " " + (summary != null ? summary : "");
-        Matcher m = WATCHDOG_MS.matcher(combined);
-        if (m.find()) {
-            return Integer.parseInt(m.group(1));
+        Integer fromMs = matchWatchdogMilliseconds(combined);
+        if (fromMs != null) {
+            return fromMs;
         }
-        m = WATCHDOG_MS.matcher(text);
+        fromMs = matchWatchdogMilliseconds(text);
+        if (fromMs != null) {
+            return fromMs;
+        }
+        Integer fromSec = matchWatchdogSeconds(combined);
+        if (fromSec != null) {
+            return fromSec;
+        }
+        return matchWatchdogSeconds(text);
+    }
+
+    private static Integer matchWatchdogMilliseconds(String haystack) {
+        if (haystack == null || haystack.isBlank()) {
+            return null;
+        }
+        Matcher m = WATCHDOG_MS.matcher(haystack);
         return m.find() ? Integer.parseInt(m.group(1)) : null;
+    }
+
+    private static Integer matchWatchdogSeconds(String haystack) {
+        if (haystack == null || haystack.isBlank()) {
+            return null;
+        }
+        Matcher m = WATCHDOG_SEC.matcher(haystack);
+        if (!m.find()) {
+            return null;
+        }
+        double seconds;
+        try {
+            seconds = Double.parseDouble(m.group(1));
+        } catch (NumberFormatException e) {
+            return WATCHDOG_NOMINAL_MS;
+        }
+        if (seconds > WATCHDOG_SEC_CORRUPT_THRESHOLD || seconds < 0) {
+            return WATCHDOG_NOMINAL_MS;
+        }
+        long ms = Math.round(seconds * 1000d);
+        if (ms > Integer.MAX_VALUE) {
+            return WATCHDOG_NOMINAL_MS;
+        }
+        return (int) Math.max(1, ms);
+    }
+
+    /**
+     * First non-vanilla TRANSFORMER/mod@version id in the report (G-01).
+     */
+    public static String extractPrimaryModId(String text) {
+        return extractPrimaryModId(text, null);
+    }
+
+    private static String extractPrimaryModId(String text, JsonArray frames) {
+        if (text != null) {
+            Matcher m = TRANSFORMER_MOD.matcher(text);
+            while (m.find()) {
+                String id = m.group(1).toLowerCase(Locale.ROOT);
+                if (!VANILLA_TRANSFORMER_IDS.contains(id) && isValidModId(id)) {
+                    return id;
+                }
+            }
+        }
+        if (frames != null) {
+            for (var el : frames) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject row = el.getAsJsonObject();
+                if (row.has("mod_id") && !row.get("mod_id").isJsonNull()) {
+                    String id = row.get("mod_id").getAsString().toLowerCase(Locale.ROOT);
+                    if (!VANILLA_TRANSFORMER_IDS.contains(id) && isValidModId(id)) {
+                        return id;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isValidModId(String id) {
+        if (id == null || id.isBlank()) {
+            return false;
+        }
+        String lower = id.toLowerCase(Locale.ROOT);
+        return !lower.contains("<no mod")
+                && !lower.equals("java.lang.error")
+                && !lower.equals("error")
+                && !lower.equals("null");
     }
 
     private static JsonArray extractStackFrames(String text, List<String> knownModIds) {
@@ -151,14 +262,21 @@ public final class CrashReportParser {
                 continue;
             }
             String frame = m.group(1);
-            if (!looksModRelated(frame, modSet)) {
+            Matcher xf = TRANSFORMER_MOD.matcher(line);
+            String transformerId = null;
+            if (xf.find()) {
+                transformerId = xf.group(1).toLowerCase(Locale.ROOT);
+            }
+            if (transformerId == null && !looksModRelated(frame, modSet)) {
                 continue;
             }
             JsonObject row = new JsonObject();
             row.addProperty("method", frame);
             row.addProperty("source", m.group(2));
-            String modId = guessModId(frame, modSet);
-            if (modId != null) {
+            String modId = transformerId != null && !VANILLA_TRANSFORMER_IDS.contains(transformerId)
+                    ? transformerId
+                    : guessModId(frame, modSet);
+            if (modId != null && isValidModId(modId) && !VANILLA_TRANSFORMER_IDS.contains(modId)) {
                 row.addProperty("mod_id", modId);
             }
             arr.add(row);

@@ -623,6 +623,9 @@ public final class OpsCacheWriter {
                 copyIfPresent(summary, row, "suspect_mod_id");
                 copyIfPresent(summary, row, "plain_english");
                 copyIfPresent(summary, row, "historical");
+                copyIfPresent(summary, row, "failure_kind");
+                copyIfPresent(summary, row, "primary_mod_id");
+                copyIfPresent(summary, row, "stall_mod_id");
                 if (!row.has(OpsCacheSchema.ENTRY_MTIME) && summary.has("time")) {
                     Instant ct = dev.mcstatus.watchtower.core.util.TimeParse.parseTime(summary.get("time").getAsString());
                     if (ct != null) {
@@ -895,6 +898,18 @@ public final class OpsCacheWriter {
         row.addProperty(OpsCacheSchema.ENTRY_SOURCE, source);
         if (entry.displayLabel() != null && !entry.displayLabel().isBlank()) {
             row.addProperty(OpsCacheSchema.ENTRY_DISPLAY_LABEL, entry.displayLabel());
+        }
+        if (entry.failureKind() != null && !entry.failureKind().isBlank()) {
+            row.addProperty("failure_kind", entry.failureKind());
+        }
+        if (entry.primaryModId() != null && !entry.primaryModId().isBlank()) {
+            row.addProperty("primary_mod_id", entry.primaryModId());
+        }
+        if (entry.stallModId() != null && !entry.stallModId().isBlank()) {
+            row.addProperty("stall_mod_id", entry.stallModId());
+        }
+        if (entry.exception() != null && !entry.exception().isBlank()) {
+            row.addProperty("exception", entry.exception());
         }
         return row;
     }

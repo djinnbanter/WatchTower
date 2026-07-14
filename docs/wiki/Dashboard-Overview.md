@@ -8,6 +8,7 @@ The dashboard is a website served by Watchtower on your server — usually **`ht
 
 - **You must sign in** — visitors without a login only see the sign-in screen
 - **First login:** `watchtower` / `password` — change password right away ([[Security and Access]])
+- **Overview welcome** — personalized greeting with hostname and a short live status summary
 - **Side menu** — tabs grouped as Monitor, Fix problems, and Day to day
 - **Top bar** — run a report, open Settings, Help, Docs, theme, logout
 - **Settings (gear)** — schedule, backups, login security, version info
@@ -19,8 +20,9 @@ The dashboard is a website served by Watchtower on your server — usually **`ht
 ## First visit
 
 1. Sign in and change your password
-2. If you have no report yet, the **welcome screen** offers a **30-day baseline** report and a tour
-3. **Run Report** in the top bar runs a full health check (same as `/watchtower run`)
+2. The **setup wizard** opens automatically on first visit — live discovery audit (logs, crashes, mods, backup configured?), optional 30-day baseline report, then Backups, schedule (default twice daily), and optional 2FA
+3. **Run Report** in the top bar runs a full health check anytime (same as `/watchtower run`)
+4. Optional: start the **guided tour** from **Help → Tour** or **Settings → About**
 
 ---
 

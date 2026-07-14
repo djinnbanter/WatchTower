@@ -51,6 +51,11 @@ public final class ReportEngine {
     }
 
     public static ReportResult run(ReportConfig baseConfig, Path reportDir) {
+        return run(baseConfig, reportDir, ReportProgress.NOOP);
+    }
+
+    public static ReportResult run(ReportConfig baseConfig, Path reportDir, ReportProgress progress) {
+        ReportProgress stages = progress != null ? progress : ReportProgress.NOOP;
         List<String> warnings = new ArrayList<>();
         try {
             Files.createDirectories(reportDir);
@@ -58,6 +63,8 @@ public final class ReportEngine {
                     ? Path.of(baseConfig.stateFile())
                     : reportDir.resolve(WatchtowerFiles.STATE_FILENAME);
 
+            stages.stage("window", "Computing time window");
+            stages.detail("Resolving lookback and last report window…");
             Window window = computeWindow(baseConfig, statePath);
             ReportConfig config = ReportConfig.builder()
                     .from(baseConfig)
@@ -66,7 +73,8 @@ public final class ReportEngine {
                     .stateFile(statePath.toString())
                     .build();
 
-            JsonObject staging = StagingBuilder.buildStaging(config);
+            stages.stage("collect", "Collecting logs, crashes, mods, host metrics");
+            JsonObject staging = StagingBuilder.buildStaging(config, stages);
             JsonObject meta = staging.getAsJsonObject("meta");
             if (meta == null) {
                 meta = new JsonObject();
@@ -76,6 +84,8 @@ public final class ReportEngine {
             meta.addProperty("engine_version", ENGINE_VERSION);
             addSourcePaths(meta, config, reportDir);
 
+            stages.stage("analyze", "Analyzing health and crashes");
+            stages.detail("Building facts from collected data…");
             JsonObject facts = ReportPipeline.buildFacts(staging);
             JsonObject factsMeta = facts.getAsJsonObject("meta");
             if (factsMeta != null) {
@@ -86,17 +96,24 @@ public final class ReportEngine {
                 }
             }
 
+            stages.stage("enrich", "Enriching incidents and scorecard");
+            stages.detail("Attaching recent lag incidents…");
             enrichRecentIncidents(facts, config.serverDir());
 
+            stages.stage("write", "Writing facts and brief");
+            stages.detail("Writing facts JSON…");
             String timestamp = ZonedDateTime.now(ZoneId.systemDefault()).format(
                     DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
             Path factsPath = reportDir.resolve(WatchtowerFiles.FACTS_PREFIX + timestamp + ".json");
             Path briefPath = reportDir.resolve(WatchtowerFiles.BRIEF_PREFIX + timestamp + ".txt");
 
             Files.writeString(factsPath, GSON.toJson(facts) + System.lineSeparator(), StandardCharsets.UTF_8);
+            stages.detail("Writing operator brief…");
             String brief = ReportPipeline.writeBrief(facts);
             Files.writeString(briefPath, brief, StandardCharsets.UTF_8);
 
+            stages.stage("finalize", "Saving state and ops cache");
+            stages.detail("Updating state.json…");
             if (!config.disasterRecovery()) {
                 StateManager.updateAfterReport(statePath, window.windowStart, facts, config.lookbackHours());
             }
@@ -140,8 +157,13 @@ public final class ReportEngine {
         }
         paths.addProperty("spark_upload", serverDir + "/watchtower/spark-upload/");
         paths.addProperty("spark_config", serverDir + "/config/spark/");
-        SparkCollector.collect(serverDir, config).ifPresent(result ->
-                paths.addProperty("spark_profile_file", result.sourcePath().toString().replace('\\', '/')));
+        try {
+            SparkCollector.collect(serverDir, config).ifPresent(result ->
+                    paths.addProperty("spark_profile_file", result.sourcePath().toString().replace('\\', '/')));
+        } catch (LinkageError ignored) {
+            // Spark parse may fail under JPMS conflicts (e.g. another mod shading protobuf);
+            // omit spark_profile_file rather than aborting the whole report.
+        }
         meta.add("source_paths", paths);
     }
 

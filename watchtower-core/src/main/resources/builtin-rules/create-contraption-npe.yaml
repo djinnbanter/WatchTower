@@ -1,0 +1,23 @@
+schema_version: 1
+pack:
+  id: builtin
+  name: "WatchTower builtin crash rules"
+  priority: 50
+
+rules:
+  - id: create-contraption-npe
+    priority: 200
+    description: "Create contraption ContinuousOBBCollider null mf.axis (G-02)"
+    when:
+      all:
+        - { source: crash_report, regex: "mf\\.axis is null" }
+        - { source: crash_report, regex: "ContinuousOBBCollider|ContraptionCollider|ContraptionHandler" }
+        - { mod_present: create }
+    emit:
+      failure_kind: mod_runtime
+      primary_mod_id: create
+      confidence: high
+      issue_id: MOD_RUNTIME_CREATE
+      fix_hints:
+        - "Stop or break the stuck Create assembly / contraption at the crash coordinates first"
+        - "If it keeps failing after clearing the assembly, check Create version notes for this Minecraft line"

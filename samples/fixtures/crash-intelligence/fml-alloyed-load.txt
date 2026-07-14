@@ -1,0 +1,24 @@
+---- Minecraft Crash Report ----
+
+Time: 2026-06-25 11:59:59
+Description: Mod loading failures have occurred; consult the issue messages for more details
+
+net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod loading has failed
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: main
+Stacktrace:
+	at MC-BOOTSTRAP/it.unimi.dsi.fastutil@8.5.12/it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap.rehash(Object2ObjectOpenHashMap.java:1279) ~[fastutil-8.5.12.jar%23111!/:?] {re:mixin}
+-- Mod loading issue for: alloyed --
+Details:
+	Mod file: /var/opt/minecraft/mods/alloyed-3.0.9+1.21.1-neoforge.jar
+	Failure message: Alloyed (alloyed) encountered an error while dispatching the net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event
+		java.lang.ArrayIndexOutOfBoundsException: Index 32768 out of bounds for length 16385
+	Mod version: 3.0.9+1.21.1
+	Exception message: java.lang.ArrayIndexOutOfBoundsException: Index 32768 out of bounds for length 16385
+Stacktrace:
+	at TRANSFORMER/alloyed@3.0.9+1.21.1/com.molybdenum.alloyed.common.compat.farmersdelight.SteelKnifeDispenseBehaviour.register(SteelKnifeDispenseBehaviour.java:9) ~[alloyed-3.0.9+1.21.1-neoforge.jar%23326!/:?] {re:classloading}

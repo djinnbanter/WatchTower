@@ -1,0 +1,11 @@
+IBM Plex Font License (OFL)
+
+The IBM Plex font files in this directory are distributed under the
+SIL Open Font License, Version 1.1.
+
+Copyright © 2017 IBM Corp., with Reserved Font Name "Plex"
+
+Full license: https://openfontlicense.org/open-font-license-official-text/
+
+Font files are downloaded by scripts/vendor-libs.mjs from Fontsource
+(jsDelivr CDN) during development setup.

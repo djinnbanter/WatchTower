@@ -1,12 +1,21 @@
 /**
  * Port of LogScanner (DR subset) — latest.log tail scan.
+ * 1.0.13: Done duration, map_render, startup_profile, fml_issues.
  */
 import { aggregateModLogErrors } from './modErrorCategory.js';
+import { parseFmlIssues } from './fmlIssueParser.js';
+import { scanStartupProfile } from './startupProfileScanner.js';
 
 const LOG_TIME_RE = /^\[(\d{2}\w{3}\d{4} \d{2}:\d{2}:\d{2}(?:\.\d+)?)\]/;
 const SERVER_STARTED_RE = /Done \((\d+\.?\d*)s\)! For help, type "help"/i;
+const DONE_DURATION_RE = /Done \(([\d.]+)s\)!/i;
 const CLEAN_SHUTDOWN_RE = /Stopping server/i;
 const OOM_RE = /OutOfMemoryError|java\.heap\.space|GC overhead limit/i;
+const SQUAREMAP_RUNTIME_RE = /squaremap/i;
+const SQUAREMAP_RUNTIME_ACTION = /FullRender|render|UpdatePlayers|task|queue depth/i;
+const BLUEMAP_RUNTIME_RE = /bluemap/i;
+const BLUEMAP_RUNTIME_ACTION = /render|update|task|FullRender/i;
+const MOD_DISCOVERER_SCAN = /ModDiscoverer|SCAN/i;
 const MAX_LINES = 15000;
 
 function parseLogTimestamp(line) {
@@ -26,10 +35,22 @@ function tailLines(content, maxLines = MAX_LINES) {
   return lines.slice(lines.length - maxLines);
 }
 
+function isMapRenderRuntime(line) {
+  if (!line || MOD_DISCOVERER_SCAN.test(line)) return null;
+  if (SQUAREMAP_RUNTIME_RE.test(line) && SQUAREMAP_RUNTIME_ACTION.test(line)) {
+    return 'squaremap';
+  }
+  if (BLUEMAP_RUNTIME_RE.test(line) && BLUEMAP_RUNTIME_ACTION.test(line)) {
+    return 'bluemap';
+  }
+  return null;
+}
+
 /**
  * @param {{ name: string, content: string }[]} logFiles — prefer latest.log
+ * @param {{ previousTotalSec?: number|null }} [opts]
  */
-export function scanLogs(logFiles) {
+export function scanLogs(logFiles, opts = {}) {
   const mc = {
     log_had_activity_in_window: false,
     clean_shutdown_seen: false,
@@ -61,8 +82,11 @@ export function scanLogs(logFiles) {
   let maxLineNo = 0;
   let serverStarted = null;
   let errorCount = 0;
+  let doneDurationSec = null;
+  let mapRender = null;
+  let sawFmlIssue = false;
 
-  linesLoop: for (let i = 0; i < allLines.length; i++) {
+  for (let i = 0; i < allLines.length; i++) {
     const line = allLines[i];
     const ts = parseLogTimestamp(line);
     if (ts && (!maxTs || ts > maxTs)) {
@@ -70,8 +94,13 @@ export function scanLogs(logFiles) {
       maxLine = line.length > 300 ? line.slice(0, 300) : line;
       maxLineNo = i + 1;
     }
-    if (SERVER_STARTED_RE.test(line)) {
+    const doneMatch = SERVER_STARTED_RE.exec(line) || DONE_DURATION_RE.exec(line);
+    if (doneMatch) {
       serverStarted = ts || new Date().toISOString();
+      const sec = Number.parseFloat(doneMatch[1]);
+      if (Number.isFinite(sec)) {
+        doneDurationSec = Math.round(sec * 10) / 10;
+      }
     }
     if (CLEAN_SHUTDOWN_RE.test(line)) mc.clean_shutdown_seen = true;
     if (OOM_RE.test(line)) {
@@ -82,6 +111,17 @@ export function scanLogs(logFiles) {
     if (line.includes('[ERROR]') || line.includes('[FATAL]')) errorCount++;
     if (line.includes('Mod loading has failed') || line.includes('Failed to start the minecraft server')) {
       mc.log_had_activity_in_window = true;
+    }
+    if (line.includes('Mod loading issue')) sawFmlIssue = true;
+
+    const mapSrc = isMapRenderRuntime(line);
+    if (mapSrc) {
+      mapRender = {
+        active: true,
+        source: mapSrc,
+        last_line: line.length > 240 ? line.slice(0, 240) : line,
+        time: ts,
+      };
     }
   }
 
@@ -98,8 +138,13 @@ export function scanLogs(logFiles) {
     mc.health_log_gap_minutes = Math.min(Math.max(gapMin, 0), 9999);
   }
   if (serverStarted) mc.server_started = serverStarted;
+  if (doneDurationSec != null) mc.done_duration_sec = doneDurationSec;
 
   const modLogErrors = aggregateModLogErrors(allLines);
+  const startupProfile = scanStartupProfile(allLines, {
+    previousTotalSec: opts.previousTotalSec ?? null,
+  });
+  const fmlIssues = sawFmlIssue ? parseFmlIssues(allLines.join('\n')) : [];
 
   return {
     minecraft: mc,
@@ -108,5 +153,8 @@ export function scanLogs(logFiles) {
     health_log_gap_minutes: mc.health_log_gap_minutes ?? null,
     logPath: primaryLog,
     allLines,
+    mapRender,
+    startupProfile,
+    fmlIssues,
   };
 }

@@ -1,0 +1,18 @@
+schema_version: 1
+pack: { id: sample-create, name: "Sample Create rule", priority: 200 }
+
+rules:
+  - id: create-contraption-npe
+    priority: 200
+    description: "Create null axis (G-02)"
+    when:
+      all:
+        - { source: crash_report, regex: "mf\\.axis is null" }
+        - { source: crash_report, regex: "ContinuousOBBCollider|ContraptionHandler" }
+        - { mod_present: create }
+    emit:
+      failure_kind: mod_runtime
+      primary_mod_id: create
+      confidence: high
+      fix_hints:
+        - "Stop or break the stuck Create assembly / contraption at the crash coordinates first"

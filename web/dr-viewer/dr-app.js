@@ -12,6 +12,9 @@ import {
   loadExample,
 } from './analyze/ingest.js';
 import { runAnalysis } from './analyze/run.js';
+import { renderModForensicsPanel } from './analyze/modForensicsPanel.js';
+
+window.WatchtowerModForensics = { renderModForensicsPanel };
 
 const IDB_NAME = 'watchtower-dr';
 const IDB_STORE = 'last-run';

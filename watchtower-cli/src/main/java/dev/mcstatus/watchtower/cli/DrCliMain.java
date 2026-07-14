@@ -1,7 +1,11 @@
 package dev.mcstatus.watchtower.cli;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.WatchtowerFiles;
+import dev.mcstatus.watchtower.core.collect.ForensicsFindService;
+import dev.mcstatus.watchtower.core.collect.JarClassIndex;
+import dev.mcstatus.watchtower.core.collect.ModJarMetadataReader;
 import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.report.DrBundlePackager;
 import dev.mcstatus.watchtower.core.report.DrLogAnchorFinder;
@@ -46,6 +50,12 @@ public final class DrCliMain {
         }
         if ("report".equalsIgnoreCase(args[0])) {
             return runReport(args);
+        }
+        if ("forensics".equalsIgnoreCase(args[0])) {
+            return runForensics(args);
+        }
+        if ("rules".equalsIgnoreCase(args[0])) {
+            return runRules(args);
         }
 
         System.err.println("Unknown command: " + args[0]);
@@ -282,8 +292,166 @@ public final class DrCliMain {
 
                   java -jar watchtower-cli.jar dr [options]       Disaster recovery bundle
                   java -jar watchtower-cli.jar report [options]   Health report (live mode)
+                  java -jar watchtower-cli.jar forensics <cmd>    Mod forensics (find-class / find-package)
+                  java -jar watchtower-cli.jar rules <cmd>        Crash rule packs (validate / list)
 
                 Run with --help on either command for details.
+                """);
+    }
+
+    private static int runRules(String[] args) {
+        if (args.length < 2 || isHelp(args[1])) {
+            printRulesUsage();
+            return args.length < 2 ? 1 : 0;
+        }
+        String sub = args[1];
+        if ("validate".equalsIgnoreCase(sub)) {
+            String file = null;
+            for (int i = 2; i < args.length; i++) {
+                if (!args[i].startsWith("-") && file == null) {
+                    file = args[i];
+                } else if (isHelp(args[i])) {
+                    printRulesUsage();
+                    return 0;
+                }
+            }
+            if (file == null) {
+                System.err.println("Missing YAML file path");
+                printRulesUsage();
+                return 1;
+            }
+            Path path = Path.of(file).toAbsolutePath().normalize();
+            if (!Files.isRegularFile(path)) {
+                System.err.println("File not found: " + path);
+                return 1;
+            }
+            try {
+                String yaml = Files.readString(path);
+                var result = dev.mcstatus.watchtower.core.rules.CrashRuleSchema.validate(yaml);
+                if (result.valid()) {
+                    System.out.println("OK: " + path.getFileName() + " is a valid crash rule pack");
+                    return 0;
+                }
+                System.err.println("INVALID: " + path);
+                for (String e : result.errors()) {
+                    System.err.println("  - " + e);
+                }
+                return 2;
+            } catch (IOException e) {
+                System.err.println("Read failed: " + e.getMessage());
+                return 1;
+            }
+        }
+        if ("list".equalsIgnoreCase(sub)) {
+            String server = ".";
+            for (int i = 2; i < args.length; i++) {
+                if ("--server".equals(args[i]) && i + 1 < args.length) {
+                    server = args[++i];
+                } else if (isHelp(args[i])) {
+                    printRulesUsage();
+                    return 0;
+                }
+            }
+            Path serverDir = Path.of(server).toAbsolutePath().normalize();
+            var reg = dev.mcstatus.watchtower.core.rules.CrashRuleRegistry.load(serverDir, true, true);
+            System.out.println("Packs (" + reg.packs().size() + "):");
+            for (var pack : reg.packs()) {
+                System.out.println("  " + pack.id() + "  priority=" + pack.priority()
+                        + (pack.builtin() ? "  [builtin]" : "  [operator]")
+                        + "  rules=" + pack.rules().size());
+                for (var rule : pack.rules()) {
+                    System.out.println("    - " + rule.id() + " (p=" + rule.priority() + ")");
+                }
+            }
+            for (String w : reg.warnings()) {
+                System.err.println("WARN: " + w);
+            }
+            return 0;
+        }
+        System.err.println("Unknown rules command: " + sub);
+        printRulesUsage();
+        return 1;
+    }
+
+    private static void printRulesUsage() {
+        System.out.println("""
+                watchtower rules — declarative crash rule packs
+
+                  java -jar watchtower-cli.jar rules validate <file.yaml>
+                  java -jar watchtower-cli.jar rules list [--server <path>]
+
+                Operator packs live in config/watchtower/rules/*.yaml
+                Builtin packs ship inside the JAR under builtin-rules/
+                """);
+    }
+
+    private static int runForensics(String[] args) {
+        if (args.length < 2 || isHelp(args[1])) {
+            printForensicsUsage();
+            return args.length < 2 ? 1 : 0;
+        }
+        String sub = args[1];
+        String server = ".";
+        String query = null;
+        String mode = "prefix";
+        boolean includeNested = true;
+        for (int i = 2; i < args.length; i++) {
+            String a = args[i];
+            if ("--server".equals(a) && i + 1 < args.length) {
+                server = args[++i];
+            } else if ("--mode".equals(a) && i + 1 < args.length) {
+                mode = args[++i];
+            } else if ("--no-nested".equals(a)) {
+                includeNested = false;
+            } else if (!a.startsWith("-") && query == null) {
+                query = a;
+            } else if (isHelp(a)) {
+                printForensicsUsage();
+                return 0;
+            }
+        }
+        if (query == null || query.isBlank()) {
+            System.err.println("Missing class/package query");
+            printForensicsUsage();
+            return 1;
+        }
+        Path serverDir = Path.of(server).toAbsolutePath().normalize();
+        if (!Files.isDirectory(serverDir)) {
+            System.err.println("Server directory not found: " + serverDir);
+            return 1;
+        }
+        try {
+            ReportConfig config = ReportConfig.builder()
+                    .serverDir(serverDir.toString())
+                    .modForensicsScan(true)
+                    .build();
+            Path modsDir = serverDir.resolve("mods");
+            Path cache = JarClassIndex.defaultCachePath(serverDir.toString());
+            JsonArray mods = ModJarMetadataReader.listModsFromDir(serverDir.toString());
+            JsonObject result;
+            if ("find-class".equalsIgnoreCase(sub)) {
+                result = ForensicsFindService.findClass(config, modsDir, mods, cache, query, includeNested);
+            } else if ("find-package".equalsIgnoreCase(sub)) {
+                result = ForensicsFindService.findPackage(config, modsDir, mods, cache, query, mode);
+            } else {
+                System.err.println("Unknown forensics command: " + sub);
+                printForensicsUsage();
+                return 1;
+            }
+            System.out.println(result);
+            return 0;
+        } catch (IOException e) {
+            System.err.println("Forensics failed: " + e.getMessage());
+            return 1;
+        }
+    }
+
+    private static void printForensicsUsage() {
+        System.out.println("""
+                watchtower forensics — class/package owning-jar lookup
+
+                  java -jar watchtower-cli.jar forensics find-class <ClassName> [--server <path>] [--no-nested]
+                  java -jar watchtower-cli.jar forensics find-package <package> [--server <path>] [--mode prefix|exact_package]
                 """);
     }
 

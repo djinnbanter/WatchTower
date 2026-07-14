@@ -114,6 +114,37 @@ class BackupScanTest {
     }
 
     @Test
+    void trackingDisabledSkipsBackupIssues() {
+        JsonObject staging = new JsonObject();
+        JsonObject meta = new JsonObject();
+        meta.addProperty("backup_tracking_enabled", false);
+        meta.addProperty("backup_local_configured", true);
+        staging.add("meta", meta);
+        staging.add("flags", new JsonObject());
+        JsonObject mc = new JsonObject();
+        mc.addProperty("log_had_activity_in_window", true);
+        staging.add("minecraft", mc);
+        staging.add("system", new JsonObject());
+        staging.add("events", new JsonArray());
+        staging.add("thresholds", new JsonObject());
+        JsonObject optional = new JsonObject();
+        JsonObject last = new JsonObject();
+        last.addProperty("status", "not_found");
+        last.addProperty("reason", "empty");
+        last.addProperty("stale", true);
+        last.addProperty("age_days", "30");
+        optional.add("last_backup", last);
+        staging.add("optional", optional);
+
+        JsonObject facts = dev.mcstatus.watchtower.core.analyze.ReportPipeline.buildFacts(staging);
+        JsonArray issues = facts.getAsJsonArray("issues");
+        for (var el : issues) {
+            String id = el.getAsJsonObject().get("id").getAsString();
+            assertFalse(id.startsWith("BACKUP_"), "expected no BACKUP_* issues when tracking disabled, got " + id);
+        }
+    }
+
+    @Test
     void craftyTimestampBackupInServerUuidDir() throws Exception {
         Path tmp = Files.createTempDirectory("wt-crafty-backup");
         String serverId = "00000000-0000-0000-0000-000000000001";

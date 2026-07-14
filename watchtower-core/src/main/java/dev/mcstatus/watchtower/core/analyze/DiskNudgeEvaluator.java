@@ -37,11 +37,19 @@ public final class DiskNudgeEvaluator {
     }
 
     public static JsonObject evaluateBackup(JsonObject lastBackup, int backupWarnDays) {
-        return evaluateBackup(lastBackup, null, backupWarnDays);
+        return evaluateBackup(lastBackup, null, backupWarnDays, true);
     }
 
     public static JsonObject evaluateBackup(JsonObject lastBackup, JsonObject backupExternal, int backupWarnDays) {
+        return evaluateBackup(lastBackup, backupExternal, backupWarnDays, true);
+    }
+
+    public static JsonObject evaluateBackup(
+            JsonObject lastBackup, JsonObject backupExternal, int backupWarnDays, boolean trackingEnabled) {
         JsonObject nudge = inactiveNudge("backup");
+        if (!trackingEnabled) {
+            return nudge;
+        }
         boolean externalConfigured = backupExternal != null && bool(backupExternal, "configured", false);
         boolean externalFresh = externalConfigured
                 && ("success".equals(str(backupExternal, "status")) || "running".equals(str(backupExternal, "status")))

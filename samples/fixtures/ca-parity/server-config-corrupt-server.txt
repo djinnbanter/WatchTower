@@ -1,0 +1,12 @@
+---- Minecraft Crash Report ----
+// SERVER config corrupt (synthetic CA-04)
+
+Time: 2026-07-13 12:20:00
+Description: Mod loading has failed
+
+java.lang.RuntimeException: Mod loading has failed
+Caused by: net.neoforged.fml.config.ConfigLoadingException: Failed loading config file create-server.toml of type SERVER for modid create
+Caused by: com.electronwill.nightconfig.core.io.ParsingException: Invalid TOML
+
+-- System Details --
+Minecraft Version: 1.21.1

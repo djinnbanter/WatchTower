@@ -1,0 +1,197 @@
+/* Chart frame + TimeSeries + Sparkline */
+
+/* ── Chart frame ──────────────────────────────────────────────────────────── */
+
+.ui-chart-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-8);
+  padding: 0;
+  min-width: 0;
+}
+
+.ui-chart-frame__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-sp-12);
+  padding: 0;
+}
+
+.ui-chart-frame__title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-8);
+  min-width: 0;
+}
+
+.ui-chart-frame__title {
+  font-size: var(--ui-text-md);
+  line-height: var(--ui-lh-md);
+  font-weight: 600;
+  color: var(--ui-text-hi);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-chart-frame__layer {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ui-chart-frame__at {
+  font-size: var(--ui-text-xs);
+  font-family: var(--ui-font-mono);
+  color: var(--ui-text-low);
+  white-space: nowrap;
+}
+
+.ui-chart-frame__window {
+  flex-shrink: 0;
+}
+
+.ui-chart-frame__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-8);
+  flex-shrink: 0;
+}
+
+.ui-chart-frame__body {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ui-rad-xl);
+  background: var(--ui-bg0);
+  border: 1px solid var(--ui-line-strong);
+  padding: var(--ui-sp-12) var(--ui-sp-12) var(--ui-sp-8);
+  box-shadow: var(--ui-shadow-inset);
+}
+
+.ui-chart-frame__caption {
+  margin-top: var(--ui-sp-8);
+  font-size: var(--ui-text-xs);
+  line-height: var(--ui-lh-xs);
+  color: var(--ui-text-low);
+}
+
+.ui-chart-frame--stale .ui-chart-frame__body {
+  opacity: 0.6;
+}
+
+/* ── TimeSeries ───────────────────────────────────────────────────────────── */
+
+.ui-timeseries {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.ui-timeseries__plot {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.ui-timeseries .uplot canvas {
+  display: block;
+}
+
+.ui-timeseries .u-legend {
+  display: none;
+}
+
+.ui-timeseries .u-cursor-pt {
+  border-radius: var(--ui-rad-full) !important;
+}
+
+.ui-timeseries__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-sp-12) var(--ui-sp-16);
+  padding-top: var(--ui-sp-8);
+  min-height: 28px;
+}
+
+.ui-timeseries__legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-6);
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-mid);
+  font-family: var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-timeseries__legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--ui-rad-full);
+  flex-shrink: 0;
+}
+
+.ui-timeseries__legend-value {
+  color: var(--ui-text-hi);
+  font-weight: 600;
+}
+
+.ui-timeseries__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--ui-text-sm);
+  color: var(--ui-text-low);
+  height: 100%;
+  min-height: 80px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ui-timeseries--reveal {
+    animation: ui-timeseries-reveal var(--ui-dur-5) var(--ui-ease-out) both;
+  }
+
+  @keyframes ui-timeseries-reveal {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0% 0 0); }
+  }
+}
+
+/* ── Sparkline ─────────────────────────────────────────────────────────────── */
+
+.ui-sparkline {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.ui-sparkline svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.ui-sparkline__line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.ui-sparkline__line--accent { stroke: var(--ui-accent); }
+.ui-sparkline__line--ok { stroke: var(--ui-ok); }
+.ui-sparkline__line--warn { stroke: var(--ui-warn); }
+.ui-sparkline__line--danger { stroke: var(--ui-danger); }
+
+.ui-sparkline__fill {
+  opacity: 0.14;
+}
+
+.ui-sparkline__fill--accent { fill: var(--ui-accent); }
+.ui-sparkline__fill--ok { fill: var(--ui-ok); }
+.ui-sparkline__fill--warn { fill: var(--ui-warn); }
+.ui-sparkline__fill--danger { fill: var(--ui-danger); }

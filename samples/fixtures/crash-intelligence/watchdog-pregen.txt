@@ -1,0 +1,11 @@
+---- Minecraft Crash Report ----
+// Why did you do that?
+
+Time: 2026-05-31 00:54:39
+Description: Watching Server
+
+java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds (should be max 0.05)
+	at TRANSFORMER/squaremap@1.2.0/xyz.jpenilla.squaremap.plugin.render.FullRender.run(FullRender.java:120)
+	at TRANSFORMER/squaremap@1.2.0/xyz.jpenilla.squaremap.common.task.UpdatePlayers.run(UpdatePlayers.java:40)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.tickChildren(MinecraftServer.java:200)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:180)

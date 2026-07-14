@@ -5,6 +5,7 @@ import { buildStagingSkeleton } from './stagingBuilder.js';
 import { scanLogs } from './logScanner.js';
 import { scanCrashReports } from './crashScanner.js';
 import { listModsFromJars } from './modJarReader.js';
+import { applyModSideScoring } from './modSideScorer.js';
 import { buildFacts } from './drFactsBuilder.js';
 import { writeBrief } from './briefWriter.js';
 import { validateBundle } from './ingest.js';
@@ -20,10 +21,21 @@ export async function runAnalysis(bundle, options = {}) {
     lookbackHours: options.lookbackHours ?? 168,
   });
 
-  const logResult = scanLogs(bundle.logs);
+  const logResult = scanLogs(bundle.logs, {
+    previousTotalSec: bundle.priorFacts?.optional?.startup_profile?.total_sec ?? null,
+  });
   Object.assign(staging.minecraft, logResult.minecraft);
   staging.health_log_gap_minutes = logResult.health_log_gap_minutes;
   staging.optional.mod_log_errors = logResult.modLogErrors;
+  if (logResult.startupProfile) {
+    staging.optional.startup_profile = logResult.startupProfile;
+  }
+  if (logResult.fmlIssues?.length) {
+    staging.optional.fml_issues = logResult.fmlIssues;
+  }
+  if (logResult.mapRender) {
+    staging.optional.map_render = logResult.mapRender;
+  }
   staging.events.push(...logResult.events);
 
   const { reports, events } = scanCrashReports(bundle.crashes, staging._cutoffEpoch);
@@ -36,6 +48,10 @@ export async function runAnalysis(bundle, options = {}) {
     } catch (e) {
       warnings.push(`Mod jar scan failed: ${e.message}`);
     }
+  }
+
+  if (Array.isArray(staging.optional.mods) && staging.optional.mods.length) {
+    applyModSideScoring(staging.optional);
   }
 
   if (bundle.priorFacts?.optional?.mods) {

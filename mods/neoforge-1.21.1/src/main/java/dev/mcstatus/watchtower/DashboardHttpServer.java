@@ -10,7 +10,13 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import dev.mcstatus.watchtower.core.WatchtowerFiles;
 import dev.mcstatus.watchtower.core.report.StateManager;
+import dev.mcstatus.watchtower.core.rules.CrashRuleModels;
+import dev.mcstatus.watchtower.core.rules.CrashRuleRegistry;
+import dev.mcstatus.watchtower.core.rules.CrashRuleSchema;
+import dev.mcstatus.watchtower.core.rules.CrashRuleValidator;
+import dev.mcstatus.watchtower.core.rules.IssueSuppressionStore;
 import dev.mcstatus.watchtower.core.analyze.BackupStatusResolver;
+import dev.mcstatus.watchtower.core.analyze.CrashFingerprintGrouper;
 import dev.mcstatus.watchtower.core.analyze.PreCrashContextBuilder;
 import dev.mcstatus.watchtower.core.analyze.PerformanceDashboardBuilder;
 import dev.mcstatus.watchtower.core.analyze.PerformanceContext;
@@ -21,6 +27,14 @@ import dev.mcstatus.watchtower.core.live.PerformanceRollupWriter;
 import dev.mcstatus.watchtower.core.collect.CrashMtimeScanner;
 import dev.mcstatus.watchtower.core.collect.CraftyCollector;
 import dev.mcstatus.watchtower.core.collect.ExternalBackupDetector;
+import dev.mcstatus.watchtower.core.collect.GzipLineReader;
+import dev.mcstatus.watchtower.core.collect.ModDependencyGraph;
+import dev.mcstatus.watchtower.core.collect.ModForensicsCollector;
+import dev.mcstatus.watchtower.core.collect.ForensicsFindService;
+import dev.mcstatus.watchtower.core.collect.CorruptedJarScanner;
+import dev.mcstatus.watchtower.core.collect.ConfigHealthScanner;
+import dev.mcstatus.watchtower.core.collect.JarClassIndex;
+import dev.mcstatus.watchtower.core.collect.ModJarMetadataReader;
 import dev.mcstatus.watchtower.core.incident.IncidentReader;
 import dev.mcstatus.watchtower.core.ops.ActivityLedgerScanner;
 import dev.mcstatus.watchtower.core.ops.OpsCacheReader;
@@ -50,6 +64,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,6 +78,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
@@ -71,11 +87,15 @@ import java.util.stream.Stream;
  */
 public final class DashboardHttpServer {
     private static final Gson GSON = new GsonBuilder().create();
-    private static final String WEB_PREFIX = "/assets/watchtower/web/";
+    private static final String WEB_PREFIX = "assets/watchtower/web/";
     private static final String FAVICON_RESOURCE = WEB_PREFIX + "assets/watchtower-icon-simple.png";
+    private static final int FORENSICS_FIND_RATE_LIMIT = 10;
+    private static final long FORENSICS_FIND_WINDOW_MS = 60_000L;
 
     private HttpServer server;
     private MinecraftServer minecraftServer;
+    /** IP → request timestamps in the last minute for find-class/package rate limit. */
+    private final ConcurrentHashMap<String, List<Long>> forensicsFindRate = new ConcurrentHashMap<>();
 
     public void start(MinecraftServer mcServer) {
         if (!WatchtowerConfig.DASHBOARD_ENABLED.get()) {
@@ -113,13 +133,34 @@ public final class DashboardHttpServer {
             server.createContext("/api/incidents/get", this::handleIncidentGet);
             server.createContext("/api/incidents/pin", this::handleIncidentPin);
             server.createContext("/api/issues/peek", this::handleIssuesPeek);
+            server.createContext("/api/issues/acks", this::handleIssueAcks);
+            server.createContext("/api/issues/ack", this::handleIssueAck);
+            server.createContext("/api/issues/acknowledge-all", this::handleIssueAckAll);
+            server.createContext("/api/issues/suppressions", this::handleIssueSuppressions);
+            server.createContext("/api/issues/suppress", this::handleIssueSuppress);
+            server.createContext("/api/issues/unsuppress", this::handleIssueUnsuppress);
+            server.createContext("/api/rules", this::handleRulesList);
+            server.createContext("/api/rules/get", this::handleRulesGet);
+            server.createContext("/api/rules/validate", this::handleRulesValidate);
             server.createContext("/api/reports/run", this::handleReportsRun);
             server.createContext("/api/crashes/acks", this::handleCrashAcks);
             server.createContext("/api/crashes/ack", this::handleCrashAck);
+            server.createContext("/api/crashes/acknowledge-all", this::handleCrashAckAll);
             server.createContext("/api/crashes/context", this::handleCrashContext);
             server.createContext("/api/crashes/report", this::handleCrashReport);
             server.createContext("/api/crashes/scan", this::handleCrashScan);
+            server.createContext("/api/crashes", this::handleCrashesGrouped);
+            server.createContext("/api/inbox/dismiss", this::handleInboxDismiss);
+            server.createContext("/api/inbox", this::handleInboxGet);
+            server.createContext("/api/logs/list", this::handleLogsList);
+            server.createContext("/api/logs/content", this::handleLogsContent);
             server.createContext("/api/mods/scan", this::handleModsScan);
+            server.createContext("/api/mods/tree", this::handleModsTree);
+            server.createContext("/api/mods/forensics/status", this::handleModsForensicsStatus);
+            server.createContext("/api/mods/forensics/find-class", this::handleModsForensicsFindClass);
+            server.createContext("/api/mods/forensics/find-package", this::handleModsForensicsFindPackage);
+            server.createContext("/api/mods/forensics/scan-corrupt", this::handleModsForensicsScanCorrupt);
+            server.createContext("/api/mods/forensics/config-health", this::handleModsForensicsConfigHealth);
             server.createContext("/api/ops-cache", this::handleOpsCache);
             server.createContext("/api/client-mods/ignores", this::handleClientModIgnores);
             server.createContext("/api/client-mods/ignore", this::handleClientModIgnore);
@@ -172,33 +213,49 @@ public final class DashboardHttpServer {
             serveResource(ex, FAVICON_RESOURCE, "image/png");
             return;
         }
-        if ("/".equals(path) || path.isEmpty()) {
-            serveResource(ex, WEB_PREFIX + "index.html", "text/html; charset=utf-8");
+        if ("/".equals(path) || path.isEmpty() || path.endsWith(".html")) {
+            serveDashboardIndex(ex);
             return;
         }
-        if (path.endsWith(".css")) {
-            String name = path.startsWith("/") ? path.substring(1) : path;
-            serveResource(ex, WEB_PREFIX + name, "text/css; charset=utf-8");
+        String name = path.startsWith("/") ? path.substring(1) : path;
+        if (name.isEmpty() || name.contains("..")) {
+            send(ex, 404, "text/plain", "Not found");
             return;
         }
-        if (path.endsWith(".js")) {
-            String name = path.startsWith("/") ? path.substring(1) : path;
-            serveResource(ex, WEB_PREFIX + name, "application/javascript; charset=utf-8");
-            return;
-        }
-        if (path.endsWith(".html")) {
-            serveResource(ex, WEB_PREFIX + "index.html", "text/html; charset=utf-8");
-            return;
-        }
-        if (path.startsWith("/assets/")) {
-            String name = path.substring(1);
-            serveResource(ex, WEB_PREFIX + name, contentTypeForAsset(name));
-            return;
-        }
-        send(ex, 404, "text/plain", "Not found");
+        serveResource(ex, WEB_PREFIX + name, contentTypeForWebAsset(name));
     }
 
-    private static String contentTypeForAsset(String name) {
+    private void serveDashboardIndex(HttpExchange ex) throws IOException {
+        try (InputStream in = DashboardHttpServer.class.getClassLoader().getResourceAsStream(WEB_PREFIX + "index.html")) {
+            if (in == null) {
+                send(ex, 404, "text/plain", "Not found: " + WEB_PREFIX + "index.html");
+                return;
+            }
+            String html = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            if (!html.contains("data-embedded=\"true\"")) {
+                html = html.replaceFirst(
+                        "<html lang=\"en\" data-theme=\"dark\">",
+                        "<html lang=\"en\" data-theme=\"dark\" data-embedded=\"true\">"
+                );
+            }
+            byte[] bytes = html.getBytes(StandardCharsets.UTF_8);
+            Headers h = ex.getResponseHeaders();
+            DashboardAuthHttp.applySecurityHeaders(h);
+            h.set("Content-Type", "text/html; charset=utf-8");
+            ex.sendResponseHeaders(200, bytes.length);
+            try (OutputStream os = ex.getResponseBody()) {
+                os.write(bytes);
+            }
+        }
+    }
+
+    private static String contentTypeForWebAsset(String name) {
+        if (name.endsWith(".css")) {
+            return "text/css; charset=utf-8";
+        }
+        if (name.endsWith(".js")) {
+            return "application/javascript; charset=utf-8";
+        }
         if (name.endsWith(".png")) {
             return "image/png";
         }
@@ -207,6 +264,12 @@ public final class DashboardHttpServer {
         }
         if (name.endsWith(".ico")) {
             return "image/x-icon";
+        }
+        if (name.endsWith(".json")) {
+            return "application/json; charset=utf-8";
+        }
+        if (name.endsWith(".woff2")) {
+            return "font/woff2";
         }
         return "application/octet-stream";
     }
@@ -352,6 +415,7 @@ public final class DashboardHttpServer {
                 .map(c -> c.getModInfo().getVersion().toString())
                 .orElse("unknown");
         cfg.addProperty("mod_version", version);
+        cfg.addProperty("report_timeout_minutes", WatchtowerConfig.REPORT_TIMEOUT_MINUTES.get());
         if (minecraftServer != null) {
             Path iconPath = minecraftServer.getServerDirectory().resolve("server-icon.png");
             if (Files.isRegularFile(iconPath)) {
@@ -430,8 +494,14 @@ public final class DashboardHttpServer {
                     double msptWarn = Math.max(1.0, Math.min(500.0, json.get("msptWarn").getAsDouble()));
                     text = WatchtowerConfWriter.upsertLine(text, "MSPT_WARN", String.valueOf(msptWarn));
                 }
+                if (json.has("modrinthLookup") && !json.get("modrinthLookup").isJsonNull()) {
+                    boolean modrinthLookup = json.get("modrinthLookup").getAsBoolean();
+                    text = WatchtowerConfWriter.upsertLine(text, "MODRINTH_LOOKUP",
+                            modrinthLookup ? "true" : "false");
+                }
                 if (json.has("lookbackHours") || json.has("incremental")
-                        || json.has("tpsWarn") || json.has("msptWarn")) {
+                        || json.has("tpsWarn") || json.has("msptWarn")
+                        || json.has("modrinthLookup")) {
                     Files.writeString(conf, text, StandardCharsets.UTF_8);
                 }
 
@@ -479,6 +549,7 @@ public final class DashboardHttpServer {
         }
         out.addProperty("lookback_hours", WatchtowerConfWriter.readInt(map, "LOOKBACK_HOURS", config.lookbackHours()));
         out.addProperty("incremental", WatchtowerConfWriter.readBool(map, "INCREMENTAL", config.incremental()));
+        out.addProperty("modrinth_lookup", WatchtowerConfWriter.readBool(map, "MODRINTH_LOOKUP", config.modrinthLookup()));
         String backupDir = map.getOrDefault("BACKUP_DIR", "");
         out.addProperty("backup_dir", backupDir != null ? backupDir : "");
         String backupDirs = map.getOrDefault("BACKUP_DIRS", "");
@@ -487,6 +558,7 @@ public final class DashboardHttpServer {
         out.addProperty("backup_webhook_enabled",
                 config.backupWebhookToken() != null && !config.backupWebhookToken().isBlank());
         out.addProperty("backup_suppress_local_missing", config.backupSuppressLocalMissing());
+        out.addProperty("backup_tracking_enabled", config.backupTrackingEnabled());
         out.addProperty("backup_tracking_mode", BackupExternalConfigService.deriveTrackingMode(config));
         out.addProperty("dashboard_port", WatchtowerConfig.DASHBOARD_PORT.get());
         Path markerPath = ExternalBackupDetector.resolveMarkerPath(
@@ -923,7 +995,7 @@ public final class DashboardHttpServer {
                 lastBackup, backupExternal, localConfigured, externalConfigured, config.backupSuppressLocalMissing());
         meta.addProperty("backup_mode", BackupStatusResolver.modeId(backupResolved.mode()));
         meta.add("backup_nudge", dev.mcstatus.watchtower.core.analyze.DiskNudgeEvaluator.evaluateBackup(
-                lastBackup, backupExternal, config.backupWarnDays()));
+                lastBackup, backupExternal, config.backupWarnDays(), config.backupTrackingEnabled()));
         if (externalConfigured && backupExternal != null) {
             JsonObject extTldr = new JsonObject();
             String status = backupExternal.has("status") ? backupExternal.get("status").getAsString() : "unknown";
@@ -1135,6 +1207,7 @@ public final class DashboardHttpServer {
             String csv = PerformanceInsightEngine.rowsToCsv(rows);
             String filename = "watchtower-performance-" + window + ".csv";
             Headers h = ex.getResponseHeaders();
+            DashboardAuthHttp.applySecurityHeaders(h);
             h.set("Content-Type", "text/csv; charset=utf-8");
             h.set("Content-Disposition", "attachment; filename=\"" + filename + "\"");
             byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
@@ -1205,7 +1278,11 @@ public final class DashboardHttpServer {
             return;
         }
         SupportBundlePackager.BundleResult result =
-                SupportBundlePackager.packageSupportBundle(reportDir, facts, brief);
+                SupportBundlePackager.packageSupportBundle(
+                        reportDir,
+                        facts,
+                        brief,
+                        WatchtowerPaths.opsCachePath(minecraftServer));
         byte[] bytes = Files.readAllBytes(result.zipPath());
         Headers h = ex.getResponseHeaders();
         DashboardAuthHttp.applySecurityHeaders(h);
@@ -1398,6 +1475,20 @@ public final class DashboardHttpServer {
         WatchtowerRuntimeState state = WatchtowerBootstrap.getState();
         JsonObject out = new JsonObject();
         out.addProperty("running", state.isReportRunning());
+        if (state.isReportRunning()) {
+            String stage = state.getReportStage();
+            if (stage != null && !stage.isBlank()) {
+                out.addProperty("stage", stage);
+            }
+            String stageLabel = state.getReportStageLabel();
+            if (stageLabel != null && !stageLabel.isBlank()) {
+                out.addProperty("stage_label", stageLabel);
+            }
+            String stageDetail = state.getReportStageDetail();
+            if (stageDetail != null && !stageDetail.isBlank()) {
+                out.addProperty("stage_detail", stageDetail);
+            }
+        }
         state.getLastReportStarted().ifPresent(t -> out.addProperty("started_at", t.toString()));
         state.getLastReportFinished().ifPresent(t -> out.addProperty("finished_at", t.toString()));
         out.addProperty("success", state.isLastReportSuccess());
@@ -1571,6 +1662,21 @@ public final class DashboardHttpServer {
             WatchtowerMod.LOGGER.warn("Onboarding backup scan failed: {}", e.toString());
             items.addProperty("backups_error", e.getMessage() != null ? e.getMessage() : "failed");
         }
+        try {
+            ReportConfig config = ModReportConfig.forServer(minecraftServer);
+            boolean trackingDisabled = !config.backupTrackingEnabled();
+            boolean backupConfigured = trackingDisabled
+                    || config.hasBackupDirs()
+                    || config.isExternalBackupConfigured();
+            items.addProperty("backup_configured", backupConfigured);
+            items.addProperty("backup_tracking_disabled", trackingDisabled);
+            Path facts = findLatestFacts(WatchtowerPaths.reportDir(minecraftServer));
+            items.addProperty("has_facts_report", facts != null);
+            ReportSchedule schedule = WatchtowerBootstrap.getScheduler().effectiveSchedule();
+            items.addProperty("schedule_summary", schedule.describe());
+        } catch (Exception e) {
+            WatchtowerMod.LOGGER.warn("Onboarding audit enrichment failed: {}", e.toString());
+        }
         out.add("items", items);
         sendJson(ex, 200, out);
     }
@@ -1728,6 +1834,368 @@ public final class DashboardHttpServer {
         sendJson(ex, 200, out);
     }
 
+    private void handleIssueAcks(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        JsonObject acks = StateManager.getAcknowledgedIssues(WatchtowerPaths.statePath(minecraftServer));
+        JsonObject out = new JsonObject();
+        out.add("acknowledged_issues", acks);
+        sendJson(ex, 200, out);
+    }
+
+    private void handleIssueAck(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        JsonObject json = body != null && !body.isBlank()
+                ? GSON.fromJson(body, JsonObject.class) : new JsonObject();
+        String id = json.has("id") && !json.get("id").isJsonNull()
+                ? json.get("id").getAsString() : null;
+        if (id == null || id.isBlank()) {
+            send(ex, 400, "text/plain", "Missing id");
+            return;
+        }
+        boolean reviewed = !json.has("reviewed") || json.get("reviewed").getAsBoolean();
+        Path statePath = WatchtowerPaths.statePath(minecraftServer);
+        if (reviewed) {
+            StateManager.acknowledgeIssue(statePath, id, Instant.now(), "dashboard");
+        } else {
+            StateManager.unacknowledgeIssue(statePath, id);
+        }
+        JsonObject out = new JsonObject();
+        out.addProperty("ok", true);
+        out.add("acknowledged_issues", StateManager.getAcknowledgedIssues(statePath));
+        sendJson(ex, 200, out);
+    }
+
+    private void handleIssueAckAll(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        JsonObject json = body != null && !body.isBlank()
+                ? GSON.fromJson(body, JsonObject.class) : new JsonObject();
+        List<String> ids = new ArrayList<>();
+        if (json.has("ids") && json.get("ids").isJsonArray()) {
+            for (JsonElement el : json.getAsJsonArray("ids")) {
+                if (el != null && el.isJsonPrimitive()) {
+                    String id = el.getAsString();
+                    if (id != null && !id.isBlank()) {
+                        ids.add(id.trim());
+                    }
+                }
+            }
+        }
+        Path statePath = WatchtowerPaths.statePath(minecraftServer);
+        int acknowledged = StateManager.acknowledgeAllIssues(statePath, ids, Instant.now(), "dashboard");
+        JsonObject out = new JsonObject();
+        out.addProperty("ok", true);
+        out.addProperty("acknowledged", acknowledged);
+        out.add("acknowledged_issues", StateManager.getAcknowledgedIssues(statePath));
+        sendJson(ex, 200, out);
+    }
+
+    private void handleIssueSuppressions(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(minecraftServer);
+            IssueSuppressionStore store = IssueSuppressionStore.load(
+                    WatchtowerPaths.statePath(minecraftServer),
+                    config.issueSuppressions(),
+                    config.issueSuppressionRegex());
+            sendJson(ex, 200, store.snapshot());
+        } catch (Exception e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "load failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleIssueSuppress(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        if (body.length() > 4096) {
+            send(ex, 413, "text/plain", "Payload too large");
+            return;
+        }
+        JsonObject json = body != null && !body.isBlank()
+                ? GSON.fromJson(body, JsonObject.class) : new JsonObject();
+        String issueId = json.has("issue_id") && !json.get("issue_id").isJsonNull()
+                ? json.get("issue_id").getAsString() : null;
+        if (issueId == null || issueId.isBlank()) {
+            send(ex, 400, "text/plain", "issue_id required");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(minecraftServer);
+            Path statePath = WatchtowerPaths.statePath(minecraftServer);
+            IssueSuppressionStore store = IssueSuppressionStore.load(
+                    statePath, config.issueSuppressions(), config.issueSuppressionRegex());
+            store.suppress(issueId.trim(), "dashboard");
+            store = IssueSuppressionStore.load(
+                    statePath, config.issueSuppressions(), config.issueSuppressionRegex());
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            out.add("suppressions", store.snapshot());
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "suppress failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleIssueUnsuppress(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        if (body.length() > 4096) {
+            send(ex, 413, "text/plain", "Payload too large");
+            return;
+        }
+        JsonObject json = body != null && !body.isBlank()
+                ? GSON.fromJson(body, JsonObject.class) : new JsonObject();
+        String issueId = json.has("issue_id") && !json.get("issue_id").isJsonNull()
+                ? json.get("issue_id").getAsString() : null;
+        if (issueId == null || issueId.isBlank()) {
+            send(ex, 400, "text/plain", "issue_id required");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(minecraftServer);
+            Path statePath = WatchtowerPaths.statePath(minecraftServer);
+            IssueSuppressionStore store = IssueSuppressionStore.load(
+                    statePath, config.issueSuppressions(), config.issueSuppressionRegex());
+            boolean removed = store.unsuppress(issueId.trim());
+            store = IssueSuppressionStore.load(
+                    statePath, config.issueSuppressions(), config.issueSuppressionRegex());
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            out.addProperty("removed", removed);
+            out.add("suppressions", store.snapshot());
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "unsuppress failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private CrashRuleRegistry loadRulesRegistry() throws IOException {
+        ReportConfig config = ModReportConfig.forServer(minecraftServer);
+        Path serverDir = minecraftServer.getServerDirectory().toAbsolutePath();
+        return CrashRuleRegistry.load(serverDir, config.crashRuleBuiltin(), config.crashRulePacks());
+    }
+
+    private void handleRulesList(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        try {
+            CrashRuleRegistry reg = loadRulesRegistry();
+            JsonObject out = new JsonObject();
+            JsonArray packs = new JsonArray();
+            for (CrashRuleModels.CrashRulePack pack : reg.packs()) {
+                JsonObject p = new JsonObject();
+                p.addProperty("id", pack.id());
+                p.addProperty("name", pack.name());
+                p.addProperty("priority", pack.priority());
+                p.addProperty("builtin", pack.builtin());
+                p.addProperty("source", pack.sourcePath() != null ? pack.sourcePath() : "");
+                JsonArray rules = new JsonArray();
+                for (CrashRuleModels.CrashRule rule : pack.rules()) {
+                    JsonObject r = new JsonObject();
+                    r.addProperty("id", rule.id());
+                    r.addProperty("priority", rule.priority());
+                    if (rule.description() != null) {
+                        r.addProperty("description", rule.description());
+                    }
+                    rules.add(r);
+                }
+                p.add("rules", rules);
+                packs.add(p);
+            }
+            out.add("packs", packs);
+            JsonArray warnings = new JsonArray();
+            for (String w : reg.warnings()) {
+                warnings.add(w);
+            }
+            out.add("warnings", warnings);
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "rules load failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleRulesGet(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String id = parseQueryParam(ex.getRequestURI().getQuery(), "id");
+        if (id == null || id.isBlank()) {
+            send(ex, 400, "text/plain", "id required (rule id or packId/ruleId)");
+            return;
+        }
+        try {
+            CrashRuleRegistry reg = loadRulesRegistry();
+            String packId = null;
+            String ruleId = id.trim();
+            if (ruleId.contains("/")) {
+                int slash = ruleId.indexOf('/');
+                packId = ruleId.substring(0, slash);
+                ruleId = ruleId.substring(slash + 1);
+            }
+            CrashRuleRegistry.ResolvedRule rr = reg.findRule(packId, ruleId);
+            if (rr == null) {
+                send(ex, 404, "text/plain", "Rule not found");
+                return;
+            }
+            JsonObject out = new JsonObject();
+            out.addProperty("pack_id", rr.pack().id());
+            out.addProperty("pack_name", rr.pack().name());
+            out.addProperty("builtin", rr.pack().builtin());
+            out.addProperty("rule_id", rr.rule().id());
+            out.addProperty("priority", rr.rule().priority());
+            if (rr.rule().description() != null) {
+                out.addProperty("description", rr.rule().description());
+            }
+            if (rr.rule().emit() != null) {
+                JsonObject emit = new JsonObject();
+                CrashRuleModels.EmitSpec e = rr.rule().emit();
+                if (e.failureKind() != null) {
+                    emit.addProperty("failure_kind", e.failureKind());
+                }
+                if (e.primaryModId() != null) {
+                    emit.addProperty("primary_mod_id", e.primaryModId());
+                }
+                if (e.confidence() != null) {
+                    emit.addProperty("confidence", e.confidence());
+                }
+                if (e.issueId() != null) {
+                    emit.addProperty("issue_id", e.issueId());
+                }
+                emit.addProperty("override", e.override());
+                JsonArray hints = new JsonArray();
+                for (String h : e.fixHints()) {
+                    hints.add(h);
+                }
+                emit.add("fix_hints", hints);
+                out.add("emit", emit);
+            }
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "rules get failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleRulesValidate(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        if (body.length() > 256_000) {
+            send(ex, 413, "text/plain", "Payload too large");
+            return;
+        }
+        String yaml = body;
+        try {
+            JsonObject json = GSON.fromJson(body, JsonObject.class);
+            if (json != null && json.has("yaml") && !json.get("yaml").isJsonNull()) {
+                yaml = json.get("yaml").getAsString();
+            }
+        } catch (Exception ignored) {
+            // treat as raw YAML
+        }
+        CrashRuleValidator.Result result = CrashRuleSchema.validate(yaml != null ? yaml : "");
+        JsonObject out = new JsonObject();
+        out.addProperty("valid", result.valid());
+        JsonArray errors = new JsonArray();
+        for (String e : result.errors()) {
+            errors.add(e);
+        }
+        out.add("errors", errors);
+        sendJson(ex, 200, out);
+    }
+
     private void handleModsScan(HttpExchange ex) throws IOException {
         if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
             send(ex, 405, "text/plain", "Method not allowed");
@@ -1763,6 +2231,373 @@ public final class DashboardHttpServer {
         }
     }
 
+    private void handleModsForensicsStatus(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(minecraftServer);
+            JsonObject lastScan = null;
+            Path factsPath = findLatestFacts(WatchtowerPaths.reportDir(minecraftServer));
+            if (factsPath != null && Files.isRegularFile(factsPath)) {
+                JsonObject facts = GSON.fromJson(Files.readString(factsPath, StandardCharsets.UTF_8), JsonObject.class);
+                if (facts != null && facts.has("optional") && facts.get("optional").isJsonObject()) {
+                    JsonObject optional = facts.getAsJsonObject("optional");
+                    if (optional.has("mod_forensics") && optional.get("mod_forensics").isJsonObject()) {
+                        JsonObject mf = optional.getAsJsonObject("mod_forensics");
+                        lastScan = new JsonObject();
+                        if (mf.has("class_index_built_at")) {
+                            lastScan.addProperty("at", mf.get("class_index_built_at").getAsString());
+                        }
+                        int corrupt = 0;
+                        if (mf.has("corrupt_jars") && mf.get("corrupt_jars").isJsonArray()) {
+                            corrupt = mf.getAsJsonArray("corrupt_jars").size();
+                        }
+                        lastScan.addProperty("corrupt_jars", corrupt);
+                        int configIssues = 0;
+                        if (optional.has("config_health") && optional.get("config_health").isJsonArray()) {
+                            configIssues = optional.getAsJsonArray("config_health").size();
+                        }
+                        lastScan.addProperty("config_issues", configIssues);
+                        boolean stderrMerged = mf.has("stderr_sources")
+                                && mf.get("stderr_sources").isJsonArray()
+                                && mf.getAsJsonArray("stderr_sources").size() > 0;
+                        lastScan.addProperty("stderr_merged", stderrMerged);
+                    }
+                }
+            }
+            String indexState = ModForensicsCollector.STATE_IDLE;
+            String builtAt = null;
+            int jarCount = 0;
+            int entryCount = 0;
+            boolean stale = false;
+            if (config.modForensicsScan()) {
+                Path modsDir = minecraftServer.getServerDirectory().resolve("mods");
+                Path cache = JarClassIndex.defaultCachePath(
+                        minecraftServer.getServerDirectory().toAbsolutePath().toString());
+                if (cache != null && Files.isRegularFile(cache)) {
+                    try {
+                        JarClassIndex index = JarClassIndex.loadCached(modsDir, cache);
+                        if (index != null) {
+                            indexState = ModForensicsCollector.STATE_READY;
+                            builtAt = index.stats().builtAt();
+                            jarCount = index.stats().jarCount();
+                            entryCount = index.stats().entryCount();
+                            stale = false;
+                        } else {
+                            // Cache present but fingerprint mismatch — report stale without jar walk.
+                            indexState = ModForensicsCollector.STATE_READY;
+                            JarClassIndex.BuildStats peek = JarClassIndex.peekCacheStats(cache);
+                            if (peek != null) {
+                                builtAt = peek.builtAt();
+                                jarCount = peek.jarCount();
+                                entryCount = peek.entryCount();
+                            }
+                            stale = true;
+                        }
+                    } catch (Exception ignored) {
+                        indexState = ModForensicsCollector.STATE_ERROR;
+                    }
+                }
+            } else {
+                indexState = ModForensicsCollector.STATE_SKIPPED;
+            }
+            JsonObject status = ModForensicsCollector.status(
+                    config, indexState, builtAt, jarCount, entryCount, stale, lastScan);
+            sendJson(ex, 200, status);
+        } catch (Exception e) {
+            WatchtowerMod.LOGGER.warn("Forensics status failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "status failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleModsForensicsFindClass(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        if (!allowForensicsFind(ex)) {
+            send(ex, 429, "text/plain", "Rate limit: 10 find requests per minute");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(minecraftServer);
+            if (!config.modForensicsScan()) {
+                JsonObject skipped = new JsonObject();
+                skipped.addProperty("state", ModForensicsCollector.STATE_SKIPPED);
+                skipped.addProperty("error", "MOD_FORENSICS_SCAN is disabled");
+                skipped.add("matches", new JsonArray());
+                sendJson(ex, 503, skipped);
+                return;
+            }
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject json = body.isBlank() ? new JsonObject() : GSON.fromJson(body, JsonObject.class);
+            String className = json != null && json.has("class") ? json.get("class").getAsString() : null;
+            boolean includeNested = json == null || !json.has("include_nested")
+                    || json.get("include_nested").getAsBoolean();
+            if (className == null || className.isBlank()) {
+                send(ex, 400, "text/plain", "class required");
+                return;
+            }
+            Path serverDir = minecraftServer.getServerDirectory().toAbsolutePath();
+            Path modsDir = serverDir.resolve("mods");
+            Path cache = JarClassIndex.defaultCachePath(serverDir.toString());
+            JsonArray mods = ModJarMetadataReader.listModsFromDir(serverDir.toString());
+            JsonObject result = ForensicsFindService.findClass(
+                    config, modsDir, mods, cache, className, includeNested);
+            sendJson(ex, 200, result);
+        } catch (Exception e) {
+            WatchtowerMod.LOGGER.warn("Forensics find-class failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "find-class failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleModsForensicsFindPackage(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        if (!allowForensicsFind(ex)) {
+            send(ex, 429, "text/plain", "Rate limit: 10 find requests per minute");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(minecraftServer);
+            if (!config.modForensicsScan()) {
+                JsonObject skipped = new JsonObject();
+                skipped.addProperty("state", ModForensicsCollector.STATE_SKIPPED);
+                skipped.addProperty("error", "MOD_FORENSICS_SCAN is disabled");
+                skipped.add("matches", new JsonArray());
+                sendJson(ex, 503, skipped);
+                return;
+            }
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject json = body.isBlank() ? new JsonObject() : GSON.fromJson(body, JsonObject.class);
+            String pkg = json != null && json.has("package") ? json.get("package").getAsString() : null;
+            String mode = json != null && json.has("mode") ? json.get("mode").getAsString() : "prefix";
+            if (pkg == null || pkg.isBlank()) {
+                send(ex, 400, "text/plain", "package required");
+                return;
+            }
+            Path serverDir = minecraftServer.getServerDirectory().toAbsolutePath();
+            Path modsDir = serverDir.resolve("mods");
+            Path cache = JarClassIndex.defaultCachePath(serverDir.toString());
+            JsonArray mods = ModJarMetadataReader.listModsFromDir(serverDir.toString());
+            JsonObject result = ForensicsFindService.findPackage(
+                    config, modsDir, mods, cache, pkg, mode);
+            sendJson(ex, 200, result);
+        } catch (Exception e) {
+            WatchtowerMod.LOGGER.warn("Forensics find-package failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "find-package failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleModsForensicsScanCorrupt(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(minecraftServer);
+            if (!config.modForensicsScan()) {
+                JsonObject skipped = new JsonObject();
+                skipped.addProperty("state", ModForensicsCollector.STATE_SKIPPED);
+                skipped.addProperty("error", "MOD_FORENSICS_SCAN is disabled");
+                sendJson(ex, 503, skipped);
+                return;
+            }
+            if (!config.forensicsCorruptJarWalk()) {
+                JsonObject skipped = new JsonObject();
+                skipped.addProperty("state", ModForensicsCollector.STATE_SKIPPED);
+                skipped.addProperty("error", "FORENSICS_CORRUPT_JAR_WALK is disabled");
+                skipped.add("corrupt", new JsonArray());
+                sendJson(ex, 400, skipped);
+                return;
+            }
+            Path modsDir = minecraftServer.getServerDirectory().resolve("mods");
+            var hits = CorruptedJarScanner.scanModsDir(modsDir);
+            JsonObject out = new JsonObject();
+            out.addProperty("scanned", hits.size());
+            out.add("corrupt", CorruptedJarScanner.toJson(hits));
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            WatchtowerMod.LOGGER.warn("Forensics scan-corrupt failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "scan-corrupt failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleModsForensicsConfigHealth(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(minecraftServer);
+            if (!config.modForensicsScan()) {
+                JsonObject skipped = new JsonObject();
+                skipped.addProperty("state", ModForensicsCollector.STATE_SKIPPED);
+                skipped.add("issues", new JsonArray());
+                sendJson(ex, 503, skipped);
+                return;
+            }
+            Path factsPath = findLatestFacts(WatchtowerPaths.reportDir(minecraftServer));
+            if (factsPath != null && Files.isRegularFile(factsPath)) {
+                JsonObject facts = GSON.fromJson(Files.readString(factsPath, StandardCharsets.UTF_8), JsonObject.class);
+                if (facts != null && facts.has("optional") && facts.get("optional").isJsonObject()) {
+                    JsonObject optional = facts.getAsJsonObject("optional");
+                    if (optional.has("config_health") && optional.get("config_health").isJsonArray()) {
+                        JsonObject out = new JsonObject();
+                        out.addProperty("scanned_at", Instant.now().toString());
+                        out.add("issues", optional.getAsJsonArray("config_health").deepCopy());
+                        sendJson(ex, 200, out);
+                        return;
+                    }
+                }
+            }
+            Path serverDir = minecraftServer.getServerDirectory().toAbsolutePath();
+            var issues = ConfigHealthScanner.scan(serverDir);
+            JsonObject out = new JsonObject();
+            out.addProperty("scanned_at", Instant.now().toString());
+            out.add("issues", ConfigHealthScanner.toJson(issues));
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            WatchtowerMod.LOGGER.warn("Forensics config-health failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "config-health failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private boolean allowForensicsFind(HttpExchange ex) {
+        String ip = "unknown";
+        try {
+            if (ex.getRemoteAddress() != null && ex.getRemoteAddress().getAddress() != null) {
+                ip = ex.getRemoteAddress().getAddress().getHostAddress();
+            }
+        } catch (Exception ignored) {
+            // keep unknown
+        }
+        long now = System.currentTimeMillis();
+        List<Long> times = forensicsFindRate.computeIfAbsent(ip, k -> new ArrayList<>());
+        synchronized (times) {
+            times.removeIf(t -> now - t > FORENSICS_FIND_WINDOW_MS);
+            if (times.size() >= FORENSICS_FIND_RATE_LIMIT) {
+                return false;
+            }
+            times.add(now);
+            return true;
+        }
+    }
+
+    private void handleModsTree(HttpExchange ex) throws IOException {
+
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String modId = parseQueryParam(ex.getRequestURI().getQuery(), "mod_id");
+        if (modId == null || modId.isBlank()) {
+            send(ex, 400, "text/plain", "mod_id required");
+            return;
+        }
+        Path factsPath = findLatestFacts(WatchtowerPaths.reportDir(minecraftServer));
+        if (factsPath == null || !Files.isRegularFile(factsPath)) {
+            send(ex, 404, "text/plain", "No report yet");
+            return;
+        }
+        try {
+            JsonObject facts = GSON.fromJson(Files.readString(factsPath, StandardCharsets.UTF_8), JsonObject.class);
+            JsonObject optional = facts.has("optional") && facts.get("optional").isJsonObject()
+                    ? facts.getAsJsonObject("optional") : null;
+            if (optional == null || !optional.has("mods") || !optional.get("mods").isJsonArray()) {
+                send(ex, 404, "text/plain", "No mod manifest in latest report");
+                return;
+            }
+            JsonArray mods = optional.getAsJsonArray("mods");
+            JsonObject match = null;
+            for (JsonElement el : mods) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject mod = el.getAsJsonObject();
+                if (modId.equals(mod.has("id") && !mod.get("id").isJsonNull()
+                        ? mod.get("id").getAsString() : null)) {
+                    match = mod;
+                    break;
+                }
+            }
+            if (match == null) {
+                send(ex, 404, "text/plain", "Mod not found in report");
+                return;
+            }
+            ModDependencyGraph graph = ModDependencyGraph.fromMods(mods);
+            JsonObject out = new JsonObject();
+            out.addProperty("mod_id", modId);
+            if (match.has("side_score") && !match.get("side_score").isJsonNull()) {
+                out.addProperty("side_score", match.get("side_score").getAsString());
+            }
+            out.add("dependents", graph.toTree(modId, ModDependencyGraph.Direction.DEPENDENTS, 6));
+            out.add("dependencies", graph.toTree(modId, ModDependencyGraph.Direction.DEPENDENCIES, 6));
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            WatchtowerMod.LOGGER.warn("Mods tree failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "tree failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
     private static int parseHoursQuery(String q, int defaultHours) {
         if (q == null) {
             return defaultHours;
@@ -1790,19 +2625,33 @@ public final class DashboardHttpServer {
             send(ex, 503, "text/plain", "Server not ready");
             return;
         }
+        WatchtowerRuntimeState state = WatchtowerBootstrap.getState();
+        // Mark running synchronously so /api/reports/status never races the server tick.
+        if (!state.tryBeginReport()) {
+            JsonObject busy = new JsonObject();
+            busy.addProperty("status", "already_running");
+            busy.addProperty("running", true);
+            sendJson(ex, 409, busy);
+            return;
+        }
+        state.setReportStage("window", "Computing time window");
         String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         ReportRunOptions opts = ReportRunOptions.empty();
         if (body != null && !body.isBlank()) {
             JsonObject json = GSON.fromJson(body, JsonObject.class);
-            Integer lookback = json.has("lookbackHours") && !json.get("lookbackHours").isJsonNull()
-                    ? json.get("lookbackHours").getAsInt() : null;
+            Integer lookback = null;
+            if (json.has("lookbackHours") && !json.get("lookbackHours").isJsonNull()) {
+                lookback = json.get("lookbackHours").getAsInt();
+            } else if (json.has("lookback_hours") && !json.get("lookback_hours").isJsonNull()) {
+                lookback = json.get("lookback_hours").getAsInt();
+            }
             String since = json.has("since") && !json.get("since").isJsonNull()
                     ? json.get("since").getAsString() : null;
             Boolean incremental = json.has("incremental") ? json.get("incremental").getAsBoolean() : null;
             opts = new ReportRunOptions(lookback, since, incremental);
         }
         ReportRunOptions finalOpts = opts;
-        minecraftServer.execute(() -> ReportRunner.runAsync(
+        minecraftServer.execute(() -> ReportRunner.continueAfterBegin(
                 minecraftServer,
                 WatchtowerBootstrap.getState(),
                 msg -> WatchtowerMod.LOGGER.info("[Watchtower] {}", msg),
@@ -1810,6 +2659,9 @@ public final class DashboardHttpServer {
         ));
         JsonObject ok = new JsonObject();
         ok.addProperty("status", "started");
+        ok.addProperty("running", true);
+        ok.addProperty("stage", "window");
+        ok.addProperty("stage_label", "Computing time window");
         sendJson(ex, 202, ok);
     }
 
@@ -1867,6 +2719,407 @@ public final class DashboardHttpServer {
         out.addProperty("ok", true);
         out.add("acknowledged_crashes", StateManager.getAcknowledgedCrashes(statePath));
         sendJson(ex, 200, out);
+    }
+
+    private void handleCrashesGrouped(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        sendJson(ex, 200, buildGroupedCrashesResponse());
+    }
+
+    private void handleCrashAckAll(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        JsonObject json = body != null && !body.isBlank()
+                ? GSON.fromJson(body, JsonObject.class) : new JsonObject();
+        String fingerprint = json.has("fingerprint") && !json.get("fingerprint").isJsonNull()
+                ? json.get("fingerprint").getAsString() : null;
+        String scope = json.has("scope") && !json.get("scope").isJsonNull()
+                ? json.get("scope").getAsString() : "unreviewed";
+
+        Path statePath = WatchtowerPaths.statePath(minecraftServer);
+        JsonObject grouped = buildGroupedCrashesResponse();
+        List<String> toAck = new ArrayList<>();
+        Map<String, Integer> groupMemberCounts = new HashMap<>();
+        if (grouped.has("groups") && grouped.get("groups").isJsonArray()) {
+            for (JsonElement gel : grouped.getAsJsonArray("groups")) {
+                JsonObject group = gel.getAsJsonObject();
+                String fp = group.has("fingerprint") ? group.get("fingerprint").getAsString() : "";
+                if (fingerprint != null && !fingerprint.isBlank() && !fingerprint.equals(fp)) {
+                    continue;
+                }
+                if (fingerprint == null && scope != null && !"unreviewed".equalsIgnoreCase(scope)
+                        && !"all".equalsIgnoreCase(scope)) {
+                    continue;
+                }
+                int memberAcked = 0;
+                if (group.has("members") && group.get("members").isJsonArray()) {
+                    for (JsonElement mel : group.getAsJsonArray("members")) {
+                        JsonObject member = mel.getAsJsonObject();
+                        boolean acknowledged = member.has("acknowledged")
+                                && member.get("acknowledged").getAsBoolean();
+                        if (acknowledged && (fingerprint == null || !"all".equalsIgnoreCase(scope))) {
+                            continue;
+                        }
+                        String file = member.has("file") ? member.get("file").getAsString() : null;
+                        if (file != null && !file.isBlank()) {
+                            toAck.add(file);
+                            memberAcked++;
+                        }
+                    }
+                }
+                if (memberAcked > 0 && fp != null && !fp.isBlank()) {
+                    groupMemberCounts.put(fp, memberAcked);
+                }
+            }
+        }
+
+        Instant now = Instant.now();
+        int acknowledged = StateManager.acknowledgeAllCrashes(statePath, toAck, now, "dashboard");
+        for (Map.Entry<String, Integer> e : groupMemberCounts.entrySet()) {
+            StateManager.recordAcknowledgedGroup(statePath, e.getKey(), now, "dashboard", e.getValue());
+        }
+
+        JsonObject out = buildGroupedCrashesResponse();
+        out.addProperty("ok", true);
+        out.addProperty("acknowledged", acknowledged);
+        out.add("acknowledged_crashes", StateManager.getAcknowledgedCrashes(statePath));
+        sendJson(ex, 200, out);
+    }
+
+    private void handleInboxGet(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        Path statePath = WatchtowerPaths.statePath(minecraftServer);
+        JsonObject dismissals = StateManager.getInboxDismissals(statePath);
+        JsonObject grouped = buildGroupedCrashesResponse();
+        JsonArray items = new JsonArray();
+
+        if (grouped.has("groups") && grouped.get("groups").isJsonArray()) {
+            for (JsonElement gel : grouped.getAsJsonArray("groups")) {
+                JsonObject group = gel.getAsJsonObject();
+                int unreviewed = group.has("unreviewed") ? group.get("unreviewed").getAsInt() : 0;
+                if (unreviewed <= 0) {
+                    continue;
+                }
+                String fp = group.has("fingerprint") ? group.get("fingerprint").getAsString() : "";
+                String id = "crash:" + fp;
+                if (dismissals.has(id)) {
+                    continue;
+                }
+                String label = group.has("label") ? group.get("label").getAsString() : fp;
+                int count = group.has("count") ? group.get("count").getAsInt() : unreviewed;
+                String body = inboxBodyFromGroup(group);
+                String failureKind = group.has("failure_kind") ? group.get("failure_kind").getAsString() : "";
+                String severity = failureKind != null && failureKind.startsWith("watchdog")
+                        ? "critical" : "warning";
+                JsonObject item = new JsonObject();
+                item.addProperty("id", id);
+                item.addProperty("kind", "crash_group");
+                item.addProperty("title", label + " (" + count + "×)");
+                item.addProperty("body", body);
+                item.addProperty("severity", severity);
+                item.addProperty("href", "?tab=crashes&group=" + URLEncoder.encode(fp, StandardCharsets.UTF_8));
+                if (group.has("last_at") && !group.get("last_at").isJsonNull()) {
+                    item.addProperty("created_at", group.get("last_at").getAsString());
+                }
+                JsonObject meta = new JsonObject();
+                meta.addProperty("fingerprint", fp);
+                meta.addProperty("count", count);
+                meta.addProperty("unreviewed", unreviewed);
+                item.add("meta", meta);
+                items.add(item);
+            }
+        }
+
+        if (!dismissals.has("update")) {
+            try {
+                Path conf = WatchtowerPaths.confPath(minecraftServer);
+                Map<String, String> map = WatchtowerConfWriter.readMap(conf);
+                ReportConfig config = ModReportConfig.forServer(minecraftServer);
+                boolean enabled = WatchtowerConfWriter.readBool(map, "UPDATE_CHECK", config.updateCheck());
+                String version = ModList.get().getModContainerById(WatchtowerMod.MOD_ID)
+                        .map(c -> c.getModInfo().getVersion().toString())
+                        .orElse("unknown");
+                JsonObject check = ReleaseVersionChecker.check(version, enabled);
+                if (check.has("update_available") && check.get("update_available").getAsBoolean()) {
+                    String latest = check.has("latest_version")
+                            ? check.get("latest_version").getAsString() : "newer";
+                    JsonObject item = new JsonObject();
+                    item.addProperty("id", "update");
+                    item.addProperty("kind", "update_check");
+                    item.addProperty("title", "Watchtower update available");
+                    item.addProperty("body", "Version " + latest + " is newer than " + version + ".");
+                    item.addProperty("severity", "warning");
+                    String href = check.has("modrinth_url")
+                            ? check.get("modrinth_url").getAsString()
+                            : "?tab=settings";
+                    item.addProperty("href", href);
+                    if (check.has("published_at") && !check.get("published_at").isJsonNull()) {
+                        item.addProperty("created_at", check.get("published_at").getAsString());
+                    }
+                    JsonObject meta = new JsonObject();
+                    meta.addProperty("current", version);
+                    meta.addProperty("latest_version", latest);
+                    item.add("meta", meta);
+                    items.add(item);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        // Modrinth compatible-update nudges from latest report (link-out only)
+        if (items.size() < 20) {
+            try {
+                Path factsPath = findLatestFacts(WatchtowerPaths.reportDir(minecraftServer));
+                if (factsPath != null) {
+                    JsonObject facts = GSON.fromJson(Files.readString(factsPath), JsonObject.class);
+                    JsonObject optional = facts.has("optional") && facts.get("optional").isJsonObject()
+                            ? facts.getAsJsonObject("optional") : null;
+                    if (optional != null && optional.has("modrinth_updates")
+                            && optional.get("modrinth_updates").isJsonArray()) {
+                        int added = 0;
+                        for (JsonElement el : optional.getAsJsonArray("modrinth_updates")) {
+                            if (added >= 5 || !el.isJsonObject()) {
+                                break;
+                            }
+                            JsonObject upd = el.getAsJsonObject();
+                            String modId = upd.has("mod_id") ? upd.get("mod_id").getAsString() : null;
+                            if (modId == null || modId.isBlank()) {
+                                continue;
+                            }
+                            String id = "mod_update:" + modId;
+                            if (dismissals.has(id)) {
+                                continue;
+                            }
+                            String titleName = upd.has("title") ? upd.get("title").getAsString() : modId;
+                            String latest = upd.has("latest_compatible")
+                                    ? upd.get("latest_compatible").getAsString() : null;
+                            JsonObject item = new JsonObject();
+                            item.addProperty("id", id);
+                            item.addProperty("kind", "mod_update");
+                            item.addProperty("title", titleName + " update available");
+                            item.addProperty("body", latest != null
+                                    ? ("NeoForge-compatible build " + latest + " is newer than the installed jar.")
+                                    : "A newer loader-compatible build is on Modrinth.");
+                            item.addProperty("severity", "info");
+                            String href = upd.has("modrinth_compatible_url")
+                                    ? upd.get("modrinth_compatible_url").getAsString()
+                                    : ("?tab=mods&mod=" + URLEncoder.encode(modId, StandardCharsets.UTF_8));
+                            item.addProperty("href", href);
+                            JsonObject meta = new JsonObject();
+                            meta.addProperty("mod_id", modId);
+                            if (latest != null) {
+                                meta.addProperty("latest_compatible", latest);
+                            }
+                            if (upd.has("related_pair") && !upd.get("related_pair").isJsonNull()) {
+                                meta.addProperty("related_pair", upd.get("related_pair").getAsString());
+                            }
+                            item.add("meta", meta);
+                            items.add(item);
+                            added++;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        JsonObject out = new JsonObject();
+        out.add("items", items);
+        sendJson(ex, 200, out);
+    }
+
+    private void handleInboxDismiss(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        JsonObject json = body != null && !body.isBlank()
+                ? GSON.fromJson(body, JsonObject.class) : new JsonObject();
+        String id = json.has("id") && !json.get("id").isJsonNull()
+                ? json.get("id").getAsString() : null;
+        if (id == null || id.isBlank()) {
+            send(ex, 400, "text/plain", "Missing id");
+            return;
+        }
+        StateManager.dismissInboxItem(
+                WatchtowerPaths.statePath(minecraftServer), id, Instant.now(), "dashboard");
+        JsonObject out = new JsonObject();
+        out.addProperty("ok", true);
+        sendJson(ex, 200, out);
+    }
+
+    private JsonObject buildGroupedCrashesResponse() throws IOException {
+        Path statePath = WatchtowerPaths.statePath(minecraftServer);
+        JsonObject acks = StateManager.getAcknowledgedCrashes(statePath);
+
+        String scannedAt = null;
+        JsonArray entries = new JsonArray();
+        try {
+            JsonObject opsCache = OpsCacheReader.load(WatchtowerPaths.opsCachePath(minecraftServer));
+            if (opsCache.has(OpsCacheSchema.CRASHES)) {
+                JsonObject crashes = opsCache.getAsJsonObject(OpsCacheSchema.CRASHES);
+                if (crashes.has(OpsCacheSchema.CRASHES_SCANNED_AT)
+                        && !crashes.get(OpsCacheSchema.CRASHES_SCANNED_AT).isJsonNull()) {
+                    scannedAt = crashes.get(OpsCacheSchema.CRASHES_SCANNED_AT).getAsString();
+                }
+                if (crashes.has(OpsCacheSchema.CRASHES_ENTRIES)
+                        && crashes.get(OpsCacheSchema.CRASHES_ENTRIES).isJsonArray()) {
+                    entries = crashes.getAsJsonArray(OpsCacheSchema.CRASHES_ENTRIES);
+                }
+            }
+        } catch (IOException ignored) {
+        }
+
+        JsonArray summaries = new JsonArray();
+        try {
+            Path factsPath = findLatestFacts(WatchtowerPaths.reportDir(minecraftServer));
+            if (factsPath != null) {
+                JsonObject facts = GSON.fromJson(Files.readString(factsPath), JsonObject.class);
+                if (facts.has("optional") && facts.getAsJsonObject("optional").has("crash_summaries")
+                        && facts.getAsJsonObject("optional").get("crash_summaries").isJsonArray()) {
+                    summaries = facts.getAsJsonObject("optional").getAsJsonArray("crash_summaries");
+                }
+            }
+        } catch (IOException ignored) {
+        }
+
+        JsonArray merged = mergeCrashRows(summaries, entries);
+        JsonObject grouped = CrashFingerprintGrouper.group(merged, acks);
+        JsonObject out = grouped != null ? grouped.deepCopy() : new JsonObject();
+        if (scannedAt != null) {
+            out.addProperty("scanned_at", scannedAt);
+        }
+        if (!out.has("count") && out.has("groups") && out.get("groups").isJsonArray()) {
+            int count = 0;
+            int unreviewed = 0;
+            for (JsonElement gel : out.getAsJsonArray("groups")) {
+                JsonObject g = gel.getAsJsonObject();
+                count += g.has("count") ? g.get("count").getAsInt() : 0;
+                unreviewed += g.has("unreviewed") ? g.get("unreviewed").getAsInt() : 0;
+            }
+            out.addProperty("count", count);
+            if (!out.has("unreviewed")) {
+                out.addProperty("unreviewed", unreviewed);
+            }
+        }
+        return out;
+    }
+
+    private static JsonArray mergeCrashRows(JsonArray summaries, JsonArray entries) {
+        Map<String, JsonObject> entryByBare = new HashMap<>();
+        if (entries != null) {
+            for (JsonElement el : entries) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject row = el.getAsJsonObject();
+                String file = row.has("file") ? row.get("file").getAsString() : "";
+                if (!file.isBlank()) {
+                    entryByBare.put(bareCrashFile(file), row);
+                }
+            }
+        }
+
+        JsonArray out = new JsonArray();
+        if (summaries != null && summaries.size() > 0) {
+            for (JsonElement el : summaries) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject row = el.getAsJsonObject().deepCopy();
+                String file = row.has("file") ? row.get("file").getAsString() : "";
+                JsonObject entry = entryByBare.get(bareCrashFile(file));
+                if (entry != null) {
+                    if (entry.has("mtime") && !row.has("mtime")) {
+                        row.add("mtime", entry.get("mtime"));
+                    }
+                    if (entry.has("size") && !row.has("size")) {
+                        row.add("size", entry.get("size"));
+                    }
+                    if (entry.has("display_label") && !row.has("display_label")) {
+                        row.add("display_label", entry.get("display_label"));
+                    }
+                }
+                out.add(row);
+            }
+            return out;
+        }
+
+        if (entries != null) {
+            for (JsonElement el : entries) {
+                if (el.isJsonObject()) {
+                    out.add(el.getAsJsonObject().deepCopy());
+                }
+            }
+        }
+        return out;
+    }
+
+    private static String bareCrashFile(String crashFile) {
+        if (crashFile == null) {
+            return "";
+        }
+        if (crashFile.startsWith("crash-reports/")) {
+            return crashFile.substring("crash-reports/".length());
+        }
+        return crashFile;
+    }
+
+    private static String inboxBodyFromGroup(JsonObject group) {
+        if (group.has("members") && group.get("members").isJsonArray()
+                && group.getAsJsonArray("members").size() > 0) {
+            JsonObject member = group.getAsJsonArray("members").get(0).getAsJsonObject();
+            for (String key : List.of("plain_english", "display_label", "summary")) {
+                if (member.has(key) && !member.get(key).isJsonNull()) {
+                    String v = member.get(key).getAsString();
+                    if (v != null && !v.isBlank()) {
+                        return v.length() > 200 ? v.substring(0, 197) + "…" : v;
+                    }
+                }
+            }
+        }
+        if (group.has("label") && !group.get("label").isJsonNull()) {
+            return group.get("label").getAsString();
+        }
+        return "Unreviewed crash group";
     }
 
     private void handleClientModIgnores(HttpExchange ex) throws IOException {
@@ -2503,6 +3756,143 @@ public final class DashboardHttpServer {
     }
 
     private static final int MAX_CRASH_REPORT_BYTES = 512 * 1024;
+    private static final int MAX_LOG_BYTES = 1024 * 1024;
+    private static final int DEFAULT_LOG_TAIL = 2000;
+    private static final int MAX_LOG_TAIL = 20000;
+
+    private void handleLogsList(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        Path logsDir = minecraftServer.getServerDirectory().resolve("logs");
+        JsonArray files = new JsonArray();
+        if (Files.isDirectory(logsDir)) {
+            List<JsonObject> rows = new ArrayList<>();
+            try (Stream<Path> stream = Files.list(logsDir)) {
+                stream.filter(Files::isRegularFile)
+                        .filter(p -> {
+                            String name = p.getFileName().toString();
+                            return "latest.log".equals(name)
+                                    || "debug.log".equals(name)
+                                    || name.endsWith(".log.gz");
+                        })
+                        .forEach(p -> {
+                            try {
+                                String name = p.getFileName().toString();
+                                JsonObject row = new JsonObject();
+                                row.addProperty("name", name);
+                                row.addProperty("size", Files.size(p));
+                                row.addProperty("mtime", Files.getLastModifiedTime(p).toMillis() / 1000L);
+                                row.addProperty("gz", name.endsWith(".gz"));
+                                rows.add(row);
+                            } catch (IOException ignored) {
+                            }
+                        });
+            }
+            rows.sort(Comparator.comparingLong((JsonObject o) -> o.get("mtime").getAsLong()).reversed());
+            for (JsonObject row : rows) {
+                files.add(row);
+            }
+        }
+        JsonObject out = new JsonObject();
+        out.add("files", files);
+        sendJson(ex, 200, out);
+    }
+
+    private void handleLogsContent(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String file = null;
+        int tail = DEFAULT_LOG_TAIL;
+        String q = ex.getRequestURI().getQuery();
+        if (q != null) {
+            for (String part : q.split("&")) {
+                if (part.startsWith("file=")) {
+                    file = URLDecoder.decode(part.substring(5), StandardCharsets.UTF_8);
+                } else if (part.startsWith("tail=")) {
+                    try {
+                        tail = Integer.parseInt(part.substring(5));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+        }
+        if (file == null || file.isBlank()) {
+            send(ex, 400, "text/plain", "Missing file parameter");
+            return;
+        }
+        if (file.contains("..") || file.contains("/") || file.contains("\\")) {
+            send(ex, 400, "text/plain", "Invalid file");
+            return;
+        }
+        if (!(file.endsWith(".log") || file.endsWith(".log.gz"))) {
+            send(ex, 400, "text/plain", "Invalid file type");
+            return;
+        }
+        final int tailLines = Math.max(1, Math.min(MAX_LOG_TAIL, tail));
+        Path logPath = minecraftServer.getServerDirectory().resolve("logs").resolve(file);
+        if (!Files.isRegularFile(logPath)) {
+            send(ex, 404, "text/plain", "Log file not found");
+            return;
+        }
+        long size = Files.size(logPath);
+        // Keep a ring of the last `tailLines` lines while scanning (works for gzip too).
+        String[] ring = new String[tailLines];
+        final int[] writtenHolder = new int[]{0};
+        GzipLineReader.forEachLine(logPath, (lineNo, line) -> {
+            ring[writtenHolder[0] % tailLines] = line;
+            writtenHolder[0]++;
+        });
+        int written = writtenHolder[0];
+        int keep = Math.min(written, tailLines);
+        int start = written > tailLines ? written % tailLines : 0;
+        StringBuilder sb = new StringBuilder();
+        long outBytes = 0;
+        boolean truncatedByBytes = false;
+        int emitted = 0;
+        for (int i = 0; i < keep; i++) {
+            String line = written <= tailLines ? ring[i] : ring[(start + i) % tailLines];
+            if (line == null) {
+                continue;
+            }
+            long add = line.length() + (sb.length() > 0 ? 1L : 0L);
+            if (outBytes + add > MAX_LOG_BYTES) {
+                truncatedByBytes = true;
+                break;
+            }
+            if (sb.length() > 0) {
+                sb.append('\n');
+            }
+            sb.append(line);
+            outBytes += add;
+            emitted++;
+        }
+        boolean truncated = written > keep || truncatedByBytes;
+        JsonObject out = new JsonObject();
+        out.addProperty("file", file);
+        out.addProperty("content", sb.toString());
+        out.addProperty("truncated", truncated);
+        out.addProperty("size", size);
+        out.addProperty("lines", emitted);
+        sendJson(ex, 200, out);
+    }
 
     private void handleCrashReport(HttpExchange ex) throws IOException {
         if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
