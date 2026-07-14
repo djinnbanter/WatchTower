@@ -1,0 +1,57 @@
+/* Health grade ring */
+
+.ui-health-grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ui-sp-6);
+}
+
+.ui-health-grade__ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ui-health-grade__ring svg {
+  display: block;
+  transform: rotate(-90deg);
+}
+
+.ui-health-grade__track {
+  fill: none;
+  stroke: var(--ui-line);
+  stroke-width: 6;
+}
+
+.ui-health-grade__arc {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--ui-dur-5) var(--ui-ease-out),
+              stroke var(--ui-dur-3) var(--ui-ease-out);
+}
+
+.ui-health-grade__arc--A { stroke: var(--ui-ok); }
+.ui-health-grade__arc--B { stroke: var(--ui-ok); }
+.ui-health-grade__arc--C { stroke: var(--ui-warn); }
+.ui-health-grade__arc--D { stroke: var(--ui-warn); }
+.ui-health-grade__arc--F { stroke: var(--ui-danger); }
+
+.ui-health-grade__letter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ui-font-mono);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-text-hi);
+}
+
+.ui-health-grade__label {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-mid);
+  text-align: center;
+}

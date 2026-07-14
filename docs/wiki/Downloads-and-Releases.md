@@ -8,8 +8,8 @@ Watchtower ships **two files** per version: the mod (for your server) and a reco
 
 | File | Where to put it |
 |------|-----------------|
-| `watchtower-neoforge-1.0.0+mc1.21.jar` | Server **`mods/`** folder — **required** |
-| `watchtower-cli-1.0.0.jar` | Same **`mods/`** folder — **recommended** (not loaded as a mod; used with `java -jar` over SSH) |
+| `watchtower-neoforge-1.1.0+mc1.21.jar` | Server **`mods/`** folder — **required** |
+| `watchtower-cli-1.1.0.jar` | Same **`mods/`** folder — **recommended** (not loaded as a mod; used with `java -jar` over SSH) |
 
 ---
 
@@ -24,14 +24,14 @@ JARs are not stored in the git repo — download from releases or build from sou
 
 ---
 
-## Current version (1.0.0)
+## Current version (1.1.0)
 
 | File | Purpose |
 |------|---------|
-| `watchtower-neoforge-1.0.0+mc1.21.jar` | Dashboard, reports, live metrics — Minecraft **1.21.x** |
-| `watchtower-cli-1.0.0.jar` | Recovery zip when server won't boot |
+| `watchtower-neoforge-1.1.0+mc1.21.jar` | Dashboard, reports, live metrics — Minecraft **1.21.x** |
+| `watchtower-cli-1.1.0.jar` | Recovery zip when server won't boot |
 
-**Local build:** `releases/1.0.0/` and `releases/latest/` after `./gradlew copyReleaseJars`.
+**Local build:** `releases/1.1.0/` and `releases/latest/` after `./gradlew copyReleaseJars`.
 
 Match CLI version to mod version when possible.
 

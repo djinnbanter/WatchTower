@@ -1,0 +1,5 @@
+---- Minecraft Crash Report ----
+// Create 6 missing class (synthetic CA-09)
+
+java.lang.NoClassDefFoundError: com/simibubi/create/foundation/utility/Couple
+Caused by: java.lang.ClassNotFoundException: com.simibubi.create.foundation.utility.Couple

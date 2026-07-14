@@ -11,6 +11,11 @@ export const ModErrorCategory = {
   MOD_LOAD_FAILED: { id: 'mod_load_failed', severityRank: 5 },
   CLIENT_ON_SERVER: { id: 'client_on_server', severityRank: 0 },
   ENGINE_PACKAGING: { id: 'engine_packaging', severityRank: 5 },
+  SERVER_CONFIG_CORRUPT: { id: 'server_config_corrupt', severityRank: 4 },
+  KUBEJS_SCRIPT: { id: 'kubejs_script', severityRank: 3 },
+  CREATE_CONTRAPTION: { id: 'create_contraption', severityRank: 3 },
+  AE2_GRID: { id: 'ae2_grid', severityRank: 3 },
+  MOD_MISSING_MIGRATION: { id: 'mod_missing_migration', severityRank: 3 },
   LOGGER_ERROR: { id: 'logger_error', severityRank: 1 },
 };
 
@@ -55,7 +60,35 @@ function integrationMod(recipeId) {
 function isVanillaLogger(modId) {
   return modId.startsWith('net.minecraft')
     || modId.startsWith('net.neoforged')
-    || modId.startsWith('cpw.mods');
+    || modId.startsWith('net.minecraftforge')
+    || modId.startsWith('cpw.mods')
+    || modId.startsWith('com.mojang');
+}
+
+const VANILLA_LOGGER_TAILS = new Set([
+  'itemstack',
+  'blockattachedentity',
+  'minecraftserver',
+  'serverlevel',
+  'serverplayer',
+  'serverchunkcache',
+  'chunkmap',
+  'playerlist',
+  'dedicatedserver',
+  'commands',
+  'main',
+]);
+
+/** @returns {string|null} mod id or null when vanilla / ignore */
+export function resolveLoggerModId(rawLogger) {
+  if (!rawLogger || !String(rawLogger).trim()) return null;
+  const full = String(rawLogger).trim().toLowerCase();
+  if (isVanillaLogger(full)) return null;
+  let tail = full;
+  if (tail.includes('.')) tail = tail.slice(tail.lastIndexOf('.') + 1);
+  if (VANILLA_LOGGER_TAILS.has(tail)) return null;
+  if (isVanillaLogger(tail)) return null;
+  return tail;
 }
 
 /**
@@ -69,6 +102,18 @@ export function classifyModErrorLine(line) {
   }
   if (line.includes('Attempted to load class net/minecraft/client')) {
     return { category: ModErrorCategory.CLIENT_ON_SERVER, primaryMod: 'unknown', relatedMod: null, recipeId: null };
+  }
+
+  // CA-04: SERVER config load failure (log line form)
+  if (line.includes('ConfigLoadingException') && line.toLowerCase().includes('of type server')) {
+    const serverToml = /of type SERVER for modid\s+(\S+)/i.exec(line);
+    let modId = serverToml ? serverToml[1].replace(/[,.]+$/, '').trim() : namespaceFrom(line);
+    return {
+      category: ModErrorCategory.SERVER_CONFIG_CORRUPT,
+      primaryMod: modId || 'unknown',
+      relatedMod: null,
+      recipeId: null,
+    };
   }
 
   const provided = PROVIDED_BY_MOD.exec(line);
@@ -116,12 +161,39 @@ export function classifyModErrorLine(line) {
     return { category: ModErrorCategory.RECIPE_FORMAT, primaryMod: missing || 'unknown', relatedMod: null, recipeId: null };
   }
 
-  if (line.includes('[ERROR]') || line.includes('[FATAL]')) {
+  // G-09 / G-15 tech categories — ERROR-gated before generic LOGGER_ERROR
+  const lower = line.toLowerCase();
+  const hasErrorGate = line.includes('[ERROR]') || line.includes('[FATAL]')
+    || lower.includes('exception') || /\/ERROR\//i.test(line);
+
+  if (hasErrorGate && (/\[KubeJS/i.test(line) || lower.includes('kubejs'))) {
+    return { category: ModErrorCategory.KUBEJS_SCRIPT, primaryMod: 'kubejs', relatedMod: null, recipeId: null };
+  }
+
+  if (hasErrorGate
+    && (lower.includes('create') || /TRANSFORMER\/create@/i.test(line))
+    && (lower.includes('contraption') || lower.includes('mf.axis') || /collision/i.test(line))) {
+    return { category: ModErrorCategory.CREATE_CONTRAPTION, primaryMod: 'create', relatedMod: null, recipeId: null };
+  }
+
+  if (hasErrorGate
+    && (lower.includes('appeng') || lower.includes('applied energistics') || /\bae2\b/i.test(line))
+    && (lower.includes('grid') || lower.includes('channel') || lower.includes('network') || lower.includes('failed') || lower.includes('overload'))) {
+    return { category: ModErrorCategory.AE2_GRID, primaryMod: 'ae2', relatedMod: null, recipeId: null };
+  }
+
+  if (/->\s*MISSING\b/i.test(line)) {
+    const mig = /(?:mod\s+)?([a-z][\w-]*)\s*(?:\([^)]*\))?\s*->\s*MISSING/i.exec(line)
+      || /([a-z][\w-]*)\s+->\s*MISSING/i.exec(line);
+    const modId = mig ? mig[1].toLowerCase() : (namespaceFrom(line) || 'unknown');
+    return { category: ModErrorCategory.MOD_MISSING_MIGRATION, primaryMod: modId, relatedMod: null, recipeId: null };
+  }
+
+  if (line.includes('[ERROR]') || line.includes('[FATAL]') || line.includes('/ERROR]') || line.includes('/FATAL]')) {
     const logMod = LOGGER_MOD.exec(line);
     if (logMod) {
-      let modId = logMod[2].trim().toLowerCase();
-      if (modId.includes('.')) modId = modId.slice(modId.lastIndexOf('.') + 1);
-      if (!isVanillaLogger(modId)) {
+      const modId = resolveLoggerModId(logMod[2]);
+      if (modId) {
         return { category: ModErrorCategory.LOGGER_ERROR, primaryMod: modId, relatedMod: null, recipeId: null };
       }
     }

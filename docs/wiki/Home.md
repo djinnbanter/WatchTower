@@ -44,20 +44,20 @@ Watchtower helps you keep your Minecraft server healthy. It checks logs, crashes
 
 ---
 
-## Download (1.0.0)
+## Download (1.1.0)
 
 | File | What to do with it |
 |------|---------------------|
-| `watchtower-neoforge-1.0.0+mc1.21.jar` | Put in your server **`mods/`** folder |
-| `watchtower-cli-1.0.0.jar` | Put in **`mods/`** too (recovery tool — not loaded as a mod) |
+| `watchtower-neoforge-1.1.0+mc1.21.jar` | Put in your server **`mods/`** folder |
+| `watchtower-cli-1.1.0.jar` | Put in **`mods/`** too (recovery tool — not loaded as a mod) |
 
 See [[Downloads and Releases]] for GitHub, Modrinth, and build instructions.
 
 ---
 
-## What's in 1.0.0
+## What's in 1.1.0
 
-Live dashboard with 11 Monitor/Triage/Ops tabs plus Admin **Docs**. Setup wizard, scheduled reports, performance insights, Spark profiler tab, external backup tracking, always-on background scans, and disaster recovery CLI.
+Live dashboard with Monitor / Triage / Ops tabs plus Admin **Docs**. Setup wizard, scheduled reports, performance insights (Patterns sub-panels), crash intelligence, Startup profile, Logs viewer, Spark profiler, backup tracking (or **Not tracking**), Session roster, always-on background scans, and disaster recovery CLI.
 
 Details: [[Changelog]]
 

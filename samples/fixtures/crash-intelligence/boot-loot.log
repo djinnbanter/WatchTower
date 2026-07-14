@@ -1,0 +1,17 @@
+[20Jun2026 00:34:50.000] [main/INFO] [cpw.mods.modlauncher.Launcher/]: ModLauncher starting: args [--launchTarget, forgeserver]
+[20Jun2026 00:34:55.000] [main/INFO] [net.neoforged.fml.loading.FMLServiceProvider/]: NeoForge version 21.1.0 loading
+[20Jun2026 00:35:10.000] [modloading-worker-0/INFO] [net.neoforged.neoforge.registries.GameData/]: Freezing registries
+[20Jun2026 00:35:48.100] [modloading-worker-0/INFO] [net.neoforged.neoforge.registries.GameData/]: Registry freeze complete
+[20Jun2026 00:36:10.000] [main/INFO] [net.neoforged.fml.ModLoader/]: Common setup / FMLCommonSetupEvent
+[20Jun2026 00:36:20.000] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:loot_table / create:chests/warehouse]: Missing required field
+[20Jun2026 00:36:20.050] [Worker-Main-2/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:loot_table / pride:pride_chest]: Unexpected token
+[20Jun2026 00:36:20.100] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:loot_table / example:broken_pool]: Invalid entry
+[20Jun2026 00:36:44.153] [main/ERROR] [net.neoforged.fml.loading.moddiscovery.ModFile/LOADING]: Access transformer file META-INF/accesstransformer.cfg provided by mod pride does not exist!
+[20Jun2026 00:36:50.000] [main/WARN] [net.neoforged.fml.ModLoader/]: Mod pride reported non-blocking load warnings (corrupt jar markers); continuing boot
+[20Jun2026 00:37:00.000] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting Minecraft server on *:25565
+[20Jun2026 00:37:12.000] [Server thread/INFO]: Done (142.30s)! For help, type "help"
+[20Jun2026 00:37:15.000] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Preparing start region for dimension minecraft:overworld
+[20Jun2026 06:40:01.000] [Server thread/INFO] [Chunky]: [Chunky] Task running for overworld. Processed: 18432 chunks (43.5%), ETA: 2h 10m, Rate: 12.4 cps
+[20Jun2026 06:45:22.000] [Server thread/INFO] [squaremap]: [squaremap] FullRender running for world overworld (runtime render, not boot SCAN)
+[20Jun2026 06:50:10.000] [Server thread/INFO] [Chunky]: [Chunky] Task running for overworld. Processed: 19200 chunks (45.2%), ETA: 2h 0m, Rate: 11.8 cps
+[20Jun2026 06:52:40.000] [Server thread/WARN] [squaremap]: [squaremap] FullRender still active — world render queue depth 128

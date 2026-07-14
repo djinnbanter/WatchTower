@@ -35,13 +35,18 @@ const EMBEDDED_CSP = {
   'X-Content-Type-Options': 'nosniff',
   'Content-Security-Policy':
     "default-src 'self'; script-src 'self'; img-src 'self' data: https://crafthead.net; "
-    + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-    + "font-src 'self' https://fonts.gstatic.com",
+    + "style-src 'self' 'unsafe-inline'; "
+    + "font-src 'self'",
 };
 
 const usePreviewCsp = process.env.PREVIEW_CSP === '1';
 
-await import('./generate-mock-data.mjs');
+try {
+  await import('./generate-mock-data.mjs');
+} catch (err) {
+  console.warn('Mock regenerate skipped:', err.message || err);
+  console.warn('Serving existing data/ fixtures.');
+}
 
 const server = createServer(async (req, res) => {
   try {

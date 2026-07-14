@@ -1,0 +1,116 @@
+/* Lantern motion catalog */
+
+.ui-pressable:active {
+  transform: scale(0.97);
+  transition: transform var(--ui-dur-2) var(--ui-ease-out);
+}
+
+.ui-lift {
+  transition: transform var(--ui-dur-2) var(--ui-ease-out),
+    box-shadow var(--ui-dur-2) var(--ui-ease-out),
+    border-color var(--ui-dur-2) var(--ui-ease-out);
+}
+
+.ui-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ui-shadow-lift);
+}
+
+.ui-lift:active {
+  transform: translateY(0) scale(0.99);
+}
+
+@keyframes ui-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-live-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.ui-enter {
+  animation: ui-enter var(--ui-dur-3) var(--ui-ease-exp) both;
+}
+
+.ui-exit {
+  animation: ui-exit var(--ui-dur-2) var(--ui-ease-out) both;
+}
+
+.ui-live-pulse {
+  animation: ui-live-pulse 2s var(--ui-ease-inout) infinite;
+}
+
+.ui-stagger > * {
+  animation: ui-enter var(--ui-dur-3) var(--ui-ease-exp) both;
+  animation-delay: calc(var(--ui-stagger-index, 0) * 40ms);
+}
+
+.ui-page__stack > * {
+  animation: ui-enter var(--ui-dur-4) var(--ui-ease-out) both;
+}
+
+.ui-page__stack > *:nth-child(1) { animation-delay: 0ms; }
+.ui-page__stack > *:nth-child(2) { animation-delay: 50ms; }
+.ui-page__stack > *:nth-child(3) { animation-delay: 100ms; }
+.ui-page__stack > *:nth-child(4) { animation-delay: 140ms; }
+.ui-page__stack > *:nth-child(5) { animation-delay: 180ms; }
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 2px;
+  transition: outline-offset var(--ui-dur-2) var(--ui-ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ui-pressable:active {
+    transform: none;
+  }
+
+  .ui-lift:hover,
+  .ui-lift:active {
+    transform: none;
+  }
+
+  .ui-enter,
+  .ui-exit,
+  .ui-stagger > *,
+  .ui-page__stack > *,
+  .ui-page__body > * {
+    animation: none !important;
+  }
+}

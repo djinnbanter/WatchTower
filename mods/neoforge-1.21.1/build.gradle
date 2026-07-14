@@ -131,39 +131,34 @@ tasks.named('jar', Jar).configure {
 def dashboardPocDir = rootProject.file('web/dashboard')
 def dashboardWebOut = layout.buildDirectory.dir('generated/resources/assets/watchtower/web')
 
-tasks.register('verifyDashboardCssModules', Exec) {
+tasks.register('buildDashboardAssets', Exec) {
     workingDir dashboardPocDir
-    commandLine 'node', 'scripts/verify-css-modules.mjs'
-    inputs.dir(new File(dashboardPocDir, 'css/v3'))
-    inputs.file(new File(dashboardPocDir, 'scripts/build-css.mjs'))
-    inputs.file(new File(dashboardPocDir, 'scripts/verify-css-modules.mjs'))
-}
-
-tasks.register('buildDashboardCss', Exec) {
-    dependsOn tasks.named('verifyDashboardCssModules')
-    workingDir dashboardPocDir
-    commandLine 'node', 'scripts/build-css.mjs'
-    inputs.dir(new File(dashboardPocDir, 'css/v3'))
-    inputs.file(new File(dashboardPocDir, 'scripts/build-css.mjs'))
-    outputs.file(new File(dashboardPocDir, 'styles.css'))
-}
-
-tasks.register('buildWiki', Exec) {
-    workingDir dashboardPocDir
-    commandLine 'node', 'scripts/build-wiki.mjs'
+    commandLine 'node', 'scripts/build.mjs'
+    inputs.dir(new File(dashboardPocDir, 'src'))
     inputs.dir(rootProject.file('docs/wiki'))
+    inputs.file(new File(dashboardPocDir, 'scripts/build.mjs'))
     inputs.file(new File(dashboardPocDir, 'scripts/build-wiki.mjs'))
-    outputs.file(new File(dashboardPocDir, 'wiki-bundle.js'))
+    inputs.file(new File(dashboardPocDir, 'index.html'))
+    outputs.file(new File(dashboardPocDir, 'styles.css'))
+    outputs.file(new File(dashboardPocDir, 'src/wiki/content.js'))
 }
 
 tasks.register('syncDashboard', Copy) {
-    dependsOn tasks.named('buildDashboardCss'), tasks.named('buildWiki')
+    dependsOn tasks.named('buildDashboardAssets')
+    // Wipe previous sync output so deleted legacy assets cannot linger in the JAR
+    doFirst {
+        def outDir = dashboardWebOut.get().asFile
+        if (outDir.exists()) {
+            outDir.deleteDir()
+        }
+    }
     from(dashboardPocDir) {
-        include '*.html', '*.js', '*.css'
+        include 'index.html'
+        include 'styles.css'
         include 'favicon.ico'
         include 'assets/**'
         include 'vendor/**'
-        include 'tower/**'
+        include 'src/**'
     }
     into dashboardWebOut
     outputs.dir(dashboardWebOut)
@@ -220,6 +215,15 @@ tasks.register('verifyModJar') {
             if (!nestedJarContains(zip, coreEntry, 'dev/mcstatus/watchtower/core/report/ReportEngine.class')) {
                 throw new GradleException("Nested watchtower-core JAR missing ReportEngine.class")
             }
+            if (!nestedJarContains(zip, coreEntry,
+                    'dev/mcstatus/watchtower/core/internal/protobuf/GeneratedMessageLite.class')) {
+                throw new GradleException(
+                        'Nested watchtower-core JAR missing relocated protobuf runtime (JPMS isolation)')
+            }
+            if (nestedJarContains(zip, coreEntry, 'com/google/protobuf/GeneratedMessageLite.class')) {
+                throw new GradleException(
+                        'Nested watchtower-core must not ship unrelocated com.google.protobuf (JPMS conflict)')
+            }
 
             def totpEntry = embeddedEntries.find { e -> e.name.toLowerCase().contains('totp') }
             if (totpEntry == null) {
@@ -245,12 +249,11 @@ tasks.register('verifyModJar') {
             def requiredWebAssets = [
                     'assets/watchtower/web/index.html',
                     'assets/watchtower/web/styles.css',
-                    'assets/watchtower/web/vendor/chart.umd.min.js',
-                    'assets/watchtower/web/vendor/lucide.min.js',
-                    'assets/watchtower/web/wiki-bundle.js',
-                    'assets/watchtower/web/setup-wizard.js',
-                    'assets/watchtower/web/tower/data.js',
-                    'assets/watchtower/web/app.js',
+                    'assets/watchtower/web/src/main.js',
+                    'assets/watchtower/web/src/wiki/content.js',
+                    'assets/watchtower/web/vendor/preact.module.js',
+                    'assets/watchtower/web/vendor/uplot.esm.js',
+                    'assets/watchtower/web/assets/fonts/IBMPlexSans-Regular.woff2',
             ]
             requiredWebAssets.each { assetPath ->
                 if (zip.getEntry(assetPath) == null) {
@@ -259,8 +262,11 @@ tasks.register('verifyModJar') {
             }
             def stylesEntry = zip.getEntry('assets/watchtower/web/styles.css')
             def stylesText = new String(zip.getInputStream(stylesEntry).readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
-            if (!stylesText.contains('.wt-setup-wizard')) {
-                throw new GradleException("Embedded styles.css missing setup wizard rules in ${jarFile.name}")
+            if (!stylesText.contains('--ui-accent') && !stylesText.contains('--ui-bg0')) {
+                throw new GradleException("Embedded styles.css missing Lantern --ui-* tokens in ${jarFile.name}")
+            }
+            if (zip.getEntry('assets/watchtower/web/tower/data.js') != null) {
+                throw new GradleException("Legacy tower/ UI must not be embedded in ${jarFile.name}")
             }
             logger.lifecycle("verifyModJar OK: ${jarFile.name} (${jarFile.length()} bytes)")
             logger.lifecycle("  embedded: ${embedded.join(', ')}")

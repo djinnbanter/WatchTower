@@ -643,6 +643,164 @@ public final class BriefFormatters {
                 + " (informational; client-class lines = client code blocked on dedicated server — usually harmless)";
     }
 
+    /**
+     * One-liner for {@code optional.startup_profile} (boot duration + slowest phase).
+     */
+    public static String fmtStartupProfileLine(JsonObject optional) {
+        if (optional == null || !optional.has("startup_profile")
+                || !optional.get("startup_profile").isJsonObject()) {
+            return null;
+        }
+        JsonObject profile = optional.getAsJsonObject("startup_profile");
+        if (!profile.has("total_sec") || profile.get("total_sec").isJsonNull()) {
+            return null;
+        }
+        double total = profile.get("total_sec").getAsDouble();
+        String slowPhase = null;
+        double slowSec = 0;
+        if (profile.has("slowest") && profile.get("slowest").isJsonArray()
+                && profile.getAsJsonArray("slowest").size() > 0) {
+            JsonObject top = profile.getAsJsonArray("slowest").get(0).getAsJsonObject();
+            slowPhase = strOr(top, "phase", null);
+            if (top.has("sec") && !top.get("sec").isJsonNull()) {
+                slowSec = top.get("sec").getAsDouble();
+            }
+            if (profile.has("phases") && profile.get("phases").isJsonArray() && slowPhase != null) {
+                for (JsonElement el : profile.getAsJsonArray("phases")) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject p = el.getAsJsonObject();
+                    if (slowPhase.equals(strOr(p, "id", ""))) {
+                        String label = strOr(p, "label", slowPhase);
+                        slowPhase = label.toLowerCase(Locale.ROOT);
+                        break;
+                    }
+                }
+            }
+        }
+        int warnN = 0;
+        if (profile.has("warnings") && profile.get("warnings").isJsonArray()) {
+            warnN = profile.getAsJsonArray("warnings").size();
+        }
+        int nonBlocking = 0;
+        if (profile.has("errors") && profile.get("errors").isJsonArray()) {
+            for (JsonElement el : profile.getAsJsonArray("errors")) {
+                if (el.isJsonObject()) {
+                    JsonObject e = el.getAsJsonObject();
+                    if (e.has("blocking") && !e.get("blocking").getAsBoolean()) {
+                        nonBlocking++;
+                    }
+                }
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format(Locale.US, "Boot %.0fs", total));
+        if (slowPhase != null && slowSec > 0) {
+            sb.append(String.format(Locale.US, " — slowest phase: %s (%.0fs)", slowPhase, slowSec));
+        }
+        int noise = Math.max(warnN, nonBlocking);
+        if (noise > 0) {
+            sb.append(". ").append(noise).append(" non-blocking warning");
+            if (noise != 1) {
+                sb.append('s');
+            }
+            sb.append('.');
+        } else {
+            sb.append('.');
+        }
+        return sb.toString();
+    }
+
+    /**
+     * One-liner for the newest CA-parity crash kind (mixin / ecosystem / lock / etc.).
+     */
+    public static String fmtCaCrashOneLiner(JsonObject optional) {
+        if (optional == null || !optional.has("crash_summaries")
+                || !optional.get("crash_summaries").isJsonArray()) {
+            return null;
+        }
+        JsonArray summaries = optional.getAsJsonArray("crash_summaries");
+        for (JsonElement el : summaries) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject c = el.getAsJsonObject();
+            if (bool(c, "historical", false) || bool(c, "acknowledged", false)) {
+                continue;
+            }
+            String kind = strOr(c, "failure_kind", null);
+            if (kind == null || kind.isBlank()) {
+                continue;
+            }
+            String primary = strOr(c, "primary_mod_id", strOr(c, "suspect_mod_id", null));
+            String line = switch (kind) {
+                case "mod_load_mixin" -> primary != null
+                        ? "Mixin failed while loading " + primary + "."
+                        : "Mixin config failed to initialise.";
+                case "mod_load_mixin_conflict" -> primary != null
+                        ? "Mixin conflict involving " + primary + "."
+                        : "Mixin conflict between mods.";
+                case "mod_load_duplicate" -> "Duplicate mods found — remove the extra jar.";
+                case "mod_load_config" -> primary != null
+                        ? "Corrupt SERVER config for " + primary + "."
+                        : "Corrupt SERVER config detected.";
+                case "mod_load_asset" -> "Invalid resource location blocked load.";
+                case "mod_load_dependency" -> primary != null
+                        ? "Missing dependency or language provider for " + primary + "."
+                        : "Missing dependency or language provider.";
+                case "mod_load_worldgen" -> "Worldgen feature order cycle — check datapacks.";
+                case "mod_load_compat" -> primary != null
+                        ? "Compatibility issue with " + primary + "."
+                        : "Mod compatibility issue.";
+                case "mod_load_ecosystem" -> "Mod ecosystem version mismatch (Create/Railways or similar).";
+                case "mod_load_script" -> "KubeJS / script datapack failed to parse.";
+                case "platform_mismatch" -> "Java class version mismatch — update the JVM or the mod.";
+                case "env_lock" -> "A file is locked by another process (close extra server instances).";
+                default -> null;
+            };
+            if (line != null) {
+                return line;
+            }
+        }
+        if (optional.has("security_flags") && optional.get("security_flags").isJsonArray()
+                && optional.getAsJsonArray("security_flags").size() > 0) {
+            return "Security: denylisted mod present — remove immediately.";
+        }
+        if (optional.has("mod_forensics") && optional.get("mod_forensics").isJsonObject()) {
+            JsonObject mf = optional.getAsJsonObject("mod_forensics");
+            if (mf.has("corrupt_jars") && mf.get("corrupt_jars").isJsonArray()
+                    && mf.getAsJsonArray("corrupt_jars").size() > 0) {
+                return "Corrupt mod jar detected — re-download the jar (do not auto-delete).";
+            }
+        }
+        if (optional.has("config_health") && optional.get("config_health").isJsonArray()
+                && optional.getAsJsonArray("config_health").size() > 0) {
+            return "Broken SERVER config file detected — fix or delete it manually.";
+        }
+        if (hasMcreatorMods(optional)) {
+            return "Note: one or more MCreator-generated mods are installed (informational).";
+        }
+        return null;
+    }
+
+    private static boolean hasMcreatorMods(JsonObject optional) {
+        if (optional == null || !optional.has("mods") || !optional.get("mods").isJsonArray()) {
+            return false;
+        }
+        for (JsonElement el : optional.getAsJsonArray("mods")) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject m = el.getAsJsonObject();
+            if (m.has("is_mcreator") && !m.get("is_mcreator").isJsonNull()
+                    && m.get("is_mcreator").getAsBoolean()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static String fmtModChangesLine(JsonObject optional, int modCount) {
         if (optional == null || !optional.has("mod_changes")) {
             return null;
@@ -935,6 +1093,18 @@ public final class BriefFormatters {
         }
         lines.add("  Heuristic list — remove one at a time and restart if unsure.");
         lines.add("  Client mods belong in your client pack, not the server.");
+        int mcreatorCount = 0;
+        if (optional.has("mods") && optional.get("mods").isJsonArray()) {
+            for (JsonElement el : optional.getAsJsonArray("mods")) {
+                if (el.isJsonObject() && el.getAsJsonObject().has("is_mcreator")
+                        && el.getAsJsonObject().get("is_mcreator").getAsBoolean()) {
+                    mcreatorCount++;
+                }
+            }
+        }
+        if (mcreatorCount > 0) {
+            lines.add("  " + mcreatorCount + " mod(s) appear MCreator-generated — higher support risk.");
+        }
         lines.add("");
         return lines;
     }

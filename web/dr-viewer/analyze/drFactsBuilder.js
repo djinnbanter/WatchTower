@@ -43,16 +43,50 @@ function buildCrashSummaries(staging) {
 
     const classification = classifyCrash(c);
     row.category = classification.category;
+    if (classification.failure_kind) row.failure_kind = classification.failure_kind;
     if (classification.suspect_mod_id) row.suspect_mod_id = classification.suspect_mod_id;
+    if (classification.primary_mod_id) row.primary_mod_id = classification.primary_mod_id;
+    if (classification.stall_mod_id) row.stall_mod_id = classification.stall_mod_id;
+    if (c.watchdog_tick_ms != null) row.watchdog_tick_ms = c.watchdog_tick_ms;
 
     const narrative = narrateCrash(c);
     enrichSummary(row, narrative);
     summaries.push(row);
   }
 
+  linkCrashIncidents(summaries);
   optional.crash_summaries = summaries;
-  enrichCrashModLinks(summaries, optional.mod_recommendations || []);
   return summaries;
+}
+
+/** G-11: pair mod_runtime with watchdog within 120s. */
+export function linkCrashIncidents(summaries) {
+  if (!summaries || summaries.length < 2) return;
+  const rows = [...summaries].sort((a, b) => new Date(a.time || 0) - new Date(b.time || 0));
+  for (let i = 0; i < rows.length; i++) {
+    const primary = rows[i];
+    const kind = primary.failure_kind;
+    if (kind !== 'mod_runtime' && primary.category !== 'mod') continue;
+    const pt = primary.time ? new Date(primary.time).getTime() : 0;
+    if (!pt) continue;
+    for (let j = i + 1; j < rows.length; j++) {
+      const follow = rows[j];
+      const ft = follow.time ? new Date(follow.time).getTime() : 0;
+      if (!ft) continue;
+      const delta = (ft - pt) / 1000;
+      if (delta < 0 || delta > 120) break;
+      const fk = follow.failure_kind || '';
+      const watchdog = fk.startsWith('watchdog')
+        || (follow.exception || '').includes('ServerHangWatchdog');
+      if (!watchdog) continue;
+      const incidentId = `inc-${String(primary.file || 'x').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      primary.incident_id = incidentId;
+      follow.incident_id = incidentId;
+      follow.paired_primary_file = primary.file || '';
+      follow.failure_kind = 'watchdog_followup';
+      break;
+    }
+  }
 }
 
 function deriveHealth(issues) {
@@ -93,14 +127,16 @@ export function buildFacts(staging) {
     addIssue(issues, 'OOM', 'OutOfMemoryError detected in logs.', 'critical');
   }
 
+  // Crash summaries first so G-05 reconcile can demote boot hygiene advice
+  const summaries = buildCrashSummaries(staging);
   const { recommendations, severeIssues } = analyzeModIssues(optional);
   optional.mod_recommendations = recommendations;
+  enrichCrashModLinks(summaries, recommendations);
 
   for (const sev of severeIssues) {
     addIssue(issues, 'MOD_LOAD_FAILED', sev.message, 'warning', { mod_id: sev.modId });
   }
 
-  const summaries = buildCrashSummaries(staging);
   const unacked = summaries.filter((c) => !c.historical);
   if (unacked.length) {
     const names = unacked.map((c) => c.file).join(', ');

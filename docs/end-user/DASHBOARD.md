@@ -9,3 +9,7 @@
 - **[Security and Access](https://github.com/djinnbanter/WatchTower/wiki/Security-and-Access)**
 
 Source: [`docs/wiki/`](../../docs/wiki/) · UI code: `web/dashboard/`
+
+### Mod forensics / jdeps (1.0.17)
+
+Owning-jar lookup uses `/api/mods/forensics/find-class` (entry scan). JDK **jdeps** is optional and offline-only — see wiki [[Dashboard Tabs]] and `tools/jdeps-mod-scan.mjs`. Watchtower does not spawn jdeps on the server.

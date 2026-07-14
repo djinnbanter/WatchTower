@@ -1,7 +1,7 @@
 package dev.mcstatus.watchtower.core.collect;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.analyze.CrashClassifier;
 import dev.mcstatus.watchtower.core.report.StateManager;
 
 import java.io.IOException;
@@ -31,7 +31,11 @@ public final class CrashMtimeScanner {
             long mtime,
             long size,
             String displayLabel,
-            boolean newOrUpdated
+            boolean newOrUpdated,
+            String failureKind,
+            String primaryModId,
+            String stallModId,
+            String exception
     ) {
     }
 
@@ -44,7 +48,7 @@ public final class CrashMtimeScanner {
     ) {
     }
 
-    private static final int PARSE_HEAD_BYTES = 4096;
+    private static final int PARSE_HEAD_BYTES = 8192;
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private CrashMtimeScanner() {
@@ -83,11 +87,15 @@ public final class CrashMtimeScanner {
                 if (changed) {
                     newCount++;
                 }
-                String label = changed ? readDisplayLabel(p) : priorIndex.containsKey(file) ? "" : readDisplayLabel(p);
-                if (label.isBlank() && changed) {
-                    label = readDisplayLabel(p);
+                ParsedHead head = (changed || !priorIndex.containsKey(file))
+                        ? parseCrashHead(p)
+                        : ParsedHead.empty();
+                if (head.displayLabel().isBlank() && changed) {
+                    head = parseCrashHead(p);
                 }
-                entries.add(new CrashEntry(file, mtime, size, label, changed));
+                entries.add(new CrashEntry(
+                        file, mtime, size, head.displayLabel(), changed,
+                        head.failureKind(), head.primaryModId(), head.stallModId(), head.exception()));
                 updatedIndex.put(file, mtime);
             }
         }
@@ -135,8 +143,10 @@ public final class CrashMtimeScanner {
                 } catch (IOException e) {
                     size = 0;
                 }
-                String label = readDisplayLabel(p);
-                entries.add(new CrashEntry(file, mtime, size, label, false));
+                ParsedHead head = parseCrashHead(p);
+                entries.add(new CrashEntry(
+                        file, mtime, size, head.displayLabel(), false,
+                        head.failureKind(), head.primaryModId(), head.stallModId(), head.exception()));
                 updatedIndex.put(file, mtime);
             }
         }
@@ -151,25 +161,43 @@ public final class CrashMtimeScanner {
         return new ScanResult(Instant.now(), 0, unreviewed, entries, updatedIndex);
     }
 
-    private static String readDisplayLabel(Path crashFile) {
+    private record ParsedHead(
+            String displayLabel,
+            String failureKind,
+            String primaryModId,
+            String stallModId,
+            String exception
+    ) {
+        static ParsedHead empty() {
+            return new ParsedHead("", null, null, null, null);
+        }
+    }
+
+    private static ParsedHead parseCrashHead(Path crashFile) {
         try {
             byte[] head = Files.readAllBytes(crashFile);
             if (head.length > PARSE_HEAD_BYTES) {
                 head = java.util.Arrays.copyOf(head, PARSE_HEAD_BYTES);
             }
             String text = new String(head, StandardCharsets.UTF_8);
+            CrashClassifier.Classification classification = CrashClassifier.classifyLight(text);
             String summary = CrashReportScanner.parseCrashSummary(text);
-            if (!summary.isBlank()) {
-                return summary;
-            }
             CrashDetails details = CrashDetails.parse(text);
-            String label = details.displayLabel();
-            if (!label.isBlank()) {
-                return label;
+            String label = summary;
+            if (label.isBlank()) {
+                label = details.displayLabel();
             }
-            return details.summary();
+            if (label.isBlank()) {
+                label = details.summary();
+            }
+            return new ParsedHead(
+                    label != null ? label : "",
+                    classification.failureKind(),
+                    classification.primaryModId(),
+                    classification.stallModId(),
+                    details.exception());
         } catch (IOException ignored) {
-            return "";
+            return ParsedHead.empty();
         }
     }
 

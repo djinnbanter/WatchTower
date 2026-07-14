@@ -1,0 +1,90 @@
+/* Freshness badge + footer */
+
+/* ── Badge ────────────────────────────────────────────────────────────────── */
+
+.ui-freshness-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-sp-4);
+  font-size: var(--ui-text-xs);
+  line-height: var(--ui-lh-xs);
+  color: var(--ui-text-low);
+  white-space: nowrap;
+}
+
+.ui-freshness-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ui-rad-full);
+  flex-shrink: 0;
+  background-color: var(--ui-text-low);
+}
+
+.ui-freshness-badge--live .ui-freshness-badge__dot {
+  background-color: var(--ui-src-live);
+}
+
+.ui-freshness-badge--scan .ui-freshness-badge__dot {
+  background-color: var(--ui-src-scan);
+}
+
+.ui-freshness-badge--report .ui-freshness-badge__dot {
+  background-color: var(--ui-src-report);
+}
+
+.ui-freshness-badge--mixed .ui-freshness-badge__dot {
+  background: conic-gradient(var(--ui-src-live) 0 120deg, var(--ui-src-scan) 120deg 240deg, var(--ui-src-report) 240deg 360deg);
+}
+
+.ui-freshness-badge--stale .ui-freshness-badge__dot {
+  background-color: var(--ui-src-stale);
+}
+
+@keyframes ui-pulse-live {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.5); }
+  50% { box-shadow: 0 0 0 4px rgba(63, 185, 80, 0); }
+}
+
+.ui-freshness-badge--live .ui-freshness-badge__dot {
+  animation: ui-pulse-live 2s ease-in-out infinite;
+}
+
+.ui-freshness-badge__label {
+  font-weight: 500;
+}
+
+.ui-freshness-badge__age {
+  color: var(--ui-text-low);
+  font-family: var(--ui-font-mono);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+
+.ui-freshness-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-16);
+  padding-top: var(--ui-sp-12);
+  border-top: 1px solid var(--ui-line);
+  flex-wrap: wrap;
+}
+
+.ui-freshness-footer__subtitle {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  margin-right: auto;
+}
+
+.ui-freshness-footer__sources {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-12);
+  flex-wrap: wrap;
+}
+
+.ui-freshness-footer__sep {
+  width: 1px;
+  height: 12px;
+  background-color: var(--ui-line-strong);
+  flex-shrink: 0;
+}

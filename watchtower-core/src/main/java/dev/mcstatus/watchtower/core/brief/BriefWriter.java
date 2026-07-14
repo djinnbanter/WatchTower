@@ -167,7 +167,16 @@ public final class BriefWriter {
         if (startupLine != null) {
             lines.add(startupLine);
         }
-        boolean oomAny = bool(mc, "oom_in_logs", false) || hasIssueId(issues, "OOM");
+        String bootProfileLine = BriefFormatters.fmtStartupProfileLine(optional);
+        if (bootProfileLine != null) {
+            lines.add(bootProfileLine);
+        }
+        String caCrashLine = BriefFormatters.fmtCaCrashOneLiner(optional);
+        if (caCrashLine != null) {
+            lines.add(caCrashLine);
+        }
+        boolean oomAny = bool(mc, "oom_in_logs", false) || hasIssueId(issues, "OOM")
+                || hasIssueId(issues, "OOM_HEAP") || hasIssueId(issues, "OOM_NATIVE");
         int crashN = array(mc, "new_crash_reports") != null ? array(mc, "new_crash_reports").size() : 0;
         lines.add(String.format("Lookback: %d crash report(s), %s, %d tick-lag warning(s)",
                 crashN, oomAny ? "OOM seen" : "no OOM", integer(mc, "cant_keep_up_count", 0)));

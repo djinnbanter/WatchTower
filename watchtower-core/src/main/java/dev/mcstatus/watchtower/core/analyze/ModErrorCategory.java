@@ -20,6 +20,8 @@ public enum ModErrorCategory {
     KUBEJS_SCRIPT("kubejs_script", 3),
     CREATE_CONTRAPTION("create_contraption", 3),
     AE2_GRID("ae2_grid", 3),
+    MOD_MISSING_MIGRATION("mod_missing_migration", 3),
+    SERVER_CONFIG_CORRUPT("server_config_corrupt", 4),
     LOGGER_ERROR("logger_error", 1);
 
     public static final String CLIENT_ON_SERVER_DISPLAY = "Client-only classes on server";
@@ -59,6 +61,8 @@ public enum ModErrorCategory {
             case KUBEJS_SCRIPT -> "kubejs script";
             case CREATE_CONTRAPTION -> "create contraption";
             case AE2_GRID -> "ae2 grid";
+            case MOD_MISSING_MIGRATION -> "missing migration";
+            case SERVER_CONFIG_CORRUPT -> "server config corrupt";
             case LOGGER_ERROR -> "error";
         };
     }
@@ -78,7 +82,23 @@ public enum ModErrorCategory {
     private static final Pattern LOGGER_MOD = Pattern.compile(
             "\\[(ERROR|FATAL)\\]\\s*\\[([^/\\]]+)/",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern LOGGER_MOD_NEO = Pattern.compile(
+            "/(?:ERROR|FATAL)\\]\\s*\\[([^/\\]]+)/",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern NAMESPACE = Pattern.compile("([a-z][\\w]*):[\\w./_-]+");
+    private static final Pattern CREATE_CONTRAPTION_PAT = Pattern.compile(
+            "create.*(contraption|mf\\.axis|Collision)|(contraption|mf\\.axis|Collision).*create",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern KUBEJS_ERROR_PAT = Pattern.compile(
+            "(?:/ERROR]|/FATAL]|/ERROR/|\\[ERROR\\]|\\[FATAL\\]).*KubeJS"
+                    + "|KubeJS.*(?:/ERROR]|/FATAL]|/ERROR/|\\[ERROR\\]|\\[FATAL\\]|Exception)",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern AE2_GRID_PAT = Pattern.compile(
+            "(?:Applied Energistics|\\bae2\\b).*(?:grid|channel|network)"
+                    + "|(?:grid|channel|network).*(?:Applied Energistics|\\bae2\\b)",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern MISSING_MIGRATION = Pattern.compile(
+            "->\\s*MISSING\\b", Pattern.CASE_INSENSITIVE);
 
     public record Hit(ModErrorCategory category, String primaryMod, String relatedMod, String recipeId) {
     }
@@ -92,6 +112,17 @@ public enum ModErrorCategory {
         }
         if (line.contains("Attempted to load class net/minecraft/client")) {
             return new Hit(CLIENT_ON_SERVER, "unknown", null, null);
+        }
+
+        // CA-04: SERVER NightConfig / FML config load failure (log line form)
+        if (line.contains("ConfigLoadingException")
+                && line.toLowerCase(Locale.ROOT).contains("of type server")) {
+            Matcher serverToml = Pattern.compile(
+                    "of type SERVER for modid\\s+(\\S+)", Pattern.CASE_INSENSITIVE).matcher(line);
+            String modId = serverToml.find()
+                    ? serverToml.group(1).replaceAll("[,.]+$", "").strip()
+                    : namespaceFrom(line);
+            return new Hit(SERVER_CONFIG_CORRUPT, modId != null ? modId : "unknown", null, null);
         }
 
         Matcher provided = PROVIDED_BY_MOD.matcher(line);
@@ -139,20 +170,74 @@ public enum ModErrorCategory {
             return new Hit(RECIPE_FORMAT, missing != null ? missing : "unknown", null, null);
         }
 
-        if (line.contains("[ERROR]") || line.contains("[FATAL]")) {
+        boolean isErrorLine = line.contains("[ERROR]") || line.contains("[FATAL]")
+                || line.contains("/ERROR]") || line.contains("/FATAL]")
+                || line.contains("/ERROR/") || line.contains("Exception");
+
+        if (isErrorLine && CREATE_CONTRAPTION_PAT.matcher(line).find()) {
+            return new Hit(CREATE_CONTRAPTION, "create", null, null);
+        }
+
+        if (KUBEJS_ERROR_PAT.matcher(line).find()) {
+            return new Hit(KUBEJS_SCRIPT, "kubejs", null, null);
+        }
+
+        if (isErrorLine && AE2_GRID_PAT.matcher(line).find()) {
+            return new Hit(AE2_GRID, "ae2", null, null);
+        }
+
+        if (MISSING_MIGRATION.matcher(line).find()) {
+            String ns = namespaceFrom(line);
+            return new Hit(MOD_MISSING_MIGRATION, ns != null ? ns : "unknown", null, null);
+        }
+
+        if (line.contains("[ERROR]") || line.contains("[FATAL]")
+                || line.contains("/ERROR]") || line.contains("/FATAL]")) {
             Matcher logMod = LOGGER_MOD.matcher(line);
             if (logMod.find()) {
-                String modId = logMod.group(2).strip().toLowerCase(Locale.ROOT);
-                if (modId.contains(".")) {
-                    modId = modId.substring(modId.lastIndexOf('.') + 1);
+                String rawLogger = logMod.group(2).strip();
+                String modId = resolveLoggerModId(rawLogger);
+                if (modId != null) {
+                    return new Hit(LOGGER_ERROR, modId, null, null);
                 }
-                if (!isVanillaLogger(modId)) {
+            }
+            // NeoForge style: [Server thread/ERROR] [modid/]:
+            Matcher neo = LOGGER_MOD_NEO.matcher(line);
+            if (neo.find()) {
+                String rawLogger = neo.group(1).strip();
+                String modId = resolveLoggerModId(rawLogger);
+                if (modId != null && !"minecraft".equals(modId)) {
                     return new Hit(LOGGER_ERROR, modId, null, null);
                 }
             }
         }
 
         return null;
+    }
+
+    /**
+     * Map a log bracket logger name to a mod id, or null when vanilla / ignore for mod peek.
+     * Checks the full logger (e.g. {@code net.minecraft.world.item.ItemStack}) before truncating.
+     */
+    static String resolveLoggerModId(String rawLogger) {
+        if (rawLogger == null || rawLogger.isBlank()) {
+            return null;
+        }
+        String full = rawLogger.strip().toLowerCase(Locale.ROOT);
+        if (isVanillaLogger(full)) {
+            return null;
+        }
+        String tail = full;
+        if (tail.contains(".")) {
+            tail = tail.substring(tail.lastIndexOf('.') + 1);
+        }
+        if (VANILLA_LOGGER_TAILS.contains(tail)) {
+            return null;
+        }
+        if (isVanillaLogger(tail)) {
+            return null;
+        }
+        return tail;
     }
 
     private static String integrationMod(String recipeId) {
@@ -197,6 +282,23 @@ public enum ModErrorCategory {
     private static boolean isVanillaLogger(String modId) {
         return modId.startsWith("net.minecraft")
                 || modId.startsWith("net.neoforged")
-                || modId.startsWith("cpw.mods");
+                || modId.startsWith("net.minecraftforge")
+                || modId.startsWith("cpw.mods")
+                || modId.startsWith("com.mojang");
     }
+
+    /** Short class-logger tails after package truncation — not mods. */
+    private static final java.util.Set<String> VANILLA_LOGGER_TAILS = java.util.Set.of(
+            "itemstack",
+            "blockattachedentity",
+            "minecraftserver",
+            "serverlevel",
+            "serverplayer",
+            "serverchunkcache",
+            "chunkmap",
+            "playerlist",
+            "dedicatedserver",
+            "commands",
+            "main"
+    );
 }

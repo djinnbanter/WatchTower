@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
 import dev.mcstatus.watchtower.core.report.ReportEngine;
+import dev.mcstatus.watchtower.core.report.ReportProgress;
 import dev.mcstatus.watchtower.core.report.ReportRetentionPolicy;
 import dev.mcstatus.watchtower.core.report.ReportSchedule;
 import dev.mcstatus.watchtower.core.report.StateManager;
@@ -39,7 +40,20 @@ public final class ReportRunner {
             feedback.accept("A report is already running.");
             return CompletableFuture.completedFuture(null);
         }
+        state.setReportStage("window", "Computing time window");
+        return continueAfterBegin(server, state, feedback, options);
+    }
 
+    /**
+     * Continue a report after {@link WatchtowerRuntimeState#tryBeginReport()} already succeeded
+     * (e.g. HTTP handler marks running before returning 202 so status polls never race the server tick).
+     */
+    public static CompletableFuture<Void> continueAfterBegin(
+            MinecraftServer server,
+            WatchtowerRuntimeState state,
+            Consumer<String> feedback,
+            ReportRunOptions options
+    ) {
         if (!WatchtowerSetup.isReady()) {
             state.finishReport(false, WatchtowerSetup.getMessage(), null, null, null, null);
             feedback.accept(WatchtowerSetup.getMessage());
@@ -58,7 +72,7 @@ public final class ReportRunner {
         int timeoutMinutes = reportTimeoutMinutes();
         try {
             return CompletableFuture
-                    .supplyAsync(() -> runReport(server, options))
+                    .supplyAsync(() -> runReport(server, state, options))
                     .orTimeout(timeoutMinutes, TimeUnit.MINUTES)
                     .handle((result, err) -> {
                         if (err != null) {
@@ -80,12 +94,27 @@ public final class ReportRunner {
         }
     }
 
-    private static ReportEngine.ReportResult runReport(MinecraftServer server, ReportRunOptions options) {
+    private static ReportEngine.ReportResult runReport(
+            MinecraftServer server,
+            WatchtowerRuntimeState state,
+            ReportRunOptions options
+    ) {
         try {
             ReportConfig config = ModReportConfig.forServer(server, options != null ? options : ReportRunOptions.empty());
             Path reportDir = WatchtowerPaths.reportDir(server);
             WatchtowerMod.LOGGER.info("[Watchtower] Running pure-Java report");
-            return ReportEngine.run(config, reportDir);
+            ReportProgress progress = new ReportProgress() {
+                @Override
+                public void stage(String id, String label) {
+                    state.setReportStage(id, label);
+                }
+
+                @Override
+                public void detail(String message) {
+                    state.setReportDetail(message);
+                }
+            };
+            return ReportEngine.run(config, reportDir, progress);
         } catch (Exception e) {
             WatchtowerMod.LOGGER.warn("[Watchtower] Report failed", e);
             return ReportEngine.ReportResult.failure(e.getMessage() != null ? e.getMessage() : "Report failed");

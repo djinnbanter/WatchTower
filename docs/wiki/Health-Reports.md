@@ -27,11 +27,11 @@ A **health report** is Watchtower’s main check: it reads logs, crashes, mods, 
 | Method | When to use |
 |--------|-------------|
 | **Run Report** button | Easiest — in the dashboard top bar |
-| **Setup wizard** initial audit | First visit — 30-day baseline report runs automatically |
+| **Setup wizard** (optional baseline) | First visit — live discovery audit; optional 30-day baseline via Run Report (does not block Finish) |
 | `/watchtower run [hours]` | From console — optional hours of history |
 | Scheduled reports | Hands-off — Settings → General |
 
-**Recommended first report:** 30 days — use the setup wizard on first login, or `/watchtower run 720`, or **Run Report** with a 720h lookback in Settings.
+**Recommended first report:** 30 days — optional from the setup wizard, or `/watchtower run 720`, or **Run Report** with a 720h lookback.
 
 ---
 

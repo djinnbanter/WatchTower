@@ -1,0 +1,79 @@
+{
+  "count": 16,
+  "unreviewed": 16,
+  "unreviewed_groups": 12,
+  "groups": [
+    {
+      "fingerprint": "oom|-|java.lang.OutOfMemoryError|-",
+      "label": "Oom",
+      "failure_kind": "oom",
+      "count": 1
+    },
+    {
+      "fingerprint": "mod_load|sable|net.neoforged.fml.ModLoadingException|-",
+      "label": "Mod load",
+      "failure_kind": "mod_load",
+      "count": 1
+    },
+    {
+      "fingerprint": "mod_runtime|connectivity|java.lang.NoClassDefFoundError|-",
+      "label": "Mod crash (connectivity)",
+      "failure_kind": "mod_runtime",
+      "count": 1
+    },
+    {
+      "fingerprint": "mod_runtime|botania|java.lang.ClassCastException|botania",
+      "label": "Mod crash (botania)",
+      "failure_kind": "mod_runtime",
+      "count": 1
+    },
+    {
+      "fingerprint": "mod_runtime|mekanism|java.lang.NullPointerException|mekanism",
+      "label": "Mod crash (mekanism)",
+      "failure_kind": "mod_runtime",
+      "count": 1
+    },
+    {
+      "fingerprint": "mod_runtime|ae2|java.lang.IllegalStateException|ae2",
+      "label": "Mod crash (ae2)",
+      "failure_kind": "mod_runtime",
+      "count": 1
+    },
+    {
+      "fingerprint": "mod_runtime|kubejs|java.lang.RuntimeException|kubejs",
+      "label": "Mod crash (kubejs)",
+      "failure_kind": "mod_runtime",
+      "count": 1
+    },
+    {
+      "fingerprint": "world_nbt_corrupt|-|java.io.EOFException|-",
+      "label": "Corrupt world NBT",
+      "failure_kind": "world_nbt_corrupt",
+      "count": 1
+    },
+    {
+      "fingerprint": "watchdog_followup|-|java.lang.Error|-",
+      "label": "Generic tick stall",
+      "failure_kind": "watchdog_followup",
+      "count": 1
+    },
+    {
+      "fingerprint": "mod_runtime|create|java.lang.NullPointerException|create,neoforge",
+      "label": "Mod crash (create)",
+      "failure_kind": "mod_runtime",
+      "count": 1
+    },
+    {
+      "fingerprint": "watchdog_pregen|squaremap|java.lang.Error|squaremap",
+      "label": "Pregen / map stall (squaremap)",
+      "failure_kind": "watchdog_pregen",
+      "count": 1
+    },
+    {
+      "fingerprint": "watchdog|-|java.lang.Error|-",
+      "label": "Generic tick stall",
+      "failure_kind": "watchdog",
+      "count": 5
+    }
+  ]
+}

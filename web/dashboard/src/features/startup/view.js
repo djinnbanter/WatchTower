@@ -1,0 +1,275 @@
+import { html } from '../../lib/preact.js';
+import { reports } from '../../state/stores.js';
+import { navigate } from '../../app/router.js';
+import { Page, Section, EmptyState } from '../../ui/patterns/index.js';
+import { Badge, Button, Card } from '../../ui/primitives/index.js';
+import { Icon } from '../../ui/icons.js';
+
+function statusTone(status) {
+  const s = (status ?? '').toLowerCase();
+  if (s === 'ok' || s === 'healthy') return 'ok';
+  if (s === 'failed' || s === 'error') return 'danger';
+  if (s === 'warnings' || s === 'warning') return 'warn';
+  return 'neutral';
+}
+
+function statusWord(status) {
+  const s = (status ?? '').toLowerCase();
+  if (s === 'ok' || s === 'healthy') return 'Clean boot';
+  if (s === 'failed' || s === 'error') return 'Failed';
+  if (s === 'warnings' || s === 'warning') return 'Warnings';
+  if (s === 'unknown') return 'Incomplete profile';
+  return status ? String(status).replace(/_/g, ' ') : 'Unknown';
+}
+
+function formatSec(sec) {
+  if (sec == null || !Number.isFinite(Number(sec))) return '—';
+  const n = Number(sec);
+  if (n >= 100) return `${Math.round(n)}s`;
+  if (n >= 10) return `${n.toFixed(1)}s`;
+  return `${n.toFixed(2)}s`;
+}
+
+function formatDoneAt(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return d.toLocaleString();
+}
+
+function formatDelta(cmp) {
+  if (!cmp || cmp.delta_sec == null) return null;
+  const abs = Math.abs(Number(cmp.delta_sec));
+  const mag = abs >= 100 ? `${Math.round(abs)}s` : `${abs.toFixed(1)}s`;
+  const dir = (cmp.direction ?? '').toLowerCase();
+  if (dir === 'faster') return { label: `${mag} faster`, tone: 'ok' };
+  if (dir === 'slower') return { label: `${mag} slower`, tone: 'warn' };
+  if (dir === 'same') return { label: 'Same as last', tone: 'ok' };
+  const signed = Number(cmp.delta_sec);
+  if (signed > 0) return { label: `+${mag}`, tone: 'warn' };
+  if (signed < 0) return { label: `−${mag}`, tone: 'ok' };
+  return { label: mag, tone: 'neutral' };
+}
+
+function humanId(id) {
+  if (!id) return '—';
+  return String(id).replace(/_/g, ' ');
+}
+
+function phaseLabel(phases, phaseId) {
+  if (!phaseId) return '—';
+  const hit = (phases ?? []).find((p) => p.id === phaseId);
+  return hit?.label ?? humanId(phaseId);
+}
+
+function maxPhaseSec(phases) {
+  if (!phases?.length) return 0;
+  return Math.max(...phases.map((p) => Number(p.sec) || 0), 0.01);
+}
+
+function slowRankMap(slowest) {
+  const map = new Map();
+  (slowest ?? []).forEach((s, i) => {
+    if (s?.phase != null && !map.has(s.phase)) map.set(s.phase, i + 1);
+  });
+  return map;
+}
+
+export function PageView() {
+  const facts = reports.value?.facts;
+  const profile = facts?.optional?.startup_profile ?? null;
+
+  if (!profile) {
+    return html`
+      <${Page} title="Startup" subtitle="Last boot timeline and warnings">
+        <div class="ui-page__stack" data-tour="startup">
+          <${EmptyState}
+            title="No boot profile yet"
+            body="Run a report after the server reaches Done! to capture boot phases, warnings, and errors."
+            action=${html`
+              <${Button} kind="accent" size="sm" onClick=${() => navigate('overview')}>
+                Back to Overview
+              </${Button}>
+            `}
+          />
+        </div>
+      </${Page}>
+    `;
+  }
+
+  const {
+    total_sec,
+    status,
+    phases = [],
+    slowest = [],
+    warnings = [],
+    errors = [],
+    compare_to_last_boot,
+    done_at,
+  } = profile;
+
+  const phaseMax = maxPhaseSec(phases);
+  const tone = statusTone(status);
+  const delta = formatDelta(compare_to_last_boot);
+  const ranks = slowRankMap(slowest);
+  const blocking = errors.filter((e) => e.blocking).length;
+  const doneLabel = formatDoneAt(done_at);
+  const slowestLabel = slowest[0]
+    ? `${phaseLabel(phases, slowest[0].phase)} · ${formatSec(slowest[0].sec)}`
+    : null;
+
+  return html`
+    <${Page} title="Startup" subtitle="Last boot timeline and warnings">
+      <div class="ui-page__stack" data-tour="startup">
+
+        <section class=${`startup-hero startup-hero--${tone}`}>
+          <div class="startup-hero__main">
+            <div class="startup-hero__eyebrow">
+              <span class=${`startup-hero__dot startup-hero__dot--${tone}`}></span>
+              <span>${statusWord(status)}</span>
+              ${doneLabel ? html`<span class="startup-hero__sep">·</span><span>Finished ${doneLabel}</span>` : null}
+            </div>
+            <div class="startup-hero__time">${formatSec(total_sec)}</div>
+            <p class="startup-hero__caption">
+              ${slowestLabel
+                ? html`Slowest phase: <strong>${slowestLabel}</strong>`
+                : 'Boot timeline from the latest health report'}
+            </p>
+          </div>
+          <div class="startup-hero__stats">
+            <div class="startup-hero__stat">
+              <span class="startup-hero__stat-label">vs last boot</span>
+              <span class=${`startup-hero__stat-value${delta ? ` startup-hero__stat-value--${delta.tone}` : ''}`}>
+                ${delta?.label ?? '—'}
+              </span>
+            </div>
+            <div class="startup-hero__stat">
+              <span class="startup-hero__stat-label">Warnings</span>
+              <span class=${`startup-hero__stat-value${warnings.length ? ' startup-hero__stat-value--warn' : ''}`}>
+                ${warnings.length}
+              </span>
+            </div>
+            <div class="startup-hero__stat">
+              <span class="startup-hero__stat-label">Errors</span>
+              <span class=${`startup-hero__stat-value${errors.length ? ' startup-hero__stat-value--danger' : ''}`}>
+                ${errors.length}${blocking ? html`<span class="startup-hero__stat-note">${blocking} blocking</span>` : null}
+              </span>
+            </div>
+            <div class="startup-hero__stat">
+              <span class="startup-hero__stat-label">Phases</span>
+              <span class="startup-hero__stat-value">${phases.length || '—'}</span>
+            </div>
+          </div>
+        </section>
+
+        <${Section} title="Boot phases">
+          ${phases.length ? html`
+            <div class="startup-phases">
+              ${phases.map((p) => {
+                const sec = Number(p.sec) || 0;
+                const pct = Math.min(100, (sec / phaseMax) * 100);
+                const share = total_sec > 0 ? Math.round((sec / Number(total_sec)) * 100) : null;
+                const rank = ranks.get(p.id);
+                const isSlow = rank === 1;
+                return html`
+                  <div
+                    class=${`startup-phase${isSlow ? ' startup-phase--slow' : ''}${rank ? ' startup-phase--ranked' : ''}`}
+                    key=${p.id ?? p.label}
+                  >
+                    <div class="startup-phase__meta">
+                      <div class="startup-phase__title">
+                        ${rank ? html`<span class="startup-phase__rank" title=${`#${rank} slowest`}>${rank}</span>` : null}
+                        <span class="startup-phase__label">${p.label ?? humanId(p.id)}</span>
+                      </div>
+                      <div class="startup-phase__nums">
+                        ${share != null ? html`<span class="startup-phase__share">${share}%</span>` : null}
+                        <span class="startup-phase__sec">${formatSec(sec)}</span>
+                      </div>
+                    </div>
+                    <div class="startup-phase__bar" aria-hidden="true">
+                      <span style=${{ width: `${pct}%` }}></span>
+                    </div>
+                  </div>
+                `;
+              })}
+            </div>
+          ` : html`
+            <${EmptyState} title="No phases" body="Boot phase markers were not found in the log for this report." />
+          `}
+        </${Section}>
+
+        <div class="startup-split">
+          <${Section}
+            title="Warnings"
+            badge=${warnings.length ? html`<${Badge} tone="warn">${warnings.length}</${Badge}>` : html`<${Badge} tone="ok">0</${Badge}>`}
+          >
+            ${warnings.length ? html`
+              <div class="startup-list">
+                ${warnings.map((w) => html`
+                  <div class="startup-chip startup-chip--warn" key=${w.id}>
+                    <${Icon} name="alert-triangle" size=${14} />
+                    <span class="startup-chip__title">${humanId(w.id)}</span>
+                    <span class="startup-chip__meta">${w.count ?? 0}×</span>
+                  </div>
+                `)}
+              </div>
+            ` : html`
+              <div class="startup-empty startup-empty--ok">
+                <${Icon} name="check" size=${16} />
+                <span>No startup warnings</span>
+              </div>
+            `}
+          </${Section}>
+
+          <${Section}
+            title="Errors"
+            badge=${errors.length
+              ? html`<${Badge} tone="danger">${errors.length}</${Badge}>`
+              : html`<${Badge} tone="ok">0</${Badge}>`}
+          >
+            ${errors.length ? html`
+              <div class="startup-list">
+                ${errors.map((err, i) => html`
+                  <${Card}
+                    key=${`${err.mod_id ?? 'mod'}-${i}`}
+                    className=${`startup-error${err.blocking ? ' startup-error--blocking' : ''}`}
+                    padding="12"
+                    tone=${err.blocking ? 'danger' : 'warn'}
+                  >
+                    <div class="startup-error__head">
+                      <div class="startup-error__id">
+                        <${Icon} name="alert-triangle" size=${14} />
+                        <strong>${err.mod_id ?? 'unknown mod'}</strong>
+                      </div>
+                      <${Badge} tone=${err.blocking ? 'danger' : 'warn'}>
+                        ${err.blocking ? 'blocking' : 'non-blocking'}
+                      </${Badge}>
+                    </div>
+                    ${err.kind ? html`
+                      <p class="startup-error__kind">${humanId(err.kind)}</p>
+                    ` : null}
+                    ${err.mod_id ? html`
+                      <div class="startup-error__actions">
+                        <${Button}
+                          kind="neutral"
+                          size="sm"
+                          onClick=${() => navigate('mods', { view: 'overview', mod: err.mod_id })}
+                        >Open Mods</${Button}>
+                      </div>
+                    ` : null}
+                  </${Card}>
+                `)}
+              </div>
+            ` : html`
+              <div class="startup-empty startup-empty--ok">
+                <${Icon} name="check" size=${16} />
+                <span>No startup errors</span>
+              </div>
+            `}
+          </${Section}>
+        </div>
+
+      </div>
+    </${Page}>
+  `;
+}

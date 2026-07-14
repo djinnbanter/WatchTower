@@ -361,7 +361,15 @@ public final class LiveMetricsService {
         if (now - lastThermalScanEpoch >= 60) {
             lastThermalScanEpoch = now;
             try {
-                cachedThermal.set(ThermalCollector.collect());
+                JsonObject thermal = ThermalCollector.collect();
+                cachedThermal.set(thermal);
+                Double packageC = thermal.has("package_c") && !thermal.get("package_c").isJsonNull()
+                        ? thermal.get("package_c").getAsDouble() : null;
+                Double ambientC = thermal.has("ambient_c") && !thermal.get("ambient_c").isJsonNull()
+                        ? thermal.get("ambient_c").getAsDouble() : null;
+                if (packageC != null || ambientC != null) {
+                    store.appendThermal(now, packageC, ambientC);
+                }
             } catch (Exception e) {
                 WatchtowerMod.LOGGER.debug("Live thermal scan failed: {}", e.toString());
             }

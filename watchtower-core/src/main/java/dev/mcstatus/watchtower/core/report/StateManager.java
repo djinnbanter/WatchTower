@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,8 +39,21 @@ public final class StateManager {
         JsonObject preservedAcks = state.has("acknowledged_crashes")
                 ? state.getAsJsonObject("acknowledged_crashes").deepCopy()
                 : null;
+        JsonObject preservedIssueAcks = state.has("acknowledged_issues")
+                ? state.getAsJsonObject("acknowledged_issues").deepCopy()
+                : null;
+        JsonObject preservedInboxDismissals = state.has("inbox_dismissals")
+                ? state.getAsJsonObject("inbox_dismissals").deepCopy()
+                : null;
+        JsonObject preservedAckedGroups = state.has("acknowledged_groups")
+                ? state.getAsJsonObject("acknowledged_groups").deepCopy()
+                : null;
         JsonObject preservedClientIgnores = state.has("ignored_client_mods")
                 ? state.getAsJsonObject("ignored_client_mods").deepCopy()
+                : null;
+        JsonArray preservedSuppressions = state.has("suppressed_issues")
+                && state.get("suppressed_issues").isJsonArray()
+                ? state.getAsJsonArray("suppressed_issues").deepCopy()
                 : null;
         JsonObject preservedCrashIndex = state.has("crash_mtime_index")
                 ? state.getAsJsonObject("crash_mtime_index").deepCopy()
@@ -116,8 +130,20 @@ public final class StateManager {
         if (preservedAcks != null) {
             state.add("acknowledged_crashes", preservedAcks);
         }
+        if (preservedIssueAcks != null) {
+            state.add("acknowledged_issues", preservedIssueAcks);
+        }
+        if (preservedInboxDismissals != null) {
+            state.add("inbox_dismissals", preservedInboxDismissals);
+        }
+        if (preservedAckedGroups != null) {
+            state.add("acknowledged_groups", preservedAckedGroups);
+        }
         if (preservedClientIgnores != null) {
             state.add("ignored_client_mods", preservedClientIgnores);
+        }
+        if (preservedSuppressions != null) {
+            state.add("suppressed_issues", preservedSuppressions);
         }
         if (preservedCrashIndex != null) {
             state.add("crash_mtime_index", preservedCrashIndex);
@@ -186,6 +212,171 @@ public final class StateManager {
             return new JsonObject();
         }
         return state.getAsJsonObject("acknowledged_crashes").deepCopy();
+    }
+
+    /**
+     * Acknowledge many crash files in one write. Source of truth remains per-file acks.
+     */
+    public static int acknowledgeAllCrashes(
+            Path statePath,
+            Collection<String> crashFiles,
+            Instant when,
+            String by) throws IOException {
+        if (crashFiles == null || crashFiles.isEmpty()) {
+            return 0;
+        }
+        JsonObject state = loadState(statePath);
+        JsonObject acks = state.has("acknowledged_crashes")
+                ? state.getAsJsonObject("acknowledged_crashes")
+                : new JsonObject();
+        int n = 0;
+        Instant at = when != null ? when : Instant.now();
+        for (String crashFile : crashFiles) {
+            if (crashFile == null || crashFile.isBlank()) {
+                continue;
+            }
+            if (isCrashAcked(acks, crashFile)) {
+                continue;
+            }
+            storeAckKeys(acks, crashFile, buildAckRecord(at, by, null, null));
+            n++;
+        }
+        if (n > 0) {
+            state.add("acknowledged_crashes", acks);
+            writeState(statePath, state);
+        }
+        return n;
+    }
+
+    public static void recordAcknowledgedGroup(
+            Path statePath,
+            String fingerprint,
+            Instant when,
+            String by,
+            int memberCount) throws IOException {
+        if (fingerprint == null || fingerprint.isBlank()) {
+            return;
+        }
+        JsonObject state = loadState(statePath);
+        JsonObject groups = state.has("acknowledged_groups")
+                ? state.getAsJsonObject("acknowledged_groups")
+                : new JsonObject();
+        JsonObject record = new JsonObject();
+        Instant at = when != null ? when : Instant.now();
+        record.addProperty("ackedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
+        record.addProperty("by", by != null && !by.isBlank() ? by : "dashboard");
+        record.addProperty("member_count", memberCount);
+        groups.add(fingerprint, record);
+        state.add("acknowledged_groups", groups);
+        writeState(statePath, state);
+    }
+
+    public static JsonObject getInboxDismissals(Path statePath) throws IOException {
+        JsonObject state = loadState(statePath);
+        if (!state.has("inbox_dismissals")) {
+            return new JsonObject();
+        }
+        return state.getAsJsonObject("inbox_dismissals").deepCopy();
+    }
+
+    public static JsonObject getAcknowledgedIssues(Path statePath) throws IOException {
+        JsonObject state = loadState(statePath);
+        if (!state.has("acknowledged_issues")) {
+            return new JsonObject();
+        }
+        return state.getAsJsonObject("acknowledged_issues").deepCopy();
+    }
+
+    /**
+     * Acknowledge a stable issue key (e.g. {@code issue:DISK_HIGH}, {@code lag:…}, {@code mod:create}).
+     */
+    public static void acknowledgeIssue(Path statePath, String issueId, Instant when, String by)
+            throws IOException {
+        if (issueId == null || issueId.isBlank()) {
+            return;
+        }
+        JsonObject state = loadState(statePath);
+        JsonObject acks = state.has("acknowledged_issues")
+                ? state.getAsJsonObject("acknowledged_issues")
+                : new JsonObject();
+        JsonObject record = new JsonObject();
+        Instant at = when != null ? when : Instant.now();
+        record.addProperty("ackedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
+        record.addProperty("by", by != null && !by.isBlank() ? by : "dashboard");
+        acks.add(issueId.trim(), record);
+        state.add("acknowledged_issues", acks);
+        writeState(statePath, state);
+    }
+
+    public static void unacknowledgeIssue(Path statePath, String issueId) throws IOException {
+        if (issueId == null || issueId.isBlank()) {
+            return;
+        }
+        JsonObject state = loadState(statePath);
+        if (!state.has("acknowledged_issues")) {
+            return;
+        }
+        JsonObject acks = state.getAsJsonObject("acknowledged_issues");
+        acks.remove(issueId.trim());
+        state.add("acknowledged_issues", acks);
+        writeState(statePath, state);
+    }
+
+    /**
+     * Acknowledge many issue keys in one write. Returns how many newly acked.
+     */
+    public static int acknowledgeAllIssues(
+            Path statePath,
+            Collection<String> issueIds,
+            Instant when,
+            String by) throws IOException {
+        if (issueIds == null || issueIds.isEmpty()) {
+            return 0;
+        }
+        JsonObject state = loadState(statePath);
+        JsonObject acks = state.has("acknowledged_issues")
+                ? state.getAsJsonObject("acknowledged_issues")
+                : new JsonObject();
+        Instant at = when != null ? when : Instant.now();
+        String who = by != null && !by.isBlank() ? by : "dashboard";
+        int n = 0;
+        for (String issueId : issueIds) {
+            if (issueId == null || issueId.isBlank()) {
+                continue;
+            }
+            String key = issueId.trim();
+            if (acks.has(key)) {
+                continue;
+            }
+            JsonObject record = new JsonObject();
+            record.addProperty("ackedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
+            record.addProperty("by", who);
+            acks.add(key, record);
+            n++;
+        }
+        if (n > 0) {
+            state.add("acknowledged_issues", acks);
+            writeState(statePath, state);
+        }
+        return n;
+    }
+
+    public static void dismissInboxItem(Path statePath, String itemId, Instant when, String by)
+            throws IOException {
+        if (itemId == null || itemId.isBlank()) {
+            return;
+        }
+        JsonObject state = loadState(statePath);
+        JsonObject dismissals = state.has("inbox_dismissals")
+                ? state.getAsJsonObject("inbox_dismissals")
+                : new JsonObject();
+        JsonObject record = new JsonObject();
+        Instant at = when != null ? when : Instant.now();
+        record.addProperty("dismissedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
+        record.addProperty("by", by != null && !by.isBlank() ? by : "dashboard");
+        dismissals.add(itemId, record);
+        state.add("inbox_dismissals", dismissals);
+        writeState(statePath, state);
     }
 
     public static void ignoreClientMod(Path statePath, String modId, Instant when) throws IOException {
@@ -414,6 +605,20 @@ public final class StateManager {
 
     public static JsonObject loadStateObject(Path statePath) throws IOException {
         return loadState(statePath);
+    }
+
+    public static JsonArray getSuppressedIssues(Path statePath) throws IOException {
+        JsonObject state = loadState(statePath);
+        if (!state.has("suppressed_issues") || !state.get("suppressed_issues").isJsonArray()) {
+            return new JsonArray();
+        }
+        return state.getAsJsonArray("suppressed_issues").deepCopy();
+    }
+
+    public static void setSuppressedIssues(Path statePath, JsonArray suppressed) throws IOException {
+        JsonObject state = loadState(statePath);
+        state.add("suppressed_issues", suppressed != null ? suppressed.deepCopy() : new JsonArray());
+        writeState(statePath, state);
     }
 
     private static JsonObject loadState(Path path) throws IOException {

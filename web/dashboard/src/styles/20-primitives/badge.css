@@ -1,0 +1,75 @@
+/* === Badge === */
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-sp-4);
+  padding: 0 var(--ui-sp-8);
+  height: 20px;
+  border-radius: var(--ui-rad-m);
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: var(--ui-bg3);
+  color: var(--ui-text-mid);
+  border: 1px solid transparent;
+}
+
+/* Tone variants */
+.ui-badge--ok {
+  background: var(--ui-ok-soft);
+  color: var(--ui-ok);
+  border-color: color-mix(in srgb, var(--ui-ok) 22%, transparent);
+}
+
+.ui-badge--warn {
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+  border-color: color-mix(in srgb, var(--ui-warn) 22%, transparent);
+}
+
+.ui-badge--danger {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+  border-color: color-mix(in srgb, var(--ui-danger) 22%, transparent);
+}
+
+.ui-badge--info {
+  background: var(--ui-info-soft);
+  color: var(--ui-info);
+  border-color: color-mix(in srgb, var(--ui-info) 22%, transparent);
+}
+
+.ui-badge--neutral {
+  background: var(--ui-bg3);
+  color: var(--ui-text-mid);
+}
+
+.ui-badge--src-live {
+  background: var(--ui-ok-soft);
+  color: var(--ui-src-live);
+}
+
+.ui-badge--src-scan {
+  background: var(--ui-info-soft);
+  color: var(--ui-src-scan);
+}
+
+.ui-badge--src-report {
+  background: var(--ui-bg3);
+  color: var(--ui-src-report);
+}
+
+/* Pulse dot prefix */
+.ui-badge--pulse::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ui-rad-full);
+  background: currentColor;
+  animation: ui-live-pulse 2s var(--ui-ease-inout) infinite;
+  flex-shrink: 0;
+}

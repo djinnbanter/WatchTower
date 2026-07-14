@@ -1,0 +1,61 @@
+{
+  "schema": "crash-intelligence-v1",
+  "failure_kinds": ["mod_runtime","mod_load_dependency","mod_load_script","world_nbt_corrupt","watchdog","watchdog_followup","watchdog_pregen","host_resource","loader","unknown"],
+  "cases": {
+    "create-npe": {
+      "file": "create-npe.txt",
+      "expected": {
+        "failure_kind": "mod_runtime",
+        "primary_mod_id": "create",
+        "category": "mod"
+      }
+    },
+    "nbt-corrupt": {
+      "file": "nbt-corrupt.txt",
+      "expected": {
+        "failure_kind": "world_nbt_corrupt",
+        "category": "host_resource"
+      }
+    },
+    "watchdog-seconds": {
+      "file": "watchdog-seconds.txt",
+      "expected": {
+        "failure_kind": "watchdog",
+        "watchdog_tick_ms": 60000,
+        "category": "host_resource"
+      }
+    },
+    "watchdog-pregen": {
+      "file": "watchdog-pregen.txt",
+      "expected": {
+        "failure_kind": "watchdog_pregen",
+        "stall_mod_id": "squaremap",
+        "primary_mod_id": "squaremap",
+        "watchdog_tick_ms": 60000,
+        "category": "host_resource"
+      }
+    },
+    "fml-multiblock": {
+      "file": "fml-multiblock.log",
+      "expected": {
+        "fml_issues_length": 3
+      }
+    },
+    "boot-loot": {
+      "file": "boot-loot.log",
+      "expected": {
+        "startup_profile": {
+          "total_sec": 142.3,
+          "pride_blocking": false
+        }
+      }
+    },
+    "create-npe-paired": {
+      "files": ["create-npe.txt", "create-npe-paired-watchdog.txt"],
+      "expected": {
+        "same_incident_id": true,
+        "followup_failure_kind": "watchdog_followup"
+      }
+    }
+  }
+}

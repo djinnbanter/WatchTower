@@ -6,9 +6,9 @@ This guide is for server owners installing Watchtower on a **Linux** server runn
 
 ## At a glance
 
-- **Download:** `watchtower-neoforge-1.0.0+mc1.21.jar` from [GitHub Releases](https://github.com/djinnbanter/WatchTower/releases) or [Modrinth](https://modrinth.com/mod/watchtower)
+- **Download:** `watchtower-neoforge-1.1.0+mc1.21.jar` from [GitHub Releases](https://github.com/djinnbanter/WatchTower/releases) or [Modrinth](https://modrinth.com/mod/watchtower)
 - **Where it goes:** your server's **`mods/`** folder
-- **Recovery tool (optional):** `watchtower-cli-1.0.0.jar` in the same folder
+- **Recovery tool (optional):** `watchtower-cli-1.1.0.jar` in the same folder
 - **After start:** a **`watchtower/`** folder appears next to your world
 - **Next step:** [[Quick Start Checklist]]
 
@@ -26,7 +26,7 @@ This guide is for server owners installing Watchtower on a **Linux** server runn
 
 ## Install steps
 
-1. Download **`watchtower-neoforge-1.0.0+mc1.21.jar`** from [[Downloads and Releases]]
+1. Download **`watchtower-neoforge-1.1.0+mc1.21.jar`** from [[Downloads and Releases]]
 2. Copy it into your server's **`mods/`** folder
 3. Start (or restart) the server
 4. Check the console for Watchtower messages and confirm a **`watchtower/`** folder exists
@@ -42,7 +42,7 @@ On first start, Watchtower creates a **`watchtower/`** folder on your server wit
 
 ## Technical details
 
-**Recovery CLI JAR:** `watchtower-cli-1.0.0.jar` is not loaded as a mod. Keeping it in `mods/` is convenient so you can run recovery commands from SSH.
+**Recovery CLI JAR:** `watchtower-cli-1.1.0.jar` is not loaded as a mod. Keeping it in `mods/` is convenient so you can run recovery commands from SSH.
 
 **Files created on first start** (under `<server>/watchtower/`):
 
@@ -54,8 +54,26 @@ See [[On-disk Files]] for a full list.
 
 ---
 
+## Privacy (optional Modrinth lookup)
+
+By default Watchtower stays fully local — reports and the dashboard never call the internet for mod classification.
+
+If you turn on **Modrinth lookup** in **Settings → Monitoring** (or set `MODRINTH_LOOKUP=true` in `watchtower.conf`):
+
+- It runs **only during a full report** (Run Report / scheduled report) — opening the Mods or Crashes tab does not call Modrinth
+- Watchtower may send **SHA-512 hashes of jar files** to `api.modrinth.com` to refine ambiguous client/server-side guesses and resolve project/version links
+- Results can power accurate **Crashes** Modrinth buttons and optional “update available” hints — Watchtower **never downloads jars** into `mods/`
+- No API key is required; hashes are anonymous fingerprints of the jar contents (not your world, logs, or player data)
+- Results are cached in `watchtower/modrinth-cache.json`
+- Leave the setting off to keep zero Modrinth network traffic
+
+On the Mods → Client-only page, Modrinth-backed rows show signal chips such as `modrinth:client_only` after that report finishes.
+
+---
+
 ## See also
 
 - [[Quick Start Checklist]]
 - [[Dashboard Overview]]
+- [[Crash Rule Packs]] — optional YAML matchers under `config/watchtower/rules/`
 - [[Downloads and Releases]]

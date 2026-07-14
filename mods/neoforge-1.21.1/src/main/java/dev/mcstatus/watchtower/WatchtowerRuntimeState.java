@@ -13,6 +13,9 @@ public final class WatchtowerRuntimeState {
     private volatile String lastFactsPath = "";
     private volatile String lastFullPath = "";
     private volatile boolean reportRunning;
+    private volatile String reportStage = "";
+    private volatile String reportStageLabel = "";
+    private volatile String reportStageDetail = "";
     private volatile int lastActiveIssueCount;
     private volatile int lastHistoricalIssueCount;
     private volatile List<FactsReader.IssueSummary> lastActiveIssues = List.of();
@@ -22,8 +25,21 @@ public final class WatchtowerRuntimeState {
             return false;
         }
         reportRunning = true;
+        reportStage = "";
+        reportStageLabel = "";
+        reportStageDetail = "";
         lastReportStarted = Instant.now();
         return true;
+    }
+
+    public synchronized void setReportStage(String stage, String label) {
+        reportStage = stage == null ? "" : stage;
+        reportStageLabel = label == null ? "" : label;
+        reportStageDetail = "";
+    }
+
+    public synchronized void setReportDetail(String detail) {
+        reportStageDetail = detail == null ? "" : detail;
     }
 
     public synchronized void finishReport(
@@ -35,6 +51,9 @@ public final class WatchtowerRuntimeState {
             FactsReader.IssueCounts issueCounts
     ) {
         reportRunning = false;
+        reportStage = "";
+        reportStageLabel = "";
+        reportStageDetail = "";
         lastReportFinished = Instant.now();
         lastReportSuccess = success;
         lastReportMessage = message == null ? "" : message;
@@ -56,6 +75,18 @@ public final class WatchtowerRuntimeState {
 
     public boolean isReportRunning() {
         return reportRunning;
+    }
+
+    public String getReportStage() {
+        return reportStage;
+    }
+
+    public String getReportStageLabel() {
+        return reportStageLabel;
+    }
+
+    public String getReportStageDetail() {
+        return reportStageDetail;
     }
 
     public Optional<Instant> getLastReportStarted() {

@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
-import me.lucko.spark.proto.SparkSamplerProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkSamplerProtos;
 
 import java.io.IOException;
 import java.nio.file.Files;

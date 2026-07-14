@@ -1,0 +1,6 @@
+{
+  "mods": [
+    { "id": "create", "version": "6.0.4", "jar_file": "create-6.0.4.jar" },
+    { "id": "railways", "version": "1.6.5", "jar_file": "Railway-1.6.5.jar" }
+  ]
+}

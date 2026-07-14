@@ -1,0 +1,6 @@
+---- Minecraft Crash Report ----
+// Epic Fight addon CNFE (synthetic CA-10)
+
+java.lang.ClassNotFoundException: yesman.epicfight.api.animation.types.StaticAnimation
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+	at com.example.epicaddon.EpicHook.init(EpicHook.java:18)

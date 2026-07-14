@@ -17,6 +17,16 @@ import {
   mockModsInventoryTldr,
   mockReportMods,
 } from './mock-mods-catalog.mjs';
+import {
+  clamp,
+  round1,
+  round2,
+  playerTarget,
+  createSimState,
+  stepSim,
+  generateCorrelatedLiveSamples,
+  gauss,
+} from '../src/api/mock-physics.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(root, 'data');
@@ -27,51 +37,9 @@ function isoAt(ms) {
   return new Date(ms).toISOString();
 }
 
-function wave(t, base, amp, period = 1) {
-  return base + amp * Math.sin((t / period) * Math.PI * 2);
-}
-
-function clamp(v, min, max) {
-  return Math.min(max, Math.max(min, v));
-}
-
-function round1(v) {
-  return Math.round(v * 10) / 10;
-}
-
-function round2(v) {
-  return Math.round(v * 100) / 100;
-}
-
-/** 0=Sun … 6=Sat — realistic player curve for heatmap preview */
+/** Alias — heatmap / rollups share the diurnal player curve. */
 function mockHeatmapPlayers(dow, hour) {
-  const weekend = dow === 0 || dow === 6;
-  const friday = dow === 5;
-
-  if (hour >= 5 && hour <= 8) return 0.2 + (hour - 5) * 0.15;
-  if (hour >= 9 && hour <= 11) return weekend ? 1.6 + hour * 0.2 : 0.35 + (hour - 9) * 0.3;
-
-  if (weekend) {
-    if (hour >= 12 && hour <= 16) return 3.2 + (hour - 12) * 1.15 + (dow === 6 ? 1.4 : 0.6);
-    if (hour >= 17 && hour <= 22) {
-      if (hour === 20) return dow === 6 ? 10.2 : 8.8;
-      if (hour === 21) return dow === 6 ? 9.4 : 7.6;
-      if (hour === 19 || hour === 22) return dow === 6 ? 7.2 : 5.8;
-      return dow === 6 ? 5.5 : 4.2;
-    }
-    if (hour >= 23 || hour <= 4) return hour <= 4 ? 3.8 - hour * 0.45 : 3.4;
-    return 1.4;
-  }
-
-  if (hour >= 17 && hour <= 22) {
-    const base = friday ? 5.5 : 4;
-    const peak = hour === 20 ? 3.2 : hour === 21 ? 2.6 : hour === 19 ? 1.6 : hour === 18 ? 0.9 : 0.5;
-    return base + peak + (friday && hour >= 21 ? 0.8 : 0);
-  }
-  if (hour >= 12 && hour <= 14) return 1 + (hour === 13 ? 1.1 : 0);
-  if (hour >= 23 || hour <= 4) return friday ? 2.8 - Math.min(hour, 4 - hour) * 0.25 : 1.4 - hour * 0.1;
-  if (hour >= 13 && hour <= 16) return 0.55 + (hour - 13) * 0.18;
-  return 0.2 + (hour % 3) * 0.08;
+  return playerTarget(dow, hour);
 }
 
 function mockHeatmapCell(dow, hour) {
@@ -136,53 +104,8 @@ function busyHoursInsightDetail(busyHours) {
   return busyHours.map((h) => `${h.label.replace(' UTC', '')} (avg ${h.avg_players} players)`).join('; ');
 }
 
-function generateSeries(now, {
-  count = 120,
-  stepMs = 30_000,
-  base,
-  spread,
-  min,
-  max,
-  period = 12,
-}) {
-  const out = [];
-  for (let i = count - 1; i >= 0; i -= 1) {
-    const t = now - i * stepMs;
-    const wobble = (Math.random() - 0.5) * spread * 0.35;
-    const v = clamp(wave(i, base, spread, period) + wobble, min, max);
-    out.push({ t: isoAt(t), v: Math.round(v * 100) / 100 });
-  }
-  return out;
-}
-
-function generateLiveSamples(now) {
-  const count = 120;
-  const stepMs = 30_000;
-  return {
-    tps: generateSeries(now, { count, stepMs, base: 19.7, spread: 0.35, min: 17.5, max: 20, period: 18 }),
-    mspt: generateSeries(now, { count, stepMs, base: 6.5, spread: 4, min: 2, max: 38, period: 9 }),
-    host_cpu: generateSeries(now, { count, stepMs, base: 44, spread: 18, min: 12, max: 88, period: 14 }),
-    heap_mb: generateSeries(now, { count, stepMs, base: 5800, spread: 900, min: 4200, max: 7200, period: 20 }),
-    mem_available_gb: generateSeries(now, { count, stepMs, base: 12.8, spread: 2.2, min: 8, max: 18, period: 24 }),
-    disk_use_pct: generateSeries(now, { count, stepMs, base: 42, spread: 3, min: 38, max: 48, period: 40 }),
-    players: generateSeries(now, { count, stepMs, base: 2.2, spread: 1.5, min: 0, max: 6, period: 8 }).map((p) => ({
-      t: p.t,
-      v: Math.round(p.v),
-    })),
-  };
-}
-
-function generateDiskIoHistory(now, count = 60, stepMs = 30_000) {
-  const out = [];
-  for (let i = count - 1; i >= 0; i -= 1) {
-    const t = now - i * stepMs;
-    out.push({
-      t: isoAt(t),
-      read: Math.round(clamp(wave(i, 28, 18, 11) + (Math.random() - 0.5) * 8, 0.5, 420) * 10) / 10,
-      write: Math.round(clamp(wave(i, 12, 9, 8) + (Math.random() - 0.5) * 5, 0.2, 160) * 10) / 10,
-    });
-  }
-  return out;
+function generateLiveBundle(now) {
+  return generateCorrelatedLiveSamples(now, { count: 720, stepMs: 30_000 });
 }
 
 function generatePerformanceRollups(now, { hours = 24, stepSec = 60 } = {}) {
@@ -195,35 +118,49 @@ function generatePerformanceRollups(now, { hours = 24, stepSec = 60 } = {}) {
   const msptP95s = [];
   let playersMax = 0;
 
+  const state = createSimState(null, now - (rowCount - 1) * stepSec * 1000);
+
   for (let i = rowCount - 1; i >= 0; i -= 1) {
     const t = now - i * stepSec * 1000;
-    const d = new Date(t);
-    const dow = d.getUTCDay();
-    const hour = d.getUTCHours();
-    const playerBase = mockHeatmapPlayers(dow, hour);
-    const players = Math.round(clamp(playerBase + (Math.random() - 0.5) * 1.4, 0, 12));
-    const busy = players >= 3;
-    const tpsBase = busy ? 18.2 : 19.6;
-    const tps = clamp(tpsBase + (Math.random() - 0.5) * 0.8, 14, 20);
-    const mspt = clamp((busy ? 12 : 6) + (Math.random() - 0.5) * 8 + players * 1.2, 2, 55);
+    // Several physics steps per rollup bucket for smoother averages
+    const sub = Math.max(1, Math.round(stepSec / 30));
+    let tpsAcc = 0;
+    let msptAcc = 0;
+    let msptPeak = 0;
+    let cpuAcc = 0;
+    let heapAcc = 0;
+    let playersPeak = 0;
+    for (let s = 0; s < sub; s += 1) {
+      const m = stepSim(state, t - (sub - 1 - s) * 30_000, 30);
+      tpsAcc += m.tps;
+      msptAcc += m.mspt;
+      msptPeak = Math.max(msptPeak, m.mspt);
+      cpuAcc += m.host_cpu;
+      heapAcc += m.heap_mb;
+      playersPeak = Math.max(playersPeak, m.players);
+    }
+    const tps = tpsAcc / sub;
+    const mspt = msptAcc / sub;
+    const players = playersPeak;
     const lowTps = tps < 19.5;
-    if (lowTps) lowTpsMinutes += 1;
+    if (lowTps) lowTpsMinutes += Math.max(1, Math.round(stepSec / 60));
     tpsSum += tps;
     msptSum += mspt;
     tpsMins.push(tps);
-    msptP95s.push(mspt);
+    msptP95s.push(msptPeak);
     playersMax = Math.max(playersMax, players);
+    const jitter = round1(clamp(msptPeak - mspt + Math.abs(gauss()) * 2, 0.5, 40));
     rows.push({
       ts: isoAt(t),
-      tps_avg: Math.round(tps * 100) / 100,
-      tps_min: Math.round((tps - 0.3) * 100) / 100,
-      mspt_avg: Math.round(mspt * 10) / 10,
-      mspt_p95: Math.round((mspt + 4) * 10) / 10,
-      mspt_jitter_max: Math.round((2 + Math.random() * 6) * 10) / 10,
+      tps_avg: round2(tps),
+      tps_min: round2(Math.max(4, tps - (msptPeak > 50 ? 1.5 : 0.25))),
+      mspt_avg: round1(mspt),
+      mspt_p95: round1(msptPeak),
+      mspt_jitter_max: jitter,
       players_max: players,
-      heap_used_gb_avg: Math.round((5.6 + Math.random() * 0.4) * 100) / 100,
-      mem_used_gb_avg: Math.round((12 + Math.random() * 2) * 100) / 100,
-      cpu_pct_avg: Math.round(clamp(busy ? 62 : 38, 10, 92) * 10) / 10,
+      heap_used_gb_avg: round2(heapAcc / sub / 1024),
+      mem_used_gb_avg: round2(clamp(32 - state.memAvail, 8, 28)),
+      cpu_pct_avg: round1(cpuAcc / sub),
       low_tps_flag: lowTps,
     });
   }
@@ -232,11 +169,11 @@ function generatePerformanceRollups(now, { hours = 24, stepSec = 60 } = {}) {
     enabled: true,
     hours,
     summary: {
-      sample_minutes: rows.length,
-      tps_avg: Math.round((tpsSum / rows.length) * 100) / 100,
-      tps_min: Math.round(Math.min(...tpsMins) * 100) / 100,
-      mspt_avg: Math.round((msptSum / rows.length) * 10) / 10,
-      mspt_p95: Math.round(Math.max(...msptP95s) * 10) / 10,
+      sample_minutes: rows.length * Math.max(1, Math.round(stepSec / 60)),
+      tps_avg: round2(tpsSum / rows.length),
+      tps_min: round2(Math.min(...tpsMins)),
+      mspt_avg: round1(msptSum / rows.length),
+      mspt_p95: round1(Math.max(...msptP95s)),
       low_tps_minutes: lowTpsMinutes,
       players_max: playersMax,
     },
@@ -410,16 +347,36 @@ function generateDailySeries(now, days) {
     const date = new Date(dayMs).toISOString().slice(0, 10);
     const dow = new Date(dayMs).getUTCDay();
     const weekend = dow === 0 || dow === 6;
+    let playersPeak = 0;
+    let msptAcc = 0;
+    let tpsAcc = 0;
+    let lowMins = 0;
+    for (let h = 0; h < 24; h += 1) {
+      const p = playerTarget(dow, h);
+      const players = Math.round(clamp(p, 0, 12));
+      playersPeak = Math.max(playersPeak, players);
+      let mspt = 3.8 + players * 2.4;
+      if (players >= 7) mspt += (players - 6) * 2.5;
+      if (h >= 19 && h <= 22) mspt += 1.5;
+      if (weekend) mspt += 1.2;
+      mspt += (d % 5) * 0.15;
+      const tps = mspt <= 50
+        ? clamp(20 - Math.max(0, mspt - 40) * 0.12, 18.5, 20)
+        : clamp(1000 / mspt, 8, 19.8);
+      msptAcc += mspt;
+      tpsAcc += tps;
+      if (tps < 19.5) lowMins += weekend ? 6 : 3;
+    }
     daily.push({
       date,
       minutes: 1440,
-      tps_avg: round2(19.35 - (d % 9) * 0.04 - (weekend ? 0.15 : 0)),
-      mspt_avg: round1(11.2 + (d % 11) * 0.75 + (weekend ? 1.4 : 0)),
-      mspt_p95: round1(25 + (d % 10) * 1.6 + (weekend ? 4 : 0)),
-      players_peak: weekend ? 8 + (d % 4) : 5 + (d % 5),
-      heap_avg: round2(5.65 + (d % 7) * 0.08),
-      cpu_avg: Math.round(36 + (d % 8) * 2.2 + (weekend ? 6 : 0)),
-      low_tps_minutes: Math.round((weekend ? 10 : 6) + (d % 6) * 1.5),
+      tps_avg: round2(tpsAcc / 24),
+      mspt_avg: round1(msptAcc / 24),
+      mspt_p95: round1(msptAcc / 24 + (weekend ? 16 : 11) + (d % 5) * 1.1),
+      players_peak: playersPeak,
+      heap_avg: round2(5.4 + playersPeak * 0.08 + (d % 7) * 0.04),
+      cpu_avg: Math.round(clamp(26 + playersPeak * 3.8 + (weekend ? 5 : 0) + (d % 4), 18, 85)),
+      low_tps_minutes: Math.round(lowMins + (d % 6)),
     });
   }
   return daily;
@@ -638,10 +595,10 @@ function generateWeekNormalFixture(now) {
   return rollups;
 }
 
-function generateCpuCores(count = 8) {
+function generateCpuCores(count = 8, hostCpu = 42) {
   return Array.from({ length: count }, (_, id) => ({
     id,
-    pct: Math.round(clamp(35 + Math.sin(id) * 18 + (Math.random() - 0.5) * 12, 4, 96) * 10) / 10,
+    pct: round1(clamp(hostCpu * (0.55 + (id % 3) * 0.12) + Math.sin(id * 1.7) * 10 + gauss() * 6, 3, 99)),
   }));
 }
 
@@ -654,33 +611,22 @@ function generateByDimension() {
   ];
 }
 
-function generateBandwidthHistory(now, count = 60, stepMs = 30_000) {
-  const out = [];
-  for (let i = count - 1; i >= 0; i -= 1) {
-    const t = now - i * stepMs;
-    out.push({
-      t: isoAt(t),
-      rx: Math.round(clamp(wave(i, 14, 8, 10) + (Math.random() - 0.5) * 3, 0.5, 45) * 10) / 10,
-      tx: Math.round(clamp(wave(i, 3.5, 2.5, 7) + (Math.random() - 0.5) * 1.2, 0.2, 18) * 10) / 10,
-    });
-  }
-  return out;
-}
-
-function latestFromSamples(samples, now) {
+function latestFromSamples(samples, now, simMeta = null) {
   const last = (key) => samples[key]?.[samples[key].length - 1]?.v;
+  const heapUsed = Math.round(last('heap_mb') ?? 5800);
+  const players = Math.round(last('players') ?? 2);
   return {
     tps: last('tps') ?? 19.8,
     mspt: last('mspt') ?? 5.2,
-    players_online: Math.round(last('players') ?? 2),
-    entities: 1247,
-    chunks: 3842,
+    players_online: players,
+    entities: simMeta?.entities ?? 1247,
+    chunks: simMeta?.chunks ?? 3842,
     host_cpu_pct: last('host_cpu') ?? 42,
-    heap_mb: { used: Math.round(last('heap_mb') ?? 5800), committed: 8192, max: 8192 },
+    heap_mb: { used: heapUsed, committed: 8192, max: 8192 },
     mem_available_gb: last('mem_available_gb') ?? 12.5,
     disk_use_pct: last('disk_use_pct') ?? 42,
     world_gb: 18.4,
-    java_rss_gb: 10.2,
+    java_rss_gb: round2(clamp(heapUsed / 1024 + 3.8 + players * 0.15, 6, 16)),
     by_dimension: generateByDimension(),
     sample_interval_sec: 1,
     retention_hours: 2160,
@@ -903,13 +849,14 @@ function generateOpsCache(now, performanceRollups) {
     _mock_incident: generateMockLagIncident(now, incidentId, pinnedAt),
     crashes: {
       scanned_at: offsetIso(now, -45_000),
-      count: 3,
-      unreviewed: 2,
+      count: 13,
+      unreviewed: 12,
+      unreviewed_groups: 11,
       latest: {
         file: 'crash-2026-06-22_14-33-07-server.txt',
         mtime: Math.floor((now - 45 * 60_000) / 1000),
         size: 28410,
-        display_label: 'Create contraption tick overflow — block entity update took too long',
+        display_label: 'Create contraption collision — mf.axis null (evidence-backed)',
         source: 'scan',
       },
       entries: [
@@ -917,7 +864,14 @@ function generateOpsCache(now, performanceRollups) {
           file: 'crash-2026-06-22_14-33-07-server.txt',
           mtime: Math.floor((now - 45 * 60_000) / 1000),
           size: 28410,
-          display_label: 'Create contraption tick overflow — block entity update took too long',
+          display_label: 'Create contraption collision — mf.axis null (evidence-backed)',
+          source: 'scan',
+        },
+        {
+          file: 'crash-2026-07-10_19-04-12-server.txt',
+          mtime: Math.floor((now - 6 * 3600_000) / 1000),
+          size: 22104,
+          display_label: 'Create crashed while ticking — BeltBlockEntity (no contraption evidence)',
           source: 'scan',
         },
         {
@@ -928,11 +882,75 @@ function generateOpsCache(now, performanceRollups) {
           source: 'scan',
         },
         {
+          file: 'crash-2026-06-18_08-13-50-server.txt',
+          mtime: Math.floor((now - 4 * 3600_000 + 60_000) / 1000),
+          size: 48102,
+          display_label: 'Watchdog follow-up — paired with primary hang',
+          source: 'scan',
+        },
+        {
+          file: 'crash-2026-06-19_11-02-18-server.txt',
+          mtime: Math.floor((now - 2 * 3600_000) / 1000),
+          size: 47011,
+          display_label: 'Watchdog timeout — Chunky pregen stall',
+          source: 'scan',
+        },
+        {
+          file: 'crash-2026-07-11_02-15-33-server.txt',
+          mtime: Math.floor((now - 18 * 3600_000) / 1000),
+          size: 31200,
+          display_label: 'Corrupt world NBT — Unexpected end of ZLIB input stream',
+          source: 'scan',
+        },
+        {
+          file: 'crash-2026-07-09_21-48-01-server.txt',
+          mtime: Math.floor((now - 2 * 24 * 3600_000) / 1000),
+          size: 19840,
+          display_label: 'Mixin init failed — create.mixins.json',
+          source: 'scan',
+        },
+        {
+          file: 'crash-2026-07-06_09-33-12-server.txt',
+          mtime: Math.floor((now - 5 * 24 * 3600_000) / 1000),
+          size: 17600,
+          display_label: 'Mixin conflict — create vs createaddition',
+          source: 'scan',
+        },
+        {
+          file: 'crash-2026-07-05_14-01-55-server.txt',
+          mtime: Math.floor((now - 6 * 24 * 3600_000) / 1000),
+          size: 14200,
+          display_label: 'Duplicate mods — create installed twice',
+          source: 'scan',
+        },
+        {
+          file: 'crash-2026-07-08_16-22-44-server.txt',
+          mtime: Math.floor((now - 3 * 24 * 3600_000) / 1000),
+          size: 15420,
+          display_label: 'Java version mismatch — LuckPerms needs Java 21',
+          source: 'scan',
+        },
+        {
+          file: 'crash-2026-07-04_20-44-08-server.txt',
+          mtime: Math.floor((now - 7 * 24 * 3600_000) / 1000),
+          size: 11800,
+          display_label: 'File lock — world/session.lock held',
+          source: 'scan',
+        },
+        {
+          file: 'crash-2026-07-07_11-05-19-server.txt',
+          mtime: Math.floor((now - 4 * 24 * 3600_000) / 1000),
+          size: 9800,
+          display_label: 'OutOfMemoryError — Java heap space',
+          source: 'scan',
+        },
+        {
           file: 'crash-2026-06-17_22-18-11-server.txt',
           mtime: Math.floor((now - 28 * 3600_000) / 1000),
           size: 12004,
-          display_label: 'Mod loading error',
+          display_label: 'Mod crash (examplemod) — reviewed',
           source: 'scan',
+          reviewed: true,
         },
       ],
     },
@@ -1092,15 +1110,24 @@ function generateOverviewMeta(now, opsCache, performanceRollups, envelope) {
 }
 
 const now = Date.now();
-const samples = generateLiveSamples(now);
-const latest = latestFromSamples(samples, now);
-const bandwidthHistory = generateBandwidthHistory(now);
-const diskIoHistory = generateDiskIoHistory(now);
+const liveBundle = generateLiveBundle(now);
+const samples = liveBundle.series;
+const bandwidthHistory = liveBundle.bandwidth;
+const diskIoHistory = liveBundle.diskIo;
+const lastSnap = liveBundle.bandwidth.length
+  ? {
+      entities: liveBundle.state.entities,
+      chunks: liveBundle.state.chunks,
+      thermal_c: liveBundle.state.thermalC,
+    }
+  : null;
+const latest = latestFromSamples(samples, now, lastSnap);
 const lastDiskIo = diskIoHistory[diskIoHistory.length - 1];
+const lastBw = bandwidthHistory[bandwidthHistory.length - 1];
 const performanceRollups = generatePerformanceRollups(now, { hours: 24, stepSec: 60 });
 const performanceRollups7d = generatePerformanceRollups(now, { hours: 168, stepSec: 60 });
 const performanceRollups30d = generatePerformanceRollups(now, { hours: 720, stepSec: 300 });
-const cpuCores = generateCpuCores(8);
+const cpuCores = generateCpuCores(8, latest.host_cpu_pct);
 const byDimension = generateByDimension();
 
 function chunkyPregenMock(now) {
@@ -1122,31 +1149,32 @@ function chunkyPregenMock(now) {
   };
 }
 
+const packageC = round1(lastSnap?.thermal_c ?? 58);
 const envelope = {
   latest,
   chunky_pregen: chunkyPregenMock(now),
   thermal: {
     available: true,
-    package_c: 58,
+    package_c: packageC,
     ambient_c: 32,
     zones: [
-      { id: 'tctl', label: 'Package', c: 58 },
-      { id: 'core0', label: 'CPU Core 0', c: 55 },
-      { id: 'core1', label: 'CPU Core 1', c: 54 },
-      { id: 'core2', label: 'CPU Core 2', c: 57 },
-      { id: 'core3', label: 'CPU Core 3', c: 53 },
-      { id: 'core4', label: 'CPU Core 4', c: 52 },
-      { id: 'core5', label: 'CPU Core 5', c: 56 },
-      { id: 'core6', label: 'CPU Core 6', c: 51 },
-      { id: 'core7', label: 'CPU Core 7', c: 50 },
-      { id: 'nvme', label: 'NVMe', c: 44 },
+      { id: 'tctl', label: 'Package', c: packageC },
+      { id: 'core0', label: 'CPU Core 0', c: round1(packageC - 3 + gauss() * 1.5) },
+      { id: 'core1', label: 'CPU Core 1', c: round1(packageC - 4 + gauss() * 1.5) },
+      { id: 'core2', label: 'CPU Core 2', c: round1(packageC - 2 + gauss() * 1.5) },
+      { id: 'core3', label: 'CPU Core 3', c: round1(packageC - 5 + gauss() * 1.5) },
+      { id: 'core4', label: 'CPU Core 4', c: round1(packageC - 6 + gauss() * 1.5) },
+      { id: 'core5', label: 'CPU Core 5', c: round1(packageC - 3.5 + gauss() * 1.5) },
+      { id: 'core6', label: 'CPU Core 6', c: round1(packageC - 7 + gauss() * 1.5) },
+      { id: 'core7', label: 'CPU Core 7', c: round1(packageC - 8 + gauss() * 1.5) },
+      { id: 'nvme', label: 'NVMe', c: round1(42 + latest.host_cpu_pct * 0.05) },
       { id: 'ambient', label: 'Ambient', c: 32 },
     ],
   },
   bandwidth: {
     interface: 'eth0',
-    rx_mbps: bandwidthHistory[bandwidthHistory.length - 1].rx,
-    tx_mbps: bandwidthHistory[bandwidthHistory.length - 1].tx,
+    rx_mbps: lastBw.rx,
+    tx_mbps: lastBw.tx,
     sample_age_sec: 2,
   },
   bandwidth_history: bandwidthHistory,
@@ -1229,9 +1257,15 @@ function writeCrashContextFixtures() {
   const contexts = {
     'crash-2026-06-22_14-33-07-server.txt': {
       window_minutes: 10,
-      tps_samples: sample(10, 18.5, 2),
-      mspt_samples: sample(10, 48, 12),
-      events: [{ t: offsetIso(Date.now(), -8 * 60_000), type: 'tick_lag', detail: "Can't keep up! 12 ticks behind" }],
+      tps_samples: sample(10, 16, 3),
+      mspt_samples: sample(10, 55, 15),
+      events: [{ t: offsetIso(Date.now(), -50 * 60_000), type: 'mod_runtime', detail: 'Create contraption NPE (mf.axis)' }],
+    },
+    'crash-2026-07-10_19-04-12-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 18, 2),
+      mspt_samples: sample(10, 40, 10),
+      events: [{ t: offsetIso(Date.now(), -6 * 3600_000), type: 'mod_runtime', detail: 'Create BeltBlockEntity NPE (generic)' }],
     },
     'crash-2026-06-18_08-12-44-server.txt': {
       window_minutes: 10,
@@ -1239,14 +1273,195 @@ function writeCrashContextFixtures() {
       mspt_samples: sample(10, 85, 20),
       events: [{ t: offsetIso(Date.now(), -15 * 60_000), type: 'watchdog', detail: 'Server hung on main thread' }],
     },
+    'crash-2026-06-18_08-13-50-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 11, 4),
+      mspt_samples: sample(10, 90, 22),
+      events: [{ t: offsetIso(Date.now(), -14 * 60_000), type: 'watchdog', detail: 'Follow-up watchdog after primary hang' }],
+    },
+    'crash-2026-06-19_11-02-18-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 10, 5),
+      mspt_samples: sample(10, 95, 25),
+      events: [{ t: offsetIso(Date.now(), -2 * 3600_000), type: 'watchdog', detail: 'Chunky pregen stall' }],
+    },
+    'crash-2026-07-11_02-15-33-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 19, 1),
+      mspt_samples: sample(10, 30, 8),
+      events: [{ t: offsetIso(Date.now(), -18 * 3600_000), type: 'world_nbt', detail: 'ZLIB EOF while reading region' }],
+    },
+    'crash-2026-07-09_21-48-01-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 20, 0),
+      mspt_samples: sample(10, 5, 1),
+      events: [{ t: offsetIso(Date.now(), -2 * 24 * 3600_000), type: 'mod_load_mixin', detail: 'create.mixins.json init failed' }],
+    },
+    'crash-2026-07-06_09-33-12-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 20, 0),
+      mspt_samples: sample(10, 5, 1),
+      events: [{ t: offsetIso(Date.now(), -5 * 24 * 3600_000), type: 'mod_load_mixin_conflict', detail: 'create vs createaddition mixin target' }],
+    },
+    'crash-2026-07-05_14-01-55-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 20, 0),
+      mspt_samples: sample(10, 5, 1),
+      events: [{ t: offsetIso(Date.now(), -6 * 24 * 3600_000), type: 'mod_load_duplicate', detail: 'create jar listed twice' }],
+    },
+    'crash-2026-07-08_16-22-44-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 20, 0),
+      mspt_samples: sample(10, 5, 1),
+      events: [{ t: offsetIso(Date.now(), -3 * 24 * 3600_000), type: 'platform_mismatch', detail: 'LuckPerms class file 65 vs runtime 61' }],
+    },
+    'crash-2026-07-04_20-44-08-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 20, 0),
+      mspt_samples: sample(10, 5, 1),
+      events: [{ t: offsetIso(Date.now(), -7 * 24 * 3600_000), type: 'env_lock', detail: 'session.lock held by another process' }],
+    },
+    'crash-2026-07-07_11-05-19-server.txt': {
+      window_minutes: 10,
+      tps_samples: sample(10, 8, 3),
+      mspt_samples: sample(10, 120, 30),
+      events: [{ t: offsetIso(Date.now(), -4 * 24 * 3600_000), type: 'oom', detail: 'Java heap space' }],
+    },
     'crash-2026-06-17_22-18-11-server.txt': {
       window_minutes: 10,
       tps_samples: sample(10, 19.8, 0.5),
       mspt_samples: sample(10, 22, 5),
-      events: [{ t: offsetIso(Date.now(), -20 * 60_000), type: 'mod_load', detail: 'Mixin apply failed during startup' }],
+      events: [{ t: offsetIso(Date.now(), -20 * 60_000), type: 'mod_runtime', detail: 'examplemod tick NPE (reviewed)' }],
     },
   };
   writeFileSync(join(dataDir, 'crash-contexts.json'), `${JSON.stringify(contexts, null, 2)}\n`);
+}
+
+/** Minimal crash-report text so Logs / Crashes "view report" works in preview. */
+function writeCrashReportFixtures() {
+  const dir = join(dataDir, 'crash-reports');
+  mkdirSync(dir, { recursive: true });
+  const reports = {
+    'crash-2026-06-22_14-33-07-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-06-22 14:33:07',
+      'Description: Exception in server tick loop',
+      '',
+      'java.lang.NullPointerException: Cannot invoke "ContraptionCollision.mf()" because "mf.axis" is null',
+      '\tat TRANSFORMER/create@6.0.0/com.simibubi.create.content.contraptions.ContraptionCollision.tick(ContraptionCollision.java:118)',
+      '\tat net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:917)',
+      '',
+      '-- System Details --',
+      '\tMod List:',
+      '\t\tcreate-6.0.0.jar |Create |create |6.0.0 |DONE |',
+      '',
+    ].join('\n'),
+    'crash-2026-07-10_19-04-12-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-07-10 19:04:12',
+      'Description: Exception in server tick loop',
+      '',
+      'java.lang.NullPointerException: Cannot invoke "BeltBlockEntity.getSpeed()"',
+      '\tat TRANSFORMER/create@6.0.0/com.simibubi.create.content.kinetics.belt.BeltBlockEntity.tick(BeltBlockEntity.java:204)',
+      '',
+    ].join('\n'),
+    'crash-2026-06-18_08-12-44-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-06-18 08:12:44',
+      'Description: Watching Server',
+      '',
+      'java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds (should be max 0.05)',
+      '\tat net.minecraft.server.dedicated.ServerHangWatchdog.run(ServerHangWatchdog.java:52)',
+      '',
+    ].join('\n'),
+    'crash-2026-06-18_08-13-50-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-06-18 08:13:50',
+      'Description: Watching Server',
+      '',
+      'java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds (should be max 0.05)',
+      '',
+    ].join('\n'),
+    'crash-2026-06-19_11-02-18-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-06-19 11:02:18',
+      'Description: Watching Server',
+      '',
+      'java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds (should be max 0.05)',
+      '\tat TRANSFORMER/chunky@1.4/org.popcraft.chunky.ChunkyTask.run(ChunkyTask.java:88)',
+      '',
+    ].join('\n'),
+    'crash-2026-07-11_02-15-33-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-07-11 02:15:33',
+      'Description: Exception generating new chunk',
+      '',
+      'java.io.EOFException: Unexpected end of ZLIB input stream',
+      '\tat java.base/java.util.zip.InflaterInputStream.fill(InflaterInputStream.java:255)',
+      '',
+    ].join('\n'),
+    'crash-2026-07-09_21-48-01-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-07-09 21:48:01',
+      'Description: Mod loading has failed',
+      '',
+      'org.spongepowered.asm.mixin.throwables.MixinInitialisationError: Error initialising mixin config create.mixins.json',
+      '',
+    ].join('\n'),
+    'crash-2026-07-06_09-33-12-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-07-06 09:33:12',
+      'Description: Mod loading has failed',
+      '',
+      'org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Overwrite conflict createaddition → create',
+      '',
+    ].join('\n'),
+    'crash-2026-07-05_14-01-55-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-07-05 14:01:55',
+      'Description: Mod loading has failed',
+      '',
+      'net.neoforged.fml.ModLoadingException: Duplicate mods found: create',
+      '\tFound jars: create-6.0.0.jar, create-6.0.0-copy.jar',
+      '',
+    ].join('\n'),
+    'crash-2026-07-08_16-22-44-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-07-08 16:22:44',
+      'Description: Initializing game',
+      '',
+      'java.lang.UnsupportedClassVersionError: me/lucko/luckperms/common/plugin/AbstractLuckPermsPlugin has been compiled by a more recent version of the Java Runtime (class file version 65.0), this version of the Java Runtime only recognizes class file versions up to 61.0',
+      '',
+    ].join('\n'),
+    'crash-2026-07-04_20-44-08-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-07-04 20:44:08',
+      'Description: Exception in server tick loop',
+      '',
+      'java.nio.file.FileSystemException: world/session.lock: The process cannot access the file because it is being used by another process',
+      '',
+    ].join('\n'),
+    'crash-2026-07-07_11-05-19-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-07-07 11:05:19',
+      'Description: Exception in server tick loop',
+      '',
+      'java.lang.OutOfMemoryError: Java heap space',
+      '',
+    ].join('\n'),
+    'crash-2026-06-17_22-18-11-server.txt': [
+      '---- Minecraft Crash Report ----',
+      'Time: 2026-06-17 22:18:11',
+      'Description: Exception in server tick loop',
+      '',
+      'java.lang.NullPointerException: Cannot invoke "examplemod.TickHandler.onTick()" because "this.handler" is null',
+      '\tat TRANSFORMER/examplemod@1.0.0/examplemod.ExampleMod.onServerTick(ExampleMod.java:42)',
+      '',
+    ].join('\n'),
+  };
+  for (const [name, body] of Object.entries(reports)) {
+    writeFileSync(join(dir, name), body);
+  }
 }
 
 function patchFactsModFixtures() {
@@ -1259,6 +1474,461 @@ function patchFactsModFixtures() {
   facts.optional.mod_recommendations = MOCK_MOD_RECOMMENDATIONS;
   facts.optional.client_only_mods = MOCK_CLIENT_ONLY_MODS;
   facts.optional.client_only_mods_summary = MOCK_CLIENT_ONLY_SUMMARY;
+  facts.optional.startup_profile = {
+    total_sec: 142.3,
+    done_at: offsetIso(Date.now(), -3 * 3600_000),
+    status: 'warnings',
+    phases: [
+      { id: 'registry', label: 'Registry freeze', sec: 38.1 },
+      { id: 'datapack', label: 'Datapack load', sec: 22.0 },
+      { id: 'mod_init', label: 'Mod initialization', sec: 41.5 },
+      { id: 'world_load', label: 'World load', sec: 28.4 },
+    ],
+    slowest: [
+      { phase: 'mod_init', sec: 41.5 },
+      { phase: 'registry', sec: 38.1 },
+      { phase: 'world_load', sec: 28.4 },
+    ],
+    warnings: [
+      { id: 'loot_parse', count: 12 },
+      { id: 'recipe_missing', count: 3 },
+    ],
+    errors: [
+      { mod_id: 'pride', kind: 'mod_corrupt', blocking: false },
+      { mod_id: 'examplemod', kind: 'mod_runtime', blocking: false },
+    ],
+    compare_to_last_boot: { delta_sec: 12.4, direction: 'slower' },
+  };
+  facts.optional.fml_issues = [
+    {
+      mod_id: 'create',
+      kind: 'mod_load_dependency',
+      message: 'Missing dependency: flywheel',
+      file: 'create-1.21.1.jar',
+    },
+    {
+      mod_id: 'kubejs',
+      kind: 'mod_load_script',
+      message: 'Script error in server_scripts/recipes.js',
+      file: 'kubejs-neoforge-1.21.1.jar',
+    },
+    {
+      mod_id: 'ae2',
+      kind: 'mod_load_failed',
+      message: 'Failed to load channel registry',
+      file: 'appliedenergistics2-1.21.1.jar',
+    },
+  ];
+  const nowMs = Date.now();
+  const watchdogBase = {
+    failure_kind: 'watchdog_pregen',
+    primary_mod_id: 'chunky',
+    stall_mod_id: 'chunky',
+    category: 'host_resource',
+    exception: 'java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds',
+    likely_cause: 'Tick hang / pregen contention',
+    confidence: 'high',
+    manual_review: false,
+    watchdog_tick_ms: 60000,
+    plain_english: 'Server tick hang — chunky blocked while Chunky pregen was active (~60s). Pause pregen or defer map render.',
+    fix_hints: [
+      'Pause Chunky / map pregen or reduce radius before changing RAM or other settings.',
+      'Defer chunky full render until pregen completes.',
+      'Restart the server and watch MSPT before re-enabling pregen.',
+    ],
+  };
+  facts.optional.crash_summaries = [
+    {
+      file: 'crash-2026-06-22_14-33-07-server.txt',
+      time: offsetIso(nowMs, -45 * 60_000),
+      summary: 'Exception in server tick loop',
+      display_label: 'java.lang.NullPointerException: Cannot invoke "ContraptionCollision.mf()" because "mf.axis" is null',
+      exception: 'java.lang.NullPointerException: Cannot invoke "ContraptionCollision.mf()" because "mf.axis" is null',
+      exception_class: 'java.lang.NullPointerException',
+      create_issue: 'contraption_collision',
+      hot_frame: 'com.simibubi.create.content.contraptions.ContraptionCollision.tick',
+      historical: false,
+      category: 'mod',
+      failure_kind: 'mod_runtime',
+      primary_mod_id: 'create',
+      suspect_mod_id: 'create',
+      matched_rule_id: 'create-contraption-npe',
+      matched_pack_id: 'builtin',
+      mod_file: 'create-6.0.0.jar',
+      stack_frames: [
+        'TRANSFORMER/create@6.0.0/com.simibubi.create.content.contraptions.ContraptionCollision.tick',
+      ],
+      plain_english: 'Create contraption collision (create) — stop the stuck assembly so the world can load, then update Create if needed.',
+      likely_cause: 'Mod crash',
+      confidence: 'medium',
+      manual_review: false,
+      fix_hints: [
+        'Find the contraption controller / bearing and break it to stop the stuck assembly so the world can load.',
+        'Reduce stress or split oversized contraptions near the crash location.',
+        'Update Create if a newer NeoForge build exists; check the Create issue tracker for collision NPEs.',
+      ],
+      mod_fix: {
+        action: 'update',
+        action_detail: 'Stop the stuck assembly first, then update Create if a fixed NeoForge build is available',
+        why: 'Stack evidence shows ContraptionCollision / mf.axis — a proven Create contraption path.',
+        install_hint: 'Download a matching Create jar from Modrinth for NeoForge 1.21.1 after the world loads',
+      },
+      incident_id: 'inc-create-2026-06-22',
+    },
+    {
+      file: 'crash-2026-07-10_19-04-12-server.txt',
+      time: offsetIso(nowMs, -6 * 3600_000),
+      summary: 'Exception in server tick loop',
+      display_label: 'java.lang.NullPointerException: Cannot invoke "BeltBlockEntity.getSpeed()"',
+      exception: 'java.lang.NullPointerException: Cannot invoke "BeltBlockEntity.getSpeed()"',
+      exception_class: 'java.lang.NullPointerException',
+      historical: false,
+      category: 'mod',
+      failure_kind: 'mod_runtime',
+      primary_mod_id: 'create',
+      suspect_mod_id: 'create',
+      mod_file: 'create-6.0.0.jar',
+      stack_frames: [
+        'TRANSFORMER/create@6.0.0/com.simibubi.create.content.kinetics.belt.BeltBlockEntity.tick',
+      ],
+      plain_english: 'Create crashed during play (create) — inspect the stack and update Create or matching addons if versions look wrong.',
+      likely_cause: 'Mod crash',
+      confidence: 'medium',
+      manual_review: false,
+      fix_hints: [
+        'Inspect the Create stack frames and update matching Create addons if versions look mismatched.',
+        'Restart the server and watch for repeats after any jar change.',
+      ],
+      mod_fix: {
+        action: 'update',
+        action_detail: 'Update Create for NeoForge 1.21.1 if outdated; align Create addons',
+        why: 'Create is on the stack, but there is no contraption/collision evidence — do not assume a stuck assembly.',
+      },
+    },
+    {
+      ...watchdogBase,
+      file: 'crash-2026-06-18_08-12-44-server.txt',
+      time: '2026-06-18T08:12:44+00:00',
+      summary: 'Watching Server',
+      display_label: watchdogBase.exception,
+      historical: false,
+      incident_id: 'inc-watchdog-chunky',
+    },
+    {
+      ...watchdogBase,
+      file: 'crash-2026-06-18_08-13-50-server.txt',
+      time: '2026-06-18T08:13:50+00:00',
+      summary: 'Watching Server',
+      display_label: watchdogBase.exception,
+      historical: false,
+      incident_id: 'inc-watchdog-chunky',
+      failure_kind: 'watchdog_followup',
+      watchdog_followup: true,
+      paired_primary_file: 'crash-2026-06-18_08-12-44-server.txt',
+    },
+    {
+      ...watchdogBase,
+      file: 'crash-2026-06-19_11-02-18-server.txt',
+      time: '2026-06-19T11:02:18+00:00',
+      summary: 'Watching Server',
+      display_label: watchdogBase.exception,
+      historical: false,
+    },
+    {
+      file: 'crash-2026-07-11_02-15-33-server.txt',
+      time: offsetIso(nowMs, -18 * 3600_000),
+      summary: 'Exception generating new chunk',
+      display_label: 'java.io.EOFException: Unexpected end of ZLIB input stream',
+      exception: 'java.io.EOFException: Unexpected end of ZLIB input stream',
+      exception_class: 'java.io.EOFException',
+      historical: false,
+      category: 'host_resource',
+      failure_kind: 'world_nbt_corrupt',
+      primary_mod_id: null,
+      plain_english: 'World or chunk NBT data looks corrupt (ZLIB/EOF while loading). Restore the affected region from a backup.',
+      likely_cause: 'Corrupt world data',
+      confidence: 'high',
+      manual_review: false,
+      fix_hints: [
+        'Back up the world, then restore the affected region/chunk from a known-good backup.',
+        'Only delete or repair the bad region file after the backup exists.',
+        'Check disk health; ZLIB/EOF errors often mean incomplete writes.',
+      ],
+    },
+    {
+      file: 'crash-2026-07-09_21-48-01-server.txt',
+      time: offsetIso(nowMs, -2 * 24 * 3600_000),
+      summary: 'Mod loading has failed',
+      display_label: 'MixinInitialisationError: Error initialising mixin config create.mixins.json',
+      exception: 'org.spongepowered.asm.mixin.throwables.MixinInitialisationError',
+      exception_class: 'org.spongepowered.asm.mixin.throwables.MixinInitialisationError',
+      mixin_config: 'create.mixins.json',
+      historical: false,
+      category: 'mod',
+      failure_kind: 'mod_load_mixin',
+      primary_mod_id: 'create',
+      suspect_mod_id: 'create',
+      plain_english: 'Mixin config create.mixins.json failed while loading mod create — update or remove that mod.',
+      likely_cause: 'Mixin failed to load',
+      confidence: 'high',
+      manual_review: false,
+      fix_hints: [
+        'Update Create to a build matching NeoForge 1.21.1',
+        'If it persists, temporarily remove create.mixins.json owner and retest boot',
+      ],
+      mod_fix: {
+        action: 'update',
+        action_detail: 'Update Create (mixin owner) then restart',
+        why: 'MixinInitialisationError named create.mixins.json',
+      },
+    },
+    {
+      file: 'crash-2026-07-06_09-33-12-server.txt',
+      time: offsetIso(nowMs, -5 * 24 * 3600_000),
+      summary: 'Mod loading has failed',
+      display_label: 'InvalidMixinException: @Overwrite conflict createaddition → create',
+      exception: 'org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException',
+      exception_class: 'org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException',
+      mixin_config: 'createaddition.mixins.json',
+      historical: false,
+      category: 'mod',
+      failure_kind: 'mod_load_mixin_conflict',
+      primary_mod_id: 'createaddition',
+      suspect_mod_id: 'createaddition',
+      plain_english: 'Mixin conflict between createaddition and create — update both or remove the addon.',
+      likely_cause: 'Mixin overwrite conflict',
+      confidence: 'high',
+      manual_review: false,
+      fix_hints: [
+        'Update Create Additions to a build matching Create 6.x',
+        'If it persists, temporarily remove createaddition and retest boot',
+      ],
+      mod_fix: {
+        action: 'update',
+        action_detail: 'Align Create Additions with Create, or remove the conflicting addon',
+        why: 'InvalidMixinException names createaddition overwriting create',
+        related_mods: ['create'],
+      },
+    },
+    {
+      file: 'crash-2026-07-05_14-01-55-server.txt',
+      time: offsetIso(nowMs, -6 * 24 * 3600_000),
+      summary: 'Mod loading has failed',
+      display_label: 'ModLoadingException: Duplicate mods found: create',
+      exception: 'net.neoforged.fml.ModLoadingException: Duplicate mods found: create',
+      exception_class: 'net.neoforged.fml.ModLoadingException',
+      duplicate_mod_ids: ['create'],
+      duplicate_jars: ['create-6.0.0.jar', 'create-6.0.0-copy.jar'],
+      historical: false,
+      category: 'mod',
+      failure_kind: 'mod_load_duplicate',
+      primary_mod_id: 'create',
+      suspect_mod_id: 'create',
+      plain_english: 'Create is installed twice — remove the duplicate jar from mods/.',
+      likely_cause: 'Duplicate mod jars',
+      confidence: 'high',
+      manual_review: false,
+      fix_hints: [
+        'Remove create-6.0.0-copy.jar (keep one Create jar)',
+        'Restart and confirm Mod List shows a single create entry',
+      ],
+      mod_fix: {
+        action: 'remove_duplicate',
+        action_detail: 'Delete the extra create jar so only one remains',
+        why: 'FML reported duplicate mod id create with two jars',
+      },
+    },
+    {
+      file: 'crash-2026-07-08_16-22-44-server.txt',
+      time: offsetIso(nowMs, -3 * 24 * 3600_000),
+      summary: 'Initializing game',
+      display_label: 'java.lang.UnsupportedClassVersionError: me/lucko/luckperms/... class file version 65.0',
+      exception: 'java.lang.UnsupportedClassVersionError',
+      exception_class: 'java.lang.UnsupportedClassVersionError',
+      class_name: 'me/lucko/luckperms/common/plugin/AbstractLuckPermsPlugin',
+      owning_jar: 'LuckPerms-NeoForge-5.4.jar',
+      compiled_java: 21,
+      runtime_java: 17,
+      historical: false,
+      category: 'loader',
+      failure_kind: 'platform_mismatch',
+      primary_mod_id: 'luckperms',
+      suspect_mod_id: 'luckperms',
+      plain_english: 'LuckPerms needs Java 21 but the server runs Java 17 — upgrade the JVM or use an older build.',
+      likely_cause: 'Java / class version mismatch',
+      confidence: 'high',
+      manual_review: false,
+      fix_hints: [
+        'Upgrade the server JVM to Java 21+ (NeoForge 1.21 expects it). This mod was compiled for Java 21 but the server runs Java 17.',
+        'Owning jar: LuckPerms-NeoForge-5.4.jar (luckperms)',
+      ],
+      mod_fix: {
+        action: 'update',
+        action_detail: 'Run the server on Java 21, or install a LuckPerms build for Java 17',
+        why: 'UnsupportedClassVersionError with owning jar attributed via class index',
+      },
+    },
+    {
+      file: 'crash-2026-07-04_20-44-08-server.txt',
+      time: offsetIso(nowMs, -7 * 24 * 3600_000),
+      summary: 'Exception in server tick loop',
+      display_label: 'FileSystemException: world/session.lock is locked',
+      exception: 'java.nio.file.FileSystemException: world/session.lock',
+      exception_class: 'java.nio.file.FileSystemException',
+      locked_path: 'world/session.lock',
+      historical: false,
+      category: 'host_resource',
+      failure_kind: 'env_lock',
+      plain_english: 'A file is locked by another Windows process — close other Minecraft/Java instances and retry.',
+      likely_cause: 'File in use',
+      confidence: 'high',
+      manual_review: false,
+      fix_hints: [
+        'Stop other Java/Minecraft instances (and close Explorer previews / antivirus locks) holding: world/session.lock',
+        'Only delete world/session.lock after confirming nothing is using this world folder.',
+      ],
+    },
+    {
+      file: 'crash-2026-07-07_11-05-19-server.txt',
+      time: offsetIso(nowMs, -4 * 24 * 3600_000),
+      summary: 'Exception in server tick loop',
+      display_label: 'java.lang.OutOfMemoryError: Java heap space',
+      exception: 'java.lang.OutOfMemoryError: Java heap space',
+      exception_class: 'java.lang.OutOfMemoryError',
+      oom_kind: 'heap',
+      historical: false,
+      category: 'host_resource',
+      failure_kind: 'host_resource',
+      plain_english: 'Java ran out of heap memory during play.',
+      likely_cause: 'Out of memory',
+      confidence: 'high',
+      manual_review: false,
+      fix_hints: [
+        'Confirm the pack needs more heap before raising RAM — oversized packs and leaks look the same.',
+        'Increase Java heap (-Xmx) only if the host still has free RAM; otherwise find leaks or shrink the pack.',
+        'Check duplicate mods, oversized chunk loaders, or run Spark heap analysis.',
+      ],
+    },
+    {
+      file: 'crash-2026-06-17_22-18-11-server.txt',
+      time: '2026-06-17T22:18:11+00:00',
+      summary: 'Exception in server tick loop',
+      display_label: 'java.lang.NullPointerException: Cannot invoke method on null object',
+      exception: 'java.lang.NullPointerException: Cannot invoke "examplemod.TickHandler.onTick()" because "this.handler" is null',
+      exception_class: 'java.lang.NullPointerException',
+      historical: true,
+      category: 'mod',
+      failure_kind: 'mod_runtime',
+      primary_mod_id: 'examplemod',
+      suspect_mod_id: 'examplemod',
+      mod_file: 'examplemod-1.0.0.jar',
+      stack_frames: [
+        'TRANSFORMER/examplemod@1.0.0/examplemod.ExampleMod.onServerTick',
+      ],
+      plain_english: 'The crash points to mod examplemod — check for updates, corrupt jars, or mixin conflicts.',
+      likely_cause: 'Mod crash',
+      confidence: 'medium',
+      manual_review: false,
+      fix_hints: [
+        'Update or remove mod \'examplemod\' — check latest.log for dependency errors',
+        'Re-download the mod JAR from the official source and replace it in mods/',
+      ],
+      mod_fix: {
+        action: 'update',
+        action_detail: 'Update examplemod to 1.0.1 or remove until pack maintainer fixes.',
+        install_hint: 'Download from Modrinth/CurseForge matching NeoForge 1.21.1.',
+      },
+    },
+  ];
+  facts.optional.crash_rule_hits = [
+    {
+      rule_id: 'create-contraption-npe',
+      pack_id: 'builtin',
+      priority: 50200,
+      matched_at: offsetIso(nowMs, -45 * 60_000),
+      crash_file: 'crash-2026-06-22_14-33-07-server.txt',
+      emit: {
+        failure_kind: 'mod_runtime',
+        primary_mod_id: 'create',
+        confidence: 'high',
+      },
+    },
+  ];
+  facts.optional.suppressed_issues = [
+    {
+      id: 'CLIENT_ON_SERVER',
+      message: 'Client-only mod detected on dedicated server (suppressed in preview).',
+      severity: 'warning',
+      suppressed: true,
+    },
+  ];
+  facts.optional.active_suppressions = {
+    conf_ids: ['CLIENT_ON_SERVER'],
+    state: [],
+    merged: [{ id: 'CLIENT_ON_SERVER', source: 'conf' }],
+  };
+  facts.optional.memory_diagnostics = {
+    page_file_disabled: false,
+    physical_mb: 32768,
+    jvm_args: '-Xms4G -Xmx8G',
+    heap_max_mb: 8192,
+  };
+  facts.optional.mod_forensics = {
+    class_index_status: 'ready',
+    class_index_built_at: offsetIso(nowMs, -90 * 60_000),
+    class_index_jar_count: 48,
+    class_index_entry_count: 18240,
+    corrupt_jars: [
+      {
+        path: 'mods/pride-broken.jar',
+        reason: 'zip_end_header',
+        source: 'log',
+        mod_id: 'pride',
+      },
+    ],
+    stderr_sources: ['logs/stderr.log'],
+    scan_config: {
+      mod_forensics_scan: true,
+      corrupt_jar_walk: false,
+      index_on_report: false,
+    },
+  };
+  facts.optional.config_health = [
+    {
+      path: 'world/serverconfig/create-server.toml',
+      reason: 'parse_error',
+      detail: 'Expected \'=\' after key at line 42',
+    },
+  ];
+  facts.optional.connector_warnings = [
+    {
+      mod_id: 'fabric_api_stub',
+      message: 'Fabric-looking jar on NeoForge without Connector — may be client leftover',
+      severity: 'warning',
+    },
+  ];
+  facts.optional.security_flags = [];
+  // Enrich issues list with forensics / config findings (info severity — G-05 safe)
+  const issueIds = new Set((facts.issues || []).map((i) => i.id));
+  const extraIssues = [
+    {
+      id: 'CORRUPTED_MOD_JAR',
+      message: 'Corrupt mod jar detected from logs: mods/pride-broken.jar (zip END header)',
+      severity: 'warning',
+    },
+    {
+      id: 'CONFIG_CORRUPT',
+      message: 'Broken serverconfig: world/serverconfig/create-server.toml (parse_error)',
+      severity: 'warning',
+    },
+  ];
+  if (!Array.isArray(facts.issues)) facts.issues = [];
+  for (const issue of extraIssues) {
+    if (!issueIds.has(issue.id)) facts.issues.push(issue);
+  }
+  facts.optional.acknowledged_crashes = {
+    'crash-2026-06-17_22-18-11-server.txt': '2026-06-18T06:00:00.000Z',
+  };
   const clientIssue = facts.issues?.find((i) => i.id === 'CLIENT_MODS_ON_SERVER');
   if (clientIssue) {
     clientIssue.message = `${MOCK_CLIENT_ONLY_MODS.length} client-only mods detected on the server.`;
@@ -1293,10 +1963,62 @@ writeFileSync(join(dataDir, 'ops-cache.json'), `${JSON.stringify(opsCache, null,
 writeFileSync(join(dataDir, 'issues-peek.json'), `${JSON.stringify(issuesPeek, null, 2)}\n`);
 writeFileSync(join(dataDir, 'overview-meta.json'), `${JSON.stringify(overviewMeta, null, 2)}\n`);
 patchFactsModFixtures();
+// Forensics API fixtures for static preview (Mods Forensics tab + Find owning jar)
+writeFileSync(join(dataDir, 'forensics-status.json'), `${JSON.stringify({
+  index: {
+    state: 'ready',
+    built_at: offsetIso(now, -90 * 60_000),
+    jar_count: 48,
+    entry_count: 18240,
+    stale: false,
+  },
+  config: {
+    mod_forensics_scan: true,
+    corrupt_jar_walk: false,
+    index_on_report: false,
+  },
+  last_report_scan: {
+    at: offsetIso(now, -2 * 3600_000),
+    corrupt_jars: 1,
+    config_issues: 1,
+    stderr_merged: true,
+  },
+}, null, 2)}\n`);
+writeFileSync(join(dataDir, 'forensics-find-class.json'), `${JSON.stringify({
+  query: 'com/simibubi/create/content/contraptions/ContraptionCollision',
+  matches: [
+    {
+      mod_id: 'create',
+      jar: 'create-6.0.0.jar',
+      class: 'com/simibubi/create/content/contraptions/ContraptionCollision',
+      inner_path: 'com/simibubi/create/content/contraptions/ContraptionCollision.class',
+      source: 'jar_entry_scan',
+    },
+    {
+      mod_id: 'luckperms',
+      jar: 'LuckPerms-NeoForge-5.4.jar',
+      class: 'me/lucko/luckperms/common/plugin/AbstractLuckPermsPlugin',
+      inner_path: 'me/lucko/luckperms/common/plugin/AbstractLuckPermsPlugin.class',
+      source: 'jar_entry_scan',
+    },
+  ],
+  truncated: false,
+  index: { state: 'ready', jar_count: 48, entry_count: 18240 },
+}, null, 2)}\n`);
+writeFileSync(join(dataDir, 'forensics-config-health.json'), `${JSON.stringify({
+  config_health: [
+    {
+      path: 'world/serverconfig/create-server.toml',
+      reason: 'parse_error',
+      detail: "Expected '=' after key at line 42",
+    },
+  ],
+}, null, 2)}\n`);
 if (!isFreshPreview) {
   writeReportsIndex(now);
 }
 writeCrashContextFixtures();
+writeCrashReportFixtures();
 copyFileSync(
   join(root, 'assets', 'watchtower-icon-simple.png'),
   join(dataDir, 'server-icon.png'),
@@ -1337,7 +2059,9 @@ console.log(`  + performance-dashboard-30d.json (Insights tab payload, 30d)`);
 console.log(`  + ops-cache.json (activity ledger, lag_issues, mod_log_errors, running_mods, mod_issues, right_now, log_stale, backups_live)`);
 console.log(`  + overview-meta.json (scorecard, crash/lag/mod TLDR, right_now, log_stale_tldr)`);
 console.log(`  + issues-peek.json`);
-console.log(`  + facts.json (mods manifest, recommendations, client-only, log errors)`);
+console.log(`  + facts.json (crash summaries, forensics, config health, CA parity kinds)`);
+console.log(`  + forensics-status.json / forensics-find-class.json / forensics-config-health.json`);
+console.log(`  + crash-contexts.json + crash-reports/*.txt`);
 if (mockIncident?.id) console.log(`  + incidents/${mockIncident.id}.json`);
 
 const sparkMocks = spawnSync(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', [':watchtower-core:sparkAuditFixtures', '-q'], {

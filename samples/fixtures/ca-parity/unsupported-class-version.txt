@@ -1,0 +1,4 @@
+---- Minecraft Crash Report ----
+// Unsupported class version (synthetic CA-14)
+
+java.lang.UnsupportedClassVersionError: com/example/mod/Main has been compiled by a more recent version of the Java Runtime (class file version 65.0), this version of the Java Runtime only recognizes class file versions up to 61.0

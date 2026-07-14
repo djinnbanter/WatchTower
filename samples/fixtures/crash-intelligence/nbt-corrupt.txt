@@ -1,0 +1,11 @@
+---- Minecraft Crash Report ----
+// Oops.
+
+Time: 2026-05-16 04:55:25
+Description: Loading NBT data
+
+java.io.EOFException: Unexpected end of ZLIB input stream
+	at java.base/java.util.zip.InflaterInputStream.fill(InflaterInputStream.java:252)
+	at java.base/java.util.zip.InflaterInputStream.read(InflaterInputStream.java:158)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.nbt.NbtIo.read(NbtIo.java:50)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.chunk.storage.ChunkSerializer.read(ChunkSerializer.java:80)

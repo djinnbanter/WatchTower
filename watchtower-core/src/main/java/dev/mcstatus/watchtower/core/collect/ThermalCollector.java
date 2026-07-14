@@ -199,6 +199,15 @@ public final class ThermalCollector {
             zoneArr.add(row);
         }
         out.add("zones", zoneArr);
+        Double ambientC = zones.stream()
+                .filter(z -> z.label.toLowerCase(Locale.ROOT).contains("ambient")
+                        || z.id.toLowerCase(Locale.ROOT).contains("ambient"))
+                .map(z -> z.c)
+                .findFirst()
+                .orElse(null);
+        if (ambientC != null) {
+            out.addProperty("ambient_c", Math.round(ambientC * 10.0) / 10.0);
+        }
         return out;
     }
 

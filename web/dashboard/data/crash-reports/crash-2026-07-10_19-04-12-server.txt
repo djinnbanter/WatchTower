@@ -1,0 +1,6 @@
+---- Minecraft Crash Report ----
+Time: 2026-07-10 19:04:12
+Description: Exception in server tick loop
+
+java.lang.NullPointerException: Cannot invoke "BeltBlockEntity.getSpeed()"
+	at TRANSFORMER/create@6.0.0/com.simibubi.create.content.kinetics.belt.BeltBlockEntity.tick(BeltBlockEntity.java:204)

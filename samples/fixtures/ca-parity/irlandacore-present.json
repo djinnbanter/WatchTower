@@ -1,0 +1,6 @@
+{
+  "mods": [
+    { "id": "irlandacore", "version": "1.0.0", "jar_file": "irlandacore-1.0.0.jar" },
+    { "id": "create", "version": "6.0.4", "jar_file": "create-6.0.4.jar" }
+  ]
+}

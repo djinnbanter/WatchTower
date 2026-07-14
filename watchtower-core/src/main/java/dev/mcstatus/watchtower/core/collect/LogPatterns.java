@@ -70,6 +70,29 @@ public final class LogPatterns {
     public static final Pattern RESTART_SOON = Pattern.compile(
             "(?:restart(?:ing)? in \\d+|server stopping in \\d+)",
             Pattern.CASE_INSENSITIVE);
+    /** Runtime squaremap render (not ModDiscoverer / SCAN). */
+    public static final Pattern SQUAREMAP_RUNTIME = Pattern.compile(
+            "squaremap.*(?:render|FullRender|UpdatePlayers|task)"
+                    + "|(?:render|FullRender|UpdatePlayers).*squaremap",
+            Pattern.CASE_INSENSITIVE);
+    /** Runtime bluemap render/update (not boot SCAN). */
+    public static final Pattern BLUEMAP_RUNTIME = Pattern.compile(
+            "bluemap.*(?:render|update|FullRender|task)"
+                    + "|(?:render|update|FullRender).*bluemap",
+            Pattern.CASE_INSENSITIVE);
+    public static final Pattern SHTREIMEL_LAG = Pattern.compile(
+            "shtreimel\\.lag", Pattern.CASE_INSENSITIVE);
+    public static final Pattern TABTPS_MSPT = Pattern.compile(
+            "TabTPS.*MSPT|\\bMSPT\\b.*TabTPS", Pattern.CASE_INSENSITIVE);
+    public static final Pattern WATCHDOG_FATAL_LOG = Pattern.compile(
+            "ServerHangWatchdog|\\bwatchdog\\b.*\\bFATAL\\b|\\bFATAL\\b.*\\bwatchdog\\b",
+            Pattern.CASE_INSENSITIVE);
+    public static final Pattern DONE_BOOT = Pattern.compile(
+            "Done \\(([\\d.]+)s\\)!", Pattern.CASE_INSENSITIVE);
+    public static final Pattern FML_ISSUE_HEADER = Pattern.compile(
+            "^-- Mod loading issue(?: for: ([\\w.-]+))? --\\s*$");
+    public static final Pattern PLAYER_DISCONNECT = Pattern.compile(
+            "lost connection:|Disconnecting|disconnected", Pattern.CASE_INSENSITIVE);
 
     public static final List<String> BACKUP_SUFFIXES = List.of(".tar.gz", ".tgz", ".tar", ".zip", ".7z");
 

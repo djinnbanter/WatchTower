@@ -1,0 +1,4 @@
+[13:00:00] [main/ERROR] [ne.ne.fm.lo.ModSorter/]: Found duplicate mods:
+	Mod ID: 'create' from mod files: [create-6.0.1.jar, create-6.0.8.jar]
+[13:00:00] [main/FATAL] [ne.ne.fm.ModLoader/]: Failed to load mods
+cpw.mods.modlauncher.InvalidLauncherSetupException: EarlyLoadingException: Duplicate mods found

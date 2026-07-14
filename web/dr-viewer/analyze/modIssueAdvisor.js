@@ -1,9 +1,15 @@
 /**
- * Port of ModIssueAdvisor.java (DR subset).
+ * Port of ModIssueAdvisor.java (DR subset) + G-05 reconcileWithCrashes.
  */
 import { ModErrorCategory } from './modErrorCategory.js';
 
 const MAX_RECOMMENDATIONS = 12;
+const ACTIVE_RUNTIME_KINDS = new Set([
+  'mod_runtime',
+  'watchdog',
+  'watchdog_pregen',
+  'watchdog_followup',
+]);
 
 function str(o, key) {
   return o?.[key] ?? null;
@@ -81,6 +87,7 @@ function buildRecommendation(modId, category, total, cats, row) {
   };
   if (row.sample_line) rec.sample_line = row.sample_line;
   if (row.top_recipes) rec.top_recipes = row.top_recipes;
+  if (row.boot_only) rec.boot_only = true;
 
   const related = relatedMods(cats, modId);
   if (related.length) rec.related_mods = related;
@@ -95,6 +102,11 @@ function buildRecommendation(modId, category, total, cats, row) {
       rec.why = `${modId} failed to load (dependency, mixin, or corrupt jar).`;
       rec.fix = `Test whether ${modId} is the blocker — remove it and try starting the server.`;
       rec.fix_steps = modDrFixSteps(modId, 'mod_load_failed');
+      break;
+    case 'server_config_corrupt':
+      rec.why = `SERVER config for ${modId} failed to parse (NightConfig).`;
+      rec.fix = `Delete or fix the corrupt SERVER .toml for ${modId} (back it up first), then let the mod regenerate defaults.`;
+      rec.install_hint = `Look under config/ for ${modId}-server.toml.`;
       break;
     case 'recipe_missing_item':
       rec.why = `Recipes or tags reference items from ${modId} that are not registered.`;
@@ -114,6 +126,47 @@ function buildRecommendation(modId, category, total, cats, row) {
 
   applyUpdateAction(rec, category, modId, related);
   return rec;
+}
+
+function hasActiveRuntimeCrash(optional) {
+  const summaries = optional?.crash_summaries || [];
+  return summaries.some((c) => {
+    if (c.historical || c.acknowledged) return false;
+    const kind = c.failure_kind || '';
+    return ACTIVE_RUNTIME_KINDS.has(kind) || kind.startsWith('watchdog');
+  });
+}
+
+/**
+ * G-05: when an active runtime crash exists, demote boot-only / boot mod_corrupt
+ * recommendations so they do not headline over the real Fix advice.
+ */
+export function reconcileWithCrashes(recommendations, optional) {
+  if (!recommendations?.length || !hasActiveRuntimeCrash(optional)) {
+    return recommendations || [];
+  }
+
+  const demoted = [];
+  const kept = [];
+  for (const rec of recommendations) {
+    const bootHygiene = rec.boot_only === true
+      || rec.category === 'mod_corrupt'
+      || (rec.by_category && rec.by_category.mod_corrupt && !rec.by_category.mod_load_failed);
+    if (bootHygiene) {
+      const copy = {
+        ...rec,
+        severity: 'info',
+        demoted: true,
+        demotion_reason: 'boot_hygiene',
+        blocking: false,
+      };
+      demoted.push(copy);
+    } else {
+      kept.push(rec);
+    }
+  }
+  // Crash-linked / runtime advice stays first; boot hygiene last
+  return [...kept, ...demoted];
 }
 
 export function analyzeModIssues(optional) {
@@ -138,10 +191,19 @@ export function analyzeModIssues(optional) {
 
     const rec = buildRecommendation(modId, topCat, total, cats, row);
     recommendations.push(rec);
-    if (topCat.severityRank >= 4 && total > 0) {
+    if (topCat.severityRank >= 4 && total > 0 && !rec.boot_only) {
       severeIssues.push({ modId, message: rec.fix, category: topCat.id });
     }
   }
 
-  return { recommendations, severeIssues };
+  const reconciled = reconcileWithCrashes(recommendations, optional);
+  // Drop severe flags for demoted boot hygiene
+  const demotedIds = new Set(
+    reconciled.filter((r) => r.demoted).map((r) => `${r.mod_id}:${r.category}`),
+  );
+  const filteredSevere = severeIssues.filter(
+    (s) => !demotedIds.has(`${s.modId}:${s.category}`),
+  );
+
+  return { recommendations: reconciled, severeIssues: filteredSevere };
 }

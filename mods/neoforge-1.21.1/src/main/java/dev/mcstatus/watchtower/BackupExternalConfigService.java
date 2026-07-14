@@ -19,6 +19,7 @@ public final class BackupExternalConfigService {
     public static final String KEY_MARKER = "BACKUP_EXTERNAL_MARKER";
     public static final String KEY_WEBHOOK_TOKEN = "BACKUP_WEBHOOK_TOKEN";
     public static final String KEY_SUPPRESS_LOCAL_MISSING = "BACKUP_SUPPRESS_LOCAL_MISSING";
+    public static final String KEY_TRACKING_ENABLED = "BACKUP_TRACKING_ENABLED";
 
     public static final String MODE_OFF = "off";
     public static final String MODE_WEBHOOK = "webhook";
@@ -63,6 +64,16 @@ public final class BackupExternalConfigService {
     public static ApplyResult apply(Path conf, JsonObject json) throws IOException {
         String generated = null;
 
+        if (json.has("trackingEnabled") && !json.get("trackingEnabled").isJsonNull()) {
+            boolean enabled = json.get("trackingEnabled").getAsBoolean();
+            WatchtowerConfWriter.upsertKey(conf, KEY_TRACKING_ENABLED, enabled ? "true" : "false");
+            if (!enabled) {
+                // Silence panel/cloud listening; leave BACKUP_DIRS untouched for easy re-enable.
+                json = json.deepCopy();
+                json.addProperty("trackingMode", MODE_OFF);
+            }
+        }
+
         if (json.has("trackingMode") && !json.get("trackingMode").isJsonNull()) {
             String mode = json.get("trackingMode").getAsString().trim().toLowerCase(Locale.ROOT);
             switch (mode) {
@@ -83,6 +94,11 @@ public final class BackupExternalConfigService {
                     generated = applyWebhookToken(conf, json);
                 }
                 default -> throw new IllegalArgumentException("Invalid trackingMode: " + mode);
+            }
+            // Re-enabling any external mode implies tracking is on unless explicitly disabled above.
+            if (!MODE_OFF.equals(mode)
+                    && (!json.has("trackingEnabled") || json.get("trackingEnabled").isJsonNull())) {
+                WatchtowerConfWriter.upsertKey(conf, KEY_TRACKING_ENABLED, "true");
             }
         }
 

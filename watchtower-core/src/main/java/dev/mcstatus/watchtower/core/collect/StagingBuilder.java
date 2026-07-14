@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.panel.PanelLabels;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
+import dev.mcstatus.watchtower.core.report.ReportProgress;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,11 +25,17 @@ public final class StagingBuilder {
     }
 
     public static JsonObject buildStaging(ReportConfig config) {
+        return buildStaging(config, ReportProgress.NOOP);
+    }
+
+    public static JsonObject buildStaging(ReportConfig config, ReportProgress progress) {
+        ReportProgress p = progress != null ? progress : ReportProgress.NOOP;
         double cutoff = config.windowStartEpoch();
         String since = config.sinceString();
 
         JsonObject staging = newStagingSkeleton(config, cutoff);
 
+        p.detail("Reading host CPU, memory, and disk...");
         JsonObject system = HostMetricsCollector.collectSystemBasics(config.serverDir());
         HostMetricsCollector.applyJavaProcessInfo(system, config);
         HostMetricsCollector.collectCpuMetrics(system, config, since);
@@ -37,31 +44,37 @@ public final class StagingBuilder {
         String serverDir = config.serverDir();
         if (config.serverDirValid()) {
             try {
+                p.detail("Scanning server logs...");
                 LogScanner.scanLogs(serverDir, staging, cutoff, config);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "log scan failed — " + safeMessage(e));
             }
             try {
+                p.detail("Scanning Distant Horizons pregen logs...");
                 DhPregenScanner.scanDhPregenLogs(serverDir, staging, cutoff, config);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "DH pregen log scan failed — " + safeMessage(e));
             }
             try {
+                p.detail("Scanning Chunky pregen logs...");
                 ChunkyPregenScanner.scanChunkyPregenLogs(serverDir, staging, cutoff, config);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "Chunky pregen log scan failed — " + safeMessage(e));
             }
             try {
+                p.detail("Reading crash reports...");
                 CrashReportScanner.scanCrashReports(serverDir, staging, cutoff);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "crash report scan failed — " + safeMessage(e));
             }
             try {
+                p.detail("Scanning backup folders...");
                 CraftyCollector.scanBackups(staging, serverDir, cutoff, config);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "backup scan failed — " + safeMessage(e));
             }
             try {
+                p.detail("Reading external backup heartbeat...");
                 JsonObject optional = staging.getAsJsonObject("optional");
                 optional.add("backup_external",
                         ExternalBackupDetector.readForReport(serverDir, config));
@@ -71,11 +84,13 @@ public final class StagingBuilder {
         }
 
         try {
+            p.detail("Reading Crafty audit log...");
             CraftyCollector.scanCraftyAudit(staging, cutoff, config);
         } catch (Exception e) {
             CollectionWarnings.add(staging, "Crafty audit.log not readable — " + safeMessage(e));
         }
         try {
+            p.detail("Scanning host events...");
             HostEventScanner.scanHostEvents(staging, since, cutoff);
         } catch (Exception e) {
             CollectionWarnings.add(staging, "journalctl unavailable — host events from auth.log only");
@@ -83,7 +98,8 @@ public final class StagingBuilder {
 
         if (config.serverDirValid()) {
             try {
-                applyV3Collectors(staging, serverDir, cutoff, config);
+                p.detail("Collecting mods, players, storage, and Spark...");
+                applyV3Collectors(staging, serverDir, cutoff, config, p);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "extended collectors failed — " + safeMessage(e));
             }
@@ -93,10 +109,11 @@ public final class StagingBuilder {
         String panelId = staging.getAsJsonObject("meta").get("panel").getAsString();
         optional.add("host_environment", HostEnvironmentDetector.detect(panelId));
 
+        p.detail("Collection complete");
         return staging;
     }
 
-    private static String safeMessage(Exception e) {
+    private static String safeMessage(Throwable e) {
         return e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
     }
 
@@ -119,11 +136,27 @@ public final class StagingBuilder {
         meta.addProperty("window_start", windowStart.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         meta.addProperty("incremental", config.incremental());
         meta.addProperty("server_dir", config.serverDir());
+        if (config.stateFile() != null && !config.stateFile().isBlank()) {
+            meta.addProperty("state_file", config.stateFile());
+        }
         String panelId = config.panelDetected();
         meta.addProperty("panel", panelId);
         meta.addProperty("panel_display_name", PanelLabels.displayName(panelId));
         meta.addProperty("loader", config.loader());
+        meta.addProperty("modrinth_lookup", config.modrinthLookup());
+        meta.addProperty("modrinth_lookup_on_report", config.modrinthLookupOnReport());
+        meta.addProperty("modrinth_rate_limit", config.modrinthRateLimit());
+        meta.addProperty("mod_forensics_scan", config.modForensicsScan());
+        meta.addProperty("forensics_corrupt_jar_walk", config.forensicsCorruptJarWalk());
+        meta.addProperty("forensics_index_on_report", config.forensicsIndexOnReport());
+        meta.addProperty("forensics_stderr_paths", config.forensicsStderrPaths());
+        meta.addProperty("crash_rule_packs", config.crashRulePacks());
+        meta.addProperty("crash_rule_builtin", config.crashRuleBuiltin());
+        meta.addProperty("issue_suppressions", config.issueSuppressions());
+        meta.addProperty("issue_suppression_regex", config.issueSuppressionRegex());
+        meta.addProperty("disaster_recovery", config.disasterRecovery());
         meta.addProperty("backup_suppress_local_missing", config.backupSuppressLocalMissing());
+        meta.addProperty("backup_tracking_enabled", config.backupTrackingEnabled());
         meta.addProperty("backup_local_configured", config.hasBackupDirs());
         meta.addProperty("backup_external_configured", config.isExternalBackupConfigured());
         staging.add("meta", meta);
@@ -175,11 +208,14 @@ public final class StagingBuilder {
             JsonObject staging,
             String serverDir,
             double cutoff,
-            ReportConfig config) {
+            ReportConfig config,
+            ReportProgress progress) {
+        ReportProgress progressCb = progress != null ? progress : ReportProgress.NOOP;
         JsonObject optional = staging.getAsJsonObject("optional");
         JsonObject mc = staging.getAsJsonObject("minecraft");
         JsonObject state = HostMetricsCollector.loadStateFile(config);
 
+        progressCb.detail("Loading live TPS snapshot...");
         JsonObject tps = WatchtowerSnapshotLoader.loadWatchtowerSnapshot(serverDir);
         boolean snapshotFresh = isSnapshotFresh(serverDir, tps);
         if (!config.disasterRecovery() && !snapshotFresh && RconMetricsCollector.isConfigured(config)) {
@@ -195,6 +231,7 @@ public final class StagingBuilder {
             tps.remove("_native");
         }
         applyPlayers(mc, optional, tps, nativeBlob);
+        progressCb.detail("Diffing mod inventory...");
         ModChangeDetector.apply(optional, nativeBlob, state);
         JsonArray modsSnapshot = ModsInventoryDiff.buildSnapshot(serverDir);
         optional.add("mods_inventory_snapshot", modsSnapshot);
@@ -205,6 +242,7 @@ public final class StagingBuilder {
         if (state.has("ignored_client_mods")) {
             optional.add("ignored_client_mods", state.get("ignored_client_mods").deepCopy());
         }
+        progressCb.detail("Reading mod list and jar metadata...");
         applyModsList(optional, nativeBlob, serverDir, config);
 
         double peakLog = mc.has("worst_tick_lag_ms") ? mc.get("worst_tick_lag_ms").getAsDouble() : 0;
@@ -338,8 +376,8 @@ public final class StagingBuilder {
         }
 
         List<String> logPaths = new ArrayList<>();
-        for (Path p : GzipLineReader.iterLogFiles(serverDir, config.logGzipCount(), cutoff)) {
-            logPaths.add(p.toString());
+        for (Path logPath : GzipLineReader.iterLogFiles(serverDir, config.logGzipCount(), cutoff)) {
+            logPaths.add(logPath.toString());
         }
         ZonedDateTime windowStartDt = Instant.ofEpochSecond((long) cutoff).atZone(ZoneId.systemDefault());
         optional.add("security", ExtrasCollector.collectSecurity(
@@ -367,12 +405,17 @@ public final class StagingBuilder {
         optional.add("player_directory", buildPlayerDirectory(serverDir, optional, mc));
 
         if (config.sparkEnabled()) {
-            SparkCollector.collect(serverDir, config).ifPresent(result -> {
-                JsonObject profile = SparkProfileBuilder.build(result, serverDir, config);
-                if (profile != null) {
-                    optional.add(SparkProfileFacts.KEY, profile);
-                }
-            });
+            try {
+                progressCb.detail("Parsing Spark profiler data...");
+                SparkCollector.collect(serverDir, config).ifPresent(result -> {
+                    JsonObject profile = SparkProfileBuilder.build(result, serverDir, config);
+                    if (profile != null) {
+                        optional.add(SparkProfileFacts.KEY, profile);
+                    }
+                });
+            } catch (LinkageError e) {
+                CollectionWarnings.add(staging, "spark profile parse unavailable — " + safeMessage(e));
+            }
         }
     }
 

@@ -8,7 +8,39 @@ Full downloads: [GitHub Releases](https://github.com/djinnbanter/WatchTower/rele
 
 ## Unreleased
 
-- **Documentation audit** — setup wizard copy, Settings → Security paths, HTTP API (Insights, Spark, onboarding), README and contributor doc fixes; DR viewer marked as early preview
+*(nothing yet — see [1.1.0](#110--2026-07-13))*
+
+---
+
+## [1.1.0] — 2026-07-13
+
+**Artifacts:** `watchtower-neoforge-1.1.0+mc1.21.jar` · `watchtower-cli-1.1.0.jar`
+
+Release: [v1.1.0](https://github.com/djinnbanter/WatchTower/releases/tag/v1.1.0)
+
+Watchtower **1.1.0** builds on **1.0.0** / **1.0.0a** with a large ops toolkit upgrade:
+
+### Dashboard
+
+- **Overview welcome** — personalized greeting with hostname and a short live status summary
+- **Session** — cleaner player roster (vitals → top playtime → directory; online-first sort)
+- **Insights Patterns** — Overview / Schedule / Load / Incidents sub-panels with Schedule heatmaps
+- **Setup wizard** — live discovery audit, optional 30-day baseline, actionable Backups / schedule / Security steps
+- **Backups Not tracking** — opt out of backup age Issues and nudges while keeping folder paths
+- **UI polish** — clearer type scale, tooltips, loading spinners, Crashes/Spark/Logs chrome
+
+### Intelligence & triage
+
+- Crash fix advice is evidence-first (Create/watchdog/OOM and related playbooks)
+- Declarative crash rule packs, mod forensics, and CA parity crash kinds
+- Crash inbox groups, Startup boot profile, Logs viewer, Issues acknowledge / Reviewed
+- Modrinth identity + update hints (opt-in; never downloads jars)
+
+### Live & chrome
+
+- Live chart windows through 30d, collapsible sections, System temps-only dials
+- Neo-Frutiger Aero glass themes; Run Report stage progress
+- Short guided tour: one card per rail page
 
 ---
 
@@ -57,5 +89,6 @@ Watchtower **1.0.0** is the complete ops toolkit for NeoForge **1.21.x** Linux s
 
 ## Links
 
+- [Release v1.1.0](https://github.com/djinnbanter/WatchTower/releases/tag/v1.1.0)
 - [Release v1.0.0](https://github.com/djinnbanter/WatchTower/releases/tag/v1.0.0)
 - [[Roadmap]] — what is planned next

@@ -21,14 +21,15 @@ Work through these steps **in order** after Watchtower is installed and the serv
 - [ ] **3. Sign in and change password** — username `watchtower`, password `password` → pick a new password when asked
 
 - [ ] **4. Complete the setup wizard** — opens automatically on first visit
-  - **Initial audit** scans logs, crashes, mods, and backups, then runs a 30-day baseline report
-  - **Backups** — automatic scan for backup files; configure later in Settings if none found
-  - **Scheduled reports** — twice daily (recommended), hourly, or off
-  - **Security** (optional) — enable 2FA if the dashboard is reachable from the internet
-  - Reopen anytime: **Help → Run setup wizard again**, or add `?setup=1` to the dashboard URL
+  - **Initial audit** — live discovery of activity, crashes, mods, and whether backups are configured (does **not** start a long report by itself)
+  - **Optional 30-day baseline** — start a full health report from the wizard; you can continue setup while it runs
+  - **Backups** — open the Backups tab to configure a folder or panel heartbeat (no silent defaults; no automatic folder guess)
+  - **Scheduled reports** — default is twice daily (midnight and noon, server time); change or turn off in the wizard or Settings → General
+  - **Security** (optional) — confirm password change and enable 2FA if the dashboard is reachable beyond localhost
+  - Reopen anytime: **Docs → Run again**, or add `?setup=1` to the dashboard URL
 
-- [ ] **5. Set up backups** (if the wizard did not find any)
-  - **Settings → Backups** — folder on this server, panel webhook, or hybrid (panel setup is not part of the first-run wizard)
+- [ ] **5. Set up backups** (if skipped in the wizard)
+  - **Backups** tab — folder on this server, panel webhook, or hybrid
 
 - [ ] **6. Turn on scheduled reports** (if skipped in wizard) — **Settings** → **General** → e.g. twice daily or every hour
 

@@ -1,0 +1,3 @@
+# Synthetic marker for CA-24 (Fabric json in NeoForge jar) fixture inventory.
+# Real detection coverage lives in ModJarMetadataReaderTest (loader_hint).
+loader_hint=fabric_in_neoforge_jar

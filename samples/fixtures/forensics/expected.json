@@ -1,0 +1,25 @@
+{
+  "version": "1.0.17",
+  "description": "Forensics harness expected inventory + smoke expectations",
+  "fixtures": {
+    "create-class-lookup.json": { "expected.mod_id": "create" },
+    "corrupt-zip-boot.log": { "issue": "CORRUPTED_MOD_JAR", "patterns": ["zip", "corrupt"] },
+    "serverconfig-bad.toml": { "config_health": true, "skip_dirs": ["defaultconfigs"] },
+    "stderr-fml-early.log": { "stderr_merge": true },
+    "mcreator-mod.marker": { "is_mcreator": true },
+    "fabric-in-neoforge.marker": { "loader_hint": "fabric_in_neoforge_jar" }
+  },
+  "api_routes": [
+    "/api/mods/forensics/status",
+    "/api/mods/forensics/find-class",
+    "/api/mods/forensics/find-package",
+    "/api/mods/forensics/scan-corrupt",
+    "/api/mods/forensics/config-health"
+  ],
+  "config_defaults": {
+    "MOD_FORENSICS_SCAN": true,
+    "FORENSICS_CORRUPT_JAR_WALK": false,
+    "FORENSICS_INDEX_ON_REPORT": false,
+    "FORENSICS_STDERR_PATHS": "logs/stderr.log,logs/stderr_stream.log"
+  }
+}

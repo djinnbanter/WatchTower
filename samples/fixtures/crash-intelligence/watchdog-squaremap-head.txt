@@ -1,0 +1,10 @@
+---- Minecraft Crash Report ----
+
+Time: 2026-06-29 09:56:04
+Description: Watching Server
+
+java.lang.Error: ServerHangWatchdog detected that a single server tick took 60004128.00 seconds (should be max 0.05)
+	at java.base/java.util.concurrent.ConcurrentLinkedQueue.offer(ConcurrentLinkedQueue.java:380) ~[?:?] {}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ChunkMap.updateChunkScheduling(ChunkMap.java:9452) ~[server-1.21.1.jar%23317!/:?] {re:mixin}
+	at TRANSFORMER/squaremap@1.3.2/xyz.jpenilla.squaremap.common.util.chunksnapshot.VanillaChunkSnapshotProvider.chunkIfGenerated(VanillaChunkSnapshotProvider.java:97) ~[squaremap-fabric-mc1.21.1-1.3.2.jar%231220!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.doRunTask(MinecraftServer.java:872) ~[server-1.21.1.jar%23317!/:?] {re:mixin}

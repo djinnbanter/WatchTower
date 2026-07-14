@@ -94,13 +94,19 @@ public final class SessionManager {
     }
 
     public SessionState markPasswordChanged(String sessionId) {
+        return markAccountSetup(sessionId, null);
+    }
+
+    /** Clears must-change flag and optionally updates the session username. */
+    public SessionState markAccountSetup(String sessionId, String username) {
         SessionState current = get(sessionId);
         if (current == null) {
             return null;
         }
+        String nextUser = (username != null && !username.isBlank()) ? username.trim() : current.username();
         SessionState updated = new SessionState(
                 current.sessionId(),
-                current.username(),
+                nextUser,
                 current.issuedAtEpochSec(),
                 current.expiresAtEpochSec(),
                 current.totpVerified(),

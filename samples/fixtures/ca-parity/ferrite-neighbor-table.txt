@@ -1,0 +1,4 @@
+---- Minecraft Crash Report ----
+// FerriteCore neighbor table (synthetic CA-08)
+
+Caused by: java.lang.UnsupportedOperationException: A mod tried to access the state neighbor table directly. Please report this at https://github.com/malte0811/FerriteCore/issues. As a temporary workaround you can enable "populateNeighborTable" in the FerriteCore config

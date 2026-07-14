@@ -1,0 +1,4 @@
+---- Minecraft Crash Report ----
+// KubeJS datapack (synthetic CA-12)
+
+java.lang.IllegalStateException: Failed to parse kubejs:recipe/broken from pack KubeJS Resource Pack [data]

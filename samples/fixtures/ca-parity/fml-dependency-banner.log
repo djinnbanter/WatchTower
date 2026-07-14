@@ -1,0 +1,7 @@
+[13Jul2026 12:00:01.000] [main/INFO] [net.neoforged.fml.loading.FMLServiceProvider/]: NeoForge mod loading starting
+[13Jul2026 12:00:02.100] [main/ERROR] [net.neoforged.neoforge.common.NeoForgeMod/]: Missing or unsupported mandatory dependencies:
+	Mod ID: 'cloth_config', Requested by: 'examplemod', Actual version: '[MISSING]'
+	Mod ID: 'architectury', Requested by: 'othermod', Actual version: '9.0.0'
+More details:
+	examplemod-1.0.jar needs cloth_config
+[13Jul2026 12:00:03.000] [main/FATAL] [net.neoforged.fml.ModLoader/]: Aborting server start due to mod loading failures

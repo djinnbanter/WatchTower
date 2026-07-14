@@ -19,6 +19,45 @@ class BackupExternalConfigServiceTest {
     Path temp;
 
     @Test
+    void trackingEnabledFalsePersistsAndClearsExternal() throws Exception {
+        Path conf = temp.resolve(WatchtowerFiles.CONF_FILENAME);
+        Files.writeString(conf, """
+                BACKUP_DIRS=/tmp/backups
+                BACKUP_WEBHOOK_TOKEN=old-token
+                BACKUP_EXTERNAL_MARKER=watchtower/backup-heartbeat.json
+                """);
+
+        JsonObject req = new JsonObject();
+        req.addProperty("trackingEnabled", false);
+        BackupExternalConfigService.apply(conf, req);
+
+        Map<String, String> map = WatchtowerConfWriter.readMap(conf);
+        assertEquals("false", map.get(BackupExternalConfigService.KEY_TRACKING_ENABLED));
+        assertEquals("", map.get(BackupExternalConfigService.KEY_MARKER));
+        assertEquals("", map.get(BackupExternalConfigService.KEY_WEBHOOK_TOKEN));
+        assertEquals("/tmp/backups", map.get("BACKUP_DIRS"));
+        ReportConfig config = ReportConfig.fromMap(map);
+        assertFalse(config.backupTrackingEnabled());
+        assertTrue(config.hasBackupDirs());
+        assertFalse(config.isExternalBackupConfigured());
+    }
+
+    @Test
+    void trackingEnabledTrueRestoresFlag() throws Exception {
+        Path conf = temp.resolve(WatchtowerFiles.CONF_FILENAME);
+        Files.writeString(conf, "BACKUP_TRACKING_ENABLED=false\n");
+
+        JsonObject req = new JsonObject();
+        req.addProperty("trackingEnabled", true);
+        req.addProperty("trackingMode", "off");
+        BackupExternalConfigService.apply(conf, req);
+
+        Map<String, String> map = WatchtowerConfWriter.readMap(conf);
+        assertEquals("true", map.get(BackupExternalConfigService.KEY_TRACKING_ENABLED));
+        assertTrue(ReportConfig.fromMap(map).backupTrackingEnabled());
+    }
+
+    @Test
     void trackingModeOffClearsExternalKeys() throws Exception {
         Path conf = temp.resolve(WatchtowerFiles.CONF_FILENAME);
         Files.writeString(conf, """

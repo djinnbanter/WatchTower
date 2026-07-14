@@ -3,8 +3,8 @@ package dev.mcstatus.watchtower.core.collect;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
-import me.lucko.spark.proto.SparkProtos;
-import me.lucko.spark.proto.SparkSamplerProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkSamplerProtos;
 
 import java.util.ArrayList;
 import java.util.Comparator;

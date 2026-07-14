@@ -83,13 +83,100 @@ const REPORT_VERSION_OVERRIDES = {
 };
 
 export function mockReportMods() {
-  return MOCK_RUNNING_MODS
+  const base = MOCK_RUNNING_MODS
     .filter((m) => !['ae2', 'alexsmobs', 'modernfix', 'rhino'].includes(m.id))
     .map((m) => ({
       id: m.id,
       version: REPORT_VERSION_OVERRIDES[m.id] ?? m.version,
       display_name: m.display_name,
+      jar_file: `${m.id}-${REPORT_VERSION_OVERRIDES[m.id] ?? m.version}.jar`,
+      dependents_count: 0,
     }));
+
+  // Ensure Create ecosystem + Railways chain for Dependencies tab preview
+  const extras = [
+    {
+      id: 'flywheel',
+      version: '1.0.2',
+      display_name: 'Flywheel',
+      jar_file: 'flywheel-1.0.2.jar',
+      side_score: 'server_required',
+      side_signals: ['SERVER_REQUIRED_IDS'],
+      dependents_count: 1,
+      dependencies: [{ modId: 'minecraft', mandatory: true }],
+    },
+    {
+      id: 'ponder',
+      version: '1.0.56',
+      display_name: 'Ponder',
+      jar_file: 'ponder-1.0.56.jar',
+      side_score: 'server_required',
+      side_signals: ['ecosystem:create'],
+      dependents_count: 0,
+      dependencies: [{ modId: 'create', mandatory: true }],
+    },
+    {
+      id: 'railways',
+      version: '1.6.4',
+      display_name: 'Create: Steam \'n\' Rails',
+      jar_file: 'railways-1.6.4.jar',
+      side_score: 'server_required',
+      side_signals: ['dependent_of:create'],
+      dependents_count: 0,
+      dependencies: [{ modId: 'create', mandatory: true }],
+    },
+    {
+      id: 'mcreator_demo',
+      version: '1.0.0',
+      display_name: 'Demo MCreator Pack',
+      jar_file: 'mcreator_demo-1.0.0.jar',
+      is_mcreator: true,
+      dependents_count: 0,
+    },
+    {
+      id: 'fabric_only_demo',
+      version: '1.0.0',
+      display_name: 'Fabric-Only Demo',
+      jar_file: 'fabric_only_demo-1.0.0.jar',
+      loader_hint: 'fabric_in_neoforge_jar',
+      dependents_count: 0,
+    },
+    {
+      id: 'xaerominimap',
+      version: '25.0.0',
+      display_name: "Xaero's Minimap",
+      jar_file: 'xaerominimap-25.0.0.jar',
+      side_score: 'uncertain',
+      side_signals: ['heuristic'],
+      dependents_count: 0,
+    },
+  ];
+
+  const byId = new Map();
+  for (const m of [...base, ...extras]) byId.set(m.id, m);
+
+  const create = byId.get('create');
+  if (create) {
+    create.side_score = 'server_required';
+    create.side_signals = ['SERVER_REQUIRED_IDS'];
+    create.dependents_count = 2;
+    create.dependencies = [
+      { modId: 'flywheel', mandatory: true },
+      { modId: 'neoforge', mandatory: true },
+    ];
+  }
+  const appleskin = byId.get('appleskin');
+  if (appleskin) {
+    appleskin.side_score = 'likely_removable';
+    appleskin.side_signals = ['heuristic', 'toml'];
+  }
+  const jei = byId.get('jei');
+  if (jei) {
+    jei.side_score = 'uncertain';
+    jei.side_signals = ['heuristic'];
+  }
+
+  return [...byId.values()];
 }
 
 const BASELINE_MTIME = 1782000000;
@@ -496,22 +583,22 @@ export const MOCK_CLIENT_ONLY_MODS = [
   {
     mod_id: 'xaeros_minimap',
     version: '25.0.0',
-    bucket: 'likely_removable',
-    confidence: 'high',
-    reason: 'Minimap mod — client UI only',
-    removal_advice: 'Safe to remove from server mods/.',
+    bucket: 'uncertain',
+    confidence: 'medium',
+    reason: 'Client map UI — some packs sync waypoints via an optional server component. Verify before removing.',
+    removal_advice: 'Check mod documentation; some features may run on dedicated servers.',
     display_name: "Xaero's Minimap",
-    signals: ['heuristic', 'naming'],
+    signals: ['heuristic'],
   },
   {
     mod_id: 'xaeros_worldmap',
     version: '3.0.0',
-    bucket: 'likely_removable',
-    confidence: 'high',
-    reason: 'World map mod — client UI only',
-    removal_advice: 'Safe to remove from server mods/.',
+    bucket: 'uncertain',
+    confidence: 'medium',
+    reason: 'Client map UI — some packs sync waypoints via an optional server component. Verify before removing.',
+    removal_advice: 'Check mod documentation; some features may run on dedicated servers.',
     display_name: "Xaero's World Map",
-    signals: ['heuristic', 'naming'],
+    signals: ['heuristic'],
   },
   {
     mod_id: 'journeymap',

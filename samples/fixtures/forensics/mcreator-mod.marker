@@ -1,0 +1,3 @@
+# Synthetic marker for CA-23 (MCreator) fixture inventory.
+# Real jar metadata coverage lives in ModJarMetadataReaderTest (is_mcreator).
+is_mcreator=true

@@ -1,0 +1,5 @@
+---- Minecraft Crash Report ----
+Time: 2026-07-06 09:33:12
+Description: Mod loading has failed
+
+org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Overwrite conflict createaddition → create

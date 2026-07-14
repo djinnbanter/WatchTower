@@ -1,0 +1,215 @@
+[
+  {
+    "file": "crash-2026-06-01_10.00.00-server.txt",
+    "time": "2026-06-01T10:00:00+01:00",
+    "failure_kind": "watchdog",
+    "category": "watchdog",
+    "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+    "primary_mod_id": null,
+    "stall_mod_id": null,
+    "plain_english": "The server tick hung for about a minute.",
+    "display_label": "ServerHangWatchdog",
+    "watchdog_tick_ms": 60000
+  },
+  {
+    "file": "crash-2026-06-01_11.00.00-server.txt",
+    "time": "2026-06-01T11:00:00+01:00",
+    "failure_kind": "watchdog",
+    "category": "watchdog",
+    "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+    "primary_mod_id": null,
+    "stall_mod_id": null,
+    "plain_english": "The server tick hung for about a minute.",
+    "display_label": "ServerHangWatchdog",
+    "watchdog_tick_ms": 60000
+  },
+  {
+    "file": "crash-2026-06-01_12.00.00-server.txt",
+    "time": "2026-06-01T12:00:00+01:00",
+    "failure_kind": "watchdog",
+    "category": "watchdog",
+    "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+    "primary_mod_id": null,
+    "stall_mod_id": null,
+    "plain_english": "The server tick hung for about a minute.",
+    "display_label": "ServerHangWatchdog",
+    "watchdog_tick_ms": 60000
+  },
+  {
+    "file": "crash-2026-06-01_13.00.00-server.txt",
+    "time": "2026-06-01T13:00:00+01:00",
+    "failure_kind": "watchdog",
+    "category": "watchdog",
+    "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+    "primary_mod_id": null,
+    "stall_mod_id": null,
+    "plain_english": "The server tick hung for about a minute.",
+    "display_label": "ServerHangWatchdog",
+    "watchdog_tick_ms": 60000
+  },
+  {
+    "file": "crash-2026-06-01_14.00.00-server.txt",
+    "time": "2026-06-01T14:00:00+01:00",
+    "failure_kind": "watchdog",
+    "category": "watchdog",
+    "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+    "primary_mod_id": null,
+    "stall_mod_id": null,
+    "plain_english": "The server tick hung for about a minute.",
+    "display_label": "ServerHangWatchdog",
+    "watchdog_tick_ms": 60000
+  },
+  {
+    "file": "crash-2026-06-02_09.00.00-server.txt",
+    "time": "2026-06-02T09:00:00+01:00",
+    "failure_kind": "watchdog_pregen",
+    "category": "watchdog",
+    "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 120.00 seconds",
+    "primary_mod_id": null,
+    "stall_mod_id": "squaremap",
+    "stack_frames": [
+      { "mod_id": "squaremap", "class": "xyz.jpenilla.squaremap.common.task.UpdateMarkers" }
+    ],
+    "plain_english": "Map rendering (squaremap) stalled the server tick.",
+    "display_label": "Pregen / map stall",
+    "watchdog_tick_ms": 120000,
+    "suspect_mod_id": "squaremap"
+  },
+  {
+    "file": "crash-2026-06-03_15.00.00-server.txt",
+    "time": "2026-06-03T15:00:00+01:00",
+    "failure_kind": "mod_runtime",
+    "category": "mod",
+    "exception": "java.lang.NullPointerException: Cannot invoke \"Object.hashCode()\" because \"o\" is null",
+    "primary_mod_id": "create",
+    "stall_mod_id": null,
+    "stack_frames": [
+      { "mod_id": "create", "class": "com.simibubi.create.content.kinetics.belt.BeltBlockEntity" },
+      { "mod_id": "neoforge", "class": "net.neoforged.neoforge.event.tick.ServerTickEvent" }
+    ],
+    "incident_id": "inc-crash-2026-06-03_15.00.00-server.txt",
+    "plain_english": "Create crashed with a NullPointerException during a tick.",
+    "display_label": "Create NPE",
+    "suspect_mod_id": "create"
+  },
+  {
+    "file": "crash-2026-06-03_15.01.02-server.txt",
+    "time": "2026-06-03T15:01:02+01:00",
+    "failure_kind": "watchdog_followup",
+    "category": "watchdog",
+    "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 62.00 seconds",
+    "primary_mod_id": null,
+    "stall_mod_id": null,
+    "incident_id": "inc-crash-2026-06-03_15.00.00-server.txt",
+    "plain_english": "Watchdog follow-up after the Create crash.",
+    "display_label": "Watchdog follow-up",
+    "watchdog_tick_ms": 62000,
+    "paired_primary_file": "crash-2026-06-03_15.00.00-server.txt"
+  },
+  {
+    "file": "crash-2026-06-04_08.30.00-server.txt",
+    "time": "2026-06-04T08:30:00+01:00",
+    "failure_kind": "world_nbt_corrupt",
+    "category": "world",
+    "exception": "java.io.EOFException: Unexpected end of ZLIB input stream",
+    "primary_mod_id": null,
+    "stall_mod_id": null,
+    "plain_english": "A region or player NBT file looks corrupt.",
+    "display_label": "Corrupt world NBT"
+  },
+  {
+    "file": "crash-2026-06-05_10.00.00-server.txt",
+    "time": "2026-06-05T10:00:00+01:00",
+    "failure_kind": "mod_runtime",
+    "category": "mod",
+    "exception": "java.lang.RuntimeException: KubeJS script failed",
+    "primary_mod_id": "kubejs",
+    "stall_mod_id": null,
+    "stack_frames": [
+      { "mod_id": "kubejs", "class": "dev.latvian.mods.kubejs.script.ScriptManager" }
+    ],
+    "plain_english": "A KubeJS script threw at runtime.",
+    "display_label": "KubeJS crash",
+    "suspect_mod_id": "kubejs"
+  },
+  {
+    "file": "crash-2026-06-05_11.00.00-server.txt",
+    "time": "2026-06-05T11:00:00+01:00",
+    "failure_kind": "mod_runtime",
+    "category": "mod",
+    "exception": "java.lang.IllegalStateException: AE2 channel overflow",
+    "primary_mod_id": "ae2",
+    "stall_mod_id": null,
+    "stack_frames": [
+      { "mod_id": "ae2", "class": "appeng.me.service.PathingService" }
+    ],
+    "plain_english": "Applied Energistics 2 hit an illegal state.",
+    "display_label": "AE2 crash",
+    "suspect_mod_id": "ae2"
+  },
+  {
+    "file": "crash-2026-06-05_12.00.00-server.txt",
+    "time": "2026-06-05T12:00:00+01:00",
+    "failure_kind": "mod_runtime",
+    "category": "mod",
+    "exception": "java.lang.NullPointerException: Cannot read field \"heat\" because \"tile\" is null",
+    "primary_mod_id": "mekanism",
+    "stall_mod_id": null,
+    "stack_frames": [
+      { "mod_id": "mekanism", "class": "mekanism.common.tile.machine.TileEntityBoilerCasing" }
+    ],
+    "plain_english": "Mekanism NPE in a boiler tile.",
+    "display_label": "Mekanism crash",
+    "suspect_mod_id": "mekanism"
+  },
+  {
+    "file": "crash-2026-06-05_13.00.00-server.txt",
+    "time": "2026-06-05T13:00:00+01:00",
+    "failure_kind": "mod_runtime",
+    "category": "mod",
+    "exception": "java.lang.ClassCastException: class net.minecraft.world.level.block.AirBlock cannot be cast",
+    "primary_mod_id": "botania",
+    "stall_mod_id": null,
+    "stack_frames": [
+      { "mod_id": "botania", "class": "vazkii.botania.common.block.flower.generating.HydroangeasBlockEntity" }
+    ],
+    "plain_english": "Botania ClassCastException in a generating flower.",
+    "display_label": "Botania crash",
+    "suspect_mod_id": "botania"
+  },
+  {
+    "file": "crash-2026-06-05_14.00.00-server.txt",
+    "time": "2026-06-05T14:00:00+01:00",
+    "failure_kind": "mod_runtime",
+    "category": "mod",
+    "exception": "java.lang.NoClassDefFoundError: org/spongepowered/asm/mixin/transformer/meta/MixinMerged",
+    "primary_mod_id": "connectivity",
+    "stall_mod_id": null,
+    "plain_english": "Connectivity failed with a missing mixin class.",
+    "display_label": "Connectivity crash",
+    "suspect_mod_id": "connectivity"
+  },
+  {
+    "file": "crash-2026-06-06_16.00.00-fml.txt",
+    "time": "2026-06-06T16:00:00+01:00",
+    "failure_kind": "mod_load",
+    "category": "mod",
+    "exception": "net.neoforged.fml.ModLoadingException: Mod sable failed to load",
+    "primary_mod_id": "sable",
+    "stall_mod_id": null,
+    "plain_english": "Sable failed during mod loading.",
+    "display_label": "Mod load failure",
+    "suspect_mod_id": "sable"
+  },
+  {
+    "file": "crash-2026-06-07_09.00.00-server.txt",
+    "time": "2026-06-07T09:00:00+01:00",
+    "failure_kind": "oom",
+    "category": "jvm",
+    "exception": "java.lang.OutOfMemoryError: Java heap space",
+    "primary_mod_id": null,
+    "stall_mod_id": null,
+    "plain_english": "The JVM ran out of heap.",
+    "display_label": "Out of memory"
+  }
+]

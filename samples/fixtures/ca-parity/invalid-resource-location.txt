@@ -1,0 +1,4 @@
+---- Minecraft Crash Report ----
+// Invalid ResourceLocation (synthetic CA-05)
+
+Caused by: net.minecraft.ResourceLocationException: Non [a-z0-9/._-] character in path of location: coolmod:Bad Asset Name

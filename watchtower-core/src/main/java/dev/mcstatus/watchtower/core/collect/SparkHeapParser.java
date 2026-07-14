@@ -2,7 +2,7 @@ package dev.mcstatus.watchtower.core.collect;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import me.lucko.spark.proto.SparkHeapProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkHeapProtos;
 
 import java.util.Comparator;
 

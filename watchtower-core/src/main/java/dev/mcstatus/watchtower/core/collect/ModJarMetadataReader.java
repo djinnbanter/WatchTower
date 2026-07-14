@@ -37,7 +37,25 @@ public final class ModJarMetadataReader {
             String modLoader,
             String modType,
             List<ModDependency> dependencies,
-            String jarFile) {
+            String jarFile,
+            boolean mcreator,
+            String loaderHint,
+            List<String> mixinConfigs) {
+
+        public ModEntry(
+                String id,
+                String version,
+                String displayName,
+                String description,
+                String modLoader,
+                String modType,
+                List<ModDependency> dependencies,
+                String jarFile,
+                boolean mcreator,
+                String loaderHint) {
+            this(id, version, displayName, description, modLoader, modType, dependencies,
+                    jarFile, mcreator, loaderHint, List.of());
+        }
     }
 
     private ModJarMetadataReader() {
@@ -122,6 +140,18 @@ public final class ModJarMetadataReader {
         if (!mod.has("dependencies") && !jarMeta.dependencies().isEmpty()) {
             mod.add("dependencies", dependenciesToJson(jarMeta.dependencies()));
         }
+        if (!mod.has("jar_file") && jarMeta.jarFile() != null && !jarMeta.jarFile().isBlank()) {
+            mod.addProperty("jar_file", jarMeta.jarFile());
+        }
+        if (jarMeta.mcreator() && (!mod.has("is_mcreator") || !mod.get("is_mcreator").getAsBoolean())) {
+            mod.addProperty("is_mcreator", true);
+        }
+        if (!mod.has("loader_hint") && jarMeta.loaderHint() != null && !jarMeta.loaderHint().isBlank()) {
+            mod.addProperty("loader_hint", jarMeta.loaderHint());
+        }
+        if (!mod.has("mixin_configs")) {
+            mod.add("mixin_configs", stringListToJson(jarMeta.mixinConfigs()));
+        }
     }
 
     public static JsonObject toJson(ModEntry entry) {
@@ -140,7 +170,29 @@ public final class ModJarMetadataReader {
         if (!entry.dependencies().isEmpty()) {
             mod.add("dependencies", dependenciesToJson(entry.dependencies()));
         }
+        if (entry.jarFile() != null && !entry.jarFile().isBlank()) {
+            mod.addProperty("jar_file", entry.jarFile());
+        }
+        if (entry.mcreator()) {
+            mod.addProperty("is_mcreator", true);
+        }
+        if (entry.loaderHint() != null && !entry.loaderHint().isBlank()) {
+            mod.addProperty("loader_hint", entry.loaderHint());
+        }
+        mod.add("mixin_configs", stringListToJson(entry.mixinConfigs()));
         return mod;
+    }
+
+    private static JsonArray stringListToJson(List<String> values) {
+        JsonArray arr = new JsonArray();
+        if (values != null) {
+            for (String v : values) {
+                if (v != null && !v.isBlank()) {
+                    arr.add(v);
+                }
+            }
+        }
+        return arr;
     }
 
     private static JsonArray dependenciesToJson(List<ModDependency> deps) {
@@ -165,36 +217,166 @@ public final class ModJarMetadataReader {
             return List.of();
         }
         try (ZipFile zip = new ZipFile(jarPath.toFile())) {
+            boolean mcreator = false;
+            boolean hasFabricMeta = zip.getEntry("fabric.mod.json") != null
+                    || zip.getEntry("quilt.mod.json") != null;
+            boolean hasNeoToml = zip.getEntry(TOML_PATH) != null
+                    || zip.getEntry("META-INF/mods.toml") != null;
+            LinkedHashMap<String, Boolean> mixinPaths = new LinkedHashMap<>();
+            List<String> nestedJarPaths = new ArrayList<>();
+            var entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry ze = entries.nextElement();
+                String name = ze.getName();
+                if (name == null) {
+                    continue;
+                }
+                if (name.startsWith("net/mcreator/")) {
+                    mcreator = true;
+                }
+                if (isMixinConfigPath(name)) {
+                    mixinPaths.putIfAbsent(name, Boolean.TRUE);
+                }
+                if (isOneLevelNestedJar(name)) {
+                    nestedJarPaths.add(name);
+                }
+            }
+            for (String nestedPath : nestedJarPaths) {
+                collectNestedMixinConfigs(zip, nestedPath, mixinPaths);
+            }
+            String loaderHint = (hasFabricMeta && !hasNeoToml) ? "fabric_in_neoforge_jar" : null;
+
             ZipEntry entry = zip.getEntry(TOML_PATH);
             if (entry == null) {
-                return List.of(fallbackFromFilename(jarPath));
+                entry = zip.getEntry("META-INF/mods.toml");
             }
-            try (InputStream in = zip.getInputStream(entry)) {
-                String toml = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-                List<ParsedModBlock> blocks = parseTomlMods(toml);
-                if (blocks.isEmpty()) {
-                    return List.of(fallbackFromFilename(jarPath));
+            List<String> tomlMixins = List.of();
+            String toml = null;
+            if (entry != null) {
+                try (InputStream in = zip.getInputStream(entry)) {
+                    toml = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                    tomlMixins = parseTomlMixinConfigs(toml);
+                    for (String cfg : tomlMixins) {
+                        mixinPaths.putIfAbsent(cfg, Boolean.TRUE);
+                    }
                 }
-                List<ModEntry> out = new ArrayList<>();
-                for (ParsedModBlock block : blocks) {
-                    out.add(new ModEntry(
-                            block.modId(),
-                            block.version() != null ? block.version() : versionFromFilename(jarPath, block.modId()),
-                            block.displayName(),
-                            block.description(),
-                            block.modLoader(),
-                            block.modType(),
-                            block.dependencies(),
-                            jarPath.getFileName().toString()));
-                }
-                return out;
             }
+            List<String> mixinConfigs = List.copyOf(mixinPaths.keySet());
+            if (toml == null) {
+                return List.of(fallbackFromFilename(jarPath, mcreator, loaderHint, mixinConfigs));
+            }
+            List<ParsedModBlock> blocks = parseTomlMods(toml);
+            if (blocks.isEmpty()) {
+                return List.of(fallbackFromFilename(jarPath, mcreator, loaderHint, mixinConfigs));
+            }
+            List<ModEntry> out = new ArrayList<>();
+            for (ParsedModBlock block : blocks) {
+                out.add(new ModEntry(
+                        block.modId(),
+                        block.version() != null ? block.version() : versionFromFilename(jarPath, block.modId()),
+                        block.displayName(),
+                        block.description(),
+                        block.modLoader(),
+                        block.modType(),
+                        block.dependencies(),
+                        jarPath.getFileName().toString(),
+                        mcreator,
+                        loaderHint,
+                        mixinConfigs));
+            }
+            return out;
         } catch (IOException e) {
-            return List.of(fallbackFromFilename(jarPath));
+            return List.of(fallbackFromFilename(jarPath, false, null, List.of()));
         }
     }
 
+    /** Filename contains {@code mixin} and ends with {@code .json}; skip paths under {@code data/}. */
+    static boolean isMixinConfigPath(String entryName) {
+        if (entryName == null || entryName.isBlank()) {
+            return false;
+        }
+        String normalized = entryName.replace('\\', '/');
+        if (normalized.toLowerCase(Locale.ROOT).startsWith("data/")) {
+            return false;
+        }
+        int slash = normalized.lastIndexOf('/');
+        String file = slash >= 0 ? normalized.substring(slash + 1) : normalized;
+        String lower = file.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".json") && lower.contains("mixin");
+    }
+
+    private static boolean isOneLevelNestedJar(String entryName) {
+        if (entryName == null || !entryName.toLowerCase(Locale.ROOT).endsWith(".jar")) {
+            return false;
+        }
+        String n = entryName.replace('\\', '/');
+        return n.startsWith("META-INF/") && n.chars().filter(ch -> ch == '/').count() == 2;
+    }
+
+    private static void collectNestedMixinConfigs(ZipFile parent, String nestedPath,
+                                                  LinkedHashMap<String, Boolean> mixinPaths) {
+        ZipEntry nested = parent.getEntry(nestedPath);
+        if (nested == null || nested.isDirectory()) {
+            return;
+        }
+        try (InputStream in = parent.getInputStream(nested);
+             java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(in)) {
+            ZipEntry child;
+            while ((child = zis.getNextEntry()) != null) {
+                String name = child.getName();
+                if (isMixinConfigPath(name)) {
+                    mixinPaths.putIfAbsent(nestedPath + "!" + name, Boolean.TRUE);
+                }
+            }
+        } catch (IOException ignored) {
+            // best-effort jar-in-jar only
+        }
+    }
+
+    static List<String> parseTomlMixinConfigs(String toml) {
+        LinkedHashMap<String, Boolean> out = new LinkedHashMap<>();
+        if (toml == null || toml.isBlank()) {
+            return List.of();
+        }
+        for (String rawLine : toml.split("\\R")) {
+            String line = rawLine.strip();
+            if (line.isEmpty() || line.startsWith("#")) {
+                continue;
+            }
+            int eq = line.indexOf('=');
+            if (eq <= 0) {
+                continue;
+            }
+            String key = line.substring(0, eq).strip();
+            String value = unquote(line.substring(eq + 1).strip());
+            if ("config".equals(key) || "mixinConfig".equalsIgnoreCase(key)
+                    || "mixinConfigs".equalsIgnoreCase(key)) {
+                if (value.startsWith("[") && value.endsWith("]")) {
+                    String inner = value.substring(1, value.length() - 1);
+                    for (String part : inner.split(",")) {
+                        String cfg = unquote(part.strip());
+                        if (!cfg.isBlank()) {
+                            out.putIfAbsent(cfg, Boolean.TRUE);
+                        }
+                    }
+                } else if (!value.isBlank()) {
+                    out.putIfAbsent(value, Boolean.TRUE);
+                }
+            }
+        }
+        return List.copyOf(out.keySet());
+    }
+
     private static ModEntry fallbackFromFilename(Path jarPath) {
+        return fallbackFromFilename(jarPath, false, null, List.of());
+    }
+
+    private static ModEntry fallbackFromFilename(Path jarPath, boolean mcreator, String loaderHint) {
+        return fallbackFromFilename(jarPath, mcreator, loaderHint, List.of());
+    }
+
+    private static ModEntry fallbackFromFilename(Path jarPath, boolean mcreator, String loaderHint,
+                                                 List<String> mixinConfigs) {
         String name = jarPath.getFileName().toString();
         if (name.endsWith(".jar")) {
             name = name.substring(0, name.length() - 4);
@@ -206,7 +388,9 @@ public final class ModJarMetadataReader {
             id = name.substring(0, dash);
             version = name.substring(dash + 1);
         }
-        return new ModEntry(id, version, null, null, null, null, List.of(), jarPath.getFileName().toString());
+        return new ModEntry(id, version, null, null, null, null, List.of(),
+                jarPath.getFileName().toString(), mcreator, loaderHint,
+                mixinConfigs != null ? mixinConfigs : List.of());
     }
 
     private static String versionFromFilename(Path jarPath, String modId) {

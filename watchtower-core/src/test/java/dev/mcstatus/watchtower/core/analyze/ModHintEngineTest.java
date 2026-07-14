@@ -17,4 +17,15 @@ class ModHintEngineTest {
         assertTrue(bundle.getAsJsonArray("fix_steps").size() >= 2);
         assertEquals("kubejs_script", bundle.get("tech_hint_id").getAsString());
     }
+
+    @Test
+    void genericCategoryHintsDoNotAskToRerunReport() {
+        JsonObject bundle = ModHintEngine.categoryBundle("itemstack", "logger_error");
+        assertTrue(bundle.has("hints"));
+        for (var el : bundle.getAsJsonArray("hints")) {
+            assertFalse(el.getAsString().toLowerCase().contains("run a full report"),
+                    () -> "unexpected hint: " + el.getAsString());
+        }
+        assertTrue(bundle.getAsJsonArray("hints").size() >= 1);
+    }
 }

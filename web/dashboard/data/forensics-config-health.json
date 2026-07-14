@@ -1,0 +1,9 @@
+{
+  "config_health": [
+    {
+      "path": "world/serverconfig/create-server.toml",
+      "reason": "parse_error",
+      "detail": "Expected '=' after key at line 42"
+    }
+  ]
+}

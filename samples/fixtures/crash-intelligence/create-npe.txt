@@ -1,0 +1,12 @@
+---- Minecraft Crash Report ----
+// mf.axis is null
+
+Time: 2026-04-21 21:35:01
+Description: Exception ticking world
+
+java.lang.NullPointerException: Cannot invoke "com.simibubi.create.content.contraptions.ContraptionCollision.mf()" because "mf.axis" is null
+	at TRANSFORMER/create@6.0.10/com.simibubi.create.content.contraptions.ContraptionCollision.tick(ContraptionCollision.java:42)
+	at TRANSFORMER/create@6.0.10/com.simibubi.create.content.contraptions.ControlledContraptionEntity.tick(ControlledContraptionEntity.java:88)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.tick(Level.java:100)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.tickChildren(MinecraftServer.java:200)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:180)

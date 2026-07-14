@@ -1,0 +1,7 @@
+{
+  "mods": [
+    { "id": "connector", "version": "1.0.0", "jar_file": "Connector-1.0.0.jar" },
+    { "id": "sodium", "version": "0.5.8", "jar_file": "sodium-0.5.8.jar" },
+    { "id": "create", "version": "6.0.4", "jar_file": "create-6.0.4.jar" }
+  ]
+}

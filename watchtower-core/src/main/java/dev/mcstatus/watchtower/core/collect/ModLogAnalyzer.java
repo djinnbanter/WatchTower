@@ -5,11 +5,9 @@ import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.analyze.ModErrorCategory;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,8 +21,22 @@ public final class ModLogAnalyzer {
     private static final int MAX_SAMPLES = 3;
 
     private final Map<String, ModStats> byMod = new HashMap<>();
+    private boolean bootWindowActive = true;
+
+    /** Mark whether the scan is still in the boot window (before {@code Done!}). */
+    public void setBootComplete(boolean complete) {
+        this.bootWindowActive = !complete;
+    }
+
+    public boolean isBootWindowActive() {
+        return bootWindowActive;
+    }
 
     public void processLine(String line) {
+        processLine(line, bootWindowActive);
+    }
+
+    public void processLine(String line, boolean inBootWindow) {
         ModErrorCategory.Hit hit = ModErrorCategory.classify(line);
         if (hit == null) {
             return;
@@ -39,10 +51,10 @@ public final class ModLogAnalyzer {
         }
         final String key = modId;
         ModStats stats = byMod.computeIfAbsent(key, k -> new ModStats(key));
-        stats.record(hit, line);
+        stats.record(hit, line, inBootWindow);
         if (hit.relatedMod() != null && !hit.relatedMod().isBlank()) {
             ModStats related = byMod.computeIfAbsent(hit.relatedMod(), k -> new ModStats(hit.relatedMod()));
-            related.record(hit, line);
+            related.record(hit, line, inBootWindow);
         }
     }
 
@@ -60,6 +72,8 @@ public final class ModLogAnalyzer {
     private static final class ModStats {
         private final String modId;
         private int total;
+        private int bootHits;
+        private int runtimeHits;
         private final Map<String, Integer> byCategory = new HashMap<>();
         private final List<String> topRecipes = new ArrayList<>();
         private final Set<String> recipeSeen = new HashSet<>();
@@ -69,8 +83,13 @@ public final class ModLogAnalyzer {
             this.modId = modId;
         }
 
-        private void record(ModErrorCategory.Hit hit, String line) {
+        private void record(ModErrorCategory.Hit hit, String line, boolean inBootWindow) {
             total++;
+            if (inBootWindow) {
+                bootHits++;
+            } else {
+                runtimeHits++;
+            }
             String cat = hit.category().id();
             byCategory.merge(cat, 1, Integer::sum);
             if (hit.recipeId() != null && recipeSeen.size() < MAX_RECIPES) {
@@ -93,6 +112,9 @@ public final class ModLogAnalyzer {
             JsonObject row = new JsonObject();
             row.addProperty("mod_id", modId);
             row.addProperty("total", total);
+            if (bootHits > 0 && runtimeHits == 0) {
+                row.addProperty("boot_only", true);
+            }
             JsonObject cats = new JsonObject();
             byCategory.entrySet().stream()
                     .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())

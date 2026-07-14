@@ -30,7 +30,7 @@ Quick snapshot: TPS, lag, players, mod count, when last report ran, issue counts
 
 ### `/watchtower diagnostics`
 
-Build a **support zip** (facts, brief, log tail, crash summaries) to share with your host or mod authors. Needs at least one successful report first.
+Build a **support zip** (facts, brief, and `ops-cache.json` when present) to share with your host or mod authors. Needs at least one successful report first.
 
 ---
 

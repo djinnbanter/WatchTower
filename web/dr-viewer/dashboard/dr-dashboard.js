@@ -1097,6 +1097,9 @@ const DrDashboard = {
     const plain = c.plain_english || label;
     const confLabel = Labels.crashConfidenceLabel(c.confidence, manualReview);
     const confCls = Labels.crashConfidenceClass(c.confidence, manualReview);
+    const ruleId = c.matched_rule_id
+      || (this.state.facts?.optional?.crash_rule_hits || []).find((h) =>
+        h && (h.crash_file === c.file || (h.crash_file || '').endsWith(fname)))?.rule_id;
     const hintList = hints.length
       ? `<ul class="fix-list">${hints.map((h) => `<li>${this.esc(h)} <button type="button" class="wt-btn wt-btn--ghost wt-btn--sm copy-hint" data-copy="${this.escAttr(h)}">Copy</button></li>`).join('')}</ul>`
       : (manualReview
@@ -1117,6 +1120,7 @@ const DrDashboard = {
           <label><input type="checkbox" class="crash-ack" data-crash-file="${this.escAttr(c.file)}" data-crash-category="${this.escAttr(category)}" data-crash-plain="${this.escAttr(c.plain_english || '')}" ${acked ? 'checked' : ''}> Reviewed</label>
           <span class="crash-filename mono-cell" title="${this.escAttr(c.file)}">${this.esc(fname)}</span>
           <span class="crash-category-pill ${Labels.crashCategoryClass(category)}">${this.esc(Labels.crashCategoryLabel(category))}</span>
+          ${ruleId ? `<span class="severity-pill info" title="Matched rule">rule:${this.esc(ruleId)}</span>` : ''}
           <span class="severity-pill ${confCls}">${this.esc(confLabel)}</span>
           ${c.historical ? '<span class="severity-pill info">Historical</span>' : ''}
         </div>
@@ -1315,6 +1319,22 @@ const DrDashboard = {
       : 0;
     const errorCount = new Set([...errorModIds, ...recModIds]).size;
 
+    const clientOnly = opt.client_only_mods ?? [];
+    const clientSummary = opt.client_only_mods_summary;
+    const clientOnlySection = clientOnly.length
+      ? `<section class="wt-panel dr-client-only-mods">
+          <h2><i data-lucide="monitor" width="16" height="16"></i> Likely client-only on server</h2>
+          <p class="text-caption">${clientSummary?.detected ?? clientOnly.length} candidate${(clientSummary?.detected ?? clientOnly.length) === 1 ? '' : 's'}${clientSummary?.likely_removable_count ? ` · ${clientSummary.likely_removable_count} likely removable` : ''} — verify before deleting jars.</p>
+          <ul class="dr-client-only-list">
+            ${clientOnly.map((m) => {
+              const name = showTech ? m.mod_id : Labels.modFriendlyName(m.mod_id);
+              const bucket = Labels.clientModVerdict(m.bucket) || m.bucket || '';
+              return `<li><strong>${this.esc(name)}</strong> <span class="text-caption">${this.esc(bucket)}</span>${m.reason ? ` — ${this.esc(m.reason)}` : ''}</li>`;
+            }).join('')}
+          </ul>
+        </section>`
+      : '';
+
     const diffSection = modDiff?.has_changes ? `
       <section class="wt-panel dr-mod-diff-panel">
         <h2><i data-lucide="git-compare" width="16" height="16"></i> Changes since last good boot</h2>
@@ -1364,7 +1384,13 @@ const DrDashboard = {
         </section>`
       : '';
 
-    if (!diffSection && !problemSection && !tableSection) {
+    const forensicsFn = globalThis.WatchtowerModForensics?.renderModForensicsPanel;
+    const forensicsPanel = typeof forensicsFn === 'function' ? forensicsFn(opt) : null;
+    const forensicsSection = forensicsPanel?.html
+      ? `<section class="wt-panel dr-mod-forensics">${forensicsPanel.html}</section>`
+      : '';
+
+    if (!diffSection && !problemSection && !tableSection && !clientOnlySection && !forensicsSection) {
       return `<section class="wt-panel"><p class="empty-state">No mod list in this bundle. Re-run the DR CLI so <code>mods/*.jar</code> are included, or check the <strong>Fix</strong> tab for log-based mod errors.</p></section>`;
     }
 
@@ -1373,11 +1399,14 @@ const DrDashboard = {
         <div class="mods-summary-stats">
           <span><strong>${mods.length}</strong> mods in list</span>
           <span class="${errorModIds.size ? 'dr-stat-warn' : ''}"><strong>${errorModIds.size}</strong> with log errors</span>
+          ${clientOnly.length ? `<span><strong>${clientOnly.length}</strong> client-only candidates</span>` : ''}
           ${changedCount ? `<span><strong>${changedCount}</strong> changed since last boot</span>` : ''}
           <span class="text-caption">Report ${this.fmtTime(f.meta?.generated)}</span>
         </div>
       </div>
+      ${forensicsSection}
       ${problemSection}
+      ${clientOnlySection}
       ${diffSection}
       ${tableSection}`;
   },

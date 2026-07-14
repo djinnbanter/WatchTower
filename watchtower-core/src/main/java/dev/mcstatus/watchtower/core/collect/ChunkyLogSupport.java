@@ -15,6 +15,10 @@ public final class ChunkyLogSupport {
     private ChunkyLogSupport() {
     }
 
+    public static boolean isRuntimeTaskLine(String line) {
+        return line != null && LogPatterns.CHUNKY_TASK.matcher(line).find();
+    }
+
     public static JsonObject buildEntryFromMatcher(Matcher cm, ZonedDateTime ts, String fileName, int lineNo) {
         String dimension = cm.group(1);
         long processed = Long.parseLong(cm.group(2));

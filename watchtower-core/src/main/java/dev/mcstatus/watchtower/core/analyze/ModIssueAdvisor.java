@@ -75,7 +75,89 @@ public final class ModIssueAdvisor {
             }
         }
         checkCrashSummaries(optional, meta, recommendations, severe);
+        reconcileWithCrashes(recommendations, optional);
         return new AdvisorResult(recommendations, severe);
+    }
+
+    /**
+     * When unacknowledged runtime/watchdog crashes exist, demote boot-only mod hygiene
+     * recommendations so crash fix hints stay higher priority.
+     */
+    static void reconcileWithCrashes(JsonArray recommendations, JsonObject optional) {
+        if (recommendations == null || recommendations.isEmpty() || optional == null) {
+            return;
+        }
+        if (!hasPriorityCrash(optional)) {
+            return;
+        }
+        List<JsonObject> crashLinked = new ArrayList<>();
+        List<JsonObject> normal = new ArrayList<>();
+        List<JsonObject> demoted = new ArrayList<>();
+        for (JsonElement el : recommendations) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject rec = el.getAsJsonObject();
+            boolean bootOnly = bool(rec, "boot_only", false);
+            boolean crashDerived = bool(rec, "crash_derived", false)
+                    || (rec.has("category") && ModErrorCategory.ENGINE_PACKAGING.id()
+                    .equals(str(rec, "category")));
+            if (bootOnly) {
+                rec.addProperty("severity", "info");
+                rec.addProperty("demoted", true);
+                rec.addProperty("demotion_reason", "boot_hygiene");
+                rec.addProperty("blocking", false);
+                if (rec.has("worry_level")) {
+                    rec.addProperty("worry_level", "low");
+                }
+                if (rec.has("action_needed")) {
+                    rec.addProperty("action_needed", false);
+                }
+                demoted.add(rec);
+            } else if (crashDerived) {
+                crashLinked.add(rec);
+            } else {
+                normal.add(rec);
+            }
+        }
+        while (recommendations.size() > 0) {
+            recommendations.remove(0);
+        }
+        for (JsonObject rec : crashLinked) {
+            recommendations.add(rec);
+        }
+        for (JsonObject rec : normal) {
+            recommendations.add(rec);
+        }
+        for (JsonObject rec : demoted) {
+            recommendations.add(rec);
+        }
+    }
+
+    private static boolean hasPriorityCrash(JsonObject optional) {
+        if (!optional.has("crash_summaries") || !optional.get("crash_summaries").isJsonArray()) {
+            return false;
+        }
+        for (JsonElement el : optional.getAsJsonArray("crash_summaries")) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject c = el.getAsJsonObject();
+            if (bool(c, "acknowledged", false) || bool(c, "historical", false)) {
+                continue;
+            }
+            String kind = str(c, "failure_kind");
+            if (kind == null) {
+                continue;
+            }
+            if ("mod_runtime".equals(kind)
+                    || "watchdog".equals(kind)
+                    || "watchdog_pregen".equals(kind)
+                    || "watchdog_followup".equals(kind)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void checkCrashSummaries(
@@ -104,6 +186,7 @@ public final class ModIssueAdvisor {
                 rec.addProperty("fix", "Install watchtower-neoforge 2.0.6+ (engine 4.0.6+) and restart the server.");
                 rec.addProperty("install_hint", "Replace the Watchtower JAR in mods/ with the latest build.");
                 rec.addProperty("count", 1);
+                rec.addProperty("crash_derived", true);
                 if (exception != null && !exception.isBlank()) {
                     rec.addProperty("sample_line", exception);
                 }
@@ -190,6 +273,10 @@ public final class ModIssueAdvisor {
         rec.add("by_category", cats.deepCopy());
 
         copySampleFields(row, rec);
+        if (bool(row, "boot_only", false)) {
+            rec.addProperty("boot_only", true);
+            rec.addProperty("blocking", true);
+        }
 
         List<String> related = relatedMods(cats, modId);
         JsonArray relatedArr = new JsonArray();
@@ -242,6 +329,12 @@ public final class ModIssueAdvisor {
                 rec.addProperty("why", modId + " failed to load (dependency, mixin, or corrupt jar).");
                 rec.addProperty("fix", "Test whether " + modId + " is the blocker — remove it and try starting the server.");
                 rec.add("fix_steps", modDrFixSteps(modId, "mod_load_failed"));
+            }
+            case SERVER_CONFIG_CORRUPT -> {
+                rec.addProperty("why", "SERVER config for " + modId + " failed to parse (NightConfig).");
+                rec.addProperty("fix", "Delete or fix the corrupt SERVER .toml for " + modId
+                        + " (back it up first), then let the mod regenerate defaults.");
+                rec.addProperty("install_hint", "Look under config/ for " + modId + "-server.toml.");
             }
             case CLIENT_ON_SERVER -> {
                 rec.addProperty("display_name", ModErrorCategory.CLIENT_ON_SERVER_DISPLAY);

@@ -1,0 +1,6 @@
+---- Minecraft Crash Report ----
+// Early mod discovery
+
+java.lang.RuntimeException: Failed to create secure jar for broken-mod-1.0.jar
+Caused by: java.util.zip.ZipException: zip END header not found
+at net.neoforged.fml.loading.moddiscovery.ModDiscoverer

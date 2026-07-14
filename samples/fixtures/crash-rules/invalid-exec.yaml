@@ -1,0 +1,5 @@
+schema_version: 1
+pack: { id: evil, priority: 1 }
+rules:
+  - id: bad
+    when: { exec: "rm -rf /" }

@@ -1,0 +1,15 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  Insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 1073741824 bytes.
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (malloc) failed to allocate 32744 bytes.
+#
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   Page file is disabled
+#
+# Physical Memory: 8191M total / 512M free
+# JVM args: -Xmx8G -XX:+UseG1GC

@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import dev.mcstatus.watchtower.core.auth.DashboardAuthRecord;
 import dev.mcstatus.watchtower.core.auth.DashboardAuthStore;
 import dev.mcstatus.watchtower.core.auth.GeneratedCredentials;
 import dev.mcstatus.watchtower.core.auth.RecoveryCodeService;
@@ -146,6 +147,7 @@ public final class DashboardAuthHttp {
         JsonObject body = parseBody(ex);
         String current = text(body, "current_password");
         String newPassword = text(body, "new_password");
+        String newUsername = text(body, "username");
         if (newPassword.length() < 8) {
             sendJson(ex, 400, errorJson("weak_password", "Password must be at least 8 characters"));
             return;
@@ -155,10 +157,48 @@ public final class DashboardAuthHttp {
             sendJson(ex, 401, errorJson("invalid_password", "Current password is incorrect"));
             return;
         }
+
+        boolean mustChange = session.mustChangePassword();
+        String resolvedUsername = null;
+        if (mustChange) {
+            String trimmed = newUsername != null ? newUsername.trim() : "";
+            if (trimmed.isEmpty()) {
+                sendJson(ex, 400, errorJson("username_required", "Choose a new username"));
+                return;
+            }
+            if (trimmed.equalsIgnoreCase(DashboardAuthRecord.DEFAULT_USERNAME)) {
+                sendJson(ex, 400, errorJson("username_default",
+                        "Choose a username other than the default (watchtower)"));
+                return;
+            }
+            try {
+                store.changeUsername(trimmed);
+                resolvedUsername = store.username();
+            } catch (IllegalArgumentException e) {
+                sendJson(ex, 400, errorJson("invalid_username", e.getMessage()));
+                return;
+            }
+        } else if (newUsername != null && !newUsername.isBlank()) {
+            // Optional username change outside first-login gate (same request)
+            try {
+                store.changeUsername(newUsername);
+                resolvedUsername = store.username();
+            } catch (IllegalArgumentException e) {
+                sendJson(ex, 400, errorJson("invalid_username", e.getMessage()));
+                return;
+            }
+        }
+
         store.setPassword(newPassword.toCharArray());
-        DashboardAuthServices.sessions().markPasswordChanged(session.sessionId());
+        SessionManager.SessionState updated = DashboardAuthServices.sessions()
+                .markAccountSetup(session.sessionId(), resolvedUsername);
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
+        if (updated != null) {
+            out.addProperty("username", updated.username());
+        } else if (resolvedUsername != null) {
+            out.addProperty("username", resolvedUsername);
+        }
         sendJson(ex, 200, out);
     }
 

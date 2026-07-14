@@ -67,6 +67,101 @@ class ModJarMetadataReaderTest {
         assertEquals("neoforge", entries.get(0).dependencies().get(0).modId());
     }
 
+    @Test
+    void detectsMcreatorAndJarFile(@TempDir Path modsDir) throws IOException {
+        Path jar = modsDir.resolve("mymod-1.0.jar");
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(jar))) {
+            zos.putNextEntry(new ZipEntry("META-INF/neoforge.mods.toml"));
+            zos.write("""
+                    [[mods]]
+                    modId="mymod"
+                    version="1.0"
+                    """.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+            zos.putNextEntry(new ZipEntry("net/mcreator/mymod/Foo.class"));
+            zos.write(new byte[] {1, 2, 3});
+            zos.closeEntry();
+        }
+        var entries = ModJarMetadataReader.readJar(jar);
+        assertEquals(1, entries.size());
+        assertTrue(entries.get(0).mcreator());
+        assertEquals("mymod-1.0.jar", entries.get(0).jarFile());
+        JsonObject json = ModJarMetadataReader.toJson(entries.get(0));
+        assertTrue(json.get("is_mcreator").getAsBoolean());
+        assertEquals("mymod-1.0.jar", json.get("jar_file").getAsString());
+    }
+
+    @Test
+    void detectsFabricInNeoForgeJar(@TempDir Path modsDir) throws IOException {
+        Path jar = modsDir.resolve("fabriconly-1.0.jar");
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(jar))) {
+            zos.putNextEntry(new ZipEntry("fabric.mod.json"));
+            zos.write("{\"id\":\"fabriconly\"}".getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+        }
+        var entries = ModJarMetadataReader.readJar(jar);
+        assertEquals(1, entries.size());
+        assertEquals("fabric_in_neoforge_jar", entries.get(0).loaderHint());
+        assertEquals("fabric_in_neoforge_jar",
+                ModJarMetadataReader.toJson(entries.get(0)).get("loader_hint").getAsString());
+    }
+
+    @Test
+    void normalNeoJarHasNoSpecialFlags(@TempDir Path modsDir) throws IOException {
+        Path jar = modsDir.resolve("normal-1.0.jar");
+        writeJar(jar, """
+                [[mods]]
+                modId="normal"
+                version="1.0"
+                """);
+        var entries = ModJarMetadataReader.readJar(jar);
+        assertFalse(entries.get(0).mcreator());
+        assertNull(entries.get(0).loaderHint());
+        assertEquals("normal-1.0.jar", entries.get(0).jarFile());
+    }
+
+    @Test
+    void extractsMixinConfigsFromJar(@TempDir Path modsDir) throws IOException {
+        Path jar = modsDir.resolve("create-6.0.0.jar");
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(jar))) {
+            zos.putNextEntry(new ZipEntry("META-INF/neoforge.mods.toml"));
+            zos.write("""
+                    [[mods]]
+                    modId="create"
+                    version="6.0.0"
+                    [[mixins]]
+                    config="create.mixins.json"
+                    """.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+            zos.putNextEntry(new ZipEntry("create.mixins.json"));
+            zos.write("{\"required\":true}".getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+            zos.putNextEntry(new ZipEntry("data/create/mixins_fake.json"));
+            zos.write("{}".getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+        }
+        var entries = ModJarMetadataReader.readJar(jar);
+        assertEquals(1, entries.size());
+        assertTrue(entries.get(0).mixinConfigs().contains("create.mixins.json"));
+        assertFalse(entries.get(0).mixinConfigs().stream().anyMatch(p -> p.startsWith("data/")));
+        JsonObject json = ModJarMetadataReader.toJson(entries.get(0));
+        assertTrue(json.has("mixin_configs"));
+        assertTrue(json.getAsJsonArray("mixin_configs").size() >= 1);
+    }
+
+    @Test
+    void jarWithoutMixinsHasEmptyArray(@TempDir Path modsDir) throws IOException {
+        Path jar = modsDir.resolve("plain-1.0.jar");
+        writeJar(jar, """
+                [[mods]]
+                modId="plain"
+                version="1.0"
+                """);
+        JsonObject json = ModJarMetadataReader.toJson(ModJarMetadataReader.readJar(jar).get(0));
+        assertTrue(json.has("mixin_configs"));
+        assertEquals(0, json.getAsJsonArray("mixin_configs").size());
+    }
+
     private static void writeJar(Path jar, String toml) throws IOException {
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(jar))) {
             zos.putNextEntry(new ZipEntry("META-INF/neoforge.mods.toml"));

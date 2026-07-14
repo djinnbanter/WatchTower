@@ -1,7 +1,7 @@
 package dev.mcstatus.watchtower.core.collect;
 
 import dev.mcstatus.watchtower.core.report.ReportConfig;
-import me.lucko.spark.proto.SparkHeapProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkHeapProtos;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -63,7 +63,7 @@ public final class SparkHeapCollector {
                     c.sourceKind(),
                     captured,
                     data));
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             return Optional.empty();
         }
     }

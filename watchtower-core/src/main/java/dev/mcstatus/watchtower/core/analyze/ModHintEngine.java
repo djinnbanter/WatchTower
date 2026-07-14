@@ -40,14 +40,16 @@ public final class ModHintEngine {
         JsonArray hints = new JsonArray();
         if ("recipe_compat".equals(topCategory) || "recipe_missing_item".equals(topCategory)) {
             hints.add("Recipe errors often mean a missing dependency mod or version mismatch — compare with a known-good pack.");
+            hints.add("Open Mods → Log errors for sample lines and recipe/item ids.");
         } else if ("mod_load_failed".equals(topCategory) || "mod_corrupt".equals(topCategory)) {
             hints.add("Try removing and re-downloading the mod jar, or check NeoForge/mod version compatibility.");
+            hints.add("Open Mods → Log errors for the full sample lines.");
         } else if ("registry_missing".equals(topCategory)) {
             hints.add("Registry errors may clear after adding the mod that provides the missing block/item.");
+            hints.add("Open Mods → Log errors for sample lines naming the missing id.");
         } else {
-            hints.add("Check Mods → Log errors for details and sample lines.");
+            hints.add("Open Mods → Log errors for sample lines and any fix steps from the latest report.");
         }
-        hints.add("Run a full report for conflict analysis and fix steps for " + modId + ".");
         out.add("hints", hints);
         return out;
     }

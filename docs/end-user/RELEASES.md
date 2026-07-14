@@ -11,7 +11,7 @@ releases/
   latest/
     LICENSE
     watchtower-*.jar
-  1.0.0/
+  1.1.0/
   archive/
 ```
 
@@ -22,8 +22,8 @@ Each release folder includes **`LICENSE`** (GPL-3.0-or-later) alongside JARs whe
 | Your server | Mod JAR | CLI JAR |
 |-------------|---------|---------|
 | **NeoForge 1.21.x** | `watchtower-neoforge-<version>+mc1.21.jar` | `watchtower-cli-<version>.jar` |
-| **NeoForge 1.20.x** (planned **1.3.0**) | `watchtower-neoforge-<version>+mc1.20.jar` | Same CLI |
-| **Fabric 1.21.x** (planned **1.2.0**) | `watchtower-fabric-<version>+mc1.21.jar` | Same CLI |
+| **NeoForge 1.20.x** (planned **1.4.0**) | `watchtower-neoforge-<version>+mc1.20.jar` | Same CLI |
+| **Fabric 1.21.x** (planned **1.3.0**) | `watchtower-fabric-<version>+mc1.21.jar` | Same CLI |
 
 Pick the mod JAR that matches your **Minecraft + loader** line. The CLI is shared — place it in `mods/` for DR when the server will not boot.
 

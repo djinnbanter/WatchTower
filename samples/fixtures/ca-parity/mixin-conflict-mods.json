@@ -1,0 +1,16 @@
+{
+  "mods": [
+    {
+      "id": "examplemod",
+      "version": "1.0.0",
+      "jar_file": "examplemod-1.0.0.jar",
+      "mixin_configs": ["mixins.examplemod.json"]
+    },
+    {
+      "id": "othermod",
+      "version": "2.0.0",
+      "jar_file": "othermod-2.0.0.jar",
+      "mixin_configs": ["mixins.othermod.json"]
+    }
+  ]
+}

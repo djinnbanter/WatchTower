@@ -1,7 +1,7 @@
 package dev.mcstatus.watchtower.core.collect;
 
-import me.lucko.spark.proto.SparkHeapProtos;
-import me.lucko.spark.proto.SparkSamplerProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkHeapProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkSamplerProtos;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

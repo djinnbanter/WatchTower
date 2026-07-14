@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated": "2026-06-24T19:04:59.035Z",
+    "generated": "2026-07-13T16:38:02.265Z",
     "hostname": "demo-server",
     "lookback_hours": 24,
     "window_start": "2026-06-17T12:00:00.000Z",
@@ -151,6 +151,16 @@
       "message": "12 client-only mods detected on the server.",
       "severity": "info",
       "historical": false
+    },
+    {
+      "id": "CORRUPTED_MOD_JAR",
+      "message": "Corrupt mod jar detected from logs: mods/pride-broken.jar (zip END header)",
+      "severity": "warning"
+    },
+    {
+      "id": "CONFIG_CORRUPT",
+      "message": "Broken serverconfig: world/serverconfig/create-server.toml (parse_error)",
+      "severity": "warning"
     }
   ],
   "optional": {
@@ -3282,272 +3292,481 @@
       {
         "id": "neoforge",
         "version": "21.1.233",
-        "display_name": "NeoForge"
+        "display_name": "NeoForge",
+        "jar_file": "neoforge-21.1.233.jar",
+        "dependents_count": 0
       },
       {
         "id": "minecraft",
         "version": "1.21.1",
-        "display_name": "Minecraft"
+        "display_name": "Minecraft",
+        "jar_file": "minecraft-1.21.1.jar",
+        "dependents_count": 0
       },
       {
         "id": "create",
         "version": "6.0.0",
-        "display_name": "Create"
+        "display_name": "Create",
+        "jar_file": "create-6.0.0.jar",
+        "dependents_count": 2,
+        "side_score": "server_required",
+        "side_signals": [
+          "SERVER_REQUIRED_IDS"
+        ],
+        "dependencies": [
+          {
+            "modId": "flywheel",
+            "mandatory": true
+          },
+          {
+            "modId": "neoforge",
+            "mandatory": true
+          }
+        ]
       },
       {
         "id": "jei",
         "version": "19.21.0.247",
-        "display_name": "JEI"
+        "display_name": "JEI",
+        "jar_file": "jei-19.21.0.247.jar",
+        "dependents_count": 0,
+        "side_score": "uncertain",
+        "side_signals": [
+          "heuristic"
+        ]
       },
       {
         "id": "mekanism",
         "version": "10.7.8",
-        "display_name": "Mekanism"
+        "display_name": "Mekanism",
+        "jar_file": "mekanism-10.7.8.jar",
+        "dependents_count": 0
       },
       {
         "id": "botania",
         "version": "1.20-450",
-        "display_name": "Botania"
+        "display_name": "Botania",
+        "jar_file": "botania-1.20-450.jar",
+        "dependents_count": 0
       },
       {
         "id": "kubejs",
         "version": "2101.7.0",
-        "display_name": "KubeJS"
+        "display_name": "KubeJS",
+        "jar_file": "kubejs-2101.7.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "architectury",
         "version": "13.0.8",
-        "display_name": "Architectury API"
+        "display_name": "Architectury API",
+        "jar_file": "architectury-13.0.8.jar",
+        "dependents_count": 0
       },
       {
         "id": "cloth_config",
         "version": "15.0.140",
-        "display_name": "Cloth Config"
+        "display_name": "Cloth Config",
+        "jar_file": "cloth_config-15.0.140.jar",
+        "dependents_count": 0
       },
       {
         "id": "curios",
         "version": "9.2.0",
-        "display_name": "Curios API"
+        "display_name": "Curios API",
+        "jar_file": "curios-9.2.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "patchouli",
         "version": "1.21-87",
-        "display_name": "Patchouli"
+        "display_name": "Patchouli",
+        "jar_file": "patchouli-1.21-87.jar",
+        "dependents_count": 0
       },
       {
         "id": "waystones",
         "version": "21.1.0",
-        "display_name": "Waystones"
+        "display_name": "Waystones",
+        "jar_file": "waystones-21.1.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "supplementaries",
         "version": "3.1.0",
-        "display_name": "Supplementaries"
+        "display_name": "Supplementaries",
+        "jar_file": "supplementaries-3.1.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "farmersdelight",
         "version": "1.2.5",
-        "display_name": "Farmer's Delight"
+        "display_name": "Farmer's Delight",
+        "jar_file": "farmersdelight-1.2.5.jar",
+        "dependents_count": 0
       },
       {
         "id": "sable",
         "version": "1.2.3",
-        "display_name": "Sable"
+        "display_name": "Sable",
+        "jar_file": "sable-1.2.3.jar",
+        "dependents_count": 0
       },
       {
         "id": "lithium",
         "version": "0.14.3",
-        "display_name": "Lithium"
+        "display_name": "Lithium",
+        "jar_file": "lithium-0.14.3.jar",
+        "dependents_count": 0
       },
       {
         "id": "ferritecore",
         "version": "7.0.0",
-        "display_name": "FerriteCore"
+        "display_name": "FerriteCore",
+        "jar_file": "ferritecore-7.0.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "spark",
         "version": "1.10.124",
-        "display_name": "spark"
+        "display_name": "spark",
+        "jar_file": "spark-1.10.124.jar",
+        "dependents_count": 0
       },
       {
         "id": "chunky",
         "version": "1.4.40",
-        "display_name": "Chunky"
+        "display_name": "Chunky",
+        "jar_file": "chunky-1.4.40.jar",
+        "dependents_count": 0
       },
       {
         "id": "watchtower",
         "version": "1.0.8",
-        "display_name": "Watchtower"
+        "display_name": "Watchtower",
+        "jar_file": "watchtower-1.0.8.jar",
+        "dependents_count": 0
       },
       {
         "id": "examplemod",
         "version": "1.0.0",
-        "display_name": "Example Mod"
+        "display_name": "Example Mod",
+        "jar_file": "examplemod-1.0.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "biomesoplenty",
         "version": "21.1.0.3",
-        "display_name": "Biomes O' Plenty"
+        "display_name": "Biomes O' Plenty",
+        "jar_file": "biomesoplenty-21.1.0.3.jar",
+        "dependents_count": 0
       },
       {
         "id": "terrablender",
         "version": "4.1.0.1",
-        "display_name": "TerraBlender"
+        "display_name": "TerraBlender",
+        "jar_file": "terrablender-4.1.0.1.jar",
+        "dependents_count": 0
       },
       {
         "id": "geckolib",
         "version": "4.7.2",
-        "display_name": "GeckoLib"
+        "display_name": "GeckoLib",
+        "jar_file": "geckolib-4.7.2.jar",
+        "dependents_count": 0
       },
       {
         "id": "citadel",
         "version": "2.6.1",
-        "display_name": "Citadel"
+        "display_name": "Citadel",
+        "jar_file": "citadel-2.6.1.jar",
+        "dependents_count": 0
       },
       {
         "id": "balm",
         "version": "21.0.29",
-        "display_name": "Balm"
+        "display_name": "Balm",
+        "jar_file": "balm-21.0.29.jar",
+        "dependents_count": 0
       },
       {
         "id": "moonlight",
         "version": "1.21-2.14.13",
-        "display_name": "Moonlight Lib"
+        "display_name": "Moonlight Lib",
+        "jar_file": "moonlight-1.21-2.14.13.jar",
+        "dependents_count": 0
       },
       {
         "id": "sophisticatedcore",
         "version": "1.21.1.1.0.0",
-        "display_name": "Sophisticated Core"
+        "display_name": "Sophisticated Core",
+        "jar_file": "sophisticatedcore-1.21.1.1.0.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "sophisticatedbackpacks",
         "version": "1.21.1.3.23.0",
-        "display_name": "Sophisticated Backpacks"
+        "display_name": "Sophisticated Backpacks",
+        "jar_file": "sophisticatedbackpacks-1.21.1.3.23.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "sophisticatedstorage",
         "version": "1.21.1.1.3.0",
-        "display_name": "Sophisticated Storage"
+        "display_name": "Sophisticated Storage",
+        "jar_file": "sophisticatedstorage-1.21.1.1.3.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "ftblibrary",
         "version": "2101.1.5",
-        "display_name": "FTB Library"
+        "display_name": "FTB Library",
+        "jar_file": "ftblibrary-2101.1.5.jar",
+        "dependents_count": 0
       },
       {
         "id": "ftbteams",
         "version": "2101.1.2",
-        "display_name": "FTB Teams"
+        "display_name": "FTB Teams",
+        "jar_file": "ftbteams-2101.1.2.jar",
+        "dependents_count": 0
       },
       {
         "id": "ftbchunks",
         "version": "2101.1.3",
-        "display_name": "FTB Chunks"
+        "display_name": "FTB Chunks",
+        "jar_file": "ftbchunks-2101.1.3.jar",
+        "dependents_count": 0
       },
       {
         "id": "ftbquests",
         "version": "2101.1.4",
-        "display_name": "FTB Quests"
+        "display_name": "FTB Quests",
+        "jar_file": "ftbquests-2101.1.4.jar",
+        "dependents_count": 0
       },
       {
         "id": "jade",
         "version": "15.2.1",
-        "display_name": "Jade"
+        "display_name": "Jade",
+        "jar_file": "jade-15.2.1.jar",
+        "dependents_count": 0
       },
       {
         "id": "carryon",
         "version": "2.2.2",
-        "display_name": "Carry On"
+        "display_name": "Carry On",
+        "jar_file": "carryon-2.2.2.jar",
+        "dependents_count": 0
       },
       {
         "id": "controlling",
         "version": "19.0.3",
-        "display_name": "Controlling"
+        "display_name": "Controlling",
+        "jar_file": "controlling-19.0.3.jar",
+        "dependents_count": 0
       },
       {
         "id": "searchables",
         "version": "1.0.2",
-        "display_name": "Searchables"
+        "display_name": "Searchables",
+        "jar_file": "searchables-1.0.2.jar",
+        "dependents_count": 0
       },
       {
         "id": "puzzleslib",
         "version": "21.1.28",
-        "display_name": "Puzzles Lib"
+        "display_name": "Puzzles Lib",
+        "jar_file": "puzzleslib-21.1.28.jar",
+        "dependents_count": 0
       },
       {
         "id": "polymorph",
         "version": "0.17.6",
-        "display_name": "Polymorph"
+        "display_name": "Polymorph",
+        "jar_file": "polymorph-0.17.6.jar",
+        "dependents_count": 0
       },
       {
         "id": "inventorysorter",
         "version": "23.0.8",
-        "display_name": "Inventory Sorter"
+        "display_name": "Inventory Sorter",
+        "jar_file": "inventorysorter-23.0.8.jar",
+        "dependents_count": 0
       },
       {
         "id": "trashslot",
         "version": "15.1.1",
-        "display_name": "TrashSlot"
+        "display_name": "TrashSlot",
+        "jar_file": "trashslot-15.1.1.jar",
+        "dependents_count": 0
       },
       {
         "id": "craftingtweaks",
         "version": "21.1.3",
-        "display_name": "Crafting Tweaks"
+        "display_name": "Crafting Tweaks",
+        "jar_file": "craftingtweaks-21.1.3.jar",
+        "dependents_count": 0
       },
       {
         "id": "appleskin",
         "version": "3.0.9+mc1.21",
-        "display_name": "AppleSkin"
+        "display_name": "AppleSkin",
+        "jar_file": "appleskin-3.0.9+mc1.21.jar",
+        "dependents_count": 0,
+        "side_score": "likely_removable",
+        "side_signals": [
+          "heuristic",
+          "toml"
+        ]
       },
       {
         "id": "sodium",
         "version": "0.6.0",
-        "display_name": "Sodium"
+        "display_name": "Sodium",
+        "jar_file": "sodium-0.6.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "embeddium",
         "version": "0.6.0",
-        "display_name": "Embeddium"
+        "display_name": "Embeddium",
+        "jar_file": "embeddium-0.6.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "oculus",
         "version": "1.8.0",
-        "display_name": "Oculus"
+        "display_name": "Oculus",
+        "jar_file": "oculus-1.8.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "entity_texture_features",
         "version": "6.2.9",
-        "display_name": "Entity Texture Features"
+        "display_name": "Entity Texture Features",
+        "jar_file": "entity_texture_features-6.2.9.jar",
+        "dependents_count": 0
       },
       {
         "id": "connectorextras",
         "version": "1.12.1+1.21.1",
-        "display_name": "Connector Extras"
+        "display_name": "Connector Extras",
+        "jar_file": "connectorextras-1.12.1+1.21.1.jar",
+        "dependents_count": 0
       },
       {
         "id": "playeranimator",
         "version": "2.0.1",
-        "display_name": "Player Animator"
+        "display_name": "Player Animator",
+        "jar_file": "playeranimator-2.0.1.jar",
+        "dependents_count": 0
       },
       {
         "id": "sound_physics_remastered",
         "version": "1.21.1-1.4.8",
-        "display_name": "Sound Physics Remastered"
+        "display_name": "Sound Physics Remastered",
+        "jar_file": "sound_physics_remastered-1.21.1-1.4.8.jar",
+        "dependents_count": 0
       },
       {
         "id": "xaeros_minimap",
         "version": "25.0.0",
-        "display_name": "Xaero's Minimap"
+        "display_name": "Xaero's Minimap",
+        "jar_file": "xaeros_minimap-25.0.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "xaeros_worldmap",
         "version": "3.0.0",
-        "display_name": "Xaero's World Map"
+        "display_name": "Xaero's World Map",
+        "jar_file": "xaeros_worldmap-3.0.0.jar",
+        "dependents_count": 0
       },
       {
         "id": "journeymap",
         "version": "6.0.0-beta.45",
-        "display_name": "JourneyMap"
+        "display_name": "JourneyMap",
+        "jar_file": "journeymap-6.0.0-beta.45.jar",
+        "dependents_count": 0
+      },
+      {
+        "id": "flywheel",
+        "version": "1.0.2",
+        "display_name": "Flywheel",
+        "jar_file": "flywheel-1.0.2.jar",
+        "side_score": "server_required",
+        "side_signals": [
+          "SERVER_REQUIRED_IDS"
+        ],
+        "dependents_count": 1,
+        "dependencies": [
+          {
+            "modId": "minecraft",
+            "mandatory": true
+          }
+        ]
+      },
+      {
+        "id": "ponder",
+        "version": "1.0.56",
+        "display_name": "Ponder",
+        "jar_file": "ponder-1.0.56.jar",
+        "side_score": "server_required",
+        "side_signals": [
+          "ecosystem:create"
+        ],
+        "dependents_count": 0,
+        "dependencies": [
+          {
+            "modId": "create",
+            "mandatory": true
+          }
+        ]
+      },
+      {
+        "id": "railways",
+        "version": "1.6.4",
+        "display_name": "Create: Steam 'n' Rails",
+        "jar_file": "railways-1.6.4.jar",
+        "side_score": "server_required",
+        "side_signals": [
+          "dependent_of:create"
+        ],
+        "dependents_count": 0,
+        "dependencies": [
+          {
+            "modId": "create",
+            "mandatory": true
+          }
+        ]
+      },
+      {
+        "id": "mcreator_demo",
+        "version": "1.0.0",
+        "display_name": "Demo MCreator Pack",
+        "jar_file": "mcreator_demo-1.0.0.jar",
+        "is_mcreator": true,
+        "dependents_count": 0
+      },
+      {
+        "id": "fabric_only_demo",
+        "version": "1.0.0",
+        "display_name": "Fabric-Only Demo",
+        "jar_file": "fabric_only_demo-1.0.0.jar",
+        "loader_hint": "fabric_in_neoforge_jar",
+        "dependents_count": 0
+      },
+      {
+        "id": "xaerominimap",
+        "version": "25.0.0",
+        "display_name": "Xaero's Minimap",
+        "jar_file": "xaerominimap-25.0.0.jar",
+        "side_score": "uncertain",
+        "side_signals": [
+          "heuristic"
+        ],
+        "dependents_count": 0
       }
     ],
     "client_only_mods": [
@@ -3652,27 +3871,25 @@
       {
         "mod_id": "xaeros_minimap",
         "version": "25.0.0",
-        "bucket": "likely_removable",
-        "confidence": "high",
-        "reason": "Minimap mod — client UI only",
-        "removal_advice": "Safe to remove from server mods/.",
+        "bucket": "uncertain",
+        "confidence": "medium",
+        "reason": "Client map UI — some packs sync waypoints via an optional server component. Verify before removing.",
+        "removal_advice": "Check mod documentation; some features may run on dedicated servers.",
         "display_name": "Xaero's Minimap",
         "signals": [
-          "heuristic",
-          "naming"
+          "heuristic"
         ]
       },
       {
         "mod_id": "xaeros_worldmap",
         "version": "3.0.0",
-        "bucket": "likely_removable",
-        "confidence": "high",
-        "reason": "World map mod — client UI only",
-        "removal_advice": "Safe to remove from server mods/.",
+        "bucket": "uncertain",
+        "confidence": "medium",
+        "reason": "Client map UI — some packs sync waypoints via an optional server component. Verify before removing.",
+        "removal_advice": "Check mod documentation; some features may run on dedicated servers.",
         "display_name": "Xaero's World Map",
         "signals": [
-          "heuristic",
-          "naming"
+          "heuristic"
         ]
       },
       {
@@ -3870,130 +4087,352 @@
     },
     "crash_summaries": [
       {
+        "file": "crash-2026-06-22_14-33-07-server.txt",
+        "time": "2026-07-13T17:53:02.488Z",
+        "summary": "Exception in server tick loop",
+        "display_label": "java.lang.NullPointerException: Cannot invoke \"ContraptionCollision.mf()\" because \"mf.axis\" is null",
+        "exception": "java.lang.NullPointerException: Cannot invoke \"ContraptionCollision.mf()\" because \"mf.axis\" is null",
+        "exception_class": "java.lang.NullPointerException",
+        "create_issue": "contraption_collision",
+        "hot_frame": "com.simibubi.create.content.contraptions.ContraptionCollision.tick",
+        "historical": false,
+        "category": "mod",
+        "failure_kind": "mod_runtime",
+        "primary_mod_id": "create",
+        "suspect_mod_id": "create",
+        "mod_file": "create-6.0.0.jar",
+        "stack_frames": [
+          "TRANSFORMER/create@6.0.0/com.simibubi.create.content.contraptions.ContraptionCollision.tick"
+        ],
+        "plain_english": "Create contraption collision (create) — stop the stuck assembly so the world can load, then update Create if needed.",
+        "likely_cause": "Mod crash",
+        "confidence": "medium",
+        "manual_review": false,
+        "fix_hints": [
+          "Find the contraption controller / bearing and break it to stop the stuck assembly so the world can load.",
+          "Reduce stress or split oversized contraptions near the crash location.",
+          "Update Create if a newer NeoForge build exists; check the Create issue tracker for collision NPEs."
+        ],
+        "mod_fix": {
+          "action": "update",
+          "action_detail": "Stop the stuck assembly first, then update Create if a fixed NeoForge build is available",
+          "why": "Stack evidence shows ContraptionCollision / mf.axis — a proven Create contraption path.",
+          "install_hint": "Download a matching Create jar from Modrinth for NeoForge 1.21.1 after the world loads"
+        },
+        "incident_id": "inc-create-2026-06-22",
+        "matched_rule_id": "create-contraption-npe",
+        "matched_pack_id": "builtin"
+      },
+      {
+        "file": "crash-2026-07-10_19-04-12-server.txt",
+        "time": "2026-07-13T12:38:02.488Z",
+        "summary": "Exception in server tick loop",
+        "display_label": "java.lang.NullPointerException: Cannot invoke \"BeltBlockEntity.getSpeed()\"",
+        "exception": "java.lang.NullPointerException: Cannot invoke \"BeltBlockEntity.getSpeed()\"",
+        "exception_class": "java.lang.NullPointerException",
+        "historical": false,
+        "category": "mod",
+        "failure_kind": "mod_runtime",
+        "primary_mod_id": "create",
+        "suspect_mod_id": "create",
+        "mod_file": "create-6.0.0.jar",
+        "stack_frames": [
+          "TRANSFORMER/create@6.0.0/com.simibubi.create.content.kinetics.belt.BeltBlockEntity.tick"
+        ],
+        "plain_english": "Create crashed during play (create) — inspect the stack and update Create or matching addons if versions look wrong.",
+        "likely_cause": "Mod crash",
+        "confidence": "medium",
+        "manual_review": false,
+        "fix_hints": [
+          "Inspect the Create stack frames and update matching Create addons if versions look mismatched.",
+          "Restart the server and watch for repeats after any jar change."
+        ],
+        "mod_fix": {
+          "action": "update",
+          "action_detail": "Update Create for NeoForge 1.21.1 if outdated; align Create addons",
+          "why": "Create is on the stack, but there is no contraption/collision evidence — do not assume a stuck assembly."
+        }
+      },
+      {
+        "failure_kind": "watchdog_pregen",
+        "primary_mod_id": "chunky",
+        "stall_mod_id": "chunky",
+        "category": "host_resource",
+        "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+        "likely_cause": "Tick hang / pregen contention",
+        "confidence": "high",
+        "manual_review": false,
+        "watchdog_tick_ms": 60000,
+        "plain_english": "Server tick hang — chunky blocked while Chunky pregen was active (~60s). Pause pregen or defer map render.",
+        "fix_hints": [
+          "Pause Chunky / map pregen or reduce radius before changing RAM or other settings.",
+          "Defer chunky full render until pregen completes.",
+          "Restart the server and watch MSPT before re-enabling pregen."
+        ],
         "file": "crash-2026-06-18_08-12-44-server.txt",
         "time": "2026-06-18T08:12:44+00:00",
         "summary": "Watching Server",
         "display_label": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+        "historical": false,
+        "incident_id": "inc-watchdog-chunky"
+      },
+      {
+        "failure_kind": "watchdog_followup",
+        "primary_mod_id": "chunky",
+        "stall_mod_id": "chunky",
+        "category": "host_resource",
         "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+        "likely_cause": "Tick hang / pregen contention",
+        "confidence": "high",
+        "manual_review": false,
+        "watchdog_tick_ms": 60000,
+        "plain_english": "Server tick hang — chunky blocked while Chunky pregen was active (~60s). Pause pregen or defer map render.",
+        "fix_hints": [
+          "Pause Chunky / map pregen or reduce radius before changing RAM or other settings.",
+          "Defer chunky full render until pregen completes.",
+          "Restart the server and watch MSPT before re-enabling pregen."
+        ],
+        "file": "crash-2026-06-18_08-13-50-server.txt",
+        "time": "2026-06-18T08:13:50+00:00",
+        "summary": "Watching Server",
+        "display_label": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+        "historical": false,
+        "incident_id": "inc-watchdog-chunky",
+        "watchdog_followup": true,
+        "paired_primary_file": "crash-2026-06-18_08-12-44-server.txt"
+      },
+      {
+        "failure_kind": "watchdog_pregen",
+        "primary_mod_id": "chunky",
+        "stall_mod_id": "chunky",
+        "category": "host_resource",
+        "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+        "likely_cause": "Tick hang / pregen contention",
+        "confidence": "high",
+        "manual_review": false,
+        "watchdog_tick_ms": 60000,
+        "plain_english": "Server tick hang — chunky blocked while Chunky pregen was active (~60s). Pause pregen or defer map render.",
+        "fix_hints": [
+          "Pause Chunky / map pregen or reduce radius before changing RAM or other settings.",
+          "Defer chunky full render until pregen completes.",
+          "Restart the server and watch MSPT before re-enabling pregen."
+        ],
+        "file": "crash-2026-06-19_11-02-18-server.txt",
+        "time": "2026-06-19T11:02:18+00:00",
+        "summary": "Watching Server",
+        "display_label": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds",
+        "historical": false
+      },
+      {
+        "file": "crash-2026-07-11_02-15-33-server.txt",
+        "time": "2026-07-13T00:38:02.488Z",
+        "summary": "Exception generating new chunk",
+        "display_label": "java.io.EOFException: Unexpected end of ZLIB input stream",
+        "exception": "java.io.EOFException: Unexpected end of ZLIB input stream",
+        "exception_class": "java.io.EOFException",
         "historical": false,
         "category": "host_resource",
-        "plain_english": "The main server thread stopped responding for ~60s. Usually lag from world gen, pregen, or a heavy contraption.",
-        "likely_cause": "Server hung",
+        "failure_kind": "world_nbt_corrupt",
+        "primary_mod_id": null,
+        "plain_english": "World or chunk NBT data looks corrupt (ZLIB/EOF while loading). Restore the affected region from a backup.",
+        "likely_cause": "Corrupt world data",
         "confidence": "high",
         "manual_review": false,
         "fix_hints": [
-          "Check for heavy world gen or Chunky pregen before the hang.",
-          "Review spark profiler output; reduce simulation distance if MSPT was high."
+          "Back up the world, then restore the affected region/chunk from a known-good backup.",
+          "Only delete or repair the bad region file after the backup exists.",
+          "Check disk health; ZLIB/EOF errors often mean incomplete writes."
+        ]
+      },
+      {
+        "file": "crash-2026-07-09_21-48-01-server.txt",
+        "time": "2026-07-11T18:38:02.488Z",
+        "summary": "Mod loading has failed",
+        "display_label": "MixinInitialisationError: Error initialising mixin config create.mixins.json",
+        "exception": "org.spongepowered.asm.mixin.throwables.MixinInitialisationError",
+        "exception_class": "org.spongepowered.asm.mixin.throwables.MixinInitialisationError",
+        "mixin_config": "create.mixins.json",
+        "historical": false,
+        "category": "mod",
+        "failure_kind": "mod_load_mixin",
+        "primary_mod_id": "create",
+        "suspect_mod_id": "create",
+        "plain_english": "Mixin config create.mixins.json failed while loading mod create — update or remove that mod.",
+        "likely_cause": "Mixin failed to load",
+        "confidence": "high",
+        "manual_review": false,
+        "fix_hints": [
+          "Update Create to a build matching NeoForge 1.21.1",
+          "If it persists, temporarily remove create.mixins.json owner and retest boot"
         ],
-        "pre_crash": {
-          "window_minutes": 10,
-          "tps": {
-            "min": 1.5,
-            "max": 19.8,
-            "last": 1.5,
-            "points": [
-              {
-                "t": "2026-06-18T08:02:00.000Z",
-                "v": 19.8
-              },
-              {
-                "t": "2026-06-18T08:03:00.000Z",
-                "v": 19.5
-              },
-              {
-                "t": "2026-06-18T08:04:00.000Z",
-                "v": 18.2
-              },
-              {
-                "t": "2026-06-18T08:05:00.000Z",
-                "v": 15.1
-              },
-              {
-                "t": "2026-06-18T08:06:00.000Z",
-                "v": 12.4
-              },
-              {
-                "t": "2026-06-18T08:07:00.000Z",
-                "v": 8.2
-              },
-              {
-                "t": "2026-06-18T08:08:00.000Z",
-                "v": 5.1
-              },
-              {
-                "t": "2026-06-18T08:09:00.000Z",
-                "v": 3.2
-              },
-              {
-                "t": "2026-06-18T08:10:00.000Z",
-                "v": 2.1
-              },
-              {
-                "t": "2026-06-18T08:11:00.000Z",
-                "v": 1.5
-              }
-            ]
-          },
-          "mspt": {
-            "max": 612.4,
-            "last": 580.2
-          },
-          "players": {
-            "last": 3
-          },
-          "chunk_gen": {
-            "active": true,
-            "source": "chunky",
-            "last_line": "[18Jun2026 08:12:40.313] [Server thread/INFO]: [Chunky] Task running for minecraft:overworld. Processed: 6126564 chunks (43.54%)",
-            "pct": 43.54
-          },
-          "commands": [
-            {
-              "time": "2026-06-18T08:05:12.000Z",
-              "player": "Steve",
-              "command": "/chunky continue"
-            },
-            {
-              "time": "2026-06-18T08:08:44.000Z",
-              "source": "panel",
-              "command": "save-all"
-            }
-          ],
-          "log_tail": [
-            "[18Jun2026 08:12:28.102] [Server thread/INFO]: [Chunky] Task running for minecraft:overworld. Processed: 6126400 chunks (43.53%)",
-            "[18Jun2026 08:12:32.218] [Server thread/WARN]: Can't keep up! Is the server overloaded? Running 2847ms or 56 ticks behind",
-            "[18Jun2026 08:12:36.441] [Server thread/INFO]: [Chunky] Task running for minecraft:overworld. Processed: 6126520 chunks (43.54%)",
-            "[18Jun2026 08:12:40.313] [Server thread/INFO]: [Chunky] Task running for minecraft:overworld. Processed: 6126564 chunks (43.54%)",
-            "[18Jun2026 08:12:42.891] [Server thread/WARN]: Can't keep up! Is the server overloaded? Running 5120ms or 102 ticks behind"
+        "mod_fix": {
+          "action": "update",
+          "action_detail": "Update Create (mixin owner) then restart",
+          "why": "MixinInitialisationError named create.mixins.json"
+        }
+      },
+      {
+        "file": "crash-2026-07-06_09-33-12-server.txt",
+        "time": "2026-07-08T18:38:02.488Z",
+        "summary": "Mod loading has failed",
+        "display_label": "InvalidMixinException: @Overwrite conflict createaddition → create",
+        "exception": "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException",
+        "exception_class": "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException",
+        "mixin_config": "createaddition.mixins.json",
+        "historical": false,
+        "category": "mod",
+        "failure_kind": "mod_load_mixin_conflict",
+        "primary_mod_id": "createaddition",
+        "suspect_mod_id": "createaddition",
+        "plain_english": "Mixin conflict between createaddition and create — update both or remove the addon.",
+        "likely_cause": "Mixin overwrite conflict",
+        "confidence": "high",
+        "manual_review": false,
+        "fix_hints": [
+          "Update Create Additions to a build matching Create 6.x",
+          "If it persists, temporarily remove createaddition and retest boot"
+        ],
+        "mod_fix": {
+          "action": "update",
+          "action_detail": "Align Create Additions with Create, or remove the conflicting addon",
+          "why": "InvalidMixinException names createaddition overwriting create",
+          "related_mods": [
+            "create"
           ]
         }
+      },
+      {
+        "file": "crash-2026-07-05_14-01-55-server.txt",
+        "time": "2026-07-07T18:38:02.488Z",
+        "summary": "Mod loading has failed",
+        "display_label": "ModLoadingException: Duplicate mods found: create",
+        "exception": "net.neoforged.fml.ModLoadingException: Duplicate mods found: create",
+        "exception_class": "net.neoforged.fml.ModLoadingException",
+        "duplicate_mod_ids": [
+          "create"
+        ],
+        "duplicate_jars": [
+          "create-6.0.0.jar",
+          "create-6.0.0-copy.jar"
+        ],
+        "historical": false,
+        "category": "mod",
+        "failure_kind": "mod_load_duplicate",
+        "primary_mod_id": "create",
+        "suspect_mod_id": "create",
+        "plain_english": "Create is installed twice — remove the duplicate jar from mods/.",
+        "likely_cause": "Duplicate mod jars",
+        "confidence": "high",
+        "manual_review": false,
+        "fix_hints": [
+          "Remove create-6.0.0-copy.jar (keep one Create jar)",
+          "Restart and confirm Mod List shows a single create entry"
+        ],
+        "mod_fix": {
+          "action": "remove_duplicate",
+          "action_detail": "Delete the extra create jar so only one remains",
+          "why": "FML reported duplicate mod id create with two jars"
+        }
+      },
+      {
+        "file": "crash-2026-07-08_16-22-44-server.txt",
+        "time": "2026-07-10T18:38:02.488Z",
+        "summary": "Initializing game",
+        "display_label": "java.lang.UnsupportedClassVersionError: me/lucko/luckperms/... class file version 65.0",
+        "exception": "java.lang.UnsupportedClassVersionError",
+        "exception_class": "java.lang.UnsupportedClassVersionError",
+        "class_name": "me/lucko/luckperms/common/plugin/AbstractLuckPermsPlugin",
+        "owning_jar": "LuckPerms-NeoForge-5.4.jar",
+        "compiled_java": 21,
+        "runtime_java": 17,
+        "historical": false,
+        "category": "loader",
+        "failure_kind": "platform_mismatch",
+        "primary_mod_id": "luckperms",
+        "suspect_mod_id": "luckperms",
+        "plain_english": "LuckPerms needs Java 21 but the server runs Java 17 — upgrade the JVM or use an older build.",
+        "likely_cause": "Java / class version mismatch",
+        "confidence": "high",
+        "manual_review": false,
+        "fix_hints": [
+          "Upgrade the server JVM to Java 21+ (NeoForge 1.21 expects it). This mod was compiled for Java 21 but the server runs Java 17.",
+          "Owning jar: LuckPerms-NeoForge-5.4.jar (luckperms)"
+        ],
+        "mod_fix": {
+          "action": "update",
+          "action_detail": "Run the server on Java 21, or install a LuckPerms build for Java 17",
+          "why": "UnsupportedClassVersionError with owning jar attributed via class index"
+        }
+      },
+      {
+        "file": "crash-2026-07-04_20-44-08-server.txt",
+        "time": "2026-07-06T18:38:02.488Z",
+        "summary": "Exception in server tick loop",
+        "display_label": "FileSystemException: world/session.lock is locked",
+        "exception": "java.nio.file.FileSystemException: world/session.lock",
+        "exception_class": "java.nio.file.FileSystemException",
+        "locked_path": "world/session.lock",
+        "historical": false,
+        "category": "host_resource",
+        "failure_kind": "env_lock",
+        "plain_english": "A file is locked by another Windows process — close other Minecraft/Java instances and retry.",
+        "likely_cause": "File in use",
+        "confidence": "high",
+        "manual_review": false,
+        "fix_hints": [
+          "Stop other Java/Minecraft instances (and close Explorer previews / antivirus locks) holding: world/session.lock",
+          "Only delete world/session.lock after confirming nothing is using this world folder."
+        ]
+      },
+      {
+        "file": "crash-2026-07-07_11-05-19-server.txt",
+        "time": "2026-07-09T18:38:02.488Z",
+        "summary": "Exception in server tick loop",
+        "display_label": "java.lang.OutOfMemoryError: Java heap space",
+        "exception": "java.lang.OutOfMemoryError: Java heap space",
+        "exception_class": "java.lang.OutOfMemoryError",
+        "oom_kind": "heap",
+        "historical": false,
+        "category": "host_resource",
+        "failure_kind": "host_resource",
+        "plain_english": "Java ran out of heap memory during play.",
+        "likely_cause": "Out of memory",
+        "confidence": "high",
+        "manual_review": false,
+        "fix_hints": [
+          "Confirm the pack needs more heap before raising RAM — oversized packs and leaks look the same.",
+          "Increase Java heap (-Xmx) only if the host still has free RAM; otherwise find leaks or shrink the pack.",
+          "Check duplicate mods, oversized chunk loaders, or run Spark heap analysis."
+        ]
       },
       {
         "file": "crash-2026-06-17_22-18-11-server.txt",
         "time": "2026-06-17T22:18:11+00:00",
         "summary": "Exception in server tick loop",
         "display_label": "java.lang.NullPointerException: Cannot invoke method on null object",
-        "exception": "java.lang.NullPointerException",
+        "exception": "java.lang.NullPointerException: Cannot invoke \"examplemod.TickHandler.onTick()\" because \"this.handler\" is null",
+        "exception_class": "java.lang.NullPointerException",
         "historical": true,
         "category": "mod",
+        "failure_kind": "mod_runtime",
+        "primary_mod_id": "examplemod",
         "suspect_mod_id": "examplemod",
         "mod_file": "examplemod-1.0.0.jar",
-        "plain_english": "examplemod threw an error during a server tick — likely a bug or version mismatch.",
-        "likely_cause": "Mod exception",
+        "stack_frames": [
+          "TRANSFORMER/examplemod@1.0.0/examplemod.ExampleMod.onServerTick"
+        ],
+        "plain_english": "The crash points to mod examplemod — check for updates, corrupt jars, or mixin conflicts.",
+        "likely_cause": "Mod crash",
         "confidence": "medium",
         "manual_review": false,
         "fix_hints": [
-          "Update examplemod to the latest version for 1.21.1.",
-          "Remove examplemod temporarily to confirm it is the culprit."
+          "Update or remove mod 'examplemod' — check latest.log for dependency errors",
+          "Re-download the mod JAR from the official source and replace it in mods/"
         ],
         "mod_fix": {
           "action": "update",
           "action_detail": "Update examplemod to 1.0.1 or remove until pack maintainer fixes.",
           "install_hint": "Download from Modrinth/CurseForge matching NeoForge 1.21.1."
-        },
-        "pre_crash": {
-          "window_minutes": 10,
-          "unavailable_reason": "No live history in static preview — see latest report for current metrics."
         }
       }
     ],
@@ -4005,6 +4444,170 @@
       "likely_removable_count": 7,
       "test_remove_count": 2,
       "client_warning_count": 24
+    },
+    "startup_profile": {
+      "total_sec": 142.3,
+      "done_at": "2026-07-13T15:38:02.488Z",
+      "status": "warnings",
+      "phases": [
+        {
+          "id": "registry",
+          "label": "Registry freeze",
+          "sec": 38.1
+        },
+        {
+          "id": "datapack",
+          "label": "Datapack load",
+          "sec": 22
+        },
+        {
+          "id": "mod_init",
+          "label": "Mod initialization",
+          "sec": 41.5
+        },
+        {
+          "id": "world_load",
+          "label": "World load",
+          "sec": 28.4
+        }
+      ],
+      "slowest": [
+        {
+          "phase": "mod_init",
+          "sec": 41.5
+        },
+        {
+          "phase": "registry",
+          "sec": 38.1
+        },
+        {
+          "phase": "world_load",
+          "sec": 28.4
+        }
+      ],
+      "warnings": [
+        {
+          "id": "loot_parse",
+          "count": 12
+        },
+        {
+          "id": "recipe_missing",
+          "count": 3
+        }
+      ],
+      "errors": [
+        {
+          "mod_id": "pride",
+          "kind": "mod_corrupt",
+          "blocking": false
+        },
+        {
+          "mod_id": "examplemod",
+          "kind": "mod_runtime",
+          "blocking": false
+        }
+      ],
+      "compare_to_last_boot": {
+        "delta_sec": 12.4,
+        "direction": "slower"
+      }
+    },
+    "fml_issues": [
+      {
+        "mod_id": "create",
+        "kind": "mod_load_dependency",
+        "message": "Missing dependency: flywheel",
+        "file": "create-1.21.1.jar"
+      },
+      {
+        "mod_id": "kubejs",
+        "kind": "mod_load_script",
+        "message": "Script error in server_scripts/recipes.js",
+        "file": "kubejs-neoforge-1.21.1.jar"
+      },
+      {
+        "mod_id": "ae2",
+        "kind": "mod_load_failed",
+        "message": "Failed to load channel registry",
+        "file": "appliedenergistics2-1.21.1.jar"
+      }
+    ],
+    "memory_diagnostics": {
+      "page_file_disabled": false,
+      "physical_mb": 32768,
+      "jvm_args": "-Xms4G -Xmx8G",
+      "heap_max_mb": 8192
+    },
+    "mod_forensics": {
+      "class_index_status": "ready",
+      "class_index_built_at": "2026-07-13T17:08:02.488Z",
+      "class_index_jar_count": 48,
+      "class_index_entry_count": 18240,
+      "corrupt_jars": [
+        {
+          "path": "mods/pride-broken.jar",
+          "reason": "zip_end_header",
+          "source": "log",
+          "mod_id": "pride"
+        }
+      ],
+      "stderr_sources": [
+        "logs/stderr.log"
+      ],
+      "scan_config": {
+        "mod_forensics_scan": true,
+        "corrupt_jar_walk": false,
+        "index_on_report": false
+      }
+    },
+    "config_health": [
+      {
+        "path": "world/serverconfig/create-server.toml",
+        "reason": "parse_error",
+        "detail": "Expected '=' after key at line 42"
+      }
+    ],
+    "connector_warnings": [
+      {
+        "mod_id": "fabric_api_stub",
+        "message": "Fabric-looking jar on NeoForge without Connector — may be client leftover",
+        "severity": "warning"
+      }
+    ],
+    "security_flags": [],
+    "crash_rule_hits": [
+      {
+        "rule_id": "create-contraption-npe",
+        "pack_id": "builtin",
+        "priority": 50200,
+        "matched_at": "2026-07-13T19:09:56.375Z",
+        "crash_file": "crash-2026-06-22_14-33-07-server.txt",
+        "emit": {
+          "failure_kind": "mod_runtime",
+          "primary_mod_id": "create",
+          "confidence": "high"
+        }
+      }
+    ],
+    "suppressed_issues": [
+      {
+        "id": "CLIENT_ON_SERVER",
+        "message": "Client-only mod detected on dedicated server (suppressed in preview).",
+        "severity": "warning",
+        "suppressed": true
+      }
+    ],
+    "active_suppressions": {
+      "conf_ids": [
+        "CLIENT_ON_SERVER"
+      ],
+      "state": [],
+      "merged": [
+        {
+          "id": "CLIENT_ON_SERVER",
+          "source": "conf"
+        }
+      ]
     }
   },
   "thresholds": {
