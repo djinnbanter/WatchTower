@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated": "2026-07-13T16:38:02.265Z",
+    "generated": "2026-07-16T15:11:20.821Z",
     "hostname": "demo-server",
     "lookback_hours": 24,
     "window_start": "2026-06-17T12:00:00.000Z",
@@ -3311,7 +3311,8 @@
         "dependents_count": 2,
         "side_score": "server_required",
         "side_signals": [
-          "SERVER_REQUIRED_IDS"
+          "SERVER_REQUIRED_IDS",
+          "modrinth:server_required"
         ],
         "dependencies": [
           {
@@ -3322,6 +3323,35 @@
             "modId": "neoforge",
             "mandatory": true
           }
+        ],
+        "modrinth_slug": "create",
+        "modrinth_title": "Create",
+        "modrinth_url": "https://modrinth.com/mod/create",
+        "modrinth_icon_url": "https://cdn.modrinth.com/data/LNytGWDc/61d716699bcf1ec42ed4926a9e1c7311be6087e2_96.webp",
+        "modrinth_wiki_url": "https://create.fandom.com/wiki/Create_Mod_Wiki",
+        "modrinth_source_url": "https://github.com/Creators-of-Create/Create",
+        "modrinth_issues_url": "https://github.com/Creators-of-Create/Create/issues",
+        "modrinth_description": "Aesthetic technology that empowers the player.",
+        "modrinth_outdated": true,
+        "modrinth_compatible_url": "https://modrinth.com/mod/create/versions",
+        "modrinth_update_label": "NeoForge build 6.0.1 available",
+        "jar_in_jar": [
+          {
+            "id": "flywheel",
+            "version": "1.0.2",
+            "display_name": "Flywheel",
+            "nested_path": "META-INF/jarjar/flywheel.jar"
+          },
+          {
+            "id": "ponder",
+            "version": "1.0.56",
+            "display_name": "Ponder",
+            "nested_path": "META-INF/jarjar/ponder.jar"
+          }
+        ],
+        "nested_mod_ids": [
+          "flywheel",
+          "ponder"
         ]
       },
       {
@@ -3332,8 +3362,14 @@
         "dependents_count": 0,
         "side_score": "uncertain",
         "side_signals": [
-          "heuristic"
-        ]
+          "heuristic",
+          "modrinth:optional_both"
+        ],
+        "modrinth_slug": "jei",
+        "modrinth_title": "Just Enough Items",
+        "modrinth_url": "https://modrinth.com/mod/jei",
+        "modrinth_icon_url": "https://cdn.modrinth.com/data/u6dRKJwZ/4a3f18ac0d096c9f8e9176984c44be4e58f94c89_96.webp",
+        "modrinth_description": "Item and recipe browsing — useful on both client and server."
       },
       {
         "id": "mekanism",
@@ -3431,7 +3467,16 @@
         "version": "1.10.124",
         "display_name": "spark",
         "jar_file": "spark-1.10.124.jar",
-        "dependents_count": 0
+        "dependents_count": 0,
+        "side_score": "server_required",
+        "side_signals": [
+          "modrinth:server_required"
+        ],
+        "modrinth_slug": "spark",
+        "modrinth_title": "spark",
+        "modrinth_url": "https://modrinth.com/mod/spark",
+        "modrinth_icon_url": "https://cdn.modrinth.com/data/l6YH9Als/61a777dd08a8447ac93e8b6372e6d27d48cd1e1a_96.webp",
+        "modrinth_description": "Performance profiler for Minecraft servers and clients."
       },
       {
         "id": "chunky",
@@ -3617,15 +3662,31 @@
         "side_score": "likely_removable",
         "side_signals": [
           "heuristic",
-          "toml"
-        ]
+          "toml",
+          "modrinth:client_only"
+        ],
+        "modrinth_slug": "appleskin",
+        "modrinth_title": "AppleSkin",
+        "modrinth_url": "https://modrinth.com/mod/appleskin",
+        "modrinth_icon_url": "https://cdn.modrinth.com/data/EsAfCjCV/icon.png",
+        "modrinth_description": "Food/hunger HUD improvements for the client."
       },
       {
         "id": "sodium",
         "version": "0.6.0",
         "display_name": "Sodium",
         "jar_file": "sodium-0.6.0.jar",
-        "dependents_count": 0
+        "dependents_count": 0,
+        "side_score": "likely_removable",
+        "side_signals": [
+          "heuristic",
+          "modrinth:client_only"
+        ],
+        "modrinth_slug": "sodium",
+        "modrinth_title": "Sodium",
+        "modrinth_url": "https://modrinth.com/mod/sodium",
+        "modrinth_icon_url": "https://cdn.modrinth.com/data/AANobbMI/295862f4724dc3f78df3447ad6072b2dcd3ef0c9_96.webp",
+        "modrinth_description": "Modern rendering engine for Minecraft."
       },
       {
         "id": "embeddium",
@@ -3691,40 +3752,6 @@
         "dependents_count": 0
       },
       {
-        "id": "flywheel",
-        "version": "1.0.2",
-        "display_name": "Flywheel",
-        "jar_file": "flywheel-1.0.2.jar",
-        "side_score": "server_required",
-        "side_signals": [
-          "SERVER_REQUIRED_IDS"
-        ],
-        "dependents_count": 1,
-        "dependencies": [
-          {
-            "modId": "minecraft",
-            "mandatory": true
-          }
-        ]
-      },
-      {
-        "id": "ponder",
-        "version": "1.0.56",
-        "display_name": "Ponder",
-        "jar_file": "ponder-1.0.56.jar",
-        "side_score": "server_required",
-        "side_signals": [
-          "ecosystem:create"
-        ],
-        "dependents_count": 0,
-        "dependencies": [
-          {
-            "modId": "create",
-            "mandatory": true
-          }
-        ]
-      },
-      {
         "id": "railways",
         "version": "1.6.4",
         "display_name": "Create: Steam 'n' Rails",
@@ -3780,7 +3807,8 @@
         "display_name": "AppleSkin",
         "signals": [
           "heuristic",
-          "toml"
+          "toml",
+          "modrinth:client_only"
         ]
       },
       {
@@ -3792,7 +3820,8 @@
         "removal_advice": "Safe to remove from server mods/.",
         "display_name": "Sodium",
         "signals": [
-          "heuristic"
+          "heuristic",
+          "modrinth:client_only"
         ]
       },
       {
@@ -4088,7 +4117,7 @@
     "crash_summaries": [
       {
         "file": "crash-2026-06-22_14-33-07-server.txt",
-        "time": "2026-07-13T17:53:02.488Z",
+        "time": "2026-07-16T16:26:21.074Z",
         "summary": "Exception in server tick loop",
         "display_label": "java.lang.NullPointerException: Cannot invoke \"ContraptionCollision.mf()\" because \"mf.axis\" is null",
         "exception": "java.lang.NullPointerException: Cannot invoke \"ContraptionCollision.mf()\" because \"mf.axis\" is null",
@@ -4100,6 +4129,8 @@
         "failure_kind": "mod_runtime",
         "primary_mod_id": "create",
         "suspect_mod_id": "create",
+        "matched_rule_id": "create-contraption-npe",
+        "matched_pack_id": "builtin",
         "mod_file": "create-6.0.0.jar",
         "stack_frames": [
           "TRANSFORMER/create@6.0.0/com.simibubi.create.content.contraptions.ContraptionCollision.tick"
@@ -4119,13 +4150,11 @@
           "why": "Stack evidence shows ContraptionCollision / mf.axis — a proven Create contraption path.",
           "install_hint": "Download a matching Create jar from Modrinth for NeoForge 1.21.1 after the world loads"
         },
-        "incident_id": "inc-create-2026-06-22",
-        "matched_rule_id": "create-contraption-npe",
-        "matched_pack_id": "builtin"
+        "incident_id": "inc-create-2026-06-22"
       },
       {
         "file": "crash-2026-07-10_19-04-12-server.txt",
-        "time": "2026-07-13T12:38:02.488Z",
+        "time": "2026-07-16T11:11:21.074Z",
         "summary": "Exception in server tick loop",
         "display_label": "java.lang.NullPointerException: Cannot invoke \"BeltBlockEntity.getSpeed()\"",
         "exception": "java.lang.NullPointerException: Cannot invoke \"BeltBlockEntity.getSpeed()\"",
@@ -4225,7 +4254,7 @@
       },
       {
         "file": "crash-2026-07-11_02-15-33-server.txt",
-        "time": "2026-07-13T00:38:02.488Z",
+        "time": "2026-07-15T23:11:21.074Z",
         "summary": "Exception generating new chunk",
         "display_label": "java.io.EOFException: Unexpected end of ZLIB input stream",
         "exception": "java.io.EOFException: Unexpected end of ZLIB input stream",
@@ -4246,7 +4275,7 @@
       },
       {
         "file": "crash-2026-07-09_21-48-01-server.txt",
-        "time": "2026-07-11T18:38:02.488Z",
+        "time": "2026-07-14T17:11:21.074Z",
         "summary": "Mod loading has failed",
         "display_label": "MixinInitialisationError: Error initialising mixin config create.mixins.json",
         "exception": "org.spongepowered.asm.mixin.throwables.MixinInitialisationError",
@@ -4273,7 +4302,7 @@
       },
       {
         "file": "crash-2026-07-06_09-33-12-server.txt",
-        "time": "2026-07-08T18:38:02.488Z",
+        "time": "2026-07-11T17:11:21.074Z",
         "summary": "Mod loading has failed",
         "display_label": "InvalidMixinException: @Overwrite conflict createaddition → create",
         "exception": "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException",
@@ -4303,7 +4332,7 @@
       },
       {
         "file": "crash-2026-07-05_14-01-55-server.txt",
-        "time": "2026-07-07T18:38:02.488Z",
+        "time": "2026-07-10T17:11:21.074Z",
         "summary": "Mod loading has failed",
         "display_label": "ModLoadingException: Duplicate mods found: create",
         "exception": "net.neoforged.fml.ModLoadingException: Duplicate mods found: create",
@@ -4336,7 +4365,7 @@
       },
       {
         "file": "crash-2026-07-08_16-22-44-server.txt",
-        "time": "2026-07-10T18:38:02.488Z",
+        "time": "2026-07-13T17:11:21.074Z",
         "summary": "Initializing game",
         "display_label": "java.lang.UnsupportedClassVersionError: me/lucko/luckperms/... class file version 65.0",
         "exception": "java.lang.UnsupportedClassVersionError",
@@ -4366,7 +4395,7 @@
       },
       {
         "file": "crash-2026-07-04_20-44-08-server.txt",
-        "time": "2026-07-06T18:38:02.488Z",
+        "time": "2026-07-09T17:11:21.074Z",
         "summary": "Exception in server tick loop",
         "display_label": "FileSystemException: world/session.lock is locked",
         "exception": "java.nio.file.FileSystemException: world/session.lock",
@@ -4386,7 +4415,7 @@
       },
       {
         "file": "crash-2026-07-07_11-05-19-server.txt",
-        "time": "2026-07-09T18:38:02.488Z",
+        "time": "2026-07-12T17:11:21.074Z",
         "summary": "Exception in server tick loop",
         "display_label": "java.lang.OutOfMemoryError: Java heap space",
         "exception": "java.lang.OutOfMemoryError: Java heap space",
@@ -4447,7 +4476,7 @@
     },
     "startup_profile": {
       "total_sec": 142.3,
-      "done_at": "2026-07-13T15:38:02.488Z",
+      "done_at": "2026-07-16T14:11:21.074Z",
       "status": "warnings",
       "phases": [
         {
@@ -4540,7 +4569,7 @@
     },
     "mod_forensics": {
       "class_index_status": "ready",
-      "class_index_built_at": "2026-07-13T17:08:02.488Z",
+      "class_index_built_at": "2026-07-16T15:41:21.074Z",
       "class_index_jar_count": 48,
       "class_index_entry_count": 18240,
       "corrupt_jars": [
@@ -4580,7 +4609,7 @@
         "rule_id": "create-contraption-npe",
         "pack_id": "builtin",
         "priority": 50200,
-        "matched_at": "2026-07-13T19:09:56.375Z",
+        "matched_at": "2026-07-16T16:26:21.074Z",
         "crash_file": "crash-2026-06-22_14-33-07-server.txt",
         "emit": {
           "failure_kind": "mod_runtime",

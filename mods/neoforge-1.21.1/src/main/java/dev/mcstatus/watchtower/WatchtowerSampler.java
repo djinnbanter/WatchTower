@@ -8,11 +8,15 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.neoforged.neoforgespi.language.IModInfo;
 
+import dev.mcstatus.watchtower.core.collect.ModJarMetadataReader;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 public final class WatchtowerSampler {
@@ -28,7 +32,17 @@ public final class WatchtowerSampler {
     public record PlayerSample(String name, String uuid, int ping, String dimension) {
     }
 
-    public record ModSample(String id, String version, String displayName) {
+    public record ModSample(
+            String id,
+            String version,
+            String displayName,
+            String jarFile,
+            boolean nested,
+            String parentJar,
+            String nestedPath) {
+        public ModSample(String id, String version, String displayName) {
+            this(id, version, displayName, null, false, null, null);
+        }
     }
 
     public record HeapMb(double used, double committed, double max) {
@@ -83,7 +97,7 @@ public final class WatchtowerSampler {
         dimensions.sort(Comparator.comparing(DimensionSample::id));
 
         int modCount = countMods(server);
-        List<ModSample> mods = sampleMods();
+        List<ModSample> mods = sampleMods(server.getServerDirectory());
         List<PlayerSample> playerSamples = samplePlayers(server);
         HeapMb heap = sampleHeap();
 
@@ -131,21 +145,99 @@ public final class WatchtowerSampler {
         return out;
     }
 
-    private static List<ModSample> sampleMods() {
+    private static List<ModSample> sampleMods(Path serverDir) {
         List<ModSample> out = new ArrayList<>();
+        Map<String, String> nestedToParent = Map.of();
+        if (serverDir != null) {
+            try {
+                nestedToParent = ModJarMetadataReader.nestedIdToParentJar(serverDir.toAbsolutePath().toString());
+            } catch (Exception e) {
+                WatchtowerMod.LOGGER.debug("Nested jar index failed: {}", e.toString());
+            }
+        }
+        Path modsDir = serverDir != null ? serverDir.resolve("mods") : null;
         try {
             for (IModInfo info : ModList.get().getMods()) {
                 String id = info.getModId();
                 if ("minecraft".equals(id) || "neoforge".equals(id)) {
                     continue;
                 }
-                out.add(new ModSample(id, info.getVersion().toString(), info.getDisplayName()));
+                String pathStr = owningFilePath(info);
+                String jarFile = null;
+                boolean nested = false;
+                String parentJar = null;
+                String nestedPath = null;
+
+                if (pathStr != null && !pathStr.isBlank()) {
+                    String normalized = pathStr.replace('\\', '/');
+                    int bang = normalized.indexOf('!');
+                    if (bang > 0) {
+                        nested = true;
+                        String outer = normalized.substring(0, bang);
+                        int slash = Math.max(outer.lastIndexOf('/'), outer.lastIndexOf('\\'));
+                        parentJar = slash >= 0 ? outer.substring(slash + 1) : outer;
+                        nestedPath = normalized.substring(bang + 1);
+                        if (nestedPath.startsWith("/")) {
+                            nestedPath = nestedPath.substring(1);
+                        }
+                        jarFile = parentJar;
+                    } else {
+                        Path p = Path.of(pathStr);
+                        jarFile = p.getFileName() != null ? p.getFileName().toString() : null;
+                        if (modsDir != null && jarFile != null) {
+                            Path direct = modsDir.resolve(jarFile);
+                            nested = !Files.isRegularFile(direct)
+                                    || normalized.toLowerCase(Locale.ROOT).contains("/jarjar/")
+                                    || normalized.toLowerCase(Locale.ROOT).contains("META-INF/jars/".toLowerCase(Locale.ROOT));
+                            if (nested) {
+                                parentJar = nestedToParent.get(id.toLowerCase(Locale.ROOT));
+                            }
+                        }
+                    }
+                }
+
+                if (!nested) {
+                    String mappedParent = nestedToParent.get(id.toLowerCase(Locale.ROOT));
+                    if (mappedParent != null) {
+                        nested = true;
+                        parentJar = mappedParent;
+                        if (jarFile == null) {
+                            jarFile = mappedParent;
+                        }
+                    }
+                }
+
+                out.add(new ModSample(
+                        id,
+                        info.getVersion().toString(),
+                        info.getDisplayName(),
+                        jarFile,
+                        nested,
+                        parentJar,
+                        nestedPath));
             }
         } catch (Exception e) {
             WatchtowerMod.LOGGER.debug("Mod list sample failed: {}", e.toString());
         }
         out.sort(Comparator.comparing(ModSample::id));
         return out;
+    }
+
+    private static String owningFilePath(IModInfo info) {
+        try {
+            var owning = info.getOwningFile();
+            if (owning == null) {
+                return null;
+            }
+            var file = owning.getFile();
+            if (file == null) {
+                return null;
+            }
+            Path path = file.getFilePath();
+            return path != null ? path.toString() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static int countMods(MinecraftServer server) {

@@ -7,6 +7,7 @@ import {
   live, samples, overviewMeta, players, reports, opsCache,
   issuesPeek, activity, updateCheck, spark,
   performance, settings, noReportYet, acks, crashGroups, inbox, issueSuppressions,
+  modrinthScan,
 } from '../state/stores.js';
 import { createSimState, stepSim } from './mock-physics.js';
 import { groupCrashes, mergeCrashRows } from '../domain/crash-groups.js';
@@ -333,6 +334,153 @@ export class FixtureSource {
 
     this._reportSimTimer = setInterval(tick, 900);
     return { status: 'started', running: true };
+  }
+
+  async fetchModrinthStatus() {
+    const data = {
+      enabled: settings.value?.data?.modrinth_lookup !== false,
+      running: modrinthScan.value?.status?.running ?? false,
+      stage: modrinthScan.value?.status?.stage ?? null,
+      stage_label: modrinthScan.value?.status?.stage_label ?? null,
+      stage_detail: modrinthScan.value?.status?.stage_detail ?? null,
+      progress: modrinthScan.value?.status?.progress ?? { done: 0, total: 0 },
+      batch: modrinthScan.value?.status?.batch ?? { index: 0, count: 0, size: 0 },
+      eta_seconds: modrinthScan.value?.status?.eta_seconds ?? null,
+      last_run: modrinthScan.value?.status?.last_run ?? null,
+      stats: modrinthScan.value?.status?.stats ?? {
+        jars_considered: 42,
+        matched: 38,
+        unresolved: 4,
+        outdated: 3,
+        coverage_pct: 90,
+        cache_hit_rate: 72,
+        cache_entries: 40,
+        api_requests: 6,
+        rate_limit_waits: 0,
+        rps: 5,
+        hash_batches: 1,
+        project_batches: 1,
+        truncated: false,
+        side_tag_mix: { server_required: 12, client_only: 8, both: 14, other: 4 },
+        top_outdated: [
+          { mod_id: 'create', title: 'Create' },
+          { mod_id: 'flywheel', title: 'Flywheel' },
+        ],
+      },
+      success: modrinthScan.value?.status?.success ?? null,
+      error: modrinthScan.value?.status?.error ?? null,
+    };
+    modrinthScan.value = {
+      ...modrinthScan.value,
+      status: { ...modrinthScan.value.status, ...data },
+    };
+    return data;
+  }
+
+  async runModrinthScan() {
+    if (settings.value?.data?.modrinth_lookup === false) {
+      return {
+        status: 'disabled',
+        enabled: false,
+        error: 'Modrinth lookup is disabled. Enable it in Settings → Monitoring.',
+      };
+    }
+    if (this._modrinthSimTimer) {
+      return { status: 'already_running', running: true };
+    }
+    const stages = [
+      { id: 'prepare', label: 'Preparing scan' },
+      { id: 'hash', label: 'Hashing jars' },
+      { id: 'cache', label: 'Checking cache' },
+      { id: 'version_files', label: 'Looking up version files' },
+      { id: 'projects', label: 'Fetching projects' },
+      { id: 'compat', label: 'Checking compatible updates' },
+      { id: 'impact', label: 'Analyzing pack impact' },
+      { id: 'persist', label: 'Saving results' },
+      { id: 'done', label: 'Done' },
+    ];
+    const started = new Date().toISOString();
+    modrinthScan.value = {
+      startedAt: Date.now(),
+      error: null,
+      status: {
+        enabled: true,
+        running: true,
+        stage: stages[0].id,
+        stage_label: stages[0].label,
+        stage_detail: 'Fixture simulation…',
+        progress: { done: 0, total: stages.length - 1 },
+        batch: { index: 1, count: 2, size: 128 },
+        eta_seconds: 8,
+        last_run: { started_at: started },
+        stats: modrinthScan.value.status?.stats ?? null,
+        success: null,
+        error: null,
+      },
+    };
+    let step = 0;
+    const tick = () => {
+      step += 1;
+      if (step < stages.length - 1) {
+        const stage = stages[step];
+        modrinthScan.value = {
+          ...modrinthScan.value,
+          status: {
+            ...modrinthScan.value.status,
+            stage: stage.id,
+            stage_label: stage.label,
+            progress: { done: step, total: stages.length - 1 },
+            batch: { index: Math.min(2, step), count: 2, size: 128 },
+            eta_seconds: Math.max(1, 8 - step),
+          },
+        };
+        return;
+      }
+      clearInterval(this._modrinthSimTimer);
+      this._modrinthSimTimer = null;
+      const finished = new Date().toISOString();
+      modrinthScan.value = {
+        ...modrinthScan.value,
+        status: {
+          ...modrinthScan.value.status,
+          running: false,
+          stage: 'done',
+          stage_label: 'Modrinth scan complete',
+          stage_detail: null,
+          progress: { done: stages.length - 1, total: stages.length - 1 },
+          eta_seconds: null,
+          success: true,
+          last_run: {
+            started_at: started,
+            finished_at: finished,
+            duration_ms: 4500,
+            success: true,
+          },
+          stats: {
+            jars_considered: 42,
+            matched: 38,
+            unresolved: 4,
+            outdated: 3,
+            coverage_pct: 90,
+            cache_hit_rate: 72,
+            cache_entries: 40,
+            api_requests: 6,
+            rate_limit_waits: 0,
+            rps: 5,
+            hash_batches: 1,
+            project_batches: 1,
+            truncated: false,
+            side_tag_mix: { server_required: 12, client_only: 8, both: 14, other: 4 },
+            top_outdated: [
+              { mod_id: 'create', title: 'Create' },
+              { mod_id: 'flywheel', title: 'Flywheel' },
+            ],
+          },
+        },
+      };
+    };
+    this._modrinthSimTimer = setInterval(tick, 700);
+    return { status: 'started', running: true, enabled: true };
   }
 
   // ── Ops cache ──────────────────────────────────────────────────────────────
@@ -690,12 +838,22 @@ export class FixtureSource {
   async fetchSparkProfiles() {
     const data = await loadJson(PATHS.sparkProfiles).catch(() => null);
     if (data) {
+      const profiles = data?.profiles ?? [];
       spark.value = {
         ...spark.value,
-        profiles: data?.profiles ?? [],
+        profiles,
         searchDirs: data?.search_dirs ?? [],
-        enabled: data?.enabled !== false,
+        enabled: data?.spark_enabled !== false && data?.enabled !== false,
       };
+      // Auto-open report profile (or first) so preview isn't stuck on empty.
+      if (!spark.value.activePath && !spark.value.profile && profiles.length > 0) {
+        const preferred =
+          data?.report_profile_path
+          ?? profiles[0]?.source_path
+          ?? profiles[0]?.path
+          ?? null;
+        if (preferred) await this.fetchSparkProfile(preferred);
+      }
     }
     return data;
   }
@@ -704,7 +862,8 @@ export class FixtureSource {
     if (!this._sparkProfileMocks) {
       this._sparkProfileMocks = await loadJson(PATHS.sparkProfileMocks).catch(() => ({}));
     }
-    const profile = this._sparkProfileMocks?.[path] ?? this._sparkProfileMocks?.['default'] ?? null;
+    const map = this._sparkProfileMocks?.profiles ?? this._sparkProfileMocks;
+    const profile = map?.[path] ?? map?.default ?? null;
     spark.value = { ...spark.value, profile, activePath: path, loading: false, error: null };
     return profile;
   }
@@ -741,6 +900,10 @@ export class FixtureSource {
     if ('modrinthLookup' in mapped) {
       mapped.modrinth_lookup = !!mapped.modrinthLookup;
       delete mapped.modrinthLookup;
+    }
+    if ('modrinthAutoScanOnModChanges' in mapped) {
+      mapped.modrinth_auto_scan_on_mod_changes = !!mapped.modrinthAutoScanOnModChanges;
+      delete mapped.modrinthAutoScanOnModChanges;
     }
     settings.value = {
       ...settings.value,

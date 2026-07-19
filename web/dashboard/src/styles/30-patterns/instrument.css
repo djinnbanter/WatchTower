@@ -1,0 +1,117 @@
+/* Shared instrument plate — glass + tone wash + top gradient hairline */
+
+.ui-instrument {
+  --ui-instrument-tone: var(--ui-sky);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-12);
+  padding: var(--ui-sp-14) var(--ui-sp-14) var(--ui-sp-12);
+  border-radius: var(--ui-rad-xl);
+  border: 1px solid color-mix(in srgb, var(--ui-instrument-tone) 26%, var(--ui-glass-border, var(--ui-line)));
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-instrument-tone) 12%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-glass, var(--ui-bg1)) 72%, transparent);
+  box-shadow: var(--ui-shadow-rest);
+  backdrop-filter: blur(var(--ui-blur, 12px));
+  -webkit-backdrop-filter: blur(var(--ui-blur, 12px));
+  overflow: hidden;
+}
+
+.ui-instrument::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--ui-instrument-tone) 65%, transparent),
+    transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ui-instrument > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ui-instrument--sky {
+  --ui-instrument-tone: var(--ui-sky);
+}
+
+.ui-instrument--disk,
+.ui-instrument--warn {
+  --ui-instrument-tone: var(--ui-ch-disk, var(--ui-warn));
+}
+
+.ui-instrument--accent {
+  --ui-instrument-tone: var(--ui-accent);
+}
+
+.ui-instrument--ok {
+  --ui-instrument-tone: var(--ui-ok);
+}
+
+.ui-instrument--danger {
+  --ui-instrument-tone: var(--ui-danger);
+}
+
+.ui-instrument--info {
+  --ui-instrument-tone: var(--ui-info, var(--ui-sky));
+}
+
+.ui-instrument--purple,
+.ui-instrument--insight {
+  --ui-instrument-tone: #8b7cf7;
+}
+
+.ui-instrument--net {
+  --ui-instrument-tone: #3ecfcf;
+}
+
+.ui-instrument--cpu {
+  --ui-instrument-tone: var(--ui-ch-cpu, var(--ui-warn));
+}
+
+/* Compact variant — less padding/gap for KPI cells */
+.ui-instrument--compact {
+  gap: var(--ui-sp-6);
+  padding: var(--ui-sp-12) var(--ui-sp-14);
+}
+
+/* Hairline-only mixin for surfaces that already own layout */
+.ui-instrument-surface {
+  --ui-instrument-tone: var(--ui-sky);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ui-instrument-tone) 26%, var(--ui-glass-border, var(--ui-line)));
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-instrument-tone) 12%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-glass, var(--ui-bg1)) 72%, transparent);
+  box-shadow: var(--ui-shadow-rest);
+  backdrop-filter: blur(var(--ui-blur, 12px));
+  -webkit-backdrop-filter: blur(var(--ui-blur, 12px));
+}
+
+.ui-instrument-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--ui-instrument-tone) 65%, transparent),
+    transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ui-instrument-surface > * {
+  position: relative;
+  z-index: 1;
+}

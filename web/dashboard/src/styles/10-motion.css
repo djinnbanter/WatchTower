@@ -77,6 +77,11 @@
 .ui-page__stack > *:nth-child(4) { animation-delay: 140ms; }
 .ui-page__stack > *:nth-child(5) { animation-delay: 180ms; }
 
+/* Live: charts must paint immediately — no staggered empty→appear */
+[data-tour="live"].ui-page__stack > * {
+  animation: none;
+}
+
 :focus {
   outline: none;
 }

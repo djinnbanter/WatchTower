@@ -6,10 +6,11 @@
 import { batch } from '../lib/signals.js';
 import {
   reports, spark, performance, activity, opsCache,
-  ui, setUi, issueSuppressions,
+  ui, setUi, issueSuppressions, modrinthScan,
 } from './stores.js';
 
 let _source = null;
+let _modrinthWasRunning = false;
 
 /** Call once after createSource() */
 export function initActions(source) {
@@ -18,7 +19,11 @@ export function initActions(source) {
 
 function kickReportPoll() {
   // Dynamic import avoids a circular dependency with scheduler.js
-  import('./scheduler.js').then((m) => m.kickReportPoll()).catch(() => {});
+  import('./scheduler.js').then((m) => m.kickTask?.('reportStatus')).catch(() => {});
+}
+
+function kickModrinthPoll() {
+  import('./scheduler.js').then((m) => m.kickTask?.('modrinthStatus')).catch(() => {});
 }
 
 // ── Scan debounce ─────────────────────────────────────────────────────────────
@@ -161,6 +166,110 @@ export async function pollReportStatus() {
     _reportWasRunning = nowRunning;
   } catch {
     // Keep local running flag so the next poll can recover
+  }
+}
+
+export async function runModrinthScan() {
+  if (!_source) return;
+  const startedAt = Date.now();
+  try {
+    modrinthScan.value = {
+      ...modrinthScan.value,
+      startedAt,
+      error: null,
+      status: {
+        ...modrinthScan.value.status,
+        running: true,
+        success: null,
+        error: null,
+        stage: 'prepare',
+        stage_label: 'Preparing Modrinth scan',
+        stage_detail: 'Starting scan…',
+      },
+    };
+    _modrinthWasRunning = true;
+    kickModrinthPoll();
+
+    const data = await _source.runModrinthScan();
+    if (data?.status === 'already_running') {
+      kickModrinthPoll();
+      return data;
+    }
+    if (data?.status === 'disabled') {
+      modrinthScan.value = {
+        ...modrinthScan.value,
+        status: {
+          ...modrinthScan.value.status,
+          enabled: false,
+          running: false,
+          error: data?.error || 'Modrinth lookup is disabled',
+        },
+      };
+      _modrinthWasRunning = false;
+      addToast(data?.error || 'Modrinth lookup is disabled', 'error');
+      return data;
+    }
+    modrinthScan.value = {
+      ...modrinthScan.value,
+      startedAt,
+      status: {
+        ...modrinthScan.value.status,
+        ...data,
+        running: data?.running !== false,
+        success: null,
+      },
+    };
+    _modrinthWasRunning = modrinthScan.value.status.running;
+    kickModrinthPoll();
+    return data;
+  } catch (err) {
+    if (err?.status === 409 || err?.body?.status === 'already_running') {
+      _modrinthWasRunning = true;
+      kickModrinthPoll();
+      return err?.body ?? { status: 'already_running', running: true };
+    }
+    if (err?.status === 400 || err?.body?.status === 'disabled') {
+      modrinthScan.value = {
+        ...modrinthScan.value,
+        status: {
+          ...modrinthScan.value.status,
+          enabled: false,
+          running: false,
+          error: err?.body?.error || err.message,
+        },
+      };
+      _modrinthWasRunning = false;
+      addToast(err?.body?.error || err.message || 'Modrinth lookup is disabled', 'error');
+      return err?.body ?? null;
+    }
+    modrinthScan.value = {
+      ...modrinthScan.value,
+      error: err.message,
+      status: { ...modrinthScan.value.status, running: false, success: false },
+    };
+    addToast(err.message || 'Modrinth scan failed to start', 'error');
+    _modrinthWasRunning = false;
+    return null;
+  }
+}
+
+export async function pollModrinthStatus() {
+  if (!_source) return;
+  const wasRunning = _modrinthWasRunning || modrinthScan.value?.status?.running === true;
+  try {
+    const data = await _source.fetchModrinthStatus();
+    const nowRunning = !!data?.running;
+    if (wasRunning && !nowRunning) {
+      if (data?.success) {
+        addToast('Modrinth scan completed', 'success');
+        await _source.fetchReportsLatest?.();
+      } else if (data?.success === false) {
+        addToast(data?.error || 'Modrinth scan failed', 'error');
+      }
+    }
+    _modrinthWasRunning = nowRunning;
+  } catch {
+    // keep local running flag for recovery
   }
 }
 

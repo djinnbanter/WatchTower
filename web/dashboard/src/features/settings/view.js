@@ -172,11 +172,14 @@ function GeneralPanel() {
 function MonitoringPanel() {
   const data = settings.value.data ?? {};
   const [modrinthLookup, setModrinthLookup] = useState(!!data.modrinth_lookup);
+  const [modrinthAutoScan, setModrinthAutoScan] = useState(!!data.modrinth_auto_scan_on_mod_changes);
   const [saving, setSaving] = useState(false);
+  const [savingAuto, setSavingAuto] = useState(false);
 
   useEffect(() => {
     setModrinthLookup(!!data.modrinth_lookup);
-  }, [data.modrinth_lookup]);
+    setModrinthAutoScan(!!data.modrinth_auto_scan_on_mod_changes);
+  }, [data.modrinth_lookup, data.modrinth_auto_scan_on_mod_changes]);
 
   const rows = [
     { key: 'Live poll interval', value: data.live_poll_sec != null ? `${data.live_poll_sec}s` : '5s' },
@@ -190,9 +193,14 @@ function MonitoringPanel() {
     setModrinthLookup(v);
     setSaving(true);
     try {
-      await saveSettings({ modrinthLookup: v });
+      const payload = { modrinthLookup: v };
+      if (!v && modrinthAutoScan) {
+        payload.modrinthAutoScanOnModChanges = false;
+        setModrinthAutoScan(false);
+      }
+      await saveSettings(payload);
       addToast(v
-        ? 'Modrinth lookup enabled — takes effect on the next full report'
+        ? 'Modrinth lookup enabled — run a scan from Mods → Modrinth'
         : 'Modrinth lookup disabled',
         'success');
     } catch (err) {
@@ -200,6 +208,23 @@ function MonitoringPanel() {
       addToast(`Could not save: ${err.message ?? err}`, 'error');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAutoScanToggle(v) {
+    setModrinthAutoScan(v);
+    setSavingAuto(true);
+    try {
+      await saveSettings({ modrinthAutoScanOnModChanges: v });
+      addToast(v
+        ? 'Auto-scan after mod changes enabled (not tied to Run Report)'
+        : 'Auto-scan after mod changes disabled',
+        'success');
+    } catch (err) {
+      setModrinthAutoScan(!v);
+      addToast(`Could not save: ${err.message ?? err}`, 'error');
+    } finally {
+      setSavingAuto(false);
     }
   }
 
@@ -222,16 +247,23 @@ function MonitoringPanel() {
           checked=${modrinthLookup}
           onChange=${handleModrinthToggle}
           label=${saving ? 'Saving…' : 'Modrinth lookup (opt-in)'}
-          disabled=${saving}
+          disabled=${saving || savingAuto}
+        />
+        <${Toggle}
+          checked=${modrinthAutoScan}
+          onChange=${handleAutoScanToggle}
+          label=${savingAuto ? 'Saving…' : 'Auto-scan after mod changes'}
+          disabled=${saving || savingAuto || !modrinthLookup}
         />
         <ul class="settings-form__bullets ui-text-low">
-          <li><strong>When:</strong> only during a full <em>Run Report</em> — not when you open Mods or Crashes.</li>
+          <li><strong>When:</strong> run a scan from <em>Mods → Modrinth</em> (not during Run Report). Optional auto-scan runs when the ops poll sees jars added/removed/updated — still not tied to Run Report. Reports only apply already-cached Modrinth identity.</li>
           <li><strong>What is sent:</strong> SHA-512 hashes of jar files to <code>api.modrinth.com</code> (no world, logs, or player data). No API key required.</li>
-          <li><strong>What you see:</strong> <code>modrinth:…</code> side chips on Client-only; accurate Modrinth project/version links on Crashes; optional “update available” hints for loader/MC-compatible builds.</li>
+          <li><strong>Coverage:</strong> looks up jars on each dedicated scan (capped, cached, batched with ETA) — not only ambiguous or crash suspects.</li>
+          <li><strong>What you see:</strong> icons, project links (Modrinth / wiki / source / issues / Discord), Client/server callouts and Modrinth-checked signal chips on Mods → Overview, Crashes CTAs, and optional “update available” hints after a successful scan patches the latest report.</li>
           <li><strong>Never downloads jars</strong> — links open Modrinth in your browser; you update mods yourself.</li>
           <li><strong>Cache:</strong> answers are stored in <code>watchtower/modrinth-cache.json</code> so the same jars are not re-queried every time.</li>
           ${!isEmbedded() ? html`
-            <li><strong>Preview:</strong> this toggle is saved in the browser only — fixture scores do not change until you use a live server report.</li>
+            <li><strong>Preview:</strong> this toggle is saved in the browser only — fixture scores do not change until you use a live server scan.</li>
           ` : null}
         </ul>
       </div>

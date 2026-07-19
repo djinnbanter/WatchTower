@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.mcstatus.watchtower.core.collect.CrashMtimeScanner;
+import dev.mcstatus.watchtower.core.collect.RunningModsCollector;
 import dev.mcstatus.watchtower.core.incident.IncidentReader;
 import dev.mcstatus.watchtower.core.live.PerformanceRollupWriter;
 import dev.mcstatus.watchtower.core.report.StateManager;
@@ -159,7 +160,7 @@ public final class OpsCacheWriter {
         ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
         JsonObject block = new JsonObject();
         block.addProperty(OpsCacheSchema.RUNNING_MODS_SCANNED_AT, now.format(ISO));
-        block.addProperty(OpsCacheSchema.RUNNING_MODS_COUNT, mods.size());
+        block.addProperty(OpsCacheSchema.RUNNING_MODS_COUNT, RunningModsCollector.topLevelCount(mods));
         block.add(OpsCacheSchema.RUNNING_MODS_MODS, mods.deepCopy());
         cache.add(OpsCacheSchema.RUNNING_MODS, block);
         cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);

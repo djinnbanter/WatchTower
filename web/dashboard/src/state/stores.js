@@ -20,6 +20,25 @@ export const reports = signal({
   error: null,
 });
 
+export const modrinthScan = signal({
+  status: {
+    enabled: true,
+    running: false,
+    stage: null,
+    stage_label: null,
+    stage_detail: null,
+    progress: { done: 0, total: 0 },
+    batch: { index: 0, count: 0, size: 0 },
+    eta_seconds: null,
+    last_run: null,
+    stats: null,
+    success: null,
+    error: null,
+  },
+  startedAt: null,
+  error: null,
+});
+
 export const opsCache = signal({ data: null, at: null });
 
 export const overviewMeta = signal({ data: null, at: null });

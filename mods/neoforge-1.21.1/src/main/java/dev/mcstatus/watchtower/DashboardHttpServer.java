@@ -46,6 +46,7 @@ import dev.mcstatus.watchtower.core.panel.PanelLabels;
 import dev.mcstatus.watchtower.core.panel.PanelResolver;
 import dev.mcstatus.watchtower.core.collect.HostMetricsCollector;
 import dev.mcstatus.watchtower.core.collect.ReportArtifactFinder;
+import dev.mcstatus.watchtower.core.collect.ModrinthScanJob;
 import dev.mcstatus.watchtower.core.collect.SparkCollector;
 import dev.mcstatus.watchtower.core.collect.SparkProfileBuilder;
 import dev.mcstatus.watchtower.core.collect.SparkProfileEntry;
@@ -143,6 +144,8 @@ public final class DashboardHttpServer {
             server.createContext("/api/rules/get", this::handleRulesGet);
             server.createContext("/api/rules/validate", this::handleRulesValidate);
             server.createContext("/api/reports/run", this::handleReportsRun);
+            server.createContext("/api/modrinth/status", this::handleModrinthStatus);
+            server.createContext("/api/modrinth/scan", this::handleModrinthScan);
             server.createContext("/api/crashes/acks", this::handleCrashAcks);
             server.createContext("/api/crashes/ack", this::handleCrashAck);
             server.createContext("/api/crashes/acknowledge-all", this::handleCrashAckAll);
@@ -242,6 +245,8 @@ public final class DashboardHttpServer {
             Headers h = ex.getResponseHeaders();
             DashboardAuthHttp.applySecurityHeaders(h);
             h.set("Content-Type", "text/html; charset=utf-8");
+            // Always revalidate shell so jar updates aren't stuck behind a cached index.html.
+            h.set("Cache-Control", "no-store");
             ex.sendResponseHeaders(200, bytes.length);
             try (OutputStream os = ex.getResponseBody()) {
                 os.write(bytes);
@@ -499,9 +504,14 @@ public final class DashboardHttpServer {
                     text = WatchtowerConfWriter.upsertLine(text, "MODRINTH_LOOKUP",
                             modrinthLookup ? "true" : "false");
                 }
+                if (json.has("modrinthAutoScanOnModChanges") && !json.get("modrinthAutoScanOnModChanges").isJsonNull()) {
+                    boolean autoScan = json.get("modrinthAutoScanOnModChanges").getAsBoolean();
+                    text = WatchtowerConfWriter.upsertLine(text, "MODRINTH_AUTO_SCAN_ON_MOD_CHANGES",
+                            autoScan ? "true" : "false");
+                }
                 if (json.has("lookbackHours") || json.has("incremental")
                         || json.has("tpsWarn") || json.has("msptWarn")
-                        || json.has("modrinthLookup")) {
+                        || json.has("modrinthLookup") || json.has("modrinthAutoScanOnModChanges")) {
                     Files.writeString(conf, text, StandardCharsets.UTF_8);
                 }
 
@@ -550,6 +560,8 @@ public final class DashboardHttpServer {
         out.addProperty("lookback_hours", WatchtowerConfWriter.readInt(map, "LOOKBACK_HOURS", config.lookbackHours()));
         out.addProperty("incremental", WatchtowerConfWriter.readBool(map, "INCREMENTAL", config.incremental()));
         out.addProperty("modrinth_lookup", WatchtowerConfWriter.readBool(map, "MODRINTH_LOOKUP", config.modrinthLookup()));
+        out.addProperty("modrinth_auto_scan_on_mod_changes",
+                WatchtowerConfWriter.readBool(map, "MODRINTH_AUTO_SCAN_ON_MOD_CHANGES", config.modrinthAutoScanOnModChanges()));
         String backupDir = map.getOrDefault("BACKUP_DIR", "");
         out.addProperty("backup_dir", backupDir != null ? backupDir : "");
         String backupDirs = map.getOrDefault("BACKUP_DIRS", "");
@@ -2665,6 +2677,125 @@ public final class DashboardHttpServer {
         sendJson(ex, 202, ok);
     }
 
+    private void handleModrinthStatus(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        WatchtowerRuntimeState state = WatchtowerBootstrap.getState();
+        ReportConfig config = minecraftServer != null
+                ? ModReportConfig.forServer(minecraftServer, ReportRunOptions.empty())
+                : null;
+        boolean enabled = config != null && config.modrinthLookup() && !config.disasterRecovery();
+
+        Path statusFile = minecraftServer != null
+                ? WatchtowerPaths.watchtowerRoot(minecraftServer).resolve(ModrinthScanJob.STATUS_FILENAME)
+                : null;
+        JsonObject loaded = ModrinthScanJob.loadStatus(statusFile);
+        final JsonObject out = (state.getLastModrinthStatus() != null && loaded.entrySet().isEmpty())
+                ? state.getLastModrinthStatus().deepCopy()
+                : loaded;
+        out.addProperty("enabled", enabled);
+        out.addProperty("running", state.isModrinthScanRunning());
+        if (state.isModrinthScanRunning()) {
+            String stage = state.getModrinthStage();
+            if (stage != null && !stage.isBlank()) {
+                out.addProperty("stage", stage);
+            }
+            String stageLabel = state.getModrinthStageLabel();
+            if (stageLabel != null && !stageLabel.isBlank()) {
+                out.addProperty("stage_label", stageLabel);
+            }
+            String stageDetail = state.getModrinthStageDetail();
+            if (stageDetail != null && !stageDetail.isBlank()) {
+                out.addProperty("stage_detail", stageDetail);
+            }
+            JsonObject progress = new JsonObject();
+            progress.addProperty("done", state.getModrinthProgressDone());
+            progress.addProperty("total", state.getModrinthProgressTotal());
+            out.add("progress", progress);
+            JsonObject batch = new JsonObject();
+            batch.addProperty("index", state.getModrinthBatchIndex());
+            batch.addProperty("count", state.getModrinthBatchCount());
+            batch.addProperty("size", state.getModrinthBatchSize());
+            out.add("batch", batch);
+            if (state.getModrinthEtaSeconds() != null) {
+                out.addProperty("eta_seconds", state.getModrinthEtaSeconds());
+            } else {
+                out.add("eta_seconds", com.google.gson.JsonNull.INSTANCE);
+            }
+            out.add("success", com.google.gson.JsonNull.INSTANCE);
+            out.remove("error");
+        } else if (out.has("success") && !out.get("success").isJsonNull()) {
+            // keep persisted success
+        } else {
+            out.addProperty("success", state.isLastModrinthScanSuccess());
+            String msg = state.getLastModrinthScanMessage();
+            if (msg != null && !msg.isBlank() && !state.isLastModrinthScanSuccess()) {
+                out.addProperty("error", msg);
+            }
+        }
+        JsonObject lastRun = out.has("last_run") && out.get("last_run").isJsonObject()
+                ? out.getAsJsonObject("last_run") : new JsonObject();
+        state.getLastModrinthScanStarted().ifPresent(t -> {
+            if (!lastRun.has("started_at")) {
+                lastRun.addProperty("started_at", t.toString());
+            }
+        });
+        state.getLastModrinthScanFinished().ifPresent(t -> lastRun.addProperty("finished_at", t.toString()));
+        if (lastRun.size() > 0) {
+            out.add("last_run", lastRun);
+        }
+        sendJson(ex, 200, out);
+    }
+
+    private void handleModrinthScan(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (minecraftServer == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        ReportConfig config = ModReportConfig.forServer(minecraftServer, ReportRunOptions.empty());
+        if (!config.modrinthLookup() || config.disasterRecovery()) {
+            JsonObject disabled = new JsonObject();
+            disabled.addProperty("status", "disabled");
+            disabled.addProperty("enabled", false);
+            disabled.addProperty("error", "Modrinth lookup is disabled. Enable it in Settings → Monitoring.");
+            sendJson(ex, 400, disabled);
+            return;
+        }
+        WatchtowerRuntimeState state = WatchtowerBootstrap.getState();
+        if (!state.tryBeginModrinthScan()) {
+            JsonObject busy = new JsonObject();
+            busy.addProperty("status", "already_running");
+            busy.addProperty("running", true);
+            sendJson(ex, 409, busy);
+            return;
+        }
+        state.setModrinthScanStage("prepare", "Preparing Modrinth scan");
+        minecraftServer.execute(() -> ModrinthScanRunner.continueAfterBegin(
+                minecraftServer,
+                WatchtowerBootstrap.getState(),
+                msg -> WatchtowerMod.LOGGER.info("[Watchtower] {}", msg)
+        ));
+        JsonObject ok = new JsonObject();
+        ok.addProperty("status", "started");
+        ok.addProperty("running", true);
+        ok.addProperty("enabled", true);
+        ok.addProperty("stage", "prepare");
+        ok.addProperty("stage_label", "Preparing Modrinth scan");
+        sendJson(ex, 202, ok);
+    }
+
     private void handleCrashAcks(HttpExchange ex) throws IOException {
         if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
             send(ex, 405, "text/plain", "Method not allowed");
@@ -4032,6 +4163,18 @@ public final class DashboardHttpServer {
             Headers h = ex.getResponseHeaders();
             DashboardAuthHttp.applySecurityHeaders(h);
             h.set("Content-Type", contentType);
+            // Dashboard HTML/JS/CSS change with every mod jar; avoid stale preview-vs-live mismatch.
+            if (classpath.endsWith(".html")
+                    || classpath.endsWith(".js")
+                    || classpath.endsWith(".css")
+                    || classpath.endsWith("index.html")) {
+                h.set("Cache-Control", "no-store");
+            } else if (classpath.endsWith(".png")
+                    || classpath.endsWith(".svg")
+                    || classpath.endsWith(".woff2")
+                    || classpath.endsWith(".ico")) {
+                h.set("Cache-Control", "private, max-age=300");
+            }
             ex.sendResponseHeaders(200, bytes.length);
             try (OutputStream os = ex.getResponseBody()) {
                 os.write(bytes);

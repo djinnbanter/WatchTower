@@ -26,7 +26,17 @@ public final class ModJarMetadataReader {
 
     private static final String TOML_PATH = "META-INF/neoforge.mods.toml";
 
-    public record ModDependency(String modId, String type, boolean mandatory, String side) {
+    public record ModDependency(String modId, String type, boolean mandatory, String side, String versionRange) {
+        public ModDependency(String modId, String type, boolean mandatory, String side) {
+            this(modId, type, mandatory, side, null);
+        }
+    }
+
+    public record JarInJarEntry(
+            String id,
+            String version,
+            String displayName,
+            String nestedPath) {
     }
 
     public record ModEntry(
@@ -40,7 +50,24 @@ public final class ModJarMetadataReader {
             String jarFile,
             boolean mcreator,
             String loaderHint,
-            List<String> mixinConfigs) {
+            List<String> mixinConfigs,
+            List<JarInJarEntry> jarInJar) {
+
+        public ModEntry(
+                String id,
+                String version,
+                String displayName,
+                String description,
+                String modLoader,
+                String modType,
+                List<ModDependency> dependencies,
+                String jarFile,
+                boolean mcreator,
+                String loaderHint,
+                List<String> mixinConfigs) {
+            this(id, version, displayName, description, modLoader, modType, dependencies,
+                    jarFile, mcreator, loaderHint, mixinConfigs, List.of());
+        }
 
         public ModEntry(
                 String id,
@@ -54,7 +81,20 @@ public final class ModJarMetadataReader {
                 boolean mcreator,
                 String loaderHint) {
             this(id, version, displayName, description, modLoader, modType, dependencies,
-                    jarFile, mcreator, loaderHint, List.of());
+                    jarFile, mcreator, loaderHint, List.of(), List.of());
+        }
+
+        public List<String> nestedModIds() {
+            if (jarInJar == null || jarInJar.isEmpty()) {
+                return List.of();
+            }
+            List<String> ids = new ArrayList<>();
+            for (JarInJarEntry e : jarInJar) {
+                if (e.id() != null && !e.id().isBlank()) {
+                    ids.add(e.id());
+                }
+            }
+            return ids;
         }
     }
 
@@ -152,6 +192,57 @@ public final class ModJarMetadataReader {
         if (!mod.has("mixin_configs")) {
             mod.add("mixin_configs", stringListToJson(jarMeta.mixinConfigs()));
         }
+        if ((!mod.has("jar_in_jar") || mod.get("jar_in_jar").isJsonNull()
+                || (mod.get("jar_in_jar").isJsonArray() && mod.getAsJsonArray("jar_in_jar").isEmpty()))
+                && jarMeta.jarInJar() != null && !jarMeta.jarInJar().isEmpty()) {
+            addJarInJarFields(mod, jarMeta.jarInJar());
+        }
+    }
+
+    /** Nested mod id (lowercase) → parent top-level jar basename. */
+    public static Map<String, String> nestedIdToParentJar(String serverDir) {
+        Map<String, String> out = new HashMap<>();
+        for (ModEntry e : readFromModsDir(serverDir)) {
+            if (e.jarFile() == null || e.jarInJar() == null) {
+                continue;
+            }
+            for (JarInJarEntry nested : e.jarInJar()) {
+                if (nested.id() != null && !nested.id().isBlank()) {
+                    out.putIfAbsent(nested.id().toLowerCase(Locale.ROOT), e.jarFile());
+                }
+            }
+        }
+        return out;
+    }
+
+    public static void addJarInJarFields(JsonObject mod, List<JarInJarEntry> jarInJar) {
+        if (mod == null || jarInJar == null || jarInJar.isEmpty()) {
+            return;
+        }
+        JsonArray arr = new JsonArray();
+        JsonArray ids = new JsonArray();
+        for (JarInJarEntry e : jarInJar) {
+            if (e.id() == null || e.id().isBlank()) {
+                continue;
+            }
+            JsonObject row = new JsonObject();
+            row.addProperty("id", e.id());
+            if (e.version() != null && !e.version().isBlank()) {
+                row.addProperty("version", e.version());
+            }
+            if (e.displayName() != null && !e.displayName().isBlank()) {
+                row.addProperty("display_name", e.displayName());
+            }
+            if (e.nestedPath() != null && !e.nestedPath().isBlank()) {
+                row.addProperty("nested_path", e.nestedPath());
+            }
+            arr.add(row);
+            ids.add(e.id());
+        }
+        if (!arr.isEmpty()) {
+            mod.add("jar_in_jar", arr);
+            mod.add("nested_mod_ids", ids);
+        }
     }
 
     public static JsonObject toJson(ModEntry entry) {
@@ -180,6 +271,9 @@ public final class ModJarMetadataReader {
             mod.addProperty("loader_hint", entry.loaderHint());
         }
         mod.add("mixin_configs", stringListToJson(entry.mixinConfigs()));
+        if (entry.jarInJar() != null && !entry.jarInJar().isEmpty()) {
+            addJarInJarFields(mod, entry.jarInJar());
+        }
         return mod;
     }
 
@@ -206,6 +300,9 @@ public final class ModJarMetadataReader {
             dep.addProperty("mandatory", d.mandatory());
             if (d.side() != null) {
                 dep.addProperty("side", d.side());
+            }
+            if (d.versionRange() != null && !d.versionRange().isBlank()) {
+                dep.addProperty("versionRange", d.versionRange());
             }
             arr.add(dep);
         }
@@ -244,6 +341,7 @@ public final class ModJarMetadataReader {
             for (String nestedPath : nestedJarPaths) {
                 collectNestedMixinConfigs(zip, nestedPath, mixinPaths);
             }
+            List<JarInJarEntry> jarInJar = parseNestedJarMods(zip, nestedJarPaths);
             String loaderHint = (hasFabricMeta && !hasNeoToml) ? "fabric_in_neoforge_jar" : null;
 
             ZipEntry entry = zip.getEntry(TOML_PATH);
@@ -263,11 +361,11 @@ public final class ModJarMetadataReader {
             }
             List<String> mixinConfigs = List.copyOf(mixinPaths.keySet());
             if (toml == null) {
-                return List.of(fallbackFromFilename(jarPath, mcreator, loaderHint, mixinConfigs));
+                return List.of(fallbackFromFilename(jarPath, mcreator, loaderHint, mixinConfigs, jarInJar));
             }
             List<ParsedModBlock> blocks = parseTomlMods(toml);
             if (blocks.isEmpty()) {
-                return List.of(fallbackFromFilename(jarPath, mcreator, loaderHint, mixinConfigs));
+                return List.of(fallbackFromFilename(jarPath, mcreator, loaderHint, mixinConfigs, jarInJar));
             }
             List<ModEntry> out = new ArrayList<>();
             for (ParsedModBlock block : blocks) {
@@ -282,11 +380,12 @@ public final class ModJarMetadataReader {
                         jarPath.getFileName().toString(),
                         mcreator,
                         loaderHint,
-                        mixinConfigs));
+                        mixinConfigs,
+                        jarInJar));
             }
             return out;
         } catch (IOException e) {
-            return List.of(fallbackFromFilename(jarPath, false, null, List.of()));
+            return List.of(fallbackFromFilename(jarPath, false, null, List.of(), List.of()));
         }
     }
 
@@ -333,6 +432,72 @@ public final class ModJarMetadataReader {
         }
     }
 
+
+    /**
+     * Parse nested jar tomls into {@link JarInJarEntry} rows (not emitted as top-level ModEntry).
+     */
+    static List<JarInJarEntry> parseNestedJarMods(ZipFile parent, List<String> nestedJarPaths) {
+        if (nestedJarPaths == null || nestedJarPaths.isEmpty()) {
+            return List.of();
+        }
+        LinkedHashMap<String, JarInJarEntry> byId = new LinkedHashMap<>();
+        for (String nestedPath : nestedJarPaths) {
+            ZipEntry nested = parent.getEntry(nestedPath);
+            if (nested == null || nested.isDirectory()) {
+                continue;
+            }
+            try (InputStream in = parent.getInputStream(nested);
+                 java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(in)) {
+                byte[] tomlBytes = null;
+                ZipEntry child;
+                while ((child = zis.getNextEntry()) != null) {
+                    String name = child.getName();
+                    if (name == null) {
+                        continue;
+                    }
+                    String n = name.replace('\\', '/');
+                    if (TOML_PATH.equals(n) || "META-INF/mods.toml".equals(n)) {
+                        tomlBytes = zis.readAllBytes();
+                        if (TOML_PATH.equals(n)) {
+                            break;
+                        }
+                    }
+                }
+                if (tomlBytes == null || tomlBytes.length == 0) {
+                    String file = nestedPath.replace('\\', '/');
+                    int slash = file.lastIndexOf('/');
+                    String base = slash >= 0 ? file.substring(slash + 1) : file;
+                    if (base.toLowerCase(Locale.ROOT).endsWith(".jar")) {
+                        base = base.substring(0, base.length() - 4);
+                    }
+                    String id = base;
+                    int dash = base.indexOf('-');
+                    if (dash > 0) {
+                        id = base.substring(0, dash);
+                    }
+                    byId.putIfAbsent(id.toLowerCase(Locale.ROOT),
+                            new JarInJarEntry(id, "?", null, nestedPath));
+                    continue;
+                }
+                String toml = new String(tomlBytes, StandardCharsets.UTF_8);
+                for (ParsedModBlock block : parseTomlMods(toml)) {
+                    if (block.modId() == null || block.modId().isBlank()) {
+                        continue;
+                    }
+                    byId.putIfAbsent(block.modId().toLowerCase(Locale.ROOT),
+                            new JarInJarEntry(
+                                    block.modId(),
+                                    block.version() != null ? block.version() : "?",
+                                    block.displayName(),
+                                    nestedPath));
+                }
+            } catch (IOException ignored) {
+                // best-effort
+            }
+        }
+        return List.copyOf(byId.values());
+    }
+
     static List<String> parseTomlMixinConfigs(String toml) {
         LinkedHashMap<String, Boolean> out = new LinkedHashMap<>();
         if (toml == null || toml.isBlank()) {
@@ -368,15 +533,20 @@ public final class ModJarMetadataReader {
     }
 
     private static ModEntry fallbackFromFilename(Path jarPath) {
-        return fallbackFromFilename(jarPath, false, null, List.of());
+        return fallbackFromFilename(jarPath, false, null, List.of(), List.of());
     }
 
     private static ModEntry fallbackFromFilename(Path jarPath, boolean mcreator, String loaderHint) {
-        return fallbackFromFilename(jarPath, mcreator, loaderHint, List.of());
+        return fallbackFromFilename(jarPath, mcreator, loaderHint, List.of(), List.of());
     }
 
     private static ModEntry fallbackFromFilename(Path jarPath, boolean mcreator, String loaderHint,
                                                  List<String> mixinConfigs) {
+        return fallbackFromFilename(jarPath, mcreator, loaderHint, mixinConfigs, List.of());
+    }
+
+    private static ModEntry fallbackFromFilename(Path jarPath, boolean mcreator, String loaderHint,
+                                                 List<String> mixinConfigs, List<JarInJarEntry> jarInJar) {
         String name = jarPath.getFileName().toString();
         if (name.endsWith(".jar")) {
             name = name.substring(0, name.length() - 4);
@@ -390,7 +560,8 @@ public final class ModJarMetadataReader {
         }
         return new ModEntry(id, version, null, null, null, null, List.of(),
                 jarPath.getFileName().toString(), mcreator, loaderHint,
-                mixinConfigs != null ? mixinConfigs : List.of());
+                mixinConfigs != null ? mixinConfigs : List.of(),
+                jarInJar != null ? jarInJar : List.of());
     }
 
     private static String versionFromFilename(Path jarPath, String modId) {
@@ -464,10 +635,6 @@ public final class ModJarMetadataReader {
             String value = unquote(line.substring(eq + 1).strip());
             if (depOwner != null) {
                 depFields.put(key, value);
-                if ("modId".equals(key)) {
-                    flushDep(depOwner, depFields, depsByMod);
-                    depFields = new HashMap<>();
-                }
             } else if (inMod && depOwner == null) {
                 modFields.put(key, value);
             }
@@ -529,7 +696,11 @@ public final class ModJarMetadataReader {
         if (fields.containsKey("mandatory")) {
             mandatory = Boolean.parseBoolean(fields.get("mandatory"));
         }
-        return new ModDependency(modId, type, mandatory, fields.get("side"));
+        String versionRange = fields.get("versionRange");
+        if (versionRange != null && versionRange.isBlank()) {
+            versionRange = null;
+        }
+        return new ModDependency(modId, type, mandatory, fields.get("side"), versionRange);
     }
 
     private static String unquote(String value) {

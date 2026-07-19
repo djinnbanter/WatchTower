@@ -3,7 +3,7 @@ import {
   live, samples, overviewMeta, players, reports, opsCache,
   issuesPeek, activity, updateCheck, dataSources, spark,
   performance, settings, auth, noReportYet, acks, crashGroups, inbox,
-  issueSuppressions,
+  issueSuppressions, modrinthScan,
 } from '../state/stores.js';
 
 /**
@@ -204,6 +204,23 @@ export class LiveSource {
 
   async runReport(payload) {
     return ep.reportsRun(payload);
+  }
+
+  async fetchModrinthStatus() {
+    const data = await ep.modrinthStatus();
+    modrinthScan.value = {
+      ...modrinthScan.value,
+      status: {
+        ...modrinthScan.value.status,
+        ...data,
+        running: !!data?.running,
+      },
+    };
+    return data;
+  }
+
+  async runModrinthScan() {
+    return ep.modrinthScanStart();
   }
 
   // ── Ops cache ─────────────────────────────────────────────────────────────
@@ -467,15 +484,16 @@ export class LiveSource {
       ...spark.value,
       profiles: data?.profiles ?? [],
       searchDirs: data?.search_dirs ?? [],
-      enabled: data?.enabled !== false,
+      enabled: data?.spark_enabled !== false && data?.enabled !== false,
     };
     return data;
   }
 
   async fetchSparkProfile(path) {
     const data = await ep.sparkProfile(path);
-    spark.value = { ...spark.value, profile: data, activePath: path, loading: false, error: null };
-    return data;
+    const profile = data?.spark_profile ?? data;
+    spark.value = { ...spark.value, profile, activePath: path, loading: false, error: null };
+    return profile;
   }
 
   // ── Performance ───────────────────────────────────────────────────────────

@@ -230,6 +230,18 @@ public final class StagingBuilder {
             optional.add("watchtower_native", nativeBlob);
             tps.remove("_native");
         }
+        JsonObject meta = staging.getAsJsonObject("meta");
+        String mcVersion = null;
+        if (nativeBlob != null && nativeBlob.has("minecraft_version")
+                && nativeBlob.get("minecraft_version").isJsonPrimitive()) {
+            mcVersion = nativeBlob.get("minecraft_version").getAsString();
+        } else if (tps != null && tps.has("minecraft_version")
+                && tps.get("minecraft_version").isJsonPrimitive()) {
+            mcVersion = tps.get("minecraft_version").getAsString();
+        }
+        if (mcVersion != null && !mcVersion.isBlank()) {
+            meta.addProperty("minecraft_version", mcVersion.trim());
+        }
         applyPlayers(mc, optional, tps, nativeBlob);
         progressCb.detail("Diffing mod inventory...");
         ModChangeDetector.apply(optional, nativeBlob, state);
@@ -528,6 +540,7 @@ public final class StagingBuilder {
         }
         if (!mods.isEmpty()) {
             ModJarMetadataReader.enrichModArray(mods, serverDir);
+            ModNesting.foldOptionalMods(mods, serverDir);
             optional.add("mods", mods);
             ClientModDetector.apply(optional, config, serverDir);
         }

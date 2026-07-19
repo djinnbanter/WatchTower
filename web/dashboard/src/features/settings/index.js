@@ -6,7 +6,7 @@ registerPage({
   title: 'Settings',
   icon: 'settings',
   group: 'system',
-  order: 2,
+  order: 3,
   subtitle: 'Server and dashboard configuration',
   render: PageView,
 });

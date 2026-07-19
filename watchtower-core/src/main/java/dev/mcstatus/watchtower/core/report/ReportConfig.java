@@ -64,6 +64,7 @@ public final class ReportConfig {
     private final int modSideScanMaxJars;
     private final boolean modrinthLookup;
     private final boolean modrinthLookupOnReport;
+    private final boolean modrinthAutoScanOnModChanges;
     private final int modrinthRateLimit;
     private final int chunkyStallMinutes;
     private final double chunkyDegradedCps;
@@ -142,6 +143,7 @@ public final class ReportConfig {
         this.modSideScanMaxJars = b.modSideScanMaxJars;
         this.modrinthLookup = b.modrinthLookup;
         this.modrinthLookupOnReport = b.modrinthLookupOnReport;
+        this.modrinthAutoScanOnModChanges = b.modrinthAutoScanOnModChanges;
         this.modrinthRateLimit = b.modrinthRateLimit;
         this.chunkyStallMinutes = b.chunkyStallMinutes;
         this.chunkyDegradedCps = b.chunkyDegradedCps;
@@ -230,7 +232,8 @@ public final class ReportConfig {
         b.modSideScanMaxJars = parseInt(env.get("MOD_SIDE_SCAN_MAX_JARS"), 50);
         b.modrinthLookup = isTruthy(env.get("MODRINTH_LOOKUP"), false);
         b.modrinthLookupOnReport = isTruthy(env.get("MODRINTH_LOOKUP_ON_REPORT"), true);
-        b.modrinthRateLimit = parseInt(env.get("MODRINTH_RATE_LIMIT"), 4);
+        b.modrinthAutoScanOnModChanges = isTruthy(env.get("MODRINTH_AUTO_SCAN_ON_MOD_CHANGES"), false);
+        b.modrinthRateLimit = parseInt(env.get("MODRINTH_RATE_LIMIT"), 5);
         b.chunkyStallMinutes = parseInt(env.get("CHUNKY_STALL_MINUTES"), 10);
         b.chunkyDegradedCps = parseDouble(env.get("CHUNKY_DEGRADED_CPS"), 5.0);
         b.chunkGenFailThreshold = parseInt(env.get("CHUNK_GEN_FAIL_THRESHOLD"), 3);
@@ -439,6 +442,7 @@ public final class ReportConfig {
     public int modSideScanMaxJars() { return modSideScanMaxJars; }
     public boolean modrinthLookup() { return modrinthLookup; }
     public boolean modrinthLookupOnReport() { return modrinthLookupOnReport; }
+    public boolean modrinthAutoScanOnModChanges() { return modrinthAutoScanOnModChanges; }
     public int modrinthRateLimit() { return modrinthRateLimit; }
     public int chunkyStallMinutes() { return chunkyStallMinutes; }
     public double chunkyDegradedCps() { return chunkyDegradedCps; }
@@ -529,7 +533,8 @@ public final class ReportConfig {
         private int modSideScanMaxJars = 50;
         private boolean modrinthLookup;
         private boolean modrinthLookupOnReport = true;
-        private int modrinthRateLimit = 4;
+        private boolean modrinthAutoScanOnModChanges;
+        private int modrinthRateLimit = 5;
         private int chunkyStallMinutes = 10;
         private double chunkyDegradedCps = 5.0;
         private int chunkGenFailThreshold = 3;
@@ -616,6 +621,7 @@ public final class ReportConfig {
         public Builder modSideScanMaxJars(int v) { this.modSideScanMaxJars = v; return this; }
         public Builder modrinthLookup(boolean v) { this.modrinthLookup = v; return this; }
         public Builder modrinthLookupOnReport(boolean v) { this.modrinthLookupOnReport = v; return this; }
+        public Builder modrinthAutoScanOnModChanges(boolean v) { this.modrinthAutoScanOnModChanges = v; return this; }
         public Builder modrinthRateLimit(int v) { this.modrinthRateLimit = v; return this; }
         public Builder sparkEnabled(boolean v) { this.sparkEnabled = v; return this; }
         public Builder sparkFreshHours(int v) { this.sparkFreshHours = v; return this; }
@@ -685,6 +691,7 @@ public final class ReportConfig {
             this.modSideScanMaxJars = c.modSideScanMaxJars();
             this.modrinthLookup = c.modrinthLookup();
             this.modrinthLookupOnReport = c.modrinthLookupOnReport();
+            this.modrinthAutoScanOnModChanges = c.modrinthAutoScanOnModChanges();
             this.modrinthRateLimit = c.modrinthRateLimit();
             this.chunkyStallMinutes = c.chunkyStallMinutes();
             this.chunkyDegradedCps = c.chunkyDegradedCps();

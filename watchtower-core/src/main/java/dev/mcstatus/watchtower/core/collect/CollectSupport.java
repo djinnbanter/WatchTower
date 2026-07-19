@@ -33,8 +33,31 @@ public final class CollectSupport {
     private CollectSupport() {
     }
 
+    /**
+     * Strip ANSI CSI / OSC sequences and optional stderr prefixes so {@link LogPatterns#LOG_TS}
+     * (anchored at {@code ^}) can still match Minecraft timestamps on merged stderr lines.
+     */
+    public static String stripLogTsJunk(String line) {
+        if (line == null || line.isEmpty()) {
+            return line;
+        }
+        String s = line;
+        // CSI: ESC [ ... letter   and OSC: ESC ] ... BEL/ST
+        s = s.replaceAll("\\u001B\\[[0-9;?]*[ -/]*[@-~]", "");
+        s = s.replaceAll("\\u001B\\][^\\u0007\\u001B]*(?:\\u0007|\\u001B\\\\)?", "");
+        s = s.replaceAll("\\u001B.", "");
+        // Leading stderr markers from StderrBootMerger / wrappers
+        s = s.replaceFirst("(?i)^\\s*\\[stderr\\]\\s*", "");
+        s = s.replaceFirst("(?i)^\\s*stderr:\\s*", "");
+        return s.stripLeading();
+    }
+
     public static ZonedDateTime parseLogTs(String line) {
-        Matcher m = LogPatterns.LOG_TS.matcher(line);
+        if (line == null || line.isBlank()) {
+            return null;
+        }
+        String cleaned = stripLogTsJunk(line);
+        Matcher m = LogPatterns.LOG_TS.matcher(cleaned);
         if (!m.find()) {
             return null;
         }

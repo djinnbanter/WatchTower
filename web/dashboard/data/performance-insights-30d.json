@@ -1,7 +1,7 @@
 {
   "window": "30d",
   "hours": 720,
-  "generated_at": "2026-07-13T18:38:02.265Z",
+  "generated_at": "2026-07-16T17:11:20.821Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -88,35 +88,35 @@
   ],
   "outlier_minutes": [
     {
-      "ts": "2026-07-13T17:53:02.265Z",
+      "ts": "2026-07-16T16:26:20.821Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-07-09T15:38:02.265Z",
+      "ts": "2026-07-12T14:11:20.821Z",
       "players_max": 6,
       "mspt_avg": 48,
       "mem_used_gb_avg": 13.8,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-07-02T13:38:02.265Z",
+      "ts": "2026-07-05T12:11:20.821Z",
       "players_max": 0,
       "mspt_avg": 58,
       "mem_used_gb_avg": 14,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-06-26T16:38:02.265Z",
+      "ts": "2026-06-29T15:11:20.821Z",
       "players_max": 4,
       "mspt_avg": 52,
       "mem_used_gb_avg": 13.5,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-06-19T12:38:02.265Z",
+      "ts": "2026-06-22T11:11:20.821Z",
       "players_max": 7,
       "mspt_avg": 61,
       "mem_used_gb_avg": 14.4,
@@ -125,22 +125,22 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-07-13T17:08:02.265Z",
-      "ended_at": "2026-07-13T17:53:02.265Z",
+      "started_at": "2026-07-16T15:41:20.821Z",
+      "ended_at": "2026-07-16T16:26:20.821Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
     },
     {
-      "started_at": "2026-07-05T16:38:02.265Z",
-      "ended_at": "2026-07-05T17:00:02.265Z",
+      "started_at": "2026-07-08T15:11:20.821Z",
+      "ended_at": "2026-07-08T15:33:20.821Z",
       "duration_min": 22,
       "peak_mspt": 55,
       "narrative": "MSPT stayed above threshold for 22 min after players left (peak 55 ms)"
     },
     {
-      "started_at": "2026-06-22T15:38:02.265Z",
-      "ended_at": "2026-06-22T16:16:02.265Z",
+      "started_at": "2026-06-25T14:11:20.821Z",
+      "ended_at": "2026-06-25T14:49:20.821Z",
       "duration_min": 38,
       "peak_mspt": 64,
       "narrative": "MSPT stayed above threshold for 38 min after players left (peak 64 ms)"

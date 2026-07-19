@@ -72,6 +72,7 @@ export function TimeSeries({
   onHoverChange,
   xMin = null,
   xMax = null,
+  reveal = true,
 }) {
   const wrapRef = useRef(null);
   const containerRef = useRef(null);
@@ -414,7 +415,7 @@ export function TimeSeries({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [height, hasData, sk]);
 
-  const revealClass = Motion.enabled && hasData ? 'ui-timeseries--reveal' : '';
+  const revealClass = reveal && Motion.enabled && hasData ? 'ui-timeseries--reveal' : '';
 
   return html`
     <div

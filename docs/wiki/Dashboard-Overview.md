@@ -9,8 +9,9 @@ The dashboard is a website served by Watchtower on your server — usually **`ht
 - **You must sign in** — visitors without a login only see the sign-in screen
 - **First login:** `watchtower` / `password` — change password right away ([[Security and Access]])
 - **Overview welcome** — personalized greeting with hostname and a short live status summary
-- **Side menu** — tabs grouped as Monitor, Fix problems, and Day to day
-- **Top bar** — run a report, open Settings, Help, Docs, theme, logout
+- **Side menu** — tabs grouped as **Monitor**, **Triage**, and **Ops**, plus **System** (Docs / Settings) with theme and collapse at the bottom
+- **Top bar** — hostname, Live/Offline and report freshness chips, Search (⌘K), and inbox
+- **Reports** — mid-rail glass plate: pick a saved report and **Run Report**
 - **Settings (gear)** — schedule, backups, login security, version info
 - **Help (?)** — short guide and tour; full articles in **Docs**
 - **Docs (book icon)** — all guides built in, with search
@@ -21,22 +22,32 @@ The dashboard is a website served by Watchtower on your server — usually **`ht
 
 1. Sign in and change your password
 2. The **setup wizard** opens automatically on first visit — live discovery audit (logs, crashes, mods, backup configured?), optional 30-day baseline report, then Backups, schedule (default twice daily), and optional 2FA
-3. **Run Report** in the top bar runs a full health check anytime (same as `/watchtower run`)
+3. **Run Report** in the side rail (Reports plate) runs a full health check anytime (same as `/watchtower run`)
 4. Optional: start the **guided tour** from **Help → Tour** or **Settings → About**
 
 ---
 
-## Top bar — what each button does
+## Chrome — rail and top bar
 
-| Button | What it does |
-|--------|----------------|
-| Report dropdown | Switch between saved health reports |
-| **Run Report** | Run a new full health check now |
-| **Settings** | Schedule, backups, security, about |
-| **Docs** | Full guides with search |
-| **Help** | Short guide and walkthrough |
-| Theme | Light / dark / black |
-| **Logout** | Sign out |
+### Side rail
+
+| Control | What it does |
+|---------|----------------|
+| **Monitor / Triage / Ops** | Switch primary tabs (see [[Dashboard Tabs]]) |
+| **Reports** | Pick a saved health report; **Run Report** for a new full check |
+| **Docs / Settings** | Guides and configuration (System group) |
+| **Theme** | Cycle light / dark / black (bottom tool row) |
+| **Collapse** | Shrink the rail to icons only |
+
+### Top bar
+
+| Control | What it does |
+|---------|----------------|
+| Hostname | Server host label (falls back to “Unknown host”) |
+| **Live / Offline** | Connection chip (stays quiet when the connection-down banner is already up) |
+| Freshness | Short chip: `Fresh · …` / `Stale · …` / `No report` |
+| **Search** | Command palette (Ctrl/Cmd+K) |
+| **Inbox** | Unreviewed crashes and update nudges |
 
 ---
 

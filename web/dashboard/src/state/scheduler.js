@@ -6,8 +6,8 @@
  * - Connection-down detection after 3 live failures
  */
 
-import { ui, setUi, reports } from './stores.js';
-import { pollReportStatus } from './actions.js';
+import { ui, setUi, reports, modrinthScan } from './stores.js';
+import { pollReportStatus, pollModrinthStatus } from './actions.js';
 
 // ── State ──────────────────────────────────────────────────────────────────────
 
@@ -152,6 +152,16 @@ function _registerBuiltinTasks() {
     // Skip hidden check for this task — see _maybeRun
     activeWhen: () => reports.value.run?.running === true,
   });
+
+  // Modrinth scan status — 1.5s while a dedicated scan runs
+  registerTask({
+    key: 'modrinthStatus',
+    run: async () => {
+      await pollModrinthStatus();
+    },
+    every: () => 1500,
+    activeWhen: () => modrinthScan.value?.status?.running === true,
+  });
 }
 
 // ── Internal scheduling ────────────────────────────────────────────────────────
@@ -191,8 +201,8 @@ async function _maybeRun(key) {
   const task = _tasks[key];
   if (!task) return;
 
-  // Skip when page hidden, except for reportStatus
-  if (document.hidden && key !== 'reportStatus') return;
+  // Skip when page hidden, except for report/modrinth status
+  if (document.hidden && key !== 'reportStatus' && key !== 'modrinthStatus') return;
 
   if (!task.activeWhen()) return;
 

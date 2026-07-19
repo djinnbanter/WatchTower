@@ -75,6 +75,12 @@ html[data-theme="dark"] {
   --ui-shadow-overlay: 0 28px 72px rgba(0, 8, 24, 0.6), 0 10px 28px rgba(0, 12, 32, 0.4);
   --ui-shadow-glow: 0 0 0 1px color-mix(in srgb, var(--ui-sky) 35%, transparent),
     0 0 28px color-mix(in srgb, var(--ui-sky) 18%, transparent);
+
+  /* Scrollbars — soft sky glass thumb on a quiet track */
+  --ui-scroll-size: 10px;
+  --ui-scroll-track: color-mix(in srgb, var(--ui-bg0) 55%, transparent);
+  --ui-scroll-thumb: color-mix(in srgb, var(--ui-sky) 32%, var(--ui-bg3));
+  --ui-scroll-thumb-hover: color-mix(in srgb, var(--ui-sky) 52%, var(--ui-bg2));
 }
 
 html[data-theme="light"] {

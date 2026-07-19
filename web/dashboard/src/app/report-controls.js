@@ -168,15 +168,14 @@ export function RunReportModal() {
           >
             Running…
           </${Button}>
-        ` : null}
-        ${!run.running && run.success == null ? html`
+        ` : html`
           <${Button}
             kind="primary"
             onClick=${handleRun}
           >
-            Run Report
+            ${run.success === false ? 'Retry' : run.success === true ? 'Run again' : 'Run Report'}
           </${Button}>
-        ` : null}
+        `}
       </div>
     </div>
   `;

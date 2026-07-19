@@ -60,14 +60,15 @@ By default Watchtower stays fully local — reports and the dashboard never call
 
 If you turn on **Modrinth lookup** in **Settings → Monitoring** (or set `MODRINTH_LOOKUP=true` in `watchtower.conf`):
 
-- It runs **only during a full report** (Run Report / scheduled report) — opening the Mods or Crashes tab does not call Modrinth
-- Watchtower may send **SHA-512 hashes of jar files** to `api.modrinth.com` to refine ambiguous client/server-side guesses and resolve project/version links
-- Results can power accurate **Crashes** Modrinth buttons and optional “update available” hints — Watchtower **never downloads jars** into `mods/`
+- It runs from **Mods → Modrinth** (dedicated scan) — full reports do **not** call Modrinth; they only apply already-cached identity
+- Optional **auto-scan after mod changes** (`MODRINTH_AUTO_SCAN_ON_MOD_CHANGES`, Settings → Monitoring) starts that same dedicated scan when the ops poll sees jars added/removed/updated — still not tied to Run Report
+- Watchtower may send **SHA-512 hashes of jar files** to `api.modrinth.com` for jars on that scan (capped; answers are cached) to resolve project identity, side tags, and links
+- Results power the Mods → Overview catalog (icons, wiki/source/issues/Discord links, Client/server callouts), Mods → Updates pack-impact checks, accurate **Crashes** Modrinth buttons, and optional “update available” hints — Watchtower **never downloads jars** into `mods/`
 - No API key is required; hashes are anonymous fingerprints of the jar contents (not your world, logs, or player data)
-- Results are cached in `watchtower/modrinth-cache.json`
+- Results are cached in `watchtower/modrinth-cache.json`; scan status is stored in `watchtower/modrinth-status.json`
 - Leave the setting off to keep zero Modrinth network traffic
 
-On the Mods → Client-only page, Modrinth-backed rows show signal chips such as `modrinth:client_only` after that report finishes.
+On Mods → Overview, Modrinth-backed rows show Client/server signal chips with the Modrinth logo and plain labels such as **Server required** / **Client only** after a successful Modrinth scan.
 
 ---
 

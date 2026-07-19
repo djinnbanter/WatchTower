@@ -1,6 +1,17 @@
 # Dashboard Tabs
 
-The dashboard has **thirteen main tabs** plus **Docs**, **Settings**, and **Help**. This page explains what each one is for and when to use it.
+The dashboard has **thirteen main tabs** plus **Docs** and **Settings** in the rail’s **System** group (theme and collapse sit in the tool row under them). Tabs are grouped as **Monitor**, **Triage**, and **Ops**.
+
+---
+
+## Navigation groups
+
+| Group | Tabs |
+|-------|------|
+| **Monitor** | Overview, Live, Insights, Session, Startup |
+| **Triage** | Issues, Crashes, Logs, Spark |
+| **Ops** | Mods, Backups, Activity, Sources |
+| **System** | Docs, Settings (+ Theme / Collapse tools) |
 
 ---
 
@@ -14,7 +25,7 @@ The dashboard has **thirteen main tabs** plus **Docs**, **Settings**, and **Help
 | **Session** | You want to see who is online | Live + last report |
 | **Startup** | You want last boot time, phases, and boot warnings | Full report |
 | **Sources** | You wonder “when did this last update?” | All layers |
-| **Issues** | You want a prioritized fix list | Full report |
+| **Issues** | You want a prioritized fix list | Report + live peek |
 | **Crashes** | A player crashed or the server died | Background scan + report |
 | **Logs** | You want to read `latest.log` or a crash file | Live file read + crash scan |
 | **Mods** | Mod errors or conflicts | Background scan + report |
@@ -28,17 +39,14 @@ The dashboard has **thirteen main tabs** plus **Docs**, **Settings**, and **Help
 
 **Your home screen** after at least one health report.
 
-- Personalized **welcome** band (username, hostname / panel label, short live status)
-- Overall health (ok / warning / critical)
-- Key numbers: speed, CPU, memory, players
-- Short list of recent problems with link to **Issues**
-- Teaser for **Insights** patterns
-- **Boot profile** card — last `Done!` duration, slowest phase, warning count; links to **Startup**
-- Storage and recent activity snippets
-- **Run full report** — refreshes everything that depends on a deep check
+- **Mission band** — health grade, one-line verdict, and live TPS / MSPT / Players (plus CPU when available)
+- Quiet **trust chips** — uptime, session, environment, Java, mods, backup
+- **Needs attention** / **Right now** triage (when something needs action)
+- **Instrument cards** — Storage (disk dial + dimension share), world pregen jobs, Boot profile strip, Insights teaser
 - Setup resume chip when wizard / baseline / backups still need attention
+- **Run Report** lives on the side rail (Reports plate)
 
-**Tip:** Run a report first for the full fix list. Many cards still update from background scans before that.
+**Tip:** Run a report first for the full fix list. Many cards still update from background scans before that. Topbar shows Live/Offline and report freshness so Overview does not repeat those.
 
 ---
 
@@ -97,31 +105,65 @@ Requires server online for live status; historical stats come from reports.
 
 ## Issues
 
-**Your fix list** from the latest health report, plus live lag/mod peek alerts.
+**Your fix inbox** for the whole server — report findings, live lag/mod/log-stale peek, Modrinth updates, backups, and a pointer into Crashes. Deep forensics stay on Crashes / Mods / Logs; Issues answers *what to fix next*.
 
-Use **Active** vs **Reviewed**:
+Subtabs: **Active** (default) · **Reviewed** · **Tools**.
 
-1. **Needs attention** — crashes, OOM, live lag spikes, blocking findings
-2. **Worth watching** — Modrinth updates, softer warnings
-3. **Older findings** — auto-historical report items (still on Active until you review them)
+### Active / Reviewed
 
-Each card has severity, what happened, suggested steps, and **Mark reviewed**. Reviewed items move to the **Reviewed** tab (Undo brings them back). **Mark all reviewed** clears the active queue; crash cards still use the Crashes ack path. Dismissing a Modrinth update in the topbar bell also marks that Issues card reviewed. Use **Suppress** to hide noisy issue ids (see [[Crash Rule Packs]]); suppressed items appear under **Hidden**.
+Permanent **list + detail** split (same idea as Crashes / Mods Overview):
+
+- **Left list** — priority bands (**Needs attention** / **Worth watching** / **Older findings**); Needs expanded by default; compact rows with severity, source chip (Live · Report · Update · Crash · Backup), age, and peek text; source filter + search
+- **Active** — open work only (live peek + action queue)
+- **Reviewed** — items you marked reviewed (Undo brings them back); no duplicate “Older findings” archive
+- **Right detail** — nested panels: **Fix** (default) | **Details**
+  - **Fix** — “Do this next” numbered step cards, primary deep link (Mods / Live / Crashes / Backups / Modrinth), Copy steps, Mark reviewed / Don’t show again, High/Medium/Low confidence when guidance exists
+  - **Details** — identity keys, source, timestamps, narrative, live lag metrics when present
+- Crash rows are a compact pointer (“N crash groups need review”) — open **Crashes** for the real fix plan
+- Deep links: `?tab=issues&view=active|reviewed|tools` + `issue=<ackKey>`; Overview attention items open Active with `issue=` set
+
+### Tools
+
+- **Mark all reviewed** (also available on Active when the queue is nonempty)
+- **Hidden (suppressed)** — restore issue ids silenced with **Don’t show again** (see [[Crash Rule Packs]])
+- Short tips on when to review vs suppress
+
+Dismissing a Modrinth update in the topbar bell also marks that Issues card reviewed. Crash cards still clear via the Crashes ack path.
 
 ---
 
 ## Crashes
 
-**Resolve crashes quickly** — similar reports collapse into fingerprint **groups**, then a numbered fix plan.
+**Resolve crashes quickly** — similar reports collapse into fingerprint **groups**, then a numbered fix plan. Subtabs: **Review** (default), **Reviewed**, **Tools**.
 
-- **Group list** — human label (e.g. “Server hang during pregen”), count chip, needs-review chip, one-line cause, primary action peek
-- Expand a group → **Do this now** first (numbered steps), then Why, then Evidence (pre-crash context, member files, View log) collapsed by default
-- **Modrinth** / **Mods** CTAs when a mod needs updating or pairing — opens Modrinth in the browser (no auto-download). With Modrinth lookup enabled, links prefer the loader/MC-compatible version page when the installed jar is outdated.
-- **Mark all reviewed** — one click for every unreviewed crash file (files stay on disk); or mark one group
-- Filters: All / Needs review / Mod-related / Server hang / Host (+ search)
-- Deep link: `?tab=crashes&group=<fingerprint>`
+### Review / Reviewed
+
+Permanent **list + detail** split (same idea as Mods Overview / Issues Active vs Reviewed):
+
+- **Left list** — inbox-style day groups (Today / Yesterday / date); only **Today** expanded by default; compact rows with title, count, age, cause peek, kind chip; kind filters + search
+- **Review** — unreviewed fingerprint groups only (the fix queue)
+- **Reviewed** — groups already marked reviewed (history)
+- **Right detail** — nested panels: **Fix** (default) | **Evidence** | **Details**
+  - **Fix** — “Do this now” numbered step cards, Modrinth / Mods / Find owning jar / Copy steps / Mark group reviewed, related mod chips, short Why + High/Medium/Low confidence
+  - **Evidence** — pre-crash context, member files with View log + per-file Reviewed
+  - **Details** — fingerprint, exception, kind, rule hits, mixin/config/OOM/java mismatch
+
+### Tools
+
+Calm ops page (no giant list):
+
+- KPI strip (Needs review, total, latest age) + **Scan now** / **Mark all reviewed**
+- **Find owning jar** — class/package lookup (same as Mods → Forensics)
+- Short tips on groups, Mark reviewed, Scan vs full report, links to Mods → Forensics and Logs
+
+### Links and inbox
+
+- URL: `?tab=crashes&view=review|reviewed|tools` (+ optional `group=<fingerprint>`)
+- Deep link / inbox: keep `group=`; opens **Review** if any member is unreviewed, else **Reviewed**
 - Confidence is **High / Medium / Low** only (no fake %)
+- Crash folder is checked in the background; **Scan now** rescans without a full report. The topbar **bell** lists unreviewed crash groups and update nudges (`GET /api/inbox`).
 
-Crash folder is checked in the background; **Scan now** rescans without a full report. The topbar **bell** lists unreviewed crash groups and update nudges (`GET /api/inbox`).
+Crash **summaries and review** stay on this tab — Logs is for reading the raw files.
 
 ---
 
@@ -152,19 +194,21 @@ Crash **summaries and review** stay on the **Crashes** tab — Logs is for readi
 
 ## Mods
 
-**Mod health** — log errors update in the background; full mod list, client-only scoring, and dependency trees need a report.
+**Mod health** — log errors update in the background; full mod list, side scoring, and dependency trees need a report.
 
-Pages: **Overview**, **Update conflicts**, **Changes**, **Client-only**, **Dependencies**, **Log errors**, **Forensics**.
+Pages: **Overview**, **Updates**, **Conflicts**, **Log errors**, **Changes**, **Modrinth**, **Forensics**.
 
-- **Overview** — running mods with report-driven badges (`server-required`, client-only bucket, MCreator, Fabric jar)
+- **Overview** — smart catalog: icons, side badges, Update chips; search in the catalog toolbar; filters All / Client / Server / Unresolved; sort (Name, Mod ID, side, updates, version); paginated list (25 per page) with a permanent 50/50 list/details split (Client/server callout, links, expandable **Dependencies** with Needed by / Needs trees). On wide screens the details pane lays out in two columns. Toolbar links to Updates when outdated jars exist. Compact banners for Security / Connector / Modrinth scan status (click through to Modrinth).
+- **Updates** — Modrinth-compatible updates from the latest report with pack-impact verdicts (Safe / Caution / Break / Unknown), blockers, co-updates, dependents, and the same expandable Dependencies section; opens Modrinth in the browser (Watchtower never downloads jars)
+- **Conflicts** — log/compat recommendations (not the same as Modrinth version Updates)
 - **Log errors** — merges scan + report aggregates into expandable cards with full sample lines, category breakdown, and Do this next from recommendations (not a one-line table)
-- **Forensics** — class-index status, corrupt jars, config health (from last report / API); use Crashes → **Find owning jar** for stack lookup
-- **Client-only** — scored candidates from the latest report (`likely_removable` / `uncertain` / …) with confidence, reason, signals, and dependents links (falls back to a short heuristic list only when no report is loaded)
-- **Dependencies** — pick any mod and expand **Needed by** / **Needs** trees from TOML dependencies
+- **Changes** — jar add/remove/change since the last report
+- **Modrinth** — dedicated scan tab: coverage / outdated / cache KPIs, Run Modrinth scan, staged progress with batches + ETA; patches the latest report after a successful scan
+- **Forensics** — class-index status, corrupt jars, config health (from last report / API); use Crashes → **Tools** → Find owning jar for stack lookup
 
 Search and jump between sections. Badge shows count of mods with log errors.
 
-Optional **Modrinth lookup** (Settings → Monitoring) can refine ambiguous jars — **only when a full report runs**, not when you open this tab. Off by default; no API key; sends jar SHA-512 hashes only. See [[Installation]] privacy note. After enabling, run a report, then look for `modrinth:…` signal chips on Client-only rows. The same lookup also fills accurate Modrinth project/version links on **Crashes** and optional “update available” inbox/Issues hints — Watchtower **never downloads jars**.
+Optional **Modrinth lookup** (Settings → Monitoring) gates the dedicated **Mods → Modrinth** scan (cached; never downloads jars). Full reports never call Modrinth — they only apply cache hits. Optional **auto-scan after mod changes** starts that scan when jars change on disk (ops poll), not when you Run Report. Off by default; no API key; sends jar SHA-512 hashes only. See [[Installation]] privacy note. After enabling, run a scan from Mods → Modrinth: Overview shows icons, project links, and Client/server signal chips; **Crashes** and inbox/Issues get accurate update hints.
 
 ---
 

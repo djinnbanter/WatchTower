@@ -1,7 +1,7 @@
 import { html } from '../lib/preact.js';
 import { useState, useCallback, useEffect } from '../lib/preact.js';
 import { ui, setUi, issuesPeek, opsCache } from '../state/stores.js';
-import { set as persistSet } from '../state/persist.js';
+import { set as persistSet, get as persistGet } from '../state/persist.js';
 import { getPage } from './registry.js';
 import { isEmbedded } from '../api/index.js';
 import { ensureReportsPresent } from './session-boot.js';
@@ -229,8 +229,8 @@ function MobileDrawer({ onClose }) {
   return html`
     <div class="ui-rail-drawer" aria-label="Mobile navigation">
       <div class="ui-rail-drawer__scrim" onClick=${onClose}></div>
-      <div class="ui-rail-drawer__panel">
-        <${Rail} />
+      <div class="ui-rail-drawer__panel" id="rail-drawer">
+        <${Rail} forceExpanded=${true} />
       </div>
     </div>
   `;
@@ -271,6 +271,12 @@ export function AppShell() {
   // Safety net: if hydrate raced or /latest failed, retry once when shell mounts
   useEffect(() => {
     ensureReportsPresent();
+  }, []);
+
+  // Restore rail collapse preference (persist writes on toggle; hydrate on boot)
+  useEffect(() => {
+    const saved = persistGet('railExpanded', null);
+    if (typeof saved === 'boolean') setUi({ railExpanded: saved });
   }, []);
 
   function closeMobileNav() {

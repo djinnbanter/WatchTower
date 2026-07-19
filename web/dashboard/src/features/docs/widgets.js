@@ -54,9 +54,10 @@ function FreshnessSample() {
 
 function RailDiagram() {
   const groups = [
-    { label: 'Monitor', tabs: ['Overview', 'Live', 'Insights', 'Session', 'Sources'] },
-    { label: 'Triage', tabs: ['Issues', 'Crashes', 'Spark'] },
-    { label: 'Ops', tabs: ['Mods', 'Backups', 'Activity'] },
+    { label: 'Monitor', tabs: ['Overview', 'Live', 'Insights', 'Session', 'Startup'] },
+    { label: 'Triage', tabs: ['Issues', 'Crashes', 'Logs', 'Spark'] },
+    { label: 'Ops', tabs: ['Mods', 'Backups', 'Activity', 'Sources'] },
+    { label: 'System', tabs: ['Docs', 'Settings', 'Theme', 'Collapse'] },
   ];
   return html`
     <div class="docs-widget docs-widget--rail" aria-hidden="true">

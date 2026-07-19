@@ -1,4 +1,5 @@
-import { ui, setUi, setRoute } from '../state/stores.js';
+import { ui, setRoute } from '../state/stores.js';
+import { kickRender } from './kick-render.js';
 
 const ALIASES = {
   performance: 'insights',
@@ -38,6 +39,7 @@ export function parseRoute() {
 export function applyRoute(route, { replace = false } = {}) {
   const { tab, params = {} } = route;
   setRoute(tab, params);
+  kickRender();
 
   const qs = new URLSearchParams({ tab, ...params }).toString();
   const url = `${location.pathname}?${qs}`;
@@ -66,6 +68,7 @@ export function initRouter() {
   window.addEventListener('popstate', () => {
     const route = parseRoute();
     setRoute(route.tab, route.params);
+    kickRender();
   });
   const initial = parseRoute();
   setRoute(initial.tab, initial.params);

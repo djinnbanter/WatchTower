@@ -1,6 +1,10 @@
-import { html, useState } from '../../lib/preact.js';
-import { reports, opsCache, issuesPeek, acks, noReportYet, crashGroups, settings, issueSuppressions } from '../../state/stores.js';
-import { setRoute } from '../../state/stores.js';
+/**
+ * Issues page shell — Active / Reviewed / Tools + URL deep links.
+ */
+import { html, useState, useCallback, useEffect, useMemo } from '../../lib/preact.js';
+import {
+  reports, opsCache, issuesPeek, acks, noReportYet, crashGroups, settings, issueSuppressions, ui,
+} from '../../state/stores.js';
 import {
   openModal,
   ackIssue,
@@ -17,220 +21,33 @@ import {
   isIssueAcked,
   peekIssueAckKey,
 } from '../../domain/health.js';
-import { Page, Section, EmptyState, FreshnessBadge, HealthGrade, BeaconCard, MetricTile, Subnav } from '../../ui/patterns/index.js';
-import { Badge, Button, Card } from '../../ui/primitives/index.js';
-import { formatTps, formatMspt } from '../../domain/formats.js';
-import { Icon } from '../../ui/icons.js';
+import { Page, Subnav, FreshnessBadge, HealthGrade, EmptyState } from '../../ui/patterns/index.js';
+import { Button } from '../../ui/primitives/index.js';
+import { QueueTab } from './queue-tab.js';
+import { ToolsTab } from './tools-tab.js';
+import {
+  buildActiveItems,
+  buildReviewedItems,
+  mapGrade,
+} from './helpers.js';
 
-const VIEW_OPTS = [
+const SUBNAV = [
   { value: 'active', label: 'Active' },
   { value: 'reviewed', label: 'Reviewed' },
+  { value: 'tools', label: 'Tools' },
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+const VALID_VIEWS = new Set(SUBNAV.map((o) => o.value));
 
-function severityTone(severity) {
-  if (severity === 'critical') return 'danger';
-  if (severity === 'warning') return 'warn';
-  if (severity === 'info') return 'info';
-  return 'neutral';
-}
-
-function mapGrade(status) {
-  const m = { ok: 'A', warning: 'C', critical: 'F' };
-  return m[status] ?? '?';
-}
-
-function FixSteps({ steps, docUrl, hints }) {
-  const list = Array.isArray(steps) && steps.length
-    ? steps
-    : (Array.isArray(hints) ? hints : []);
-  if (!list.length && !docUrl) return null;
-  return html`
-    <div class="issues-fix">
-      ${list.length ? html`
-        <div class="issues-fix__label">Do this next</div>
-        <ol class="issues-fix__steps">
-          ${list.map((step, i) => html`<li key=${i}>${step}</li>`)}
-        </ol>
-      ` : null}
-      ${docUrl ? html`
-        <a class="issues-fix__doc" href=${docUrl} target="_blank" rel="noopener noreferrer">
-          Open mod docs
-          <${Icon} name="external-link" size=${12} />
-        </a>
-      ` : null}
-    </div>
-  `;
-}
-
-function CardActions({ primary, onAck, reviewed, onUnack, onSuppress }) {
-  return html`
-    <div class="issues-card__actions">
-      ${primary}
-      ${!reviewed && onSuppress
-        ? html`<${Button} kind="neutral" size="sm" onClick=${onSuppress}>Don't show again</${Button}>`
-        : null}
-      ${reviewed
-        ? html`<${Button} kind="neutral" size="sm" onClick=${onUnack}>Undo</${Button}>`
-        : html`<${Button} kind="neutral" size="sm" onClick=${onAck}>Mark reviewed</${Button}>`}
-    </div>
-  `;
-}
-
-// ── Sub-components ─────────────────────────────────────────────────────────────
-
-function LagIssueRow({ entry, ackKey, reviewed, onAck, onUnack }) {
-  const { id, incident_id, severity, title, narrative, metrics, hints, primary_suspect, ackedAt } = entry;
-  const tone = reviewed ? 'neutral' : severityTone(severity);
-  const modalId = incident_id ?? id;
-
-  return html`
-    <${Card} tone=${tone} className="issues-card" padding="12">
-      <div class="issues-card__top">
-        <div class="issues-card__title-row">
-          <${Badge} tone=${tone}>${reviewed ? 'reviewed' : severity}</${Badge}>
-          <strong class="issues-card__title">${title}</strong>
-        </div>
-        <${CardActions}
-          reviewed=${reviewed}
-          onAck=${() => onAck(ackKey)}
-          onUnack=${() => onUnack(ackKey)}
-          primary=${html`
-            <${Button}
-              kind="neutral"
-              size="sm"
-              onClick=${() => openModal('lag-incident', { id: modalId, entry })}
-            >Details</${Button}>
-          `}
-        />
-      </div>
-      ${narrative ? html`<p class="issues-card__narrative">${narrative}</p>` : null}
-      ${ackedAt ? html`<p class="issues-card__acked">Reviewed ${new Date(ackedAt).toLocaleString()}</p>` : null}
-      ${primary_suspect ? html`
-        <p class="issues-card__suspect">Suspect: <strong>${primary_suspect}</strong></p>
-      ` : null}
-      ${metrics ? html`
-        <div class="issues-lag-metrics">
-          <span>TPS ${formatTps(metrics.tps)}</span>
-          <span class="issues-lag-metrics__sep">·</span>
-          <span>MSPT ${formatMspt(metrics.mspt)}</span>
-          <span class="issues-lag-metrics__sep">·</span>
-          <span>${metrics.players_online ?? 0} player${metrics.players_online !== 1 ? 's' : ''}</span>
-        </div>
-      ` : null}
-      ${!reviewed ? html`<${FixSteps} steps=${null} hints=${hints} />` : null}
-    </${Card}>
-  `;
-}
-
-function ModIssueRow({ entry, ackKey, reviewed, onAck, onUnack }) {
-  const { severity, title, narrative, hints, fix_steps, doc_url, ackedAt } = entry;
-  const tone = reviewed ? 'neutral' : severityTone(severity);
-
-  return html`
-    <${Card} tone=${tone} className="issues-card" padding="12">
-      <div class="issues-card__top">
-        <div class="issues-card__title-row">
-          <${Badge} tone=${tone}>${reviewed ? 'reviewed' : severity}</${Badge}>
-          <strong class="issues-card__title">${title}</strong>
-        </div>
-        <${CardActions}
-          reviewed=${reviewed}
-          onAck=${() => onAck(ackKey)}
-          onUnack=${() => onUnack(ackKey)}
-          primary=${html`
-            <${Button} kind="neutral" size="sm" onClick=${() => navigate('mods', { view: 'conflicts' })}>
-              Open Mods
-            </${Button}>
-          `}
-        />
-      </div>
-      ${narrative ? html`<p class="issues-card__narrative">${narrative}</p>` : null}
-      ${ackedAt ? html`<p class="issues-card__acked">Reviewed ${new Date(ackedAt).toLocaleString()}</p>` : null}
-      ${!reviewed ? html`<${FixSteps} steps=${fix_steps} hints=${hints} docUrl=${doc_url} />` : null}
-    </${Card}>
-  `;
-}
-
-function ActionRow({ item, reviewed, onAck, onUnack, onAckCrash, onSuppress }) {
-  const { severity, title, summary, detail, primaryAction, evidence, kind, ackedAt } = item;
-  const tone = reviewed ? 'neutral' : severityTone(severity);
-  const steps = item.fix_steps
-    ?? (Array.isArray(evidence) ? evidence.filter((e) => typeof e === 'string') : null);
-  const issueId = item.meta?.issueId || (kind === 'issue' && item.key?.startsWith('issue:')
-    ? item.key.slice(6) : null);
-
-  function go() {
-    if (!primaryAction) return;
-    if (primaryAction.href) {
-      try {
-        window.open(primaryAction.href, '_blank', 'noopener,noreferrer');
-      } catch {
-        /* ignore */
-      }
-      return;
-    }
-    if (primaryAction.params) setRoute(primaryAction.tab, primaryAction.params);
-    else if (primaryAction.tab) setRoute(primaryAction.tab);
+function resolveDeepLinkView(issueKey, activeItems, reviewedItems, hiddenIds) {
+  if (!issueKey) return 'active';
+  if (activeItems.some((i) => i.key === issueKey)) return 'active';
+  if (reviewedItems.some((i) => i.key === issueKey)) return 'reviewed';
+  const bare = issueKey.startsWith('issue:') ? issueKey.slice(6) : issueKey;
+  if (hiddenIds.has(String(bare).toLowerCase()) || hiddenIds.has(String(issueKey).toLowerCase())) {
+    return 'tools';
   }
-
-  async function handleAck() {
-    if (kind === 'crash') {
-      await onAckCrash();
-      return;
-    }
-    onAck(item.key);
-  }
-
-  return html`
-    <${Card} tone=${tone} className="issues-card" padding="12">
-      <div class="issues-card__top">
-        <div class="issues-card__title-row">
-          <${Badge} tone=${tone}>${reviewed ? 'reviewed' : severity}</${Badge}>
-          <strong class="issues-card__title">${title}</strong>
-        </div>
-        <${CardActions}
-          reviewed=${reviewed}
-          onAck=${handleAck}
-          onUnack=${() => onUnack(item.key)}
-          onSuppress=${issueId && onSuppress ? () => onSuppress(issueId) : null}
-          primary=${primaryAction ? html`
-            <${Button} kind="neutral" size="sm" onClick=${go}>${primaryAction.label}</${Button}>
-          ` : null}
-        />
-      </div>
-      ${summary ? html`<p class="issues-card__narrative">${summary}</p>` : null}
-      ${detail && detail !== summary ? html`<p class="issues-card__detail">${detail}</p>` : null}
-      ${ackedAt ? html`<p class="issues-card__acked">Reviewed ${new Date(ackedAt).toLocaleString()}</p>` : null}
-      ${!reviewed ? html`<${FixSteps} steps=${steps} />` : null}
-    </${Card}>
-  `;
-}
-
-function LogStaleRow({ entry, reviewed, onAck, onUnack, ackedAt }) {
-  return html`
-    <${Card} tone=${reviewed ? 'neutral' : 'warn'} className="issues-card" padding="12">
-      <div class="issues-card__top">
-        <div class="issues-card__title-row">
-          <${Badge} tone=${reviewed ? 'neutral' : 'warn'}>${reviewed ? 'reviewed' : 'warning'}</${Badge}>
-          <strong class="issues-card__title">${entry.title}</strong>
-        </div>
-        <${CardActions}
-          reviewed=${reviewed}
-          onAck=${() => onAck('log_stale')}
-          onUnack=${() => onUnack('log_stale')}
-        />
-      </div>
-      <p class="issues-card__narrative">${entry.narrative}</p>
-      ${ackedAt ? html`<p class="issues-card__acked">Reviewed ${new Date(ackedAt).toLocaleString()}</p>` : null}
-      ${!reviewed ? html`<${FixSteps} hints=${[
-        'Confirm the server is still writing latest.log',
-        'Check disk space and file permissions on the logs folder',
-        'Restart the server if logging has stalled',
-      ]} />` : null}
-    </${Card}>
-  `;
+  return 'active';
 }
 
 export function issueBadgeCount() {
@@ -272,7 +89,10 @@ export function issueBadgeCount() {
 }
 
 export function PageView() {
-  const [view, setView] = useState('active');
+  const { params } = ui.value.route;
+  const routeIssue = params?.issue ? decodeURIComponent(String(params.issue)) : null;
+  const rawView = params?.view;
+
   const facts = reports.value.facts;
   const crashAcks = acks.value.crashes ?? {};
   const issueAcks = acks.value.issues ?? {};
@@ -280,58 +100,98 @@ export function PageView() {
   const peek = issuesPeek.value.data;
   const peekAt = issuesPeek.value.at;
   const isNoReport = noReportYet.value;
-
   const groups = crashGroups.value;
-  const queueOpts = {
+
+  const [acking, setAcking] = useState(false);
+  const [deepLinkApplied, setDeepLinkApplied] = useState(false);
+
+  const queueOpts = useMemo(() => ({
     backupTrackingEnabled: settings.value?.data?.backup_tracking_enabled !== false,
     issueSuppressions: issueSuppressions.value?.data
       ?? facts?.optional?.active_suppressions
       ?? null,
-  };
+  }), [
+    settings.value?.data?.backup_tracking_enabled,
+    issueSuppressions.value?.data,
+    facts?.optional?.active_suppressions,
+  ]);
+
   const health = facts ? displayHealth(facts, crashAcks, opsCacheData, queueOpts) : null;
   const queue = facts
     ? buildActionQueue(facts, crashAcks, opsCacheData, groups, issueAcks, queueOpts)
     : { now: [], soon: [], historical: [], reviewed: [] };
 
-  const allLag = peek?.lag_issues ?? [];
-  const allMod = peek?.mod_issues ?? [];
-  const logStale = peek?.log_stale?.active ? peek.log_stale : null;
+  const activeItems = useMemo(
+    () => buildActiveItems({ peek, queue, issueAcks }),
+    [peek, queue, issueAcks],
+  );
+  const reviewedItems = useMemo(
+    () => buildReviewedItems({ peek, queue, issueAcks }),
+    [peek, queue, issueAcks],
+  );
 
-  const liveLag = allLag.filter((e) => !e.resolved && !isIssueAcked(issueAcks, peekIssueAckKey('lag', e)));
-  const liveMod = allMod.filter((e) => !e.resolved && !isIssueAcked(issueAcks, peekIssueAckKey('mod', e)));
-  const liveLogStale = logStale && !isIssueAcked(issueAcks, 'log_stale') ? logStale : null;
+  const hidden = facts?.optional?.suppressed_issues ?? [];
+  const hiddenIds = useMemo(() => {
+    const set = new Set();
+    for (const h of hidden) {
+      if (h?.id != null) set.add(String(h.id).toLowerCase());
+    }
+    return set;
+  }, [hidden]);
 
-  const reviewedLag = allLag
-    .map((e) => {
-      const key = peekIssueAckKey('lag', e);
-      if (!isIssueAcked(issueAcks, key)) return null;
-      return { ...e, ackKey: key, ackedAt: issueAcks[key]?.ackedAt ?? null };
-    })
-    .filter(Boolean);
-  const reviewedMod = allMod
-    .map((e) => {
-      const key = peekIssueAckKey('mod', e);
-      if (!isIssueAcked(issueAcks, key)) return null;
-      return { ...e, ackKey: key, ackedAt: issueAcks[key]?.ackedAt ?? null };
-    })
-    .filter(Boolean);
-  const reviewedLogStale = isIssueAcked(issueAcks, 'log_stale') && logStale
-    ? { ...logStale, ackedAt: issueAcks.log_stale?.ackedAt ?? null }
-    : (isIssueAcked(issueAcks, 'log_stale')
-      ? { title: 'Log output stale', narrative: 'Marked reviewed.', ackedAt: issueAcks.log_stale?.ackedAt ?? null }
-      : null);
+  const needsCount = activeItems.filter((i) => i.band === 'needs').length;
+  const watchingCount = activeItems.filter((i) => i.band === 'watching').length;
+  const reviewedCount = reviewedItems.length;
+  const hasActiveWork = needsCount > 0 || watchingCount > 0
+    || activeItems.some((i) => i.band === 'older');
 
-  const needsCount = liveLag.length + liveMod.length + queue.now.length + (liveLogStale ? 1 : 0);
-  const soonCount = queue.soon.length;
-  const historicalCount = queue.historical.length;
-  const reviewedCount = queue.reviewed.length + reviewedLag.length + reviewedMod.length + (reviewedLogStale ? 1 : 0);
-  const hasNow = needsCount > 0;
-  const hasSoon = soonCount > 0;
-  const hasHistorical = historicalCount > 0;
-  const hasReviewed = reviewedCount > 0;
+  // Deep link / view normalize
+  useEffect(() => {
+    if (deepLinkApplied) return;
+    if (VALID_VIEWS.has(rawView)) {
+      setDeepLinkApplied(true);
+      return;
+    }
+    if (!routeIssue) {
+      setDeepLinkApplied(true);
+      return;
+    }
+    // Wait until we have something to resolve against (or empty queue is fine)
+    const view = resolveDeepLinkView(routeIssue, activeItems, reviewedItems, hiddenIds);
+    navigate('issues', { view, issue: routeIssue }, { replace: true });
+    setDeepLinkApplied(true);
+  }, [routeIssue, activeItems, reviewedItems, hiddenIds, deepLinkApplied, rawView]);
 
-  const inboxTone = hasNow ? 'danger' : hasSoon ? 'warn' : 'ok';
-  const inboxWord = hasNow ? 'Needs attention' : hasSoon ? 'Watching' : 'Clear';
+  const effectiveView = VALID_VIEWS.has(rawView)
+    ? rawView
+    : (routeIssue && !rawView
+      ? resolveDeepLinkView(routeIssue, activeItems, reviewedItems, hiddenIds)
+      : 'active');
+
+  const subnavOptions = useMemo(() => SUBNAV.map((opt) => (
+    opt.value === 'active' && needsCount > 0
+      ? { ...opt, label: `Active (${needsCount})` }
+      : opt
+  )), [needsCount]);
+
+  const handleSelect = useCallback((key) => {
+    const next = { view: effectiveView };
+    if (key) next.issue = key;
+    navigate('issues', next, { replace: true });
+  }, [effectiveView]);
+
+  function handleViewChange(v) {
+    if (v === 'tools') {
+      navigate('issues', { view: v });
+      return;
+    }
+    const next = { view: v };
+    if (routeIssue) {
+      const pool = v === 'reviewed' ? reviewedItems : activeItems;
+      if (pool.some((i) => i.key === routeIssue)) next.issue = routeIssue;
+    }
+    navigate('issues', next);
+  }
 
   async function handleAck(id) {
     if (!id) return;
@@ -343,7 +203,7 @@ export function PageView() {
     if (!id) return;
     await ackIssue(id, false);
     addToast('Moved back to Active', 'info');
-    setView('active');
+    navigate('issues', { view: 'active', issue: id });
   }
 
   async function handleAckCrash() {
@@ -356,7 +216,8 @@ export function PageView() {
     try {
       const res = await suppressIssue({ issue_id: issueId });
       applyIssueSuppressions(res?.suppressions ?? res);
-      addToast('Hidden from Active — undo in Hidden below', 'success');
+      addToast('Hidden from Active — restore in Tools', 'success');
+      navigate('issues', { view: 'tools' });
     } catch (e) {
       addToast(e?.message || 'Could not hide issue', 'danger');
     }
@@ -375,38 +236,40 @@ export function PageView() {
 
   async function handleAckAllActive() {
     const ids = [];
-    for (const e of liveLag) {
-      const key = peekIssueAckKey('lag', e);
-      if (key) ids.push(key);
-    }
-    for (const e of liveMod) {
-      const key = peekIssueAckKey('mod', e);
-      if (key) ids.push(key);
-    }
-    if (liveLogStale) ids.push('log_stale');
-    for (const item of [...queue.now, ...queue.soon, ...queue.historical]) {
+    for (const item of activeItems) {
       if (item.kind === 'crash') continue;
       if (item.key) ids.push(item.key);
     }
-    const hasCrash = [...queue.now, ...queue.soon].some((i) => i.kind === 'crash');
-    if (ids.length) await acknowledgeAllIssues(ids);
-    if (hasCrash) await acknowledgeAllCrashes({ scope: 'unreviewed' });
-    if (ids.length || hasCrash) {
-      addToast('All active issues marked reviewed', 'success');
+    const hasCrash = activeItems.some((i) => i.kind === 'crash');
+    setAcking(true);
+    try {
+      if (ids.length) await acknowledgeAllIssues(ids);
+      if (hasCrash) await acknowledgeAllCrashes({ scope: 'unreviewed' });
+      if (ids.length || hasCrash) {
+        addToast('All active issues marked reviewed', 'success');
+      }
+    } finally {
+      setAcking(false);
     }
   }
 
-  if (isNoReport) {
+  if (isNoReport && !peek && !activeItems.length && !reviewedItems.length) {
     return html`
       <${Page} title="Issues" subtitle="Prioritized fixes and alerts">
         <${EmptyState}
           title="No report yet"
-          body="Run a report from the top bar to start receiving issue analysis and guided fixes."
+          body="Run a report from the top bar to start receiving issue analysis and guided fixes. Live lag peek can still appear after the ops scan warms up."
           action=${html`<${Button} kind="accent" onClick=${() => openModal('run-report')}>Run Report</${Button}>`}
         />
       </${Page}>
     `;
   }
+
+  const inboxWord = needsCount > 0
+    ? 'Needs attention'
+    : watchingCount > 0
+      ? 'Watching'
+      : 'Clear';
 
   return html`
     <${Page}
@@ -414,8 +277,10 @@ export function PageView() {
       subtitle="Prioritized fixes — what to do next"
       actions=${html`
         <div class="issues-page-actions">
-          ${view === 'active' && (hasNow || hasSoon) ? html`
-            <${Button} kind="neutral" size="sm" onClick=${handleAckAllActive}>Mark all reviewed</${Button}>
+          ${effectiveView === 'active' && (needsCount > 0 || watchingCount > 0) ? html`
+            <${Button} kind="neutral" size="sm" loading=${acking} onClick=${handleAckAllActive}>
+              Mark all reviewed
+            </${Button}>
           ` : null}
           ${health ? html`
             <${HealthGrade}
@@ -427,225 +292,56 @@ export function PageView() {
         </div>
       `}
     >
-      <div data-tour="issues" class="ui-page__stack">
-        <div class="issues-summary">
-          <${BeaconCard}
-            label="Inbox"
-            hint="Action queue status"
-            word=${inboxWord}
-            tone=${inboxTone}
-          />
-          <div class="feat-kpi-row issues-summary__metrics">
-            <${MetricTile}
-              label="Needs attention"
-              value=${needsCount}
-              tone=${needsCount > 0 ? 'danger' : 'ok'}
-              padding="12"
-            />
-            <${MetricTile}
-              label="Worth fixing"
-              value=${soonCount}
-              tone=${soonCount > 0 ? 'warn' : null}
-              padding="12"
-            />
-            <${MetricTile}
-              label="Reviewed"
-              value=${reviewedCount}
-              padding="12"
-            />
-          </div>
+      <div data-tour="issues" class="ui-page__stack issues-page">
+        <div class="issues-summary-slim">
+          <span class=${`issues-summary-slim__word issues-summary-slim__word--${needsCount > 0 ? 'danger' : watchingCount > 0 ? 'warn' : 'ok'}`}>
+            ${inboxWord}
+          </span>
+          <span class="issues-summary-slim__counts">
+            <span>Needs ${needsCount}</span>
+            <span class="issues-summary-slim__sep">·</span>
+            <span>Watching ${watchingCount}</span>
+            <span class="issues-summary-slim__sep">·</span>
+            <span>Reviewed ${reviewedCount}</span>
+          </span>
         </div>
 
-        <${Subnav} options=${VIEW_OPTS} value=${view} onChange=${setView} />
+        <div class="feat-issues-nav">
+          <${Subnav}
+            options=${subnavOptions}
+            value=${effectiveView}
+            onChange=${handleViewChange}
+          />
+        </div>
 
-        ${view === 'active' ? html`
-          ${!hasNow && !hasSoon && !hasHistorical ? html`
-            <${EmptyState}
-              title="All clear"
-              body=${hasReviewed
-                ? 'Nothing active — open Reviewed for past acknowledgements.'
-                : 'No active issues detected. Peek at Live charts or Insights if you want a deeper look.'}
-              action=${html`
-                <div class="issues-empty-actions">
-                  ${hasReviewed ? html`
-                    <${Button} kind="neutral" size="sm" onClick=${() => setView('reviewed')}>Open Reviewed</${Button}>
-                  ` : null}
-                  <${Button} kind="neutral" size="sm" onClick=${() => navigate('live')}>Open Live</${Button}>
-                  <${Button} kind="neutral" size="sm" onClick=${() => navigate('insights')}>Open Insights</${Button}>
-                </div>
-              `}
-            />
-          ` : null}
-
-          ${hasNow ? html`
-            <${Section} title="Needs attention" badge=${html`<${Badge} tone="danger">${needsCount}</${Badge}>`}>
-              ${liveLag.map((e) => html`
-                <${LagIssueRow}
-                  key=${e.id}
-                  entry=${e}
-                  ackKey=${peekIssueAckKey('lag', e)}
-                  onAck=${handleAck}
-                  onUnack=${handleUnack}
-                />
-              `)}
-              ${liveMod.map((e) => html`
-                <${ModIssueRow}
-                  key=${e.id}
-                  entry=${e}
-                  ackKey=${peekIssueAckKey('mod', e)}
-                  onAck=${handleAck}
-                  onUnack=${handleUnack}
-                />
-              `)}
-              ${liveLogStale ? html`
-                <${LogStaleRow}
-                  entry=${liveLogStale}
-                  onAck=${handleAck}
-                  onUnack=${handleUnack}
-                />
-              ` : null}
-              ${queue.now.map((item) => html`
-                <${ActionRow}
-                  key=${item.key}
-                  item=${item}
-                  onAck=${handleAck}
-                  onUnack=${handleUnack}
-                  onAckCrash=${handleAckCrash}
-                  onSuppress=${handleSuppress}
-                />
-              `)}
-            </${Section}>
-          ` : null}
-
-          <div class="issues-wide-secondary">
-            ${hasSoon ? html`
-              <${Section} title="Worth watching">
-                ${queue.soon.map((item) => html`
-                  <${ActionRow}
-                    key=${item.key}
-                    item=${item}
-                    onAck=${handleAck}
-                    onUnack=${handleUnack}
-                    onAckCrash=${handleAckCrash}
-                  onSuppress=${handleSuppress}
-                  />
-                `)}
-              </${Section}>
-            ` : null}
-
-            ${hasHistorical ? html`
-              <${Section} title="Older findings" collapsible=${true} defaultOpen=${false}>
-                ${queue.historical.map((item) => html`
-                  <${ActionRow}
-                    key=${item.key}
-                    item=${item}
-                    onAck=${handleAck}
-                    onUnack=${handleUnack}
-                    onAckCrash=${handleAckCrash}
-                  onSuppress=${handleSuppress}
-                  />
-                `)}
-              </${Section}>
-            ` : null}
-          </div>
+        ${effectiveView === 'tools' ? html`
+          <${ToolsTab}
+            needsCount=${needsCount}
+            watchingCount=${watchingCount}
+            reviewedCount=${reviewedCount}
+            hidden=${hidden}
+            onAckAll=${handleAckAllActive}
+            onUnsuppress=${handleUnsuppress}
+            acking=${acking}
+            hasActive=${hasActiveWork}
+          />
         ` : html`
-          ${!hasReviewed && !hasHistorical ? html`
-            <${EmptyState}
-              title="No reviewed issues yet"
-              body="Mark items reviewed on the Active tab to clear the queue. They’ll land here so you can undo later if needed."
-              action=${html`<${Button} kind="neutral" size="sm" onClick=${() => setView('active')}>Back to Active</${Button}>`}
-            />
-          ` : html`
-            ${hasReviewed ? html`
-              <${Section} title="Marked reviewed" badge=${html`<${Badge} tone="ok">${reviewedCount}</${Badge}>`}>
-                ${reviewedLag.map((e) => html`
-                  <${LagIssueRow}
-                    key=${e.ackKey}
-                    entry=${e}
-                    ackKey=${e.ackKey}
-                    reviewed=${true}
-                    onAck=${handleAck}
-                    onUnack=${handleUnack}
-                  />
-                `)}
-                ${reviewedMod.map((e) => html`
-                  <${ModIssueRow}
-                    key=${e.ackKey}
-                    entry=${e}
-                    ackKey=${e.ackKey}
-                    reviewed=${true}
-                    onAck=${handleAck}
-                    onUnack=${handleUnack}
-                  />
-                `)}
-                ${reviewedLogStale ? html`
-                  <${LogStaleRow}
-                    entry=${reviewedLogStale}
-                    reviewed=${true}
-                    ackedAt=${reviewedLogStale.ackedAt}
-                    onAck=${handleAck}
-                    onUnack=${handleUnack}
-                  />
-                ` : null}
-                ${queue.reviewed.map((item) => html`
-                  <${ActionRow}
-                    key=${item.key}
-                    item=${item}
-                    reviewed=${true}
-                    onAck=${handleAck}
-                    onUnack=${handleUnack}
-                    onAckCrash=${handleAckCrash}
-                  onSuppress=${handleSuppress}
-                  />
-                `)}
-              </${Section}>
-            ` : null}
-
-            ${hasHistorical ? html`
-              <${Section} title="Older findings (auto)" collapsible=${true} defaultOpen=${!hasReviewed}>
-                <p class="ui-text-low feat-hint">These were already historical before you reviewed anything — mark reviewed to archive them here permanently.</p>
-                ${queue.historical.map((item) => html`
-                  <${ActionRow}
-                    key=${item.key}
-                    item=${item}
-                    onAck=${handleAck}
-                    onUnack=${handleUnack}
-                    onAckCrash=${handleAckCrash}
-                  onSuppress=${handleSuppress}
-                  />
-                `)}
-              </${Section}>
-            ` : null}
-          `}
+          <${QueueTab}
+            mode=${effectiveView}
+            items=${effectiveView === 'reviewed' ? reviewedItems : activeItems}
+            selectedKey=${routeIssue}
+            onSelect=${handleSelect}
+            onAck=${handleAck}
+            onUnack=${handleUnack}
+            onSuppress=${handleSuppress}
+            onAckCrash=${handleAckCrash}
+            onOpenTools=${() => navigate('issues', { view: 'tools' })}
+            noReport=${isNoReport}
+          />
         `}
 
-        ${(() => {
-          const hidden = facts?.optional?.suppressed_issues ?? [];
-          if (!Array.isArray(hidden) || !hidden.length) return null;
-          return html`
-            <${Section} title="Hidden (suppressed)" subtitle="Won’t show in Active until restored">
-              <div class="issues-list">
-                ${hidden.map((issue) => html`
-                  <${Card} tone="neutral" className="issues-card" padding="12" key=${issue.id}>
-                    <div class="issues-card__top">
-                      <div class="issues-card__title-row">
-                        <${Badge} tone="neutral">hidden</${Badge}>
-                        <strong class="issues-card__title">${issue.id || 'Issue'}</strong>
-                      </div>
-                      <${Button} kind="neutral" size="sm" onClick=${() => handleUnsuppress(issue.id)}>
-                        Unsuppress
-                      </${Button}>
-                    </div>
-                    ${issue.message ? html`<p class="issues-card__narrative">${issue.message}</p>` : null}
-                  </${Card}>
-                `)}
-              </div>
-            </${Section}>
-          `;
-        })()}
-
         ${peekAt ? html`
-          <div style="margin-top: var(--ui-sp-12)">
+          <div class="issues-freshness">
             <${FreshnessBadge} layer="scan" at=${peekAt} />
           </div>
         ` : null}

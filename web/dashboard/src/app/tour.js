@@ -12,13 +12,13 @@ const STEPS = [
   {
     target: '[data-tour="rail"]',
     title: 'Navigation rail',
-    body: 'Switch panels from the rail — click the logo to collapse it.',
+    body: 'Switch panels from the rail — use Collapse at the bottom to shrink it.',
     placement: 'right',
   },
   {
     target: '[data-tour="topbar"]',
     title: 'Top bar',
-    body: 'Connection status, Ctrl/Cmd+K palette, inbox, and theme live here.',
+    body: 'Live/Offline and report freshness chips, Ctrl/Cmd+K search, and inbox live here.',
     placement: 'bottom',
   },
   {
@@ -88,7 +88,7 @@ const STEPS = [
     tab: 'mods',
     target: '[data-tour="mods"]',
     title: 'Mods',
-    body: 'Mod inventory, conflicts, client-only scoring, dependencies, and forensics.',
+    body: 'Mod inventory, updates with pack impact, conflicts, changes, and forensics.',
     placement: 'bottom',
   },
   {
@@ -124,6 +124,13 @@ const STEPS = [
     target: '[data-tour="docs"]',
     title: 'Docs',
     body: 'Built-in operator wiki with search — reopen the setup wizard from here anytime.',
+    placement: 'bottom',
+  },
+  {
+    tab: 'roadmap',
+    target: '[data-tour="roadmap"]',
+    title: 'Roadmap',
+    body: 'What’s coming next — lag auto-forensics, fleet command, alerts, and more on the workbench.',
     placement: 'bottom',
   },
 ];

@@ -6,7 +6,10 @@ import { Motion } from '../../motion/reduced.js';
  * Top-level page layout with stagger-enter children.
  */
 export function Page({ title, subtitle, actions, children, footerSubtitle, tour }) {
-  const kids = Array.isArray(children) ? children : children != null ? [children] : [];
+  const raw = Array.isArray(children) ? children : children != null ? [children] : [];
+  // Preact/htm leaves `false`/`null` for inactive `${cond && html`…`}` branches —
+  // wrapping those still creates flex-gap holes in .ui-page__body.
+  const kids = raw.filter((child) => child != null && child !== false && child !== true);
 
   const staggeredKids = Motion.enabled
     ? kids.map((child, i) =>

@@ -138,6 +138,7 @@ public final class WatchtowerSetup {
                 # Opt-in Modrinth side lookup (SHA-512 hashes only; off by default)
                 # MODRINTH_LOOKUP=false
                 # MODRINTH_LOOKUP_ON_REPORT=true
+                # MODRINTH_AUTO_SCAN_ON_MOD_CHANGES=false
                 # MODRINTH_RATE_LIMIT=4
                 # Mod forensics toolbox (1.0.17) — master on; zip walk / index-on-report off by default
                 # MOD_FORENSICS_SCAN=true

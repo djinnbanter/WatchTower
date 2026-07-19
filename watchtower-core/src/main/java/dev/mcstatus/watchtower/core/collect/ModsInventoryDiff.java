@@ -118,6 +118,15 @@ public final class ModsInventoryDiff {
         return state.getAsJsonArray("last_mods_snapshot").deepCopy();
     }
 
+    /** Previous ops-poll jar snapshot used to detect on-disk changes between scans. */
+    public static JsonArray loadOpsBaseline(JsonObject state) {
+        if (state == null || !state.has("last_mods_ops_snapshot")
+                || !state.get("last_mods_ops_snapshot").isJsonArray()) {
+            return new JsonArray();
+        }
+        return state.getAsJsonArray("last_mods_ops_snapshot").deepCopy();
+    }
+
     public static String summarizeTldr(JsonObject diff) {
         if (diff == null || !diff.has("has_changes") || !diff.get("has_changes").getAsBoolean()) {
             return null;

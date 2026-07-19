@@ -196,11 +196,16 @@
   );
 }
 
-/* --- Card (glass + top sheen — no left accent bar) --- */
+/* --- Card (instrument plate — tone wash + top hairline) --- */
 .ui-card {
+  --ui-instrument-tone: var(--ui-sky);
   position: relative;
-  background: var(--ui-glass, var(--ui-bg1));
-  border: 1px solid var(--ui-glass-border, var(--ui-line));
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-instrument-tone) 10%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-glass, var(--ui-bg1)) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ui-instrument-tone) 22%, var(--ui-glass-border, var(--ui-line)));
   border-radius: var(--ui-rad-xl);
   overflow: hidden;
   box-shadow: var(--ui-shadow-rest);
@@ -212,10 +217,13 @@
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 40%;
+  height: 2px;
   pointer-events: none;
-  background: var(--ui-sheen);
-  opacity: 0.9;
+  background: linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--ui-instrument-tone) 65%, transparent),
+    transparent);
+  opacity: 1;
   z-index: 0;
 }
 
@@ -237,27 +245,52 @@
 }
 
 .ui-card--ok {
-  background: color-mix(in srgb, var(--ui-ok) 12%, var(--ui-glass, var(--ui-bg1)));
+  --ui-instrument-tone: var(--ui-ok);
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-ok) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-ok) 8%, var(--ui-glass, var(--ui-bg1)));
   border-color: color-mix(in srgb, var(--ui-ok) 32%, var(--ui-glass-border, var(--ui-line)));
 }
 
 .ui-card--warn {
-  background: color-mix(in srgb, var(--ui-warn) 12%, var(--ui-glass, var(--ui-bg1)));
+  --ui-instrument-tone: var(--ui-warn);
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-warn) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-warn) 8%, var(--ui-glass, var(--ui-bg1)));
   border-color: color-mix(in srgb, var(--ui-warn) 32%, var(--ui-glass-border, var(--ui-line)));
 }
 
 .ui-card--danger {
-  background: color-mix(in srgb, var(--ui-danger) 12%, var(--ui-glass, var(--ui-bg1)));
+  --ui-instrument-tone: var(--ui-danger);
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-danger) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-danger) 8%, var(--ui-glass, var(--ui-bg1)));
   border-color: color-mix(in srgb, var(--ui-danger) 32%, var(--ui-glass-border, var(--ui-line)));
 }
 
 .ui-card--info {
-  background: color-mix(in srgb, var(--ui-info) 12%, var(--ui-glass, var(--ui-bg1)));
+  --ui-instrument-tone: var(--ui-info);
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-info) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-info) 8%, var(--ui-glass, var(--ui-bg1)));
   border-color: color-mix(in srgb, var(--ui-info) 32%, var(--ui-glass-border, var(--ui-line)));
 }
 
 .ui-card--accent {
-  background: color-mix(in srgb, var(--ui-accent) 12%, var(--ui-glass, var(--ui-bg1)));
+  --ui-instrument-tone: var(--ui-accent);
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-accent) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-accent) 8%, var(--ui-glass, var(--ui-bg1)));
   border-color: color-mix(in srgb, var(--ui-accent) 34%, var(--ui-glass-border, var(--ui-line)));
 }
 

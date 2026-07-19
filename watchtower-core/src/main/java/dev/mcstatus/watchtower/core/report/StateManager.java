@@ -455,6 +455,17 @@ public final class StateManager {
         return seq;
     }
 
+    /** Persist the last ops-poll mods jar snapshot for change detection. */
+    public static void saveLastModsOpsSnapshot(Path statePath, JsonArray snapshot) throws IOException {
+        JsonObject state = loadState(statePath);
+        if (snapshot == null) {
+            state.remove("last_mods_ops_snapshot");
+        } else {
+            state.add("last_mods_ops_snapshot", snapshot.deepCopy());
+        }
+        writeState(statePath, state);
+    }
+
     public static long getLastLagIncidentAt(Path statePath) throws IOException {
         JsonObject state = loadState(statePath);
         return state.has("last_lag_incident_at") ? state.get("last_lag_incident_at").getAsLong() : 0L;

@@ -225,7 +225,7 @@ export function buildActionQueue(facts, acks, opsCacheData, crashGroupsData, iss
           : 'A newer loader-compatible build is on Modrinth — open the link to update manually.',
         primaryAction: u.modrinth_compatible_url
           ? { label: 'Open Modrinth', href: u.modrinth_compatible_url }
-          : { label: 'Open Mods', tab: 'mods', params: { view: 'overview', mod: modId } },
+          : { label: 'Open Updates', tab: 'mods', params: { view: 'updates', mod: modId } },
         evidence: [],
         when: null,
         meta: {

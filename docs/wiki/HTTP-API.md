@@ -37,8 +37,8 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/config` | GET | `live_sample_interval_sec`, `live_retention_hours`, `embedded`, `hostname`, `bind_exposed` |
-| `/api/settings` | GET | Schedule, lookback, incremental, `modrinth_lookup`, backup dirs, external tracking mode, panel, `ops_poll_sec`, `ops_log_scan_sec`, `report_retention_count`, `report_retention_days`, `live_sample_interval_seconds` |
-| `/api/settings` | POST | `{ reportIntervalMinutes?, lookbackHours?, incremental?, modrinthLookup?, … }` |
+| `/api/settings` | GET | Schedule, lookback, incremental, `modrinth_lookup`, `modrinth_auto_scan_on_mod_changes`, backup dirs, external tracking mode, panel, `ops_poll_sec`, `ops_log_scan_sec`, `report_retention_count`, `report_retention_days`, `live_sample_interval_seconds` |
+| `/api/settings` | POST | `{ reportIntervalMinutes?, lookbackHours?, incremental?, modrinthLookup?, modrinthAutoScanOnModChanges?, … }` |
 | `/api/data-sources` | GET | Freshness timestamps for Sources tab: `live_at`, `ops_scan_at`, `full_report_at`, `next_scheduled_minutes`, `ops_log_scan_sec`, `ops_poll_sec` |
 | `/api/update/check` | GET | Read-only version check against GitHub Releases / Modrinth |
 
@@ -119,6 +119,8 @@ See [[Using-Spark-with-Watchtower]] for capture workflow.
 | `/api/reports/get` | GET | `?facts=<filename>` |
 | `/api/reports/status` | GET | In-progress report status (`running`, `started_at`, `finished_at`, `success`, `message`, `facts_path`; while running also `stage` / `stage_label`: `window`, `collect`, `analyze`, `enrich`, `write`, `finalize`) |
 | `/api/reports/run` | POST | `{ lookbackHours?, incremental? }` → 202 started |
+| `/api/modrinth/status` | GET | Dedicated Modrinth scan status (`enabled`, `running`, `stage`, `stage_label`, `stage_detail`, `progress`, `batch`, `eta_seconds`, `last_run`, `stats`, `success`, `error`) |
+| `/api/modrinth/scan` | POST | Start Modrinth scan → 202 started; 400 if lookup disabled; 409 if already running |
 
 ### Facts `optional` — crash intelligence (1.0.13)
 

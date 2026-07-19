@@ -158,22 +158,63 @@ export function mockReportMods() {
   const create = byId.get('create');
   if (create) {
     create.side_score = 'server_required';
-    create.side_signals = ['SERVER_REQUIRED_IDS'];
+    create.side_signals = ['SERVER_REQUIRED_IDS', 'modrinth:server_required'];
     create.dependents_count = 2;
     create.dependencies = [
       { modId: 'flywheel', mandatory: true },
       { modId: 'neoforge', mandatory: true },
     ];
+    create.modrinth_slug = 'create';
+    create.modrinth_title = 'Create';
+    create.modrinth_url = 'https://modrinth.com/mod/create';
+    create.modrinth_icon_url = 'https://cdn.modrinth.com/data/LNytGWDc/61d716699bcf1ec42ed4926a9e1c7311be6087e2_96.webp';
+    create.modrinth_wiki_url = 'https://create.fandom.com/wiki/Create_Mod_Wiki';
+    create.modrinth_source_url = 'https://github.com/Creators-of-Create/Create';
+    create.modrinth_issues_url = 'https://github.com/Creators-of-Create/Create/issues';
+    create.modrinth_description = 'Aesthetic technology that empowers the player.';
+    create.modrinth_outdated = true;
+    create.modrinth_compatible_url = 'https://modrinth.com/mod/create/versions';
+    create.modrinth_update_label = 'NeoForge build 6.0.1 available';
   }
   const appleskin = byId.get('appleskin');
   if (appleskin) {
     appleskin.side_score = 'likely_removable';
-    appleskin.side_signals = ['heuristic', 'toml'];
+    appleskin.side_signals = ['heuristic', 'toml', 'modrinth:client_only'];
+    appleskin.modrinth_slug = 'appleskin';
+    appleskin.modrinth_title = 'AppleSkin';
+    appleskin.modrinth_url = 'https://modrinth.com/mod/appleskin';
+    appleskin.modrinth_icon_url = 'https://cdn.modrinth.com/data/EsAfCjCV/icon.png';
+    appleskin.modrinth_description = 'Food/hunger HUD improvements for the client.';
   }
   const jei = byId.get('jei');
   if (jei) {
     jei.side_score = 'uncertain';
-    jei.side_signals = ['heuristic'];
+    jei.side_signals = ['heuristic', 'modrinth:optional_both'];
+    jei.modrinth_slug = 'jei';
+    jei.modrinth_title = 'Just Enough Items';
+    jei.modrinth_url = 'https://modrinth.com/mod/jei';
+    jei.modrinth_icon_url = 'https://cdn.modrinth.com/data/u6dRKJwZ/4a3f18ac0d096c9f8e9176984c44be4e58f94c89_96.webp';
+    jei.modrinth_description = 'Item and recipe browsing — useful on both client and server.';
+  }
+  const sodium = byId.get('sodium');
+  if (sodium) {
+    sodium.side_score = 'likely_removable';
+    sodium.side_signals = ['heuristic', 'modrinth:client_only'];
+    sodium.modrinth_slug = 'sodium';
+    sodium.modrinth_title = 'Sodium';
+    sodium.modrinth_url = 'https://modrinth.com/mod/sodium';
+    sodium.modrinth_icon_url = 'https://cdn.modrinth.com/data/AANobbMI/295862f4724dc3f78df3447ad6072b2dcd3ef0c9_96.webp';
+    sodium.modrinth_description = 'Modern rendering engine for Minecraft.';
+  }
+  const spark = byId.get('spark');
+  if (spark) {
+    spark.side_score = 'server_required';
+    spark.side_signals = ['modrinth:server_required'];
+    spark.modrinth_slug = 'spark';
+    spark.modrinth_title = 'spark';
+    spark.modrinth_url = 'https://modrinth.com/mod/spark';
+    spark.modrinth_icon_url = 'https://cdn.modrinth.com/data/l6YH9Als/61a777dd08a8447ac93e8b6372e6d27d48cd1e1a_96.webp';
+    spark.modrinth_description = 'Performance profiler for Minecraft servers and clients.';
   }
 
   return [...byId.values()];
@@ -508,7 +549,7 @@ export const MOCK_CLIENT_ONLY_MODS = [
     reason: 'Adds various food-related HUD improvements',
     removal_advice: 'Safe to remove from server mods/ on a dedicated host.',
     display_name: 'AppleSkin',
-    signals: ['heuristic', 'toml'],
+    signals: ['heuristic', 'toml', 'modrinth:client_only'],
   },
   {
     mod_id: 'sodium',
@@ -518,7 +559,7 @@ export const MOCK_CLIENT_ONLY_MODS = [
     reason: 'Client rendering optimization — not needed on dedicated server',
     removal_advice: 'Safe to remove from server mods/.',
     display_name: 'Sodium',
-    signals: ['heuristic'],
+    signals: ['heuristic', 'modrinth:client_only'],
   },
   {
     mod_id: 'embeddium',

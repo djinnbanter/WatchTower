@@ -24,6 +24,7 @@ import '../features/sources/index.js';
 
 // System group
 import '../features/docs/index.js';
+import '../features/roadmap/index.js';
 import '../features/settings/index.js';
 import '../features/help/index.js';
 import '../features/wizard/index.js';

@@ -30,6 +30,15 @@ function formatSec(sec) {
   return `${n.toFixed(2)}s`;
 }
 
+/** Drop absurd phase durations (e.g. old line-index-as-epoch bug) for display. */
+function sanePhaseSec(sec, totalSec) {
+  const n = Number(sec);
+  if (!Number.isFinite(n) || n < 0) return null;
+  const total = Number(totalSec);
+  if (Number.isFinite(total) && total > 0 && n > total * 2) return null;
+  return n;
+}
+
 function formatDoneAt(iso) {
   if (!iso) return null;
   const d = new Date(iso);
@@ -62,9 +71,12 @@ function phaseLabel(phases, phaseId) {
   return hit?.label ?? humanId(phaseId);
 }
 
-function maxPhaseSec(phases) {
+function maxPhaseSec(phases, totalSec) {
   if (!phases?.length) return 0;
-  return Math.max(...phases.map((p) => Number(p.sec) || 0), 0.01);
+  const vals = phases
+    .map((p) => sanePhaseSec(p.sec, totalSec))
+    .filter((n) => n != null);
+  return Math.max(...vals, 0.01);
 }
 
 function slowRankMap(slowest) {
@@ -108,14 +120,15 @@ export function PageView() {
     done_at,
   } = profile;
 
-  const phaseMax = maxPhaseSec(phases);
+  const phaseMax = maxPhaseSec(phases, total_sec);
   const tone = statusTone(status);
   const delta = formatDelta(compare_to_last_boot);
   const ranks = slowRankMap(slowest);
   const blocking = errors.filter((e) => e.blocking).length;
   const doneLabel = formatDoneAt(done_at);
-  const slowestLabel = slowest[0]
-    ? `${phaseLabel(phases, slowest[0].phase)} · ${formatSec(slowest[0].sec)}`
+  const slowestSec = slowest[0] ? sanePhaseSec(slowest[0].sec, total_sec) : null;
+  const slowestLabel = slowest[0] && slowestSec != null
+    ? `${phaseLabel(phases, slowest[0].phase)} · ${formatSec(slowestSec)}`
     : null;
 
   return html`
@@ -166,9 +179,12 @@ export function PageView() {
           ${phases.length ? html`
             <div class="startup-phases">
               ${phases.map((p) => {
-                const sec = Number(p.sec) || 0;
-                const pct = Math.min(100, (sec / phaseMax) * 100);
-                const share = total_sec > 0 ? Math.round((sec / Number(total_sec)) * 100) : null;
+                const sec = sanePhaseSec(p.sec, total_sec);
+                const pct = sec != null ? Math.min(100, (sec / phaseMax) * 100) : 0;
+                const shareRaw = sec != null && total_sec > 0
+                  ? Math.round((sec / Number(total_sec)) * 100)
+                  : null;
+                const share = shareRaw != null ? Math.max(0, Math.min(100, shareRaw)) : null;
                 const rank = ranks.get(p.id);
                 const isSlow = rank === 1;
                 return html`

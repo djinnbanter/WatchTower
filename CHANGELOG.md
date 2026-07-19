@@ -9,8 +9,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/djinnbanter/WatchTower/compare/v1.1.0...HEAD)
 
+### Added
+
+- **Roadmap dashboard page** — new System rail tab (?tab=roadmap) showcasing what’s coming next in a neo-Frutiger Aero glass layout (hero band, Live today strip, themed vision cards, bigger horizons, trust chips, GitHub Issues CTA); guided tour includes a Roadmap step
+- **Dedicated Modrinth scan backend** — opt-in scans now own Modrinth network work, persist a status snapshot and cache, and patch the latest facts report with refreshed mod identities and update impact data
+- **Mods → Modrinth** — dedicated subtab with coverage/outdated/cache KPIs, Run scan, staged checklist with batches + ETA, and Overview banner deep-link; `POST /api/modrinth/scan` + `GET /api/modrinth/status`
+- **Modrinth auto-scan after mod changes** — optional Settings → Monitoring toggle (`MODRINTH_AUTO_SCAN_ON_MOD_CHANGES`); when lookup is on, starts the dedicated Modrinth scan if the ops poll sees jars added/removed/updated (not tied to Run Report)
+- **Mods → Updates** — dedicated subtab for Modrinth-compatible outdated jars with pack-impact verdicts (Safe / Caution / Break / Unknown), blockers, co-updates, and dependents; never downloads jars
+- **Mod update pack-impact analyzer** — during dedicated Modrinth scans, checks candidate version dependencies + local TOML `versionRange` against the installed pack and enriches `optional.modrinth_updates[]`
+- **Mods Overview catalog** — merged running + report mods with Modrinth icons, side/Update badges, project links (Modrinth / wiki / source / issues / Discord), All/Client/Server/Unresolved filters, and a permanent split list/details panel
+- **Modrinth all-mod enrichment** — opt-in Modrinth scan hashes jars (512 cap, chunked requests, rate-limited, 429 Retry-After once then skip); persists wiki/source/issues/Discord/icon/description on `optional.mods[]` for scoring and the catalog
+- **Login default credentials hint** — sign-in screen shows default `watchtower` / `password` with a reminder to change it
+
+### Fixed
+
+- **Modrinth “0 updates” on live NeoForge** — compatible-update checks no longer require a `minecraft` row in `optional.mods` (live sampling omits it); MC version is resolved from snapshot/meta, Spark/startup platform, `+mc` suffixes, or NeoForge version mapping, and empty Modrinth version filters soft-retry with loader + MC preference
+- **Mods Overview top-level only** — jar-in-jar / nested mods (e.g. Flywheel inside Create) no longer appear as separate catalog rows; they show under the parent jar in Details as Nested / embedded jars
+- **Report Retry** — after a failed (or finished) Run Report, the modal keeps a primary Retry / Run again button instead of only Close
+- **Dashboard asset cache** — live server serves HTML/JS/CSS with Cache-Control: no-store so Overview and other UI updates match the installed jar after a refresh (not a stale browser cache)
+- **Startup boot phases** — phase durations no longer explode when a log line lacks a parseable timestamp (removed line-index-as-epoch fallback; remaining-budget allocation + total_sec cap; first-hit-only phases; stderr/ANSI-tolerant timestamp parse); Startup UI clamps absurd shares
+- **Spark preview** — fixture profiles from `samples/fixtures/spark/` now load in dashboard preview (nested mock lookup, `source_path` selector, parser field names for verdict/methods/timeline/mods/world/advanced); live API unwraps `spark_profile`
+- **Roadmap page padding** — fixed collapsed spacing from invalid --ui-sp-18/--ui-sp-28 tokens; sections and cards now use the shared spacing scale with consistent gutters
+- **Live charts empty then fill** — charts no longer wait on page stagger / clip-path reveal; samples + live envelope prefetch at boot, and root re-render tracks sample updates so Live paints filled immediately
+- **Dashboard navigation frozen** — `@preact/signals` `shouldComponentUpdate` was blocking `useState` and route updates on our Preact build, so rail clicks updated the URL but the page often stayed put; patched SCU and force a root `kickRender()` on route/UI signal changes so hooks, signals, and navigation re-render reliably again
+- **Crashes list layout** — rebuilt Lantern `styles.css` so the new list/detail row styles load (unstyled rows were stacking as bare buttons)
+
 ### Changed
 
+- **Instrument plate across pages** — shared glass + tone wash + top gradient hairline (Overview Performance insight / Storage / Pregen / Boot look) now applied to featured cards, Live chart frames & thermal/network plates, Session/Startup heroes, Sources cards, Mods forensics KPIs, and other verdict/hero surfaces
+- **Overview Storage** — removed duplicate Heap tile (heap stays in mission vitals); disk used % readout is smaller
+- **Overview vivid & alive** — the mission band now reads energetic instead of grey: a glowing grade beacon (tone halo + ring draw-in + letter pop), an even grid of channel-coloured live vital cards (TPS/MSPT/Players/Heap + CPU) with clear current values + count-up + live pulse (no sparkline clutter), a tone mesh wash with gradient headline, tinted KPI chips, one consolidated status chip strip (MC / loader / Java / session / mods / backup — no duplicate pill rows), colour-washed instrument cards, and triage lists as a single glass plate of flush rows instead of nested cards; all motion respects `prefers-reduced-motion`
+- **Overview server spec restored** — MC version, loader (NeoForge + version) and Java live in the status chip strip; Heap returns as a live vital up top (`deriveMcVersion` / `loaderInfo` helpers)
+- **Overview mission control** — first viewport is one Live-inspired mission band (grade + verdict + vitals) plus quiet trust chips; dropped stacked welcome/status-strip/beacon-trio/vitals row; Storage uses a disk Gauge + dimension well; Boot is a hero strip; triage lists use queue glass; lag list capped; backup-disable CTA shown once
+- **Rail brand header** — glass brand plate with icon cradle for the WatchTower mark, stronger wordmark, and a quiet “Server ops” tagline (icon-only when collapsed)
+- **Rail + topbar UX** — Reports is one glass plate; System micro-label above Docs/Settings; Theme/Collapse demoted to a compact tool row; rail width unified (220/56); collapse preference restores on boot; mobile drawer always expands; Issues/Crashes badges use warn (1–2) then danger; topbar shows short freshness + Live/Offline chips, Search as primary glass chip then quiet Inbox, hostname falls back to “Unknown host”; guided tour and wiki match current chrome
+- **Sticky detail panes** — shell main is now the real scrollport (`height: 100dvh` shell + `min-height: 0` main); page enter animation no longer leaves a `transform` on page body children (both were breaking `position: sticky` on Issues / Crashes / Mods details)
+- **Issues / Crashes / Mods chrome parity** — shared glass search+filter strip (`feat-queue-chrome`); Crashes queue and Mods Overview/Updates/Forensics/secondary tabs match Issues toolbar look; Mods Overview & Updates detail panes reuse Crashes detail/panel chrome; catalog row hover/selected aligned; detail panes sticky in the main page scroll (no nested pane scrollbar)
+- **Issues tab overhaul** — Active / Reviewed / Tools subtabs; permanent list+detail with Fix | Details; priority bands (Needs / Worth watching / Older); Hidden suppressions under Tools; URL `view` + `issue` deep links; crash rows demoted to Crashes pointers; Overview attention items deep-link into Issues; detail panes reuse Crashes panel/step chrome
+- **Crashes Fix pane UX** — numbered step cards with large 1/2/3 badges, primary vs tools vs Mark reviewed action tiers, confidence badge in the detail header, quieter Why footer; Evidence members and Details tech fields tightened to match
+- **Crashes Evidence & Details panes** — same panel chrome as Fix (hero + section blocks); pre-crash KPI chips and lead-file highlight; Details grouped into Identity / Classification / Mixins & config / Duplicates & locks
+- **Crashes inbox list** — crash groups fold into collapsible day sections (Today / Yesterday / date); only Today is expanded by default
+- **Crashes tab subtabs** — **Review** / **Reviewed** / **Tools** (Issues-style Active/Reviewed split); list/detail with Fix | Evidence | Details; Tools holds Scan, Mark all, Find owning jar; inbox deep links open Review or Reviewed from unreviewed members
+- **Modrinth report enrichment** — report generation is cache-only; it never calls the Modrinth API, while the dedicated scan refreshes cached data
+- **Settings → Monitoring** — Modrinth copy points to Mods → Modrinth for scans (not Run Report); optional auto-scan after mod changes; still SHA-512 only, never downloads jars
+- **Mods Overview chrome** — compact one-line Security/Connector banners; single glass control strip with search + filters/sort side-by-side and a one-line stats row
+- **Mods Overview search** — search field moved into the catalog toolbar (glass bar with icon) so it sits with filters/sort instead of the easy-to-miss strip under the subnav
+- **Mods Overview catalog** — paginated full list (25 per page, First/Prev/Next/Last) with sort (Name, Mod ID, Server→Client, Updates first, Version); remembered in the browser
+- **Themed scrollbars** — dashboard scrollbars use soft sky-glass thumbs (Firefox + Chromium) instead of the OS native chrome
+- **Mods page gaps** — Page layout no longer wraps inactive tab branches in empty flex children (that was the large blank strip under Mods subnav/search)
+- **Mods Forensics** — KPI strip, glass search chrome, side-by-side corrupt/config panels, clearer empty/disabled states
+- **Mods subtab search gap** — subnav + search share one nav block so page spacing no longer leaves a large empty strip under the tabs
+- **Mods subtabs** — order is Overview → Updates → Conflicts → Log errors → Changes → Modrinth → Forensics (problems first, then inventory/tooling); removed **Client-only** and **Dependencies** pages; Client/server advice stays on Overview details, and dependency trees live in an expandable **Dependencies** section at the bottom of Overview and Updates detail panes
+- **Mods list/details scroll** — Overview uses pagination instead of a nested list scroller; details pane stays `overflow: visible` so wheel-scroll over it still moves the page
+- **Mods Client/server signals** — Modrinth-backed chips use the Modrinth logo plus plain labels (**Server required**, **Client only**, **Both sides**) instead of raw `modrinth:…` keys
+- **Mods list/details layout** — fixed 50/50 split (stacks below ~1100px); details body is two columns (Client/server | About/Links) with Needed by / Needs side by side; toolbar links to Updates when outdated jars exist; Overview Segmented no longer has an Updates filter (use the Updates subtab)
+- **Mods Overview split details** — permanent glass list/details split; full-row hover + selected glass highlight; Client/server callout in the details pane (role, reason, advice, signals); Modrinth links only in the details pane
+- **Mods tabs UI polish** — Overview catalog gets link chips, alert blocks, and clearer detail sections/CTAs; Conflicts/Changes/Log errors/Forensics get labeled actions, search wiring, and consistent empty states
 - **Sidebar rail (neo-aero)** — brand mark from `assets/watchtower-icon-simple.png` + frosted logo plate; glass column with top sheen; clearer group labels and active glass pills; integrated report controls; clearer collapse toggle; theme cycle moved to rail only (removed topbar sun button)
 - **Overview** — grade legend under health ring; bold colourful By dimension share bars; backup-disable copy padding; disable-backup-alerts control; Backup pill shows **Not tracking** when tracking is off
 - **Session** — Top playtime strip padding aligned with hero; glass hero KPI trio, stronger playtime chips, online/offline directory grouping, playtime report CTA
@@ -21,9 +75,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Mods → Conflicts** — removed duplicate Scan issues section; update conflicts from `mod_recommendations` only
 - **Run Report** — 30-day lookback shows a note that the first full run can take several minutes on busy hosts
 - **Activity KPI row** — multi-column auto-fill layout instead of a single full-width tile
+- **Support bundle** — includes `ops-cache.json` when present (scan aggregates such as `mod_log_errors` / `mod_issues`) so live scan rows are debuggable
+- **Run Report progress detail** — checklist shows step N/M, elapsed time, and live sub-step text (e.g. “Scanning server logs…”) so long Collect stages look alive
+- **First-login account setup** — password-change gate now also requires a new username (not the default `watchtower`)
 
 ### Fixed
 
+- **Mods Overview details pane padding** — panel used nonexistent `--ui-sp-18`, so the padding shorthand was dropped and content sat flush to the edges
+- **mods.toml dependency fields** — dependency blocks now keep `type` / `mandatory` / `versionRange` (previously flushed early on `modId`)
+- **Mods catalog icons** — CSP allows `cdn.modrinth.com` images; preview mocks use current Modrinth icon URLs (Create/JEI/Sodium were 404 `icon.png` paths); broken icons fall back to a letter placeholder
 - **CI audit-public-tree** — removed accidentally committed `.tmp-support-bundle/` (real hostname / player data) and gitignored local support-bundle extracts
 - **Missing --ui-sp-14 token** — invalid spacing vars dropped whole padding/gap shorthands (Overview dimension rows + backup banner looked flush)
 - **Overview By dimension** — grid layout fixes squashed label/GB text; share shown only via bar width (no duplicate % pill); row + backup banner padding
@@ -39,16 +99,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Report data missing after refresh** — dashboard waits on a loading screen until saved reports hydrate; loads index → latest → `/get` fallback and restores the last selected report; shell retries once if facts are still empty
 - **Modal close (X)** — popup close button sits above modal body content and receives clicks again (Run Report and other dialogs)
 - **Run Report Hide** — you can close the Run Report dialog while a report is still running (it continues in the background)
-
-### Changed
-
-- **Support bundle** — includes `ops-cache.json` when present (scan aggregates such as `mod_log_errors` / `mod_issues`) so live scan rows are debuggable
-- **Run Report progress detail** — checklist shows step N/M, elapsed time, and live sub-step text (e.g. “Scanning server logs…”) so long Collect stages look alive
-- **First-login account setup** — password-change gate now also requires a new username (not the default `watchtower`)
-
-### Added
-
-- **Login default credentials hint** — sign-in screen shows default `watchtower` / `password` with a reminder to change it
 
 ## [1.1.0](https://github.com/djinnbanter/WatchTower/compare/v1.0.0a...v1.1.0) — 2026-07-13
 

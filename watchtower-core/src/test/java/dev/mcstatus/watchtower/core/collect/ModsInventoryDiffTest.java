@@ -32,4 +32,18 @@ class ModsInventoryDiffTest {
         assertEquals(1, diff.get("removed_count").getAsInt());
         assertEquals("1 added, 1 removed since last report", ModsInventoryDiff.summarizeTldr(diff));
     }
+
+    @Test
+    void loadOpsBaselineReadsLastModsOpsSnapshot() {
+        JsonObject state = new JsonObject();
+        assertEquals(0, ModsInventoryDiff.loadOpsBaseline(state).size());
+        JsonArray snap = new JsonArray();
+        JsonObject row = new JsonObject();
+        row.addProperty("jar", "a.jar");
+        snap.add(row);
+        state.add("last_mods_ops_snapshot", snap);
+        JsonArray loaded = ModsInventoryDiff.loadOpsBaseline(state);
+        assertEquals(1, loaded.size());
+        assertEquals("a.jar", loaded.get(0).getAsJsonObject().get("jar").getAsString());
+    }
 }

@@ -7,6 +7,7 @@ import dev.mcstatus.watchtower.core.collect.CrashMtimeScanner;
 import dev.mcstatus.watchtower.core.collect.ExternalBackupDetector;
 import dev.mcstatus.watchtower.core.collect.HostMetricsCollector;
 import dev.mcstatus.watchtower.core.collect.ModsInventoryDiff;
+import dev.mcstatus.watchtower.core.collect.ModNesting;
 import dev.mcstatus.watchtower.core.collect.RunningModsCollector;
 import dev.mcstatus.watchtower.core.analyze.DiskJumpEvaluator;
 import dev.mcstatus.watchtower.core.incident.IncidentWriter;
@@ -93,13 +94,57 @@ public final class OpsScanService {
     }
 
     public static void scanModsInventory(MinecraftServer server) throws IOException {
+        scanModsInventory(server, true);
+    }
+
+    /**
+     * @param maybeAutoModrinth when true, start a dedicated Modrinth scan if jar inventory
+     *                          changed since the last ops poll and auto-scan is enabled
+     * @return true when jars changed vs the previous ops snapshot (false on first baseline)
+     */
+    public static boolean scanModsInventory(MinecraftServer server, boolean maybeAutoModrinth) throws IOException {
         String serverDir = server.getServerDirectory().toAbsolutePath().toString();
         Path statePath = WatchtowerPaths.statePath(server);
         JsonArray current = ModsInventoryDiff.buildSnapshot(serverDir);
         JsonObject state = StateManager.loadStateObject(statePath);
-        JsonArray baseline = ModsInventoryDiff.loadBaseline(state);
-        JsonObject block = ModsInventoryDiff.buildOpsBlock(current, baseline);
+        JsonArray reportBaseline = ModsInventoryDiff.loadBaseline(state);
+        JsonArray opsBaseline = ModsInventoryDiff.loadOpsBaseline(state);
+        JsonObject block = ModsInventoryDiff.buildOpsBlock(current, reportBaseline);
         OpsCacheWriter.applyModsInventory(WatchtowerPaths.opsCachePath(server), statePath, block);
+
+        boolean hadOpsBaseline = opsBaseline.size() > 0;
+        JsonObject vsOps = ModsInventoryDiff.diff(current, opsBaseline);
+        boolean changed = hadOpsBaseline && vsOps.has("has_changes") && vsOps.get("has_changes").getAsBoolean();
+        StateManager.saveLastModsOpsSnapshot(statePath, current);
+
+        if (maybeAutoModrinth && changed) {
+            maybeStartModrinthAutoScan(server);
+        }
+        return changed;
+    }
+
+    /** Starts a dedicated Modrinth scan when lookup + auto-scan-on-mod-changes are enabled. */
+    public static void maybeStartModrinthAutoScan(MinecraftServer server) {
+        try {
+            ReportConfig config = ModReportConfig.forServer(server);
+            if (!config.modrinthLookup() || !config.modrinthAutoScanOnModChanges() || config.disasterRecovery()) {
+                return;
+            }
+            WatchtowerRuntimeState runtime = WatchtowerBootstrap.getState();
+            if (!runtime.tryBeginModrinthScan()) {
+                WatchtowerMod.LOGGER.info("[Watchtower] Modrinth auto-scan skipped — scan already running");
+                return;
+            }
+            runtime.setModrinthScanStage("prepare", "Preparing Modrinth scan");
+            WatchtowerMod.LOGGER.info("[Watchtower] Mod jar changes detected — starting Modrinth auto-scan");
+            ModrinthScanRunner.continueAfterBegin(
+                    server,
+                    runtime,
+                    msg -> WatchtowerMod.LOGGER.info("[Watchtower] {}", msg)
+            );
+        } catch (Exception e) {
+            WatchtowerMod.LOGGER.warn("[Watchtower] Modrinth auto-scan failed to start: {}", e.toString());
+        }
     }
 
     public static void scanBackupsLive(MinecraftServer server) throws IOException {
@@ -126,9 +171,18 @@ public final class OpsScanService {
     public static JsonArray scanRunningMods(MinecraftServer server) throws IOException {
         List<RunningModsCollector.ModRow> rows = new ArrayList<>();
         for (WatchtowerSampler.ModSample m : WatchtowerSampler.collect(server).mods()) {
-            rows.add(new RunningModsCollector.ModRow(m.id(), m.version(), m.displayName()));
+            rows.add(new RunningModsCollector.ModRow(
+                    m.id(),
+                    m.version(),
+                    m.displayName(),
+                    m.jarFile(),
+                    m.nested(),
+                    m.parentJar(),
+                    m.nestedPath()));
         }
         JsonArray mods = RunningModsCollector.toJsonArray(rows);
+        // Fold nested ModList peers under parents before persisting.
+        ModNesting.foldRunningMods(mods, server.getServerDirectory().toAbsolutePath().toString());
         OpsCacheWriter.applyRunningMods(
                 WatchtowerPaths.opsCachePath(server),
                 WatchtowerPaths.statePath(server),

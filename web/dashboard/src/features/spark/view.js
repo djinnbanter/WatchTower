@@ -19,17 +19,44 @@ const SUBNAV_OPTIONS = [
 const SPARK_COMMANDS = `/spark profiler start
 /spark profiler stop`;
 
+/** Map parser grades (critical/degraded/healthy) onto HealthGrade A–F letters. */
+const VERDICT_TO_LETTER = {
+  critical: 'F',
+  degraded: 'D',
+  healthy: 'A',
+  ok: 'A',
+  good: 'B',
+  fair: 'C',
+  warn: 'C',
+  warning: 'C',
+};
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+function letterGrade(grade) {
+  if (!grade) return null;
+  const g = String(grade);
+  if (/^[A-F]$/i.test(g)) return g.toUpperCase();
+  return VERDICT_TO_LETTER[g.toLowerCase()] ?? null;
+}
+
 function gradeLabel(grade) {
-  const m = { A: 'Excellent', B: 'Good', C: 'Fair', D: 'Needs work', F: 'Critical' };
-  return m[grade] ?? grade ?? '—';
+  const raw = String(grade ?? '');
+  const letter = letterGrade(grade);
+  const byLetter = { A: 'Excellent', B: 'Good', C: 'Fair', D: 'Needs work', F: 'Critical' };
+  const byParser = {
+    critical: 'Critical',
+    degraded: 'Degraded',
+    healthy: 'Healthy',
+  };
+  return byParser[raw.toLowerCase()] ?? byLetter[letter] ?? (raw || '—');
 }
 
 function gradeTone(grade) {
-  if (!grade) return 'neutral';
-  if (grade === 'A' || grade === 'B') return 'ok';
-  if (grade === 'C') return 'warn';
+  const letter = letterGrade(grade);
+  if (!letter) return 'neutral';
+  if (letter === 'A' || letter === 'B') return 'ok';
+  if (letter === 'C') return 'warn';
   return 'danger';
 }
 
@@ -45,18 +72,85 @@ function pctTone(pct) {
   return 'ok';
 }
 
+function formatJvmHeap(heap) {
+  if (heap == null) return '—';
+  if (typeof heap === 'number') return formatMb(heap);
+  if (typeof heap === 'object') {
+    const used = heap.used_mb ?? heap.used;
+    const max = heap.max_mb ?? heap.max;
+    if (used != null && max != null) return `${formatMb(used)} / ${formatMb(max)}`;
+    if (used != null) return formatMb(used);
+  }
+  return String(heap);
+}
+
+function methodLabel(m) {
+  return m?.label ?? (m?.class && m?.method ? `${m.class}.${m.method}` : null) ?? m?.name ?? m?.method ?? String(m);
+}
+
+function hotMethods(profile) {
+  return profile?.deep?.top_methods ?? profile?.top_methods ?? profile?.hot_methods ?? [];
+}
+
 function narrativeText(item) {
   if (typeof item === 'string') return item;
-  return item?.text ?? item?.message ?? item?.name ?? JSON.stringify(item);
+  if (item?.title && item?.detail) return `${item.title} — ${item.detail}`;
+  return item?.title ?? item?.detail ?? item?.summary ?? item?.text ?? item?.message ?? item?.name ?? JSON.stringify(item);
 }
 
 function narrativeTone(item) {
   const s = String(item?.severity ?? item?.level ?? item?.tone ?? '').toLowerCase();
   if (['critical', 'error', 'danger', 'high'].includes(s)) return 'danger';
-  if (['warning', 'warn', 'medium'].includes(s)) return 'warn';
-  if (['ok', 'success', 'good', 'low'].includes(s)) return 'ok';
+  if (['warning', 'warn', 'medium', 'degraded'].includes(s)) return 'warn';
+  if (['ok', 'success', 'good', 'low', 'healthy'].includes(s)) return 'ok';
   if (['info'].includes(s)) return 'info';
   return 'info';
+}
+
+function flattenSystem(system) {
+  const items = [];
+  for (const [k, v] of Object.entries(system ?? {})) {
+    if (v != null && typeof v === 'object' && !Array.isArray(v)) {
+      for (const [sk, sv] of Object.entries(v)) {
+        items.push({
+          key: `${k.replace(/_/g, ' ')} · ${sk.replace(/_/g, ' ')}`,
+          value: typeof sv === 'number' ? String(Number(sv.toFixed?.(2) ?? sv)) : String(sv ?? '—'),
+        });
+      }
+    } else {
+      items.push({
+        key: k.replace(/_/g, ' '),
+        value: typeof v === 'number' ? String(Number(v.toFixed?.(2) ?? v)) : String(v ?? '—'),
+      });
+    }
+  }
+  return items;
+}
+
+function configEntries(configs) {
+  if (!configs) return [];
+  if (Array.isArray(configs)) {
+    return configs.map((c) => ({
+      key: c.key ?? c.name ?? String(c),
+      value: String(c.value ?? '—'),
+    }));
+  }
+  if (typeof configs === 'object') {
+    return Object.entries(configs).map(([key, value]) => {
+      let display = value;
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          display = typeof parsed === 'object' ? JSON.stringify(parsed, null, 0) : String(parsed);
+        } catch {
+          display = value;
+        }
+      }
+      const str = String(display ?? '—');
+      return { key, value: str.length > 160 ? `${str.slice(0, 157)}…` : str };
+    });
+  }
+  return [];
 }
 
 function NarrativeList({ items, badgeLabel = 'Note' }) {
@@ -84,8 +178,8 @@ function NarrativeList({ items, badgeLabel = 'Note' }) {
 
 function ProfileSelector({ profiles, activePath, loading }) {
   const options = profiles.map((p) => ({
-    value: p.path ?? p.file ?? p.id ?? String(p),
-    label: p.label ?? p.name ?? p.path ?? String(p),
+    value: p.source_path ?? p.path ?? p.file ?? p.id ?? String(p),
+    label: p.source_file ?? p.label ?? p.name ?? p.source_path ?? p.path ?? String(p),
     hint: p.captured_at ? new Date(p.captured_at).toLocaleString() : undefined,
   }));
 
@@ -109,12 +203,13 @@ function ProfileSelector({ profiles, activePath, loading }) {
 function SummaryView({ profile }) {
   const verdict = profile?.verdict ?? {};
   const ctx = profile?.context ?? {};
-  const heap = profile?.heap ?? {};
+  const heap = profile?.heap_summary ?? profile?.heap ?? null;
   const findings = profile?.key_findings ?? [];
   const recommendations = profile?.recommendations ?? [];
-  const hotMethods = profile?.hot_methods ?? [];
+  const methods = hotMethods(profile);
 
   const grade = verdict.grade ?? null;
+  const letter = letterGrade(grade);
   const tone = gradeTone(grade);
 
   const contextItems = [
@@ -122,19 +217,19 @@ function SummaryView({ profile }) {
     { key: 'MSPT P95 (1m)', value: ctx.mspt_p95_1m != null ? formatMspt(ctx.mspt_p95_1m) : '—' },
     { key: 'Players', value: ctx.players != null ? String(ctx.players) : '—' },
     { key: 'World entities', value: ctx.world_entities != null ? String(ctx.world_entities) : '—' },
-    { key: 'JVM heap', value: ctx.jvm_heap != null ? formatMb(ctx.jvm_heap) : '—' },
+    { key: 'JVM heap', value: formatJvmHeap(ctx.jvm_heap) },
   ];
 
   const topMethodColumns = [
-    { key: 'name', label: 'Method', width: '60%' },
+    { key: 'name', label: 'Method', width: '55%' },
     { key: 'pct', label: '%', align: 'right', width: '10%', render: (v) => fmtPct(v) },
-    { key: 'category', label: 'Category', width: '30%' },
+    { key: 'category', label: 'Mod / category', width: '35%' },
   ];
-  const topMethodRows = hotMethods.slice(0, 20).map((m, i) => ({
+  const topMethodRows = methods.slice(0, 20).map((m, i) => ({
     id: i,
-    name: m.name ?? m.method ?? String(m),
+    name: methodLabel(m),
     pct: m.pct ?? m.percent ?? null,
-    category: m.category ?? '—',
+    category: m.mod_id ?? m.category ?? '—',
   }));
 
   return html`
@@ -144,9 +239,9 @@ function SummaryView({ profile }) {
       ${grade || verdict.headline ? html`
         <${Card} tone=${tone} className="spark-verdict">
           <div class="spark-verdict__header">
-            ${grade ? html`
+            ${letter ? html`
               <${HealthGrade}
-                grade=${grade}
+                grade=${letter}
                 label=${gradeLabel(grade)}
                 size=${56}
               />
@@ -185,8 +280,8 @@ function SummaryView({ profile }) {
         </${Section}>
       ` : null}
 
-      <!-- Heap summary -->
-      ${heap && Object.keys(heap).length > 0 ? html`
+      <!-- Heap summary (only when .sparkheap present) -->
+      ${heap && typeof heap === 'object' && Object.keys(heap).length > 0 ? html`
         <${Section} title="Heap summary">
           <${KeyValue}
             columns=${2}
@@ -225,14 +320,14 @@ function ModsView({ profile }) {
         ? html`<${BarMeter} value=${v} max=${100} valueLabel=${fmtPct(v)} tone=${pctTone(v)} compact=${true} />`
         : '—',
     },
-    { key: 'category', label: 'Top category', width: '25%' },
+    { key: 'category', label: 'Top method', width: '25%' },
   ];
 
   const rows = modRollups.map((m, i) => ({
     id: m.mod_id ?? i,
-    name: m.name ?? m.mod_id ?? String(m),
+    name: m.display_name ?? m.name ?? m.mod_id ?? String(m),
     pct: m.pct ?? m.percent ?? null,
-    category: m.top_category ?? m.category ?? '—',
+    category: m.top_label ?? m.top_category ?? m.category ?? '—',
   }));
 
   if (rows.length === 0 && modHints.length === 0) {
@@ -257,7 +352,7 @@ function ModsView({ profile }) {
         </${Section}>
       ` : null}
       ${modHints.length > 0 ? html`
-        <${Section} title="Mod hints">
+        <${Section} title="Mod signals">
           <${NarrativeList} items=${modHints} badgeLabel="Hint" />
         </${Section}>
       ` : null}
@@ -270,9 +365,10 @@ function ModsView({ profile }) {
 function WorldView({ profile }) {
   const ctx = profile?.context ?? {};
   const dimRollups = profile?.dimension_rollups ?? profile?.world_rollups ?? [];
-  const topEntities = ctx.top_entities ?? ctx.entity_hotspots ?? [];
+  const topEntities = ctx.top_entities ?? [];
+  const hotspots = ctx.entity_hotspots ?? [];
 
-  const hasData = dimRollups.length > 0 || topEntities.length > 0 || ctx.world_entities != null;
+  const hasData = dimRollups.length > 0 || topEntities.length > 0 || hotspots.length > 0 || ctx.world_entities != null;
 
   if (!hasData) {
     return html`
@@ -291,7 +387,7 @@ function WorldView({ profile }) {
   ];
 
   const dimRows = dimRollups.map((d, i) => ({
-    id: d.name ?? i,
+    id: d.name ?? d.dimension ?? i,
     name: d.name ?? d.dimension ?? String(d),
     pct: d.pct ?? null,
     entities: d.entities ?? '—',
@@ -299,16 +395,27 @@ function WorldView({ profile }) {
   }));
 
   const entityColumns = [
-    { key: 'type', label: 'Entity type', width: '60%' },
-    { key: 'count', label: 'Count', align: 'right', width: '20%' },
-    { key: 'pct', label: '%', align: 'right', width: '20%', render: (v) => fmtPct(v) },
+    { key: 'type', label: 'Entity type', width: '70%' },
+    { key: 'count', label: 'Count', align: 'right', width: '30%' },
   ];
 
   const entityRows = (Array.isArray(topEntities) ? topEntities : []).slice(0, 15).map((e, i) => ({
-    id: e.type ?? i,
-    type: e.type ?? e.name ?? String(e),
+    id: e.id ?? e.type ?? i,
+    type: e.id ?? e.type ?? e.name ?? String(e),
     count: e.count ?? '—',
-    pct: e.pct ?? null,
+  }));
+
+  const hotspotColumns = [
+    { key: 'where', label: 'Chunk', width: '40%' },
+    { key: 'type', label: 'Top type', width: '40%' },
+    { key: 'count', label: 'Count', align: 'right', width: '20%' },
+  ];
+
+  const hotspotRows = (Array.isArray(hotspots) ? hotspots : []).slice(0, 15).map((h, i) => ({
+    id: i,
+    where: `${h.dimension ?? '?'} ${h.chunk_x ?? '?'},${h.chunk_z ?? '?'}`,
+    type: h.top_type ?? '—',
+    count: h.top_count ?? h.total_entities ?? '—',
   }));
 
   return html`
@@ -322,8 +429,13 @@ function WorldView({ profile }) {
         </${Section}>
       ` : null}
       ${entityRows.length > 0 ? html`
-        <${Section} title="Entity hotspots">
+        <${Section} title="Top entities">
           <${DataTable} columns=${entityColumns} rows=${entityRows} rowKey="id" density=${32} />
+        </${Section}>
+      ` : null}
+      ${hotspotRows.length > 0 ? html`
+        <${Section} title="Entity hotspots">
+          <${DataTable} columns=${hotspotColumns} rows=${hotspotRows} rowKey="id" density=${32} />
         </${Section}>
       ` : null}
     </div>
@@ -345,23 +457,37 @@ function WindowView({ profile }) {
     `;
   }
 
-  // Build uPlot-compatible data from timeline entries
   const tArr = timeline.map((p) => {
-    const ms = typeof p.t === 'number' ? p.t * 1000 : Date.parse(p.t);
+    const raw = p.start_at ?? p.t ?? p.end_at;
+    const ms = typeof raw === 'number' ? (raw > 1e12 ? raw : raw * 1000) : Date.parse(raw);
     return Math.floor((isNaN(ms) ? 0 : ms) / 1000);
   });
 
   const hasKey = (key) => timeline.some((p) => p[key] != null);
+  const hasMspt = hasKey('mspt') || hasKey('mspt_median');
+  const hasCpu = hasKey('cpu') || hasKey('cpu_process');
 
   const seriesConfig = [
     hasKey('tps') && { key: 'tps', label: 'TPS', unit: '', color: 'ch-tps' },
-    hasKey('mspt') && { key: 'mspt', label: 'MSPT', unit: ' ms', color: 'ch-mspt', scale: 'mspt' },
-    hasKey('cpu') && { key: 'cpu', label: 'CPU %', unit: '%', color: 'ch-cpu' },
+    hasMspt && { key: 'mspt', label: 'MSPT', unit: ' ms', color: 'ch-mspt', scale: 'mspt' },
+    hasCpu && { key: 'cpu', label: 'CPU %', unit: '%', color: 'ch-cpu' },
   ].filter(Boolean);
 
   const data = { t: tArr };
   for (const s of seriesConfig) {
-    data[s.key] = timeline.map((p) => p[s.key] ?? null);
+    if (s.key === 'mspt') {
+      data.mspt = timeline.map((p) => p.mspt ?? p.mspt_median ?? null);
+    } else if (s.key === 'cpu') {
+      data.cpu = timeline.map((p) => {
+        if (p.cpu != null) return p.cpu;
+        if (p.cpu_process == null) return null;
+        const v = Number(p.cpu_process);
+        // Spark stores process CPU as 0–1 fraction.
+        return v <= 1 ? v * 100 : v;
+      });
+    } else {
+      data[s.key] = timeline.map((p) => p[s.key] ?? null);
+    }
   }
 
   return html`
@@ -389,55 +515,58 @@ function WindowView({ profile }) {
 // ── Advanced view ──────────────────────────────────────────────────────────────
 
 function AdvancedView({ profile }) {
-  const system = profile?.system ?? {};
-  const threads = profile?.other_threads ?? [];
-  const serverConfigs = profile?.server_configurations ?? profile?.capture?.server_configurations ?? [];
-  const hotMethods = profile?.hot_methods ?? [];
+  const systemItems = flattenSystem(profile?.system ?? {});
+  const threads = profile?.threads_other ?? profile?.other_threads ?? [];
+  const threadsAnalyzed = profile?.threads_analyzed ?? [];
+  const serverConfigs = configEntries(profile?.server_configurations ?? profile?.capture?.server_configurations);
+  const methods = hotMethods(profile);
+  const platform = profile?.platform ?? {};
+  const captureMeta = [
+    platform.loader && { key: 'Loader', value: String(platform.loader) },
+    platform.minecraft && { key: 'Minecraft', value: String(platform.minecraft) },
+    platform.spark_version != null && { key: 'Spark version', value: String(platform.spark_version) },
+    profile?.spark_viewer_url && { key: 'Viewer', value: String(profile.spark_viewer_url) },
+    threadsAnalyzed.length > 0 && { key: 'Threads analyzed', value: threadsAnalyzed.join(', ') },
+  ].filter(Boolean);
 
   return html`
     <div class="spark-advanced">
 
+      ${captureMeta.length > 0 ? html`
+        <${Section} title="Capture details">
+          <${KeyValue} columns=${2} items=${captureMeta} />
+        </${Section}>
+      ` : null}
+
       <!-- System info -->
-      ${Object.keys(system).length > 0 ? html`
+      ${systemItems.length > 0 ? html`
         <${Section} title="System">
-          <${KeyValue}
-            columns=${2}
-            items=${Object.entries(system).slice(0, 12).map(([k, v]) => ({
-              key: k.replace(/_/g, ' '),
-              value: String(v ?? '—'),
-            }))}
-          />
+          <${KeyValue} columns=${2} items=${systemItems.slice(0, 16)} />
         </${Section}>
       ` : null}
 
       <!-- Server configuration -->
       ${serverConfigs.length > 0 ? html`
         <${Section} title="Server configuration">
-          <${KeyValue}
-            columns=${2}
-            items=${serverConfigs.slice(0, 16).map((c) => ({
-              key: c.key ?? c.name ?? String(c),
-              value: String(c.value ?? '—'),
-            }))}
-          />
+          <${KeyValue} columns=${2} items=${serverConfigs.slice(0, 16)} />
         </${Section}>
       ` : null}
 
       <!-- All hot methods -->
-      ${hotMethods.length > 0 ? html`
+      ${methods.length > 0 ? html`
         <${Section} title="All hot methods" collapsible=${true} defaultOpen=${false}>
           <${ScrollRegion} maxHeight="400px" label="Hot methods list">
             <${DataTable}
               columns=${[
                 { key: 'name', label: 'Method' },
                 { key: 'pct', label: '%', align: 'right', width: '80px', render: (v) => fmtPct(v) },
-                { key: 'category', label: 'Category', width: '140px' },
+                { key: 'category', label: 'Mod', width: '140px' },
               ]}
-              rows=${hotMethods.map((m, i) => ({
+              rows=${methods.map((m, i) => ({
                 id: i,
-                name: m.name ?? m.method ?? String(m),
+                name: methodLabel(m),
                 pct: m.pct ?? null,
-                category: m.category ?? '—',
+                category: m.mod_id ?? m.category ?? '—',
               }))}
               rowKey="id"
               density=${28}

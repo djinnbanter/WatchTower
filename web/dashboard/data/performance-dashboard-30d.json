@@ -1,7 +1,7 @@
 {
   "window": "30d",
   "hours": 720,
-  "generated_at": "2026-07-13T18:38:02.265Z",
+  "generated_at": "2026-07-16T17:11:20.821Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -88,35 +88,35 @@
   ],
   "outlier_minutes": [
     {
-      "ts": "2026-07-13T17:53:02.265Z",
+      "ts": "2026-07-16T16:26:20.821Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-07-09T15:38:02.265Z",
+      "ts": "2026-07-12T14:11:20.821Z",
       "players_max": 6,
       "mspt_avg": 48,
       "mem_used_gb_avg": 13.8,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-07-02T13:38:02.265Z",
+      "ts": "2026-07-05T12:11:20.821Z",
       "players_max": 0,
       "mspt_avg": 58,
       "mem_used_gb_avg": 14,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-06-26T16:38:02.265Z",
+      "ts": "2026-06-29T15:11:20.821Z",
       "players_max": 4,
       "mspt_avg": 52,
       "mem_used_gb_avg": 13.5,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-06-19T12:38:02.265Z",
+      "ts": "2026-06-22T11:11:20.821Z",
       "players_max": 7,
       "mspt_avg": 61,
       "mem_used_gb_avg": 14.4,
@@ -125,22 +125,22 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-07-13T17:08:02.265Z",
-      "ended_at": "2026-07-13T17:53:02.265Z",
+      "started_at": "2026-07-16T15:41:20.821Z",
+      "ended_at": "2026-07-16T16:26:20.821Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
     },
     {
-      "started_at": "2026-07-05T16:38:02.265Z",
-      "ended_at": "2026-07-05T17:00:02.265Z",
+      "started_at": "2026-07-08T15:11:20.821Z",
+      "ended_at": "2026-07-08T15:33:20.821Z",
       "duration_min": 22,
       "peak_mspt": 55,
       "narrative": "MSPT stayed above threshold for 22 min after players left (peak 55 ms)"
     },
     {
-      "started_at": "2026-06-22T15:38:02.265Z",
-      "ended_at": "2026-06-22T16:16:02.265Z",
+      "started_at": "2026-06-25T14:11:20.821Z",
+      "ended_at": "2026-06-25T14:49:20.821Z",
       "duration_min": 38,
       "peak_mspt": 64,
       "narrative": "MSPT stayed above threshold for 38 min after players left (peak 64 ms)"
@@ -1699,249 +1699,249 @@
   ],
   "daily_series": [
     {
-      "date": "2026-06-14",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 15.5,
-      "mspt_p95": 35.9,
-      "players_peak": 9,
-      "heap_avg": 6.16,
-      "cpu_avg": 66,
-      "low_tps_minutes": 5
-    },
-    {
-      "date": "2026-06-15",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 9.2,
-      "mspt_p95": 23.5,
-      "players_peak": 7,
-      "heap_avg": 5.96,
-      "cpu_avg": 53,
-      "low_tps_minutes": 4
-    },
-    {
-      "date": "2026-06-16",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 9.1,
-      "mspt_p95": 22.3,
-      "players_peak": 7,
-      "heap_avg": 6.2,
-      "cpu_avg": 56,
-      "low_tps_minutes": 3
-    },
-    {
       "date": "2026-06-17",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 8.9,
-      "mspt_p95": 21,
+      "mspt_avg": 9.4,
+      "mspt_p95": 24.8,
       "players_peak": 7,
-      "heap_avg": 6.16,
-      "cpu_avg": 55,
-      "low_tps_minutes": 2
+      "heap_avg": 6,
+      "cpu_avg": 54,
+      "low_tps_minutes": 5
     },
     {
       "date": "2026-06-18",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 8.8,
-      "mspt_p95": 19.8,
+      "mspt_avg": 9.2,
+      "mspt_p95": 23.5,
       "players_peak": 7,
-      "heap_avg": 6.12,
-      "cpu_avg": 54,
-      "low_tps_minutes": 1
+      "heap_avg": 5.96,
+      "cpu_avg": 53,
+      "low_tps_minutes": 4
     },
     {
       "date": "2026-06-19",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 11.3,
-      "mspt_p95": 26.7,
+      "mspt_avg": 11,
+      "mspt_p95": 24.2,
       "players_peak": 8,
-      "heap_avg": 6.16,
-      "cpu_avg": 56,
-      "low_tps_minutes": 0
+      "heap_avg": 6.28,
+      "cpu_avg": 59,
+      "low_tps_minutes": 3
     },
     {
       "date": "2026-06-20",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 17.2,
-      "mspt_p95": 36.5,
+      "mspt_avg": 16.9,
+      "mspt_p95": 34,
       "players_peak": 10,
-      "heap_avg": 6.28,
-      "cpu_avg": 72,
-      "low_tps_minutes": 5
+      "heap_avg": 6.4,
+      "cpu_avg": 71,
+      "low_tps_minutes": 2
     },
     {
       "date": "2026-06-21",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 15.2,
-      "mspt_p95": 33.4,
+      "mspt_avg": 14.9,
+      "mspt_p95": 30.9,
       "players_peak": 9,
-      "heap_avg": 6.16,
-      "cpu_avg": 67,
-      "low_tps_minutes": 4
+      "heap_avg": 6.28,
+      "cpu_avg": 66,
+      "low_tps_minutes": 1
     },
     {
       "date": "2026-06-22",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 8.9,
-      "mspt_p95": 21,
+      "mspt_avg": 9.4,
+      "mspt_p95": 24.8,
       "players_peak": 7,
-      "heap_avg": 5.96,
-      "cpu_avg": 54,
-      "low_tps_minutes": 3
+      "heap_avg": 6.08,
+      "cpu_avg": 53,
+      "low_tps_minutes": 0
     },
     {
       "date": "2026-06-23",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 8.8,
-      "mspt_p95": 19.8,
+      "mspt_avg": 9.2,
+      "mspt_p95": 23.5,
       "players_peak": 7,
-      "heap_avg": 6.2,
-      "cpu_avg": 53,
-      "low_tps_minutes": 2
+      "heap_avg": 6.04,
+      "cpu_avg": 56,
+      "low_tps_minutes": 5
     },
     {
       "date": "2026-06-24",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 9.4,
-      "mspt_p95": 24.8,
+      "mspt_avg": 9.1,
+      "mspt_p95": 22.3,
       "players_peak": 7,
-      "heap_avg": 6.16,
-      "cpu_avg": 56,
-      "low_tps_minutes": 1
+      "heap_avg": 6,
+      "cpu_avg": 55,
+      "low_tps_minutes": 4
     },
     {
       "date": "2026-06-25",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 9.2,
-      "mspt_p95": 23.5,
+      "mspt_avg": 8.9,
+      "mspt_p95": 21,
       "players_peak": 7,
-      "heap_avg": 6.12,
-      "cpu_avg": 55,
-      "low_tps_minutes": 0
+      "heap_avg": 5.96,
+      "cpu_avg": 54,
+      "low_tps_minutes": 3
     },
     {
       "date": "2026-06-26",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 11,
-      "mspt_p95": 24.2,
-      "players_peak": 8,
-      "heap_avg": 6.16,
-      "cpu_avg": 57,
-      "low_tps_minutes": 5
-    },
-    {
-      "date": "2026-06-27",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 16.9,
-      "mspt_p95": 34,
-      "players_peak": 10,
-      "heap_avg": 6.28,
-      "cpu_avg": 69,
-      "low_tps_minutes": 4
-    },
-    {
-      "date": "2026-06-28",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 14.9,
-      "mspt_p95": 30.9,
-      "players_peak": 9,
-      "heap_avg": 6.16,
-      "cpu_avg": 68,
-      "low_tps_minutes": 3
-    },
-    {
-      "date": "2026-06-29",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 9.4,
-      "mspt_p95": 24.8,
-      "players_peak": 7,
-      "heap_avg": 5.96,
-      "cpu_avg": 55,
-      "low_tps_minutes": 2
-    },
-    {
-      "date": "2026-06-30",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 9.2,
-      "mspt_p95": 23.5,
-      "players_peak": 7,
-      "heap_avg": 6.2,
-      "cpu_avg": 54,
-      "low_tps_minutes": 1
-    },
-    {
-      "date": "2026-07-01",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 9.1,
-      "mspt_p95": 22.3,
-      "players_peak": 7,
-      "heap_avg": 6.16,
-      "cpu_avg": 53,
-      "low_tps_minutes": 0
-    },
-    {
-      "date": "2026-07-02",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 8.9,
-      "mspt_p95": 21,
-      "players_peak": 7,
-      "heap_avg": 6.12,
-      "cpu_avg": 56,
-      "low_tps_minutes": 5
-    },
-    {
-      "date": "2026-07-03",
-      "minutes": 1440,
-      "tps_avg": 20,
       "mspt_avg": 10.7,
       "mspt_p95": 21.7,
       "players_peak": 8,
-      "heap_avg": 6.16,
-      "cpu_avg": 58,
-      "low_tps_minutes": 4
+      "heap_avg": 6.28,
+      "cpu_avg": 56,
+      "low_tps_minutes": 2
     },
     {
-      "date": "2026-07-04",
+      "date": "2026-06-27",
       "minutes": 1440,
       "tps_avg": 19.99,
       "mspt_avg": 17.3,
       "mspt_p95": 37.7,
       "players_peak": 10,
-      "heap_avg": 6.28,
-      "cpu_avg": 70,
-      "low_tps_minutes": 3
+      "heap_avg": 6.4,
+      "cpu_avg": 72,
+      "low_tps_minutes": 1
     },
     {
-      "date": "2026-07-05",
+      "date": "2026-06-28",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 15.3,
       "mspt_p95": 34.6,
       "players_peak": 9,
-      "heap_avg": 6.16,
-      "cpu_avg": 65,
+      "heap_avg": 6.28,
+      "cpu_avg": 67,
+      "low_tps_minutes": 0
+    },
+    {
+      "date": "2026-06-29",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 9.1,
+      "mspt_p95": 22.3,
+      "players_peak": 7,
+      "heap_avg": 6.08,
+      "cpu_avg": 54,
+      "low_tps_minutes": 5
+    },
+    {
+      "date": "2026-06-30",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 8.9,
+      "mspt_p95": 21,
+      "players_peak": 7,
+      "heap_avg": 6.04,
+      "cpu_avg": 53,
+      "low_tps_minutes": 4
+    },
+    {
+      "date": "2026-07-01",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 8.8,
+      "mspt_p95": 19.8,
+      "players_peak": 7,
+      "heap_avg": 6,
+      "cpu_avg": 56,
+      "low_tps_minutes": 3
+    },
+    {
+      "date": "2026-07-02",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 9.4,
+      "mspt_p95": 24.8,
+      "players_peak": 7,
+      "heap_avg": 5.96,
+      "cpu_avg": 55,
       "low_tps_minutes": 2
     },
     {
+      "date": "2026-07-03",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 11.1,
+      "mspt_p95": 25.4,
+      "players_peak": 8,
+      "heap_avg": 6.28,
+      "cpu_avg": 57,
+      "low_tps_minutes": 1
+    },
+    {
+      "date": "2026-07-04",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 17,
+      "mspt_p95": 35.2,
+      "players_peak": 10,
+      "heap_avg": 6.4,
+      "cpu_avg": 69,
+      "low_tps_minutes": 0
+    },
+    {
+      "date": "2026-07-05",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 15,
+      "mspt_p95": 32.1,
+      "players_peak": 9,
+      "heap_avg": 6.28,
+      "cpu_avg": 68,
+      "low_tps_minutes": 5
+    },
+    {
       "date": "2026-07-06",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 8.8,
+      "mspt_p95": 19.8,
+      "players_peak": 7,
+      "heap_avg": 6.08,
+      "cpu_avg": 55,
+      "low_tps_minutes": 4
+    },
+    {
+      "date": "2026-07-07",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 9.4,
+      "mspt_p95": 24.8,
+      "players_peak": 7,
+      "heap_avg": 6.04,
+      "cpu_avg": 54,
+      "low_tps_minutes": 3
+    },
+    {
+      "date": "2026-07-08",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 9.2,
+      "mspt_p95": 23.5,
+      "players_peak": 7,
+      "heap_avg": 6,
+      "cpu_avg": 53,
+      "low_tps_minutes": 2
+    },
+    {
+      "date": "2026-07-09",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.1,
@@ -1952,73 +1952,73 @@
       "low_tps_minutes": 1
     },
     {
-      "date": "2026-07-07",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 8.9,
-      "mspt_p95": 21,
-      "players_peak": 7,
-      "heap_avg": 6.2,
-      "cpu_avg": 55,
-      "low_tps_minutes": 0
-    },
-    {
-      "date": "2026-07-08",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 8.8,
-      "mspt_p95": 19.8,
-      "players_peak": 7,
-      "heap_avg": 6.16,
-      "cpu_avg": 54,
-      "low_tps_minutes": 5
-    },
-    {
-      "date": "2026-07-09",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 9.4,
-      "mspt_p95": 24.8,
-      "players_peak": 7,
-      "heap_avg": 6.12,
-      "cpu_avg": 53,
-      "low_tps_minutes": 4
-    },
-    {
       "date": "2026-07-10",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 11.1,
-      "mspt_p95": 25.4,
+      "mspt_avg": 10.8,
+      "mspt_p95": 22.9,
       "players_peak": 8,
-      "heap_avg": 6.16,
-      "cpu_avg": 59,
-      "low_tps_minutes": 3
+      "heap_avg": 6.28,
+      "cpu_avg": 58,
+      "low_tps_minutes": 0
     },
     {
       "date": "2026-07-11",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 17,
-      "mspt_p95": 35.2,
+      "mspt_avg": 16.7,
+      "mspt_p95": 32.7,
       "players_peak": 10,
-      "heap_avg": 6.28,
-      "cpu_avg": 71,
-      "low_tps_minutes": 2
+      "heap_avg": 6.4,
+      "cpu_avg": 70,
+      "low_tps_minutes": 5
     },
     {
       "date": "2026-07-12",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 15,
-      "mspt_p95": 32.1,
+      "mspt_avg": 15.5,
+      "mspt_p95": 35.9,
       "players_peak": 9,
-      "heap_avg": 6.16,
-      "cpu_avg": 66,
-      "low_tps_minutes": 1
+      "heap_avg": 6.28,
+      "cpu_avg": 65,
+      "low_tps_minutes": 4
     },
     {
       "date": "2026-07-13",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 9.2,
+      "mspt_p95": 23.5,
+      "players_peak": 7,
+      "heap_avg": 6.08,
+      "cpu_avg": 56,
+      "low_tps_minutes": 3
+    },
+    {
+      "date": "2026-07-14",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 9.1,
+      "mspt_p95": 22.3,
+      "players_peak": 7,
+      "heap_avg": 6.04,
+      "cpu_avg": 55,
+      "low_tps_minutes": 2
+    },
+    {
+      "date": "2026-07-15",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 8.9,
+      "mspt_p95": 21,
+      "players_peak": 7,
+      "heap_avg": 6,
+      "cpu_avg": 54,
+      "low_tps_minutes": 1
+    },
+    {
+      "date": "2026-07-16",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.8,
@@ -2087,49 +2087,49 @@
   ],
   "related_events": [
     {
-      "ts": "2026-07-13T18:30:02.265Z",
+      "ts": "2026-07-16T17:03:20.821Z",
       "type": "lag_incident",
       "title": "Lag spike — MSPT 118ms · TPS 8.4",
       "detail": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
       "tab_link": "issues"
     },
     {
-      "ts": "2026-07-13T18:30:02.265Z",
+      "ts": "2026-07-16T17:03:20.821Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-07-13T17:53:02.265Z",
+      "ts": "2026-07-16T16:26:20.821Z",
       "type": "performance_spike",
       "title": "Sticky lag after players left",
       "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-07-10T14:38:02.265Z",
+      "ts": "2026-07-13T13:11:20.821Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "TPS dipped to 17.2 during Saturday evening peak (6 players).",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-07-04T16:38:02.265Z",
+      "ts": "2026-07-07T15:11:20.821Z",
       "type": "performance_spike",
       "title": "Performance spike",
       "detail": "MSPT spike to 54 ms with 5 players online.",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-06-27T13:38:02.265Z",
+      "ts": "2026-06-30T12:11:20.821Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "Sustained low TPS for 8 minutes during mod farm load.",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-06-16T17:38:02.265Z",
+      "ts": "2026-06-19T16:11:20.821Z",
       "type": "performance_spike",
       "title": "Performance spike",
       "detail": "Evening peak MSPT reached 48 ms with 8 players.",

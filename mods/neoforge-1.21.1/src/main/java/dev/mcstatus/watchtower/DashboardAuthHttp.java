@@ -29,7 +29,8 @@ public final class DashboardAuthHttp {
         headers.set("X-Frame-Options", "DENY");
         headers.set("X-Content-Type-Options", "nosniff");
         headers.set("Content-Security-Policy",
-                "default-src 'self'; script-src 'self'; img-src 'self' data: https://crafthead.net; "
+                "default-src 'self'; script-src 'self'; "
+                        + "img-src 'self' data: https://crafthead.net https://cdn.modrinth.com; "
                         + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                         + "font-src 'self' https://fonts.gstatic.com");
     }

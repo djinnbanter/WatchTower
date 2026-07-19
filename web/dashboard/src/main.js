@@ -6,7 +6,6 @@
 // Signals Preact integration (side effect: patches Preact reconciler)
 import './lib/signals.js';
 
-import { render } from './lib/preact.js';
 import { html } from './lib/preact.js';
 
 import { migrateLegacy } from './state/persist.js';
@@ -14,12 +13,13 @@ import { initTheme } from './theme/theme.js';
 import { createSource, isEmbedded } from './api/index.js';
 import { initActions } from './state/actions.js';
 import { startClock } from './state/clock.js';
-import { auth, ui, setUi } from './state/stores.js';
+import { auth, ui, setUi, samples, live } from './state/stores.js';
 import { AppShell } from './app/shell.js';
 import { AuthGate } from './app/auth-gate.js';
 import { WizardView } from './features/wizard/view.js';
 import { BootScreen } from './app/boot.js';
 import { setBootSource, resumeAfterAuth, ensureRouter } from './app/session-boot.js';
+import { setRenderRoot, kickRender } from './app/kick-render.js';
 
 // Register all feature pages (side effects)
 import './app/pages.js';
@@ -59,7 +59,27 @@ async function boot() {
   const embedded = isEmbedded();
 
   const appEl = document.getElementById('app');
-  render(html`<${App} />`, appEl);
+  setRenderRoot(appEl, () => html`<${App} />`);
+  kickRender();
+
+  // Keep the root in sync when auth / boot / route signals change even if
+  // component auto-subscriptions stall.
+  const { effect } = await import('./lib/signals.js');
+  effect(() => {
+    void ui.value.bootPhase;
+    void ui.value.route?.tab;
+    void ui.value.route?.params;
+    void ui.value.railExpanded;
+    void ui.value.mobileNavOpen;
+    void ui.value.modal;
+    void ui.value.paletteOpen;
+    void ui.value.theme;
+    void ui.value.toasts;
+    void auth.value.gate;
+    void samples.value.at;
+    void live.value.at;
+    kickRender();
+  });
 
   if (embedded) {
     setUi({ bootPhase: 'auth' });

@@ -1,35 +1,38 @@
 import { html } from '../lib/preact.js';
 import { ui, setUi, live, overviewMeta } from '../state/stores.js';
-import { formatReportFreshness } from '../domain/labels.js';
+import { formatReportFreshnessShort } from '../domain/labels.js';
 import { Icon } from '../ui/icons.js';
 import { Kbd } from '../ui/primitives/kbd.js';
 import { InboxBell } from '../features/inbox/popover.js';
 
-function ConnectionDot({ down }) {
+function StatusChip({ tone, dot, children, title }) {
   return html`
     <span
-      class=${'ui-topbar__dot' + (down ? ' ui-topbar__dot--down' : ' ui-topbar__dot--up')}
-      title=${down ? 'Connection lost' : 'Connected'}
-      aria-label=${down ? 'Connection lost' : 'Connected'}
-    ></span>
+      class=${'ui-topbar__chip ui-topbar__chip--' + tone}
+      title=${title || null}
+    >
+      ${dot
+        ? html`<span class=${'ui-topbar__chip-dot ui-topbar__chip-dot--' + tone} aria-hidden="true"></span>`
+        : null}
+      <span class="ui-topbar__chip-text">${children}</span>
+    </span>
   `;
 }
 
 /**
- * Application top bar — hostname, freshness, connection, palette button,
- * inbox bell, and mobile-menu toggle.
+ * Application top bar — hostname, short status chips, Search (primary), inbox.
  */
 export function TopBar() {
-  const { connectionDown } = ui.value;
+  const { connectionDown, mobileNavOpen, paletteOpen } = ui.value;
   const envelope = live.value.envelope;
   const meta = overviewMeta.value.data;
 
   const hostname =
     envelope?.hostname ||
     meta?.hostname ||
-    'WatchTower';
+    'Unknown host';
 
-  const freshness = formatReportFreshness(meta);
+  const freshness = formatReportFreshnessShort(meta);
 
   function openPalette() {
     setUi({ paletteOpen: true });
@@ -41,43 +44,49 @@ export function TopBar() {
 
   return html`
     <header class="ui-topbar" role="banner" data-tour="topbar">
-      <!-- Mobile menu toggle (hidden on desktop) -->
       <button
+        type="button"
         class="ui-topbar__menu-btn"
         onClick=${toggleMobileNav}
-        aria-label="Toggle navigation"
-        aria-expanded=${ui.value.mobileNavOpen}
+        aria-label=${mobileNavOpen ? 'Close navigation' : 'Open navigation'}
+        aria-expanded=${mobileNavOpen}
+        aria-controls="rail-drawer"
       >
-        <${Icon} name="menu" size=${20} />
+        <${Icon} name=${mobileNavOpen ? 'x' : 'menu'} size=${20} />
       </button>
 
-      <!-- Hostname + freshness -->
       <div class="ui-topbar__identity">
         <span class="ui-topbar__hostname">${hostname}</span>
-        ${freshness
-          ? html`<span class="ui-topbar__freshness">${freshness}</span>`
-          : null}
+        <div class="ui-topbar__chips">
+          <${StatusChip}
+            tone=${connectionDown ? 'muted' : 'ok'}
+            dot=${true}
+            title=${connectionDown ? 'Connection lost' : 'Connected'}
+          >${connectionDown ? 'Offline' : 'Live'}</${StatusChip}>
+          <${StatusChip}
+            tone=${freshness.tone}
+            title=${freshness.title || null}
+          >${freshness.label}</${StatusChip}>
+        </div>
       </div>
 
       <div class="ui-topbar__spacer" aria-hidden="true"></div>
 
-      <!-- Connection status -->
-      <${ConnectionDot} down=${connectionDown} />
-
-      <!-- Inbox bell -->
-      <${InboxBell} />
-
-      <!-- Palette trigger -->
       <button
-        class="ui-topbar__palette-btn"
+        type="button"
+        class=${'ui-topbar__palette-btn' + (paletteOpen ? ' ui-topbar__palette-btn--open' : '')}
         onClick=${openPalette}
         aria-label="Open command palette (Ctrl K)"
+        aria-pressed=${paletteOpen}
         title="Command palette"
+        data-tour="palette-trigger"
       >
         <${Icon} name="search" size=${16} />
         <span class="ui-topbar__palette-hint">Search</span>
         <${Kbd}>Ctrl K</${Kbd}>
       </button>
+
+      <${InboxBell} />
     </header>
   `;
 }

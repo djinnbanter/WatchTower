@@ -1,7 +1,7 @@
 {
   "window": "7d",
   "hours": 168,
-  "generated_at": "2026-07-13T18:38:02.265Z",
+  "generated_at": "2026-07-16T17:11:20.821Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -88,7 +88,7 @@
   ],
   "outlier_minutes": [
     {
-      "ts": "2026-07-13T17:53:02.265Z",
+      "ts": "2026-07-16T16:26:20.821Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
@@ -97,8 +97,8 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-07-13T17:08:02.265Z",
-      "ended_at": "2026-07-13T17:53:02.265Z",
+      "started_at": "2026-07-16T15:41:20.821Z",
+      "ended_at": "2026-07-16T16:26:20.821Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
@@ -1657,73 +1657,73 @@
   ],
   "daily_series": [
     {
-      "date": "2026-07-07",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 8.9,
-      "mspt_p95": 21,
-      "players_peak": 7,
-      "heap_avg": 6.2,
-      "cpu_avg": 55,
-      "low_tps_minutes": 0
-    },
-    {
-      "date": "2026-07-08",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 8.8,
-      "mspt_p95": 19.8,
-      "players_peak": 7,
-      "heap_avg": 6.16,
-      "cpu_avg": 54,
-      "low_tps_minutes": 5
-    },
-    {
-      "date": "2026-07-09",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 9.4,
-      "mspt_p95": 24.8,
-      "players_peak": 7,
-      "heap_avg": 6.12,
-      "cpu_avg": 53,
-      "low_tps_minutes": 4
-    },
-    {
       "date": "2026-07-10",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 11.1,
-      "mspt_p95": 25.4,
+      "mspt_avg": 10.8,
+      "mspt_p95": 22.9,
       "players_peak": 8,
-      "heap_avg": 6.16,
-      "cpu_avg": 59,
-      "low_tps_minutes": 3
+      "heap_avg": 6.28,
+      "cpu_avg": 58,
+      "low_tps_minutes": 0
     },
     {
       "date": "2026-07-11",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 17,
-      "mspt_p95": 35.2,
+      "mspt_avg": 16.7,
+      "mspt_p95": 32.7,
       "players_peak": 10,
-      "heap_avg": 6.28,
-      "cpu_avg": 71,
-      "low_tps_minutes": 2
+      "heap_avg": 6.4,
+      "cpu_avg": 70,
+      "low_tps_minutes": 5
     },
     {
       "date": "2026-07-12",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 15,
-      "mspt_p95": 32.1,
+      "mspt_avg": 15.5,
+      "mspt_p95": 35.9,
       "players_peak": 9,
-      "heap_avg": 6.16,
-      "cpu_avg": 66,
-      "low_tps_minutes": 1
+      "heap_avg": 6.28,
+      "cpu_avg": 65,
+      "low_tps_minutes": 4
     },
     {
       "date": "2026-07-13",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 9.2,
+      "mspt_p95": 23.5,
+      "players_peak": 7,
+      "heap_avg": 6.08,
+      "cpu_avg": 56,
+      "low_tps_minutes": 3
+    },
+    {
+      "date": "2026-07-14",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 9.1,
+      "mspt_p95": 22.3,
+      "players_peak": 7,
+      "heap_avg": 6.04,
+      "cpu_avg": 55,
+      "low_tps_minutes": 2
+    },
+    {
+      "date": "2026-07-15",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 8.9,
+      "mspt_p95": 21,
+      "players_peak": 7,
+      "heap_avg": 6,
+      "cpu_avg": 54,
+      "low_tps_minutes": 1
+    },
+    {
+      "date": "2026-07-16",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.8,
@@ -1780,21 +1780,21 @@
   ],
   "related_events": [
     {
-      "ts": "2026-07-13T18:30:02.265Z",
+      "ts": "2026-07-16T17:03:20.821Z",
       "type": "lag_incident",
       "title": "Lag spike — MSPT 118ms · TPS 8.4",
       "detail": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
       "tab_link": "issues"
     },
     {
-      "ts": "2026-07-13T18:30:02.265Z",
+      "ts": "2026-07-16T17:03:20.821Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-07-13T17:53:02.265Z",
+      "ts": "2026-07-16T16:26:20.821Z",
       "type": "performance_spike",
       "title": "Sticky lag after players left",
       "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",

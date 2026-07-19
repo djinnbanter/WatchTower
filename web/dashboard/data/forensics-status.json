@@ -1,7 +1,7 @@
 {
   "index": {
     "state": "ready",
-    "built_at": "2026-07-13T17:08:02.265Z",
+    "built_at": "2026-07-16T15:41:20.821Z",
     "jar_count": 48,
     "entry_count": 18240,
     "stale": false
@@ -12,7 +12,7 @@
     "index_on_report": false
   },
   "last_report_scan": {
-    "at": "2026-07-13T16:38:02.265Z",
+    "at": "2026-07-16T15:11:20.821Z",
     "corrupt_jars": 1,
     "config_issues": 1,
     "stderr_merged": true

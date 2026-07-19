@@ -93,6 +93,15 @@ public final class SnapshotWriter {
         }
         root.addProperty("mod_count", sample.modCount());
 
+        try {
+            String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
+            if (mcVersion != null && !mcVersion.isBlank()) {
+                root.addProperty("minecraft_version", mcVersion);
+            }
+        } catch (Exception ignored) {
+            // older mappings / unexpected WorldVersion shape — Modrinth scan has other fallbacks
+        }
+
         if (!sample.mods().isEmpty()) {
             JsonArray mods = new JsonArray();
             for (WatchtowerSampler.ModSample m : sample.mods()) {
@@ -101,6 +110,18 @@ public final class SnapshotWriter {
                 mod.addProperty("version", m.version());
                 if (m.displayName() != null && !m.displayName().isBlank()) {
                     mod.addProperty("display_name", m.displayName());
+                }
+                if (m.jarFile() != null && !m.jarFile().isBlank()) {
+                    mod.addProperty("jar_file", m.jarFile());
+                }
+                if (m.nested()) {
+                    mod.addProperty("nested", true);
+                    if (m.parentJar() != null && !m.parentJar().isBlank()) {
+                        mod.addProperty("parent_jar", m.parentJar());
+                    }
+                    if (m.nestedPath() != null && !m.nestedPath().isBlank()) {
+                        mod.addProperty("nested_path", m.nestedPath());
+                    }
                 }
                 mods.add(mod);
             }

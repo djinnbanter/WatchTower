@@ -125,9 +125,17 @@ public final class StartupProfileScanner {
             StartupWarnings.countLine(line, warnCounts);
             StartupPhaseMarkers.PhaseDef phase = StartupPhaseMarkers.match(line);
             if (phase != null) {
-                ZonedDateTime ts = CollectSupport.parseLogTs(line);
-                double epoch = ts != null ? CollectSupport.epochSeconds(ts) : i;
-                if (phaseHits.isEmpty() || !phaseHits.get(phaseHits.size() - 1).id.equals(phase.id())) {
+                // First hit only — re-matches (e.g. modloading-worker) must not re-open a phase.
+                boolean alreadySeen = false;
+                for (PhaseHit existing : phaseHits) {
+                    if (existing.id.equals(phase.id())) {
+                        alreadySeen = true;
+                        break;
+                    }
+                }
+                if (!alreadySeen) {
+                    ZonedDateTime ts = CollectSupport.parseLogTs(line);
+                    Double epoch = ts != null ? CollectSupport.epochSeconds(ts) : null;
                     phaseHits.add(new PhaseHit(phase.id(), phase.label(), epoch, i));
                 }
             }
@@ -148,30 +156,75 @@ public final class StartupProfileScanner {
             out.addProperty("done_at", doneAt);
         }
 
+        Double doneEpoch = null;
+        if (doneIndex >= 0) {
+            ZonedDateTime doneTs = CollectSupport.parseLogTs(lines.get(doneIndex));
+            if (doneTs != null) {
+                doneEpoch = CollectSupport.epochSeconds(doneTs);
+            }
+        }
+
+        // Durations only when both ends have real timestamps — never invent epochs from line index.
+        Double[] knownSec = new Double[phaseHits.size()];
+        int unknownCount = 0;
+        double knownSum = 0;
+        for (int i = 0; i < phaseHits.size(); i++) {
+            PhaseHit hit = phaseHits.get(i);
+            Double endEpoch;
+            if (i + 1 < phaseHits.size()) {
+                endEpoch = phaseHits.get(i + 1).epoch;
+            } else {
+                endEpoch = doneEpoch;
+            }
+            if (hit.epoch != null && endEpoch != null) {
+                double sec = Math.max(0, endEpoch - hit.epoch);
+                if (totalSec != null) {
+                    sec = Math.min(sec, totalSec);
+                }
+                knownSec[i] = Math.round(sec * 10.0) / 10.0;
+                knownSum += knownSec[i];
+            } else {
+                knownSec[i] = null;
+                unknownCount++;
+            }
+        }
+
+        // Remaining-budget allocation for phases without parseable timestamps.
+        if (totalSec != null && unknownCount > 0) {
+            double remaining = Math.max(0, totalSec - knownSum);
+            double share = Math.round((remaining / unknownCount) * 10.0) / 10.0;
+            for (int i = 0; i < knownSec.length; i++) {
+                if (knownSec[i] == null) {
+                    knownSec[i] = share;
+                }
+            }
+        }
+
         JsonArray phases = new JsonArray();
         List<JsonObject> phaseRows = new ArrayList<>();
         for (int i = 0; i < phaseHits.size(); i++) {
             PhaseHit hit = phaseHits.get(i);
-            double endEpoch;
-            if (i + 1 < phaseHits.size()) {
-                endEpoch = phaseHits.get(i + 1).epoch;
-            } else if (doneIndex >= 0) {
-                ZonedDateTime doneTs = CollectSupport.parseLogTs(lines.get(doneIndex));
-                endEpoch = doneTs != null ? CollectSupport.epochSeconds(doneTs) : hit.epoch;
-            } else {
-                endEpoch = hit.epoch;
-            }
-            double sec = Math.max(0, endEpoch - hit.epoch);
             JsonObject row = new JsonObject();
             row.addProperty("id", hit.id);
             row.addProperty("label", hit.label);
-            row.addProperty("sec", Math.round(sec * 10.0) / 10.0);
+            if (knownSec[i] != null) {
+                double sec = knownSec[i];
+                if (totalSec != null) {
+                    sec = Math.min(sec, totalSec);
+                }
+                row.addProperty("sec", Math.round(sec * 10.0) / 10.0);
+            }
             phases.add(row);
             phaseRows.add(row);
         }
         out.add("phases", phases);
 
-        List<JsonObject> slowest = new ArrayList<>(phaseRows);
+        List<JsonObject> slowest = new ArrayList<>();
+        for (JsonObject row : phaseRows) {
+            if (row.has("sec") && !row.get("sec").isJsonNull()) {
+                slowest.add(row);
+            }
+        }
         slowest.sort(Comparator.comparingDouble((JsonObject o) -> o.get("sec").getAsDouble()).reversed());
         JsonArray slowestArr = new JsonArray();
         int slowLimit = Math.min(3, slowest.size());
@@ -253,7 +306,7 @@ public final class StartupProfileScanner {
         return out;
     }
 
-    private record PhaseHit(String id, String label, double epoch, int lineIndex) {
+    private record PhaseHit(String id, String label, Double epoch, int lineIndex) {
     }
 
     private static final class BootError {

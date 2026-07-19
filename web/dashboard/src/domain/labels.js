@@ -70,6 +70,34 @@ export function formatReportFreshness(meta) {
 }
 
 /**
+ * Short freshness chip for the topbar (full remediation stays on the stale banner).
+ * @param {{ stale?: boolean, age_hours?: number, last_report_at?: string } | null | undefined} meta
+ * @returns {{ label: string, tone: 'ok'|'warn'|'neutral', title?: string }}
+ */
+export function formatReportFreshnessShort(meta) {
+  if (!meta) {
+    return { label: 'No report', tone: 'neutral', title: 'No report on disk yet' };
+  }
+  if (meta.stale) {
+    const age = meta.age_hours != null ? `${meta.age_hours}h` : '24h+';
+    return {
+      label: `Stale · ${age}`,
+      tone: 'warn',
+      title: formatReportFreshness(meta),
+    };
+  }
+  if (meta.last_report_at) {
+    const age = meta.age_hours != null ? `${meta.age_hours}h` : 'recent';
+    return {
+      label: `Fresh · ${age}`,
+      tone: 'ok',
+      title: formatReportFreshness(meta),
+    };
+  }
+  return { label: 'No report', tone: 'neutral', title: 'No report on disk yet' };
+}
+
+/**
  * Source layer display labels.
  * @param {'live'|'scan'|'report'|'unknown'} layer
  */

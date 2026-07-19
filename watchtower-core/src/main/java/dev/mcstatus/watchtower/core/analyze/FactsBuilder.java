@@ -1119,24 +1119,9 @@ public final class FactsBuilder {
         if (optional == null || meta == null) {
             return;
         }
-        boolean lookup = bool(meta, "modrinth_lookup", false);
-        boolean onReport = bool(meta, "modrinth_lookup_on_report", true);
-        boolean dr = bool(meta, "disaster_recovery", false)
-                || "dr".equalsIgnoreCase(str(meta, "report_mode"));
-        if (!lookup || !onReport || dr) {
-            return;
-        }
-        String serverDir = str(meta, "server_dir");
-        int rate = integer(meta, "modrinth_rate_limit", 4);
-        String loader = str(meta, "loader");
-        ReportConfig cfg = ReportConfig.builder()
-                .modrinthLookup(true)
-                .modrinthLookupOnReport(true)
-                .modrinthRateLimit(rate)
-                .loader(loader != null ? loader : "neoforge")
-                .serverDir(serverDir != null ? serverDir : "")
-                .build();
-        ModrinthLookupService.enrichCrashSuspects(optional, cfg, serverDir);
+        // Reports must not initiate Modrinth I/O. This only rebuilds the summary from fields
+        // already stored on optional.mods by the dedicated scan/cache path.
+        ModrinthLookupService.enrichCrashSuspects(optional, null, null);
     }
 
     private static void enrichCrashModLinks(JsonObject optional, JsonArray modRecs) {

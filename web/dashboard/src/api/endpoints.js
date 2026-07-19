@@ -158,6 +158,14 @@ export async function reportsRun(payload) {
   return apiFetch('/api/reports/run', { method: 'POST', body: payload });
 }
 
+export async function modrinthStatus() {
+  return apiFetch('/api/modrinth/status');
+}
+
+export async function modrinthScanStart() {
+  return apiFetch('/api/modrinth/scan', { method: 'POST', body: {} });
+}
+
 // ── Ops cache ─────────────────────────────────────────────────────────────────
 
 export async function opsCache() {

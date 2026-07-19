@@ -338,7 +338,7 @@ export function PageView() {
   const statusTone = isDown ? 'danger' : isPaused ? 'neutral' : 'ok';
 
   return html`
-    <${Page} title="Live" subtitle="Real-time server metrics">
+    <${Page} title="Live" subtitle="Real-time server metrics" tour="live">
       <div class="ui-page__stack" data-tour="live">
 
       <div class=${`lv-toolbar lv-toolbar--${statusTone}`}>
@@ -412,6 +412,7 @@ export function PageView() {
         <div class="lv-charts">
           <${ChartFrame} title="TPS" layer="live" caption=${tpsPack?.caption}>
             <${TimeSeries}
+              reveal=${false}
               height=${156}
               data=${tpsPack?.data}
               series=${SERIES_TPS}
@@ -423,6 +424,7 @@ export function PageView() {
 
           <${ChartFrame} title="MSPT" layer="live" caption=${msptPack?.caption}>
             <${TimeSeries}
+              reveal=${false}
               height=${156}
               data=${msptPack?.data}
               series=${msptSeries}
@@ -434,6 +436,7 @@ export function PageView() {
 
           <${ChartFrame} title="Java Heap" layer="live" caption=${heapPack?.caption}>
             <${TimeSeries}
+              reveal=${false}
               height=${156}
               data=${heapPack?.data}
               series=${heapSeries}
@@ -444,6 +447,7 @@ export function PageView() {
 
           <${ChartFrame} title="Players online" layer="live" caption=${playersPack?.caption}>
             <${TimeSeries}
+              reveal=${false}
               height=${156}
               data=${playersPack?.data}
               series=${playersSeries}
@@ -463,6 +467,7 @@ export function PageView() {
         <div class="lv-charts">
           <${ChartFrame} title="Host CPU" layer="live" caption=${cpuPack?.caption}>
             <${TimeSeries}
+              reveal=${false}
               height=${156}
               data=${cpuPack?.data}
               series=${SERIES_CPU}
@@ -473,6 +478,7 @@ export function PageView() {
 
           <${ChartFrame} title="RAM free" layer="live" caption=${ramPack?.caption}>
             <${TimeSeries}
+              reveal=${false}
               height=${156}
               data=${ramPack?.data}
               series=${SERIES_RAM}
@@ -484,6 +490,7 @@ export function PageView() {
           ${diskPack?.data ? html`
             <${ChartFrame} title="Disk used" layer="live" caption=${diskPack.caption}>
               <${TimeSeries}
+              reveal=${false}
                 height=${156}
                 data=${diskPack.data}
                 series=${SERIES_DISK}
@@ -496,6 +503,7 @@ export function PageView() {
           ${diskReadPack?.data ? html`
             <${ChartFrame} title="Disk read" layer="live" caption=${diskReadPack.caption}>
               <${TimeSeries}
+              reveal=${false}
                 height=${156}
                 data=${diskReadPack.data}
                 series=${SERIES_DISK_READ}
@@ -508,6 +516,7 @@ export function PageView() {
           ${diskWritePack?.data ? html`
             <${ChartFrame} title="Disk write" layer="live" caption=${diskWritePack.caption}>
               <${TimeSeries}
+              reveal=${false}
                 height=${156}
                 data=${diskWritePack.data}
                 series=${SERIES_DISK_WRITE}
@@ -547,6 +556,7 @@ export function PageView() {
             ${rxPack?.data ? html`
               <${ChartFrame} title="Receive" layer="live" caption=${rxPack.caption}>
                 <${TimeSeries}
+              reveal=${false}
                   height=${156}
                   data=${rxPack.data}
                   series=${SERIES_RX}
@@ -558,6 +568,7 @@ export function PageView() {
             ${txPack?.data ? html`
               <${ChartFrame} title="Send" layer="live" caption=${txPack.caption}>
                 <${TimeSeries}
+              reveal=${false}
                   height=${156}
                   data=${txPack.data}
                   series=${SERIES_TX}
@@ -594,6 +605,7 @@ export function PageView() {
                 <div class="lv-thermal-card__chart">
                   ${thermalPkgPack?.data ? html`
                     <${TimeSeries}
+              reveal=${false}
                       height=${THERMAL_CHART_H}
                       data=${thermalPkgPack.data}
                       series=${SERIES_THERMAL_PKG}
@@ -622,6 +634,7 @@ export function PageView() {
                 <div class="lv-thermal-card__chart">
                   ${thermalAmbPack?.data ? html`
                     <${TimeSeries}
+              reveal=${false}
                       height=${THERMAL_CHART_H}
                       data=${thermalAmbPack.data}
                       series=${ambientSeries}
