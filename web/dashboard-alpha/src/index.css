@@ -163,6 +163,11 @@ html[data-theme="black"] {
   scrollbar-gutter: stable;
 }
 
+/* README screenshot studio — hide preview chrome while capturing */
+html[data-wt-capture='1'] .wt-capture-hide {
+  display: none !important;
+}
+
 html,
 body,
 #root {

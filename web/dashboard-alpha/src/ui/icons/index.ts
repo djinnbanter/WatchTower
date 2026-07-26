@@ -73,6 +73,7 @@ import {
 import {
   AlertOctagon as LucideAlertOctagon,
   Bug as LucideBug,
+  Camera as LucideCamera,
   Circle as LucideCircle,
   ExternalLink as LucideExternalLink,
   FileWarning as LucideFileWarning,
@@ -167,6 +168,7 @@ export const Zap = a(ZapIcon);
 
 export const AlertOctagon = LucideAlertOctagon;
 export const Bug = LucideBug;
+export const Camera = LucideCamera;
 export const Circle = LucideCircle;
 export const ExternalLink = LucideExternalLink;
 export const FileWarning = LucideFileWarning;
@@ -187,6 +189,7 @@ const PAGE_ICON_MAP: Record<string, WtIcon> = {
   bug: Bug,
   database: Database,
   'file-text': FileText,
+  camera: Camera,
   'flask-conical': FlaskConical,
   'layout-dashboard': LayoutDashboard,
   'life-buoy': LifeBuoy,

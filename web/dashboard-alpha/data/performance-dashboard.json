@@ -1,7 +1,7 @@
 {
   "window": "7d",
   "hours": 168,
-  "generated_at": "2026-07-26T12:08:28.573Z",
+  "generated_at": "2026-07-26T18:45:38.529Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -90,7 +90,7 @@
   "players_band_scale_source": "observed_peak",
   "outlier_minutes": [
     {
-      "ts": "2026-07-26T11:23:28.573Z",
+      "ts": "2026-07-26T18:00:38.529Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
@@ -99,8 +99,8 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-07-26T10:38:28.573Z",
-      "ended_at": "2026-07-26T11:23:28.573Z",
+      "started_at": "2026-07-26T17:15:38.529Z",
+      "ended_at": "2026-07-26T18:00:38.529Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
@@ -1782,21 +1782,21 @@
   ],
   "related_events": [
     {
-      "ts": "2026-07-26T12:00:28.573Z",
+      "ts": "2026-07-26T18:37:38.529Z",
       "type": "lag_incident",
       "title": "Lag spike — MSPT 118ms · TPS 8.4",
       "detail": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
       "tab_link": "issues"
     },
     {
-      "ts": "2026-07-26T12:00:28.573Z",
+      "ts": "2026-07-26T18:37:38.529Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-07-26T11:23:28.573Z",
+      "ts": "2026-07-26T18:00:38.529Z",
       "type": "performance_spike",
       "title": "Sticky lag after players left",
       "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
@@ -1846,7 +1846,7 @@
     "can_set_baseline": true,
     "threshold_pct": 10,
     "has_baseline": true,
-    "baseline_captured_at": "2026-07-16T12:08:29.207Z",
+    "baseline_captured_at": "2026-07-16T18:45:39.164Z",
     "baseline_source": "auto",
     "label": "Slower than your baseline",
     "detail": "MSPT p95 is 18% higher than your saved baseline over the last 7 days.",

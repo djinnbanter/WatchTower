@@ -16,6 +16,7 @@ import { hrefFor, navigate, type RouteState } from '@/app/router';
 import { isFixturePreview } from '@/app/runtime';
 import { useTheme, type Theme } from '@/app/theme';
 import { asRecord, cn, get, str } from '@/lib/utils';
+import { isCaptureMode } from '@/app/capture-mode';
 import { SupportBuilderModal } from '@/features/support';
 import '@/features/register';
 
@@ -35,6 +36,7 @@ export function AppShell({ route, page, children }: Props) {
   const { theme, toggleTheme } = useTheme();
   const [navOpen, setNavOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [capture, setCapture] = useState(isCaptureMode);
   const pages = getPages();
   const themeCycle = THEME_CYCLE[theme];
   const ThemeIcon = themeCycle.icon;
@@ -55,6 +57,12 @@ export function AppShell({ route, page, children }: Props) {
     const onOpenSupport = () => setSupportOpen(true);
     window.addEventListener('wt:open-support', onOpenSupport);
     return () => window.removeEventListener('wt:open-support', onOpenSupport);
+  }, []);
+
+  useEffect(() => {
+    const onCapture = () => setCapture(isCaptureMode());
+    window.addEventListener('wt:capture-change', onCapture);
+    return () => window.removeEventListener('wt:capture-change', onCapture);
   }, []);
 
   const rail = (
@@ -175,7 +183,7 @@ export function AppShell({ route, page, children }: Props) {
           </button>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium">{hostname}</div>
-            <div className="truncate text-xs text-wt-text-low">
+            <div className={cn('truncate text-xs text-wt-text-low', capture && 'wt-capture-hide')}>
               {isFixturePreview() ? 'Fixture preview' : 'Server ops dashboard'}
             </div>
           </div>

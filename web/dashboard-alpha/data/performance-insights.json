@@ -1,7 +1,7 @@
 {
   "window": "7d",
   "hours": 168,
-  "generated_at": "2026-07-26T12:08:28.573Z",
+  "generated_at": "2026-07-26T18:45:38.529Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -90,7 +90,7 @@
   "players_band_scale_source": "observed_peak",
   "outlier_minutes": [
     {
-      "ts": "2026-07-26T11:23:28.573Z",
+      "ts": "2026-07-26T18:00:38.529Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
@@ -99,8 +99,8 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-07-26T10:38:28.573Z",
-      "ended_at": "2026-07-26T11:23:28.573Z",
+      "started_at": "2026-07-26T17:15:38.529Z",
+      "ended_at": "2026-07-26T18:00:38.529Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"

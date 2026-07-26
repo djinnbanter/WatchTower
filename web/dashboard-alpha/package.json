@@ -37,6 +37,7 @@
     "d3-array": "^3.2.4",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.2.0",
+    "html-to-image": "^1.11.13",
     "lucide-animated": "^1.0.5",
     "lucide-react": "^0.525.0",
     "motion": "^12.42.2",

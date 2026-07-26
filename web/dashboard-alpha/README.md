@@ -4,6 +4,7 @@ Production dashboard shipped in the mod JAR via NeoForge `syncDashboard`.
 
 - **Stack:** React + Vite + Bklit charts (MIT)
 - **Fixture preview:** `npm run preview` → http://127.0.0.1:8081/
+- **README screenshots:** in fixture preview, open **System → Visuals** (`?tab=visuals`) — live page previews + **Save all as PNGs**. Not included in production JAR builds.
 - **Live soak:** `WATCHTOWER_ORIGIN=http://127.0.0.1:8787 npm run preview:live`
 - **Build:** `npm run build` → `dist/` (copied into the JAR)
 

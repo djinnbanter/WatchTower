@@ -2,22 +2,22 @@
   "reports": [
     {
       "id": "latest",
-      "label": "2026-07-26 10:08:28",
+      "label": "2026-07-26 16:45:38",
       "facts": "facts.json",
       "brief": "brief.txt",
       "engine": "4.0.6",
-      "generated": "2026-07-26T10:08:28.573Z",
-      "window_start": "2026-07-25T10:08:28.573Z",
+      "generated": "2026-07-26T16:45:38.529Z",
+      "window_start": "2026-07-25T16:45:38.529Z",
       "lookback_hours": 24
     },
     {
       "id": "prev",
-      "label": "2026-07-25 10:08:28",
+      "label": "2026-07-25 16:45:38",
       "facts": "facts-prev.json",
       "brief": "brief.txt",
       "engine": "4.0.5",
-      "generated": "2026-07-25T10:08:28.573Z",
-      "window_start": "2026-07-24T10:08:28.573Z",
+      "generated": "2026-07-25T16:45:38.529Z",
+      "window_start": "2026-07-24T16:45:38.529Z",
       "lookback_hours": 24
     }
   ]

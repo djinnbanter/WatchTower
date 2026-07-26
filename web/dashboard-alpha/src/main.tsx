@@ -17,10 +17,22 @@ const queryClient = new QueryClient({
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root');
 
-createRoot(root).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </StrictMode>,
-);
+async function boot() {
+  // Preview-only Visuals tab (README screenshot studio). Tree-shaken out of production builds.
+  if (import.meta.env.DEV) {
+    const { isFixturePreview } = await import('@/app/runtime');
+    if (isFixturePreview()) {
+      await import('@/features/visuals');
+    }
+  }
+
+  createRoot(root!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+}
+
+void boot();

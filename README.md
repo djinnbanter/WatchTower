@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="web/dashboard-alpha/assets/watchtower-logo.png" alt="Watchtower" width="96">
+  <img src="docs/assets/screenshots/readme-header.png" alt="Watchtower — keep your Minecraft server healthy" width="920">
 </p>
 
 # Watchtower
@@ -87,6 +87,26 @@ The CLI is **not** loaded as a Minecraft mod. Keep it in `mods/` next to Watchto
 <p align="center">
   <img src="docs/assets/screenshots/Crash-Logs.png" alt="Crashes — grouped crash reports" width="900"><br>
   <em>Crashes — grouped reports you can actually work through</em>
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/Mods.png" alt="Mods — catalog and details" width="900"><br>
+  <em>Mods — what’s installed, nested jars, and Modrinth links</em>
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/spark.png" alt="Spark — lag profile findings" width="900"><br>
+  <em>Spark — turn a lag profile into plain next steps</em>
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/Insights.png" alt="Insights — patterns over time" width="900"><br>
+  <em>Insights — week-over-week patterns and daily trends</em>
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/Backups.png" alt="Backups — freshness tracking" width="900"><br>
+  <em>Backups — see if your world backups look fresh</em>
 </p>
 
 ---

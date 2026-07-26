@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated": "2026-07-26T10:08:28.573Z",
+    "generated": "2026-07-26T16:45:38.529Z",
     "hostname": "demo-server",
     "lookback_hours": 24,
     "window_start": "2026-06-17T12:00:00.000Z",
@@ -37939,7 +37939,7 @@
     "crash_summaries": [
       {
         "file": "crash-2026-06-22_14-33-07-server.txt",
-        "time": "2026-07-26T11:23:28.919Z",
+        "time": "2026-07-26T18:00:38.869Z",
         "summary": "Exception in server tick loop",
         "display_label": "java.lang.NullPointerException: Cannot invoke \"ContraptionCollision.mf()\" because \"mf.axis\" is null",
         "exception": "java.lang.NullPointerException: Cannot invoke \"ContraptionCollision.mf()\" because \"mf.axis\" is null",
@@ -37976,7 +37976,7 @@
       },
       {
         "file": "crash-2026-07-10_19-04-12-server.txt",
-        "time": "2026-07-26T06:08:28.919Z",
+        "time": "2026-07-26T12:45:38.869Z",
         "summary": "Exception in server tick loop",
         "display_label": "java.lang.NullPointerException: Cannot invoke \"BeltBlockEntity.getSpeed()\"",
         "exception": "java.lang.NullPointerException: Cannot invoke \"BeltBlockEntity.getSpeed()\"",
@@ -38076,7 +38076,7 @@
       },
       {
         "file": "crash-2026-07-11_02-15-33-server.txt",
-        "time": "2026-07-25T18:08:28.919Z",
+        "time": "2026-07-26T00:45:38.869Z",
         "summary": "Exception generating new chunk",
         "display_label": "java.io.EOFException: Unexpected end of ZLIB input stream",
         "exception": "java.io.EOFException: Unexpected end of ZLIB input stream",
@@ -38097,7 +38097,7 @@
       },
       {
         "file": "crash-2026-07-09_21-48-01-server.txt",
-        "time": "2026-07-24T12:08:28.919Z",
+        "time": "2026-07-24T18:45:38.869Z",
         "summary": "Mod loading has failed",
         "display_label": "MixinInitialisationError: Error initialising mixin config create.mixins.json",
         "exception": "org.spongepowered.asm.mixin.throwables.MixinInitialisationError",
@@ -38124,7 +38124,7 @@
       },
       {
         "file": "crash-2026-07-06_09-33-12-server.txt",
-        "time": "2026-07-21T12:08:28.919Z",
+        "time": "2026-07-21T18:45:38.869Z",
         "summary": "Mod loading has failed",
         "display_label": "InvalidMixinException: @Overwrite conflict createaddition → create",
         "exception": "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException",
@@ -38154,7 +38154,7 @@
       },
       {
         "file": "crash-2026-07-05_14-01-55-server.txt",
-        "time": "2026-07-20T12:08:28.919Z",
+        "time": "2026-07-20T18:45:38.869Z",
         "summary": "Mod loading has failed",
         "display_label": "ModLoadingException: Duplicate mods found: create",
         "exception": "net.neoforged.fml.ModLoadingException: Duplicate mods found: create",
@@ -38187,7 +38187,7 @@
       },
       {
         "file": "crash-2026-07-08_16-22-44-server.txt",
-        "time": "2026-07-23T12:08:28.919Z",
+        "time": "2026-07-23T18:45:38.869Z",
         "summary": "Initializing game",
         "display_label": "java.lang.UnsupportedClassVersionError: me/lucko/luckperms/... class file version 65.0",
         "exception": "java.lang.UnsupportedClassVersionError",
@@ -38217,7 +38217,7 @@
       },
       {
         "file": "crash-2026-07-04_20-44-08-server.txt",
-        "time": "2026-07-19T12:08:28.919Z",
+        "time": "2026-07-19T18:45:38.869Z",
         "summary": "Exception in server tick loop",
         "display_label": "FileSystemException: world/session.lock is locked",
         "exception": "java.nio.file.FileSystemException: world/session.lock",
@@ -38237,7 +38237,7 @@
       },
       {
         "file": "crash-2026-07-07_11-05-19-server.txt",
-        "time": "2026-07-22T12:08:28.919Z",
+        "time": "2026-07-22T18:45:38.869Z",
         "summary": "Exception in server tick loop",
         "display_label": "java.lang.OutOfMemoryError: Java heap space",
         "exception": "java.lang.OutOfMemoryError: Java heap space",
@@ -38298,7 +38298,7 @@
     },
     "startup_profile": {
       "total_sec": 142.3,
-      "done_at": "2026-07-26T09:08:28.919Z",
+      "done_at": "2026-07-26T15:45:38.869Z",
       "status": "warnings",
       "phases": [
         {
@@ -38364,7 +38364,7 @@
       },
       "boot_history": [
         {
-          "done_at": "2026-07-19T08:08:28.919Z",
+          "done_at": "2026-07-19T14:45:38.869Z",
           "total_sec": 118.2,
           "status": "ok",
           "phases": [
@@ -38391,7 +38391,7 @@
           ]
         },
         {
-          "done_at": "2026-07-20T08:08:28.919Z",
+          "done_at": "2026-07-20T14:45:38.869Z",
           "total_sec": 124.6,
           "status": "ok",
           "phases": [
@@ -38418,7 +38418,7 @@
           ]
         },
         {
-          "done_at": "2026-07-21T08:08:28.919Z",
+          "done_at": "2026-07-21T14:45:38.869Z",
           "total_sec": 131.1,
           "status": "warnings",
           "phases": [
@@ -38445,7 +38445,7 @@
           ]
         },
         {
-          "done_at": "2026-07-22T08:08:28.919Z",
+          "done_at": "2026-07-22T14:45:38.869Z",
           "total_sec": 128.4,
           "status": "warnings",
           "phases": [
@@ -38472,7 +38472,7 @@
           ]
         },
         {
-          "done_at": "2026-07-23T08:08:28.919Z",
+          "done_at": "2026-07-23T14:45:38.869Z",
           "total_sec": 135.9,
           "status": "warnings",
           "phases": [
@@ -38499,7 +38499,7 @@
           ]
         },
         {
-          "done_at": "2026-07-24T08:08:28.919Z",
+          "done_at": "2026-07-24T14:45:38.869Z",
           "total_sec": 122.7,
           "status": "ok",
           "phases": [
@@ -38526,7 +38526,7 @@
           ]
         },
         {
-          "done_at": "2026-07-25T08:08:28.919Z",
+          "done_at": "2026-07-25T14:45:38.869Z",
           "total_sec": 129.9,
           "status": "warnings",
           "phases": [
@@ -38553,7 +38553,7 @@
           ]
         },
         {
-          "done_at": "2026-07-26T09:08:28.919Z",
+          "done_at": "2026-07-26T15:45:38.869Z",
           "total_sec": 142.3,
           "status": "warnings",
           "phases": [
@@ -38609,7 +38609,7 @@
     },
     "mod_forensics": {
       "class_index_status": "ready",
-      "class_index_built_at": "2026-07-26T10:38:28.919Z",
+      "class_index_built_at": "2026-07-26T17:15:38.869Z",
       "class_index_jar_count": 48,
       "class_index_entry_count": 18240,
       "corrupt_jars": [
@@ -38649,7 +38649,7 @@
         "rule_id": "create-contraption-npe",
         "pack_id": "builtin",
         "priority": 50200,
-        "matched_at": "2026-07-26T11:23:28.919Z",
+        "matched_at": "2026-07-26T18:00:38.869Z",
         "crash_file": "crash-2026-06-22_14-33-07-server.txt",
         "emit": {
           "failure_kind": "mod_runtime",

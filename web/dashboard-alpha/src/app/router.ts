@@ -80,6 +80,17 @@ function emit() {
 
 window.addEventListener('popstate', emit);
 
+/** While > 0, navigate() is a no-op — used by Visuals live page previews. */
+let previewNavLock = 0;
+
+export function beginPreviewNavLock() {
+  previewNavLock += 1;
+}
+
+export function endPreviewNavLock() {
+  previewNavLock = Math.max(0, previewNavLock - 1);
+}
+
 export function getRoute() {
   return current;
 }
@@ -90,6 +101,7 @@ export function subscribeRoute(listener: () => void) {
 }
 
 export function navigate( partial: Record<string, string | null | undefined>, replace = false) {
+  if (previewNavLock > 0) return;
   const next = new URLSearchParams(window.location.search);
   for (const [key, value] of Object.entries(partial)) {
     if (value == null || value === '') next.delete(key);
