@@ -75,7 +75,9 @@ GPL-3.0-or-later — see [LICENSE](LICENSE). By contributing, you agree that you
 | `web/dashboard/` | Legacy Preact archive — do not re-point Gradle here |
 | `web/dr-viewer/` | Static DR viewer (`npm run sync:dashboard` copies shared assets) |
 | `tools/` | Smoke tests, wiki sync, issue import helpers |
+| `samples/` | Tracked golden fixtures + sample DR/support bundles (not the local gitignored `fixtures/`) |
 | `docs/wiki/` | Wiki source (publish with `node tools/sync-wiki.mjs --push`) |
+| `docs/research/` | Optional web-research reference dumps (not runtime inputs) |
 | `docs/ROADMAP.md` | Public planned releases |
 
 Mod subprojects: see [`mods/README.md`](mods/README.md). Web UI: see [`web/README.md`](web/README.md).
