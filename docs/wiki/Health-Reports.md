@@ -25,7 +25,7 @@ Day-to-day tabs stay current via **Watching** and **Scanning** — [[Understandi
 
 ## Support pack entry points
 
-Use these (not Settings → Advanced as the primary path):
+Use these (Support lives on the rail — not under Settings → Integrations):
 
 1. Rail footer **Build support pack**
 2. Overview **Support pack** card

@@ -32,6 +32,8 @@ Watchtower never auto-fills a guessed path.
 
 ## Step B — External / cloud / panel
 
+**Alpha:** panel / cloud tracking is experimental and may not work reliably on every host. Prefer a local folder (Step A) when you can.
+
 1. Open **External / cloud**
 2. Choose mode: **Folder** · **Heartbeat** · **Both** · **Not tracking**
 3. Optional marker file path

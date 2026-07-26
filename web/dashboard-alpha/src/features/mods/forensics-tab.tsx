@@ -75,7 +75,7 @@ export function ForensicsTab({
           Enable MOD_FORENSICS_SCAN in watchtower.conf to index jars for Find owning jar, corrupt
           scans, and config health.
         </EmptyState>
-        <Button kind="default" onClick={() => navigate({ tab: 'settings', panel: 'advanced' })}>
+        <Button kind="default" onClick={() => navigate({ tab: 'settings', panel: 'integrations' })}>
           Open Settings
         </Button>
       </div>

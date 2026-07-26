@@ -294,7 +294,7 @@ export function ModrinthTab({
           Enable Modrinth lookup in Settings → Monitoring, then run a scan from this tab. Watchtower
           only sends jar SHA-512 hashes — it never downloads jars.
         </EmptyState>
-        <Button kind="default" onClick={() => navigate({ tab: 'settings', panel: 'advanced' })}>
+        <Button kind="default" onClick={() => navigate({ tab: 'settings', panel: 'integrations' })}>
           Open Settings
         </Button>
       </div>

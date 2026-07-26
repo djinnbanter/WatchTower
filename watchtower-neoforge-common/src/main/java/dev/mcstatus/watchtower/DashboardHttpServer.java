@@ -580,12 +580,81 @@ public final class DashboardHttpServer {
                     text = WatchtowerConfWriter.upsertLine(text, "BASELINE_REGRESSION_THRESHOLD_PCT",
                             String.valueOf(thr));
                 }
-                if (json.has("lookbackHours") || json.has("incremental")
+                if (json.has("sparkEnabled") && !json.get("sparkEnabled").isJsonNull()) {
+                    boolean sparkEnabled = json.get("sparkEnabled").getAsBoolean();
+                    text = WatchtowerConfWriter.upsertLine(text, "SPARK_ENABLED",
+                            sparkEnabled ? "true" : "false");
+                }
+                if (json.has("sparkAutoCaptureWindowSec") && !json.get("sparkAutoCaptureWindowSec").isJsonNull()) {
+                    int windowSec = Math.max(5, Math.min(300, json.get("sparkAutoCaptureWindowSec").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "SPARK_AUTO_CAPTURE_WINDOW_SEC",
+                            String.valueOf(windowSec));
+                }
+                if (json.has("sparkAutoCaptureCooldownSec") && !json.get("sparkAutoCaptureCooldownSec").isJsonNull()) {
+                    int cooldownSec = Math.max(60, Math.min(86400, json.get("sparkAutoCaptureCooldownSec").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "SPARK_AUTO_CAPTURE_COOLDOWN_SEC",
+                            String.valueOf(cooldownSec));
+                }
+                if (json.has("updateCheck") && !json.get("updateCheck").isJsonNull()) {
+                    boolean updateCheck = json.get("updateCheck").getAsBoolean();
+                    text = WatchtowerConfWriter.upsertLine(text, "UPDATE_CHECK",
+                            updateCheck ? "true" : "false");
+                }
+                if (json.has("metricsContextBanner") && !json.get("metricsContextBanner").isJsonNull()) {
+                    boolean banner = json.get("metricsContextBanner").getAsBoolean();
+                    text = WatchtowerConfWriter.upsertLine(text, "METRICS_CONTEXT_BANNER",
+                            banner ? "true" : "false");
+                }
+                if (json.has("diskWarnPct") && !json.get("diskWarnPct").isJsonNull()) {
+                    int diskWarn = Math.max(50, Math.min(99, json.get("diskWarnPct").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "DISK_WARN_PCT", String.valueOf(diskWarn));
+                }
+                if (json.has("diskFillWarnDays") && !json.get("diskFillWarnDays").isJsonNull()) {
+                    int fillDays = Math.max(1, Math.min(365, json.get("diskFillWarnDays").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "DISK_FILL_WARN_DAYS", String.valueOf(fillDays));
+                }
+                if (json.has("diskIoLatencyWarnMs") && !json.get("diskIoLatencyWarnMs").isJsonNull()) {
+                    double latencyMs = Math.max(1.0, Math.min(5000.0, json.get("diskIoLatencyWarnMs").getAsDouble()));
+                    text = WatchtowerConfWriter.upsertLine(text, "DISK_IO_LATENCY_WARN_MS",
+                            String.valueOf(latencyMs));
+                }
+                if (json.has("opsPollSec") && !json.get("opsPollSec").isJsonNull()) {
+                    int opsPoll = Math.max(15, Math.min(3600, json.get("opsPollSec").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "OPS_POLL_SEC", String.valueOf(opsPoll));
+                }
+                if (json.has("opsLogScanSec") && !json.get("opsLogScanSec").isJsonNull()) {
+                    int logScan = Math.max(15, Math.min(3600, json.get("opsLogScanSec").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "OPS_LOG_SCAN_SEC", String.valueOf(logScan));
+                }
+                if (json.has("reportRetentionDays") && !json.get("reportRetentionDays").isJsonNull()) {
+                    int retentionDays = Math.max(1, Math.min(3650, json.get("reportRetentionDays").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "REPORT_RETENTION_DAYS",
+                            String.valueOf(retentionDays));
+                }
+                if (json.has("reportRetentionCount") && !json.get("reportRetentionCount").isJsonNull()) {
+                    int retentionCount = Math.max(1, Math.min(500, json.get("reportRetentionCount").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "REPORT_RETENTION_COUNT",
+                            String.valueOf(retentionCount));
+                }
+                boolean wroteConf = json.has("lookbackHours") || json.has("incremental")
                         || json.has("tpsWarn") || json.has("msptWarn")
                         || json.has("modrinthLookup") || json.has("modrinthAutoScanOnModChanges")
                         || json.has("sparkAutoCaptureOnLag")
                         || json.has("baselineAutoCapture")
-                        || json.has("baselineRegressionThresholdPct")) {
+                        || json.has("baselineRegressionThresholdPct")
+                        || json.has("sparkEnabled")
+                        || json.has("sparkAutoCaptureWindowSec")
+                        || json.has("sparkAutoCaptureCooldownSec")
+                        || json.has("updateCheck")
+                        || json.has("metricsContextBanner")
+                        || json.has("diskWarnPct")
+                        || json.has("diskFillWarnDays")
+                        || json.has("diskIoLatencyWarnMs")
+                        || json.has("opsPollSec")
+                        || json.has("opsLogScanSec")
+                        || json.has("reportRetentionDays")
+                        || json.has("reportRetentionCount");
+                if (wroteConf) {
                     Files.writeString(conf, text, StandardCharsets.UTF_8);
                 }
 
@@ -636,15 +705,20 @@ public final class DashboardHttpServer {
         out.addProperty("modrinth_lookup", WatchtowerConfWriter.readBool(map, "MODRINTH_LOOKUP", config.modrinthLookup()));
         out.addProperty("modrinth_auto_scan_on_mod_changes",
                 WatchtowerConfWriter.readBool(map, "MODRINTH_AUTO_SCAN_ON_MOD_CHANGES", config.modrinthAutoScanOnModChanges()));
-        out.addProperty("spark_enabled", config.sparkEnabled());
+        out.addProperty("spark_enabled",
+                WatchtowerConfWriter.readBool(map, "SPARK_ENABLED", config.sparkEnabled()));
         out.addProperty("spark_mod_loaded", serverContext.isModLoaded("spark"));
         out.addProperty("spark_auto_capture_on_lag",
                 WatchtowerConfWriter.readBool(map, "SPARK_AUTO_CAPTURE_ON_LAG", config.sparkAutoCaptureOnLag()));
-        out.addProperty("spark_auto_capture_window_sec", config.sparkAutoCaptureWindowSec());
-        out.addProperty("spark_auto_capture_cooldown_sec", config.sparkAutoCaptureCooldownSec());
+        out.addProperty("spark_auto_capture_window_sec",
+                WatchtowerConfWriter.readInt(map, "SPARK_AUTO_CAPTURE_WINDOW_SEC", config.sparkAutoCaptureWindowSec()));
+        out.addProperty("spark_auto_capture_cooldown_sec",
+                WatchtowerConfWriter.readInt(map, "SPARK_AUTO_CAPTURE_COOLDOWN_SEC", config.sparkAutoCaptureCooldownSec()));
         out.addProperty("baseline_auto_capture",
                 WatchtowerConfWriter.readBool(map, "BASELINE_AUTO_CAPTURE", config.baselineAutoCapture()));
-        out.addProperty("baseline_regression_threshold_pct", config.baselineRegressionThresholdPct());
+        out.addProperty("baseline_regression_threshold_pct",
+                WatchtowerConfWriter.readDouble(map, "BASELINE_REGRESSION_THRESHOLD_PCT",
+                        config.baselineRegressionThresholdPct()));
         String backupDir = map.getOrDefault("BACKUP_DIR", "");
         out.addProperty("backup_dir", backupDir != null ? backupDir : "");
         String backupDirs = map.getOrDefault("BACKUP_DIRS", "");
@@ -669,18 +743,25 @@ public final class DashboardHttpServer {
         }
         out.addProperty("panel", panel.panelId());
         out.addProperty("panel_display_name", PanelLabels.displayName(panel.panelId()));
-        out.addProperty("tps_warn", config.tpsWarn());
-        out.addProperty("mspt_warn", config.msptWarn());
-        out.addProperty("disk_warn_pct", config.diskWarnPct());
-        out.addProperty("disk_fill_warn_days", config.diskFillWarnDays());
-        out.addProperty("disk_io_latency_warn_ms", config.diskIoLatencyWarnMs());
-        out.addProperty("metrics_context_banner", config.metricsContextBanner());
-        out.addProperty("update_check", config.updateCheck());
+        out.addProperty("tps_warn", WatchtowerConfWriter.readDouble(map, "TPS_WARN", config.tpsWarn()));
+        out.addProperty("mspt_warn", WatchtowerConfWriter.readDouble(map, "MSPT_WARN", config.msptWarn()));
+        out.addProperty("disk_warn_pct", WatchtowerConfWriter.readInt(map, "DISK_WARN_PCT", config.diskWarnPct()));
+        out.addProperty("disk_fill_warn_days",
+                WatchtowerConfWriter.readInt(map, "DISK_FILL_WARN_DAYS", config.diskFillWarnDays()));
+        out.addProperty("disk_io_latency_warn_ms",
+                WatchtowerConfWriter.readDouble(map, "DISK_IO_LATENCY_WARN_MS", config.diskIoLatencyWarnMs()));
+        out.addProperty("metrics_context_banner",
+                WatchtowerConfWriter.readBool(map, "METRICS_CONTEXT_BANNER", config.metricsContextBanner()));
+        out.addProperty("update_check",
+                WatchtowerConfWriter.readBool(map, "UPDATE_CHECK", config.updateCheck()));
         out.addProperty("hostname", resolveHostname());
-        out.addProperty("ops_poll_sec", config.opsPollSec());
-        out.addProperty("ops_log_scan_sec", config.opsLogScanSec());
-        out.addProperty("report_retention_count", config.reportRetentionCount());
-        out.addProperty("report_retention_days", config.reportRetentionDays());
+        out.addProperty("ops_poll_sec", WatchtowerConfWriter.readInt(map, "OPS_POLL_SEC", config.opsPollSec()));
+        out.addProperty("ops_log_scan_sec",
+                WatchtowerConfWriter.readInt(map, "OPS_LOG_SCAN_SEC", config.opsLogScanSec()));
+        out.addProperty("report_retention_count",
+                WatchtowerConfWriter.readInt(map, "REPORT_RETENTION_COUNT", config.reportRetentionCount()));
+        out.addProperty("report_retention_days",
+                WatchtowerConfWriter.readInt(map, "REPORT_RETENTION_DAYS", config.reportRetentionDays()));
         try {
             out.addProperty("live_sample_interval_seconds", ModRuntime.config().liveSampleIntervalSeconds());
         } catch (IllegalStateException e) {

@@ -60,6 +60,18 @@ public final class WatchtowerConfWriter {
         }
     }
 
+    public static double readDouble(Map<String, String> map, String key, double defaultValue) {
+        String raw = map.get(key);
+        if (raw == null || raw.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Double.parseDouble(raw.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     public static boolean readBool(Map<String, String> map, String key, boolean defaultValue) {
         String raw = map.get(key);
         if (raw == null || raw.isBlank()) {

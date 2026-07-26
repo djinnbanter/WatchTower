@@ -583,13 +583,25 @@ export function fixtureApiPlugin(): Plugin {
             const camelToSnake: Record<string, string> = {
               lookbackHours: 'lookback_hours',
               incremental: 'incremental',
+              updateCheck: 'update_check',
+              metricsContextBanner: 'metrics_context_banner',
               tpsWarn: 'tps_warn',
               msptWarn: 'mspt_warn',
+              opsPollSec: 'ops_poll_sec',
+              opsLogScanSec: 'ops_log_scan_sec',
               modrinthLookup: 'modrinth_lookup',
               modrinthAutoScanOnModChanges: 'modrinth_auto_scan_on_mod_changes',
+              sparkEnabled: 'spark_enabled',
               sparkAutoCaptureOnLag: 'spark_auto_capture_on_lag',
+              sparkAutoCaptureWindowSec: 'spark_auto_capture_window_sec',
+              sparkAutoCaptureCooldownSec: 'spark_auto_capture_cooldown_sec',
               baselineAutoCapture: 'baseline_auto_capture',
               baselineRegressionThresholdPct: 'baseline_regression_threshold_pct',
+              diskWarnPct: 'disk_warn_pct',
+              diskFillWarnDays: 'disk_fill_warn_days',
+              diskIoLatencyWarnMs: 'disk_io_latency_warn_ms',
+              reportRetentionDays: 'report_retention_days',
+              reportRetentionCount: 'report_retention_count',
             };
             for (const [k, v] of Object.entries(body)) {
               const snake = camelToSnake[k] ?? k;

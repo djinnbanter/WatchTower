@@ -20,15 +20,15 @@ Most settings live in the dashboard **Settings** menu. A few advanced options li
 
 | Panel | What you can do |
 |-------|-----------------|
-| **General** | TPS / lag warning levels |
-| **Monitoring** | Intervals, Modrinth lookup, retention (as shown) |
-| **Backups** | Status + link to [[Backups]] tab |
-| **Rules** | Crash / issue rule options |
+| **General** | Identity (read-only), update check, metrics banner, legacy lookback / incremental |
+| **Monitoring** | TPS / MSPT thresholds, performance baseline, Spark auto-capture on lag, ops/log scan intervals |
+| **Backups** | Local folder + external panel tracking |
+| **Alerts** | Disk warn / fill / write latency, report retention |
 | **Security** | Password, username, 2FA |
-| **Advanced** | Advanced options |
-| **About** | Version, Welcome tour entry |
+| **Integrations** | Modrinth lookup / auto-scan, Spark enabled |
+| **About** | Install facts + relaunch setup wizard |
 
-Deep link: `?tab=settings&panel=monitoring` (and other panel ids).
+Deep link: `?tab=settings&panel=monitoring` (and other panel ids). Older links `panel=rules` / `panel=advanced` redirect to **Alerts** / **Integrations**.
 
 Monitoring cadence also surfaces from [[Sources]] → Open monitoring settings.
 

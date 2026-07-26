@@ -47,7 +47,8 @@ Legacy deep-audit facts on disk (older installs or optional schedule) are still 
 | Badges on cards | Live / Scanning / Mixed |
 | Rail **Build support pack** | Compose a support bundle |
 | Help Center / Overview Support card | Same compose flow |
-| **Settings → Monitoring** | Intervals and retention |
+| **Settings → Monitoring** | Lag thresholds, baseline, Spark auto-capture, scan intervals |
+| **Settings → Alerts** | Disk warnings and report retention |
 
 > **Do not confuse** Ops **Sources** (pollers) with Spark → **Sources** (which mod owns profile time). Spark details: [[Using-Spark-with-Watchtower]].
 

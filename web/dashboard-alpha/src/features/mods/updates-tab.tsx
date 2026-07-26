@@ -377,7 +377,7 @@ export function UpdatesTab({
           Enable Modrinth lookup in Settings → Monitoring, then run a scan from Mods → Modrinth.
           Watchtower never downloads jars — it only checks impact and links you to Modrinth.
         </EmptyState>
-        <Button kind="default" onClick={() => navigate({ tab: 'settings', panel: 'advanced' })}>
+        <Button kind="default" onClick={() => navigate({ tab: 'settings', panel: 'integrations' })}>
           Open Settings
         </Button>
       </div>

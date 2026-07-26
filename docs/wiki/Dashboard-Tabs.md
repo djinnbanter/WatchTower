@@ -73,12 +73,12 @@ Tabs are grouped as **Monitor**, **Triage**, **Ops**, and **System**. Theme, ski
 | Tab / tool | Job |
 |------------|-----|
 | **Help Center** | Guides, search, Support pack shortcut |
-| **Settings** | General, Monitoring, Backups, Rules, Security, Advanced, About |
+| **Settings** | General, Monitoring, Backups, Alerts, Security, Integrations, About |
 | **Roadmap** | Works / coming / later / not our job |
 | **Welcome** | Skippable tour — not a daily tab |
 | Theme / Collapse | Appearance and rail width |
 
-**Settings panels:** General · Monitoring · Backups · Rules · Security · Advanced · About (`?tab=settings&panel=<id>`).
+**Settings panels:** General · Monitoring · Backups · Alerts · Security · Integrations · About (`?tab=settings&panel=<id>`).
 
 ---
 

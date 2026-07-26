@@ -1,19 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
+  AlertTriangle,
   CheckCircle2,
   Info,
-  Lock,
+  Package,
   Save,
   ServerCog,
   Shield,
   SlidersHorizontal,
-  Sparkles,
   Wrench,
 } from '@/ui/icons';
 import { api } from '@/api/client';
 import { navigate, type RouteState } from '@/app/router';
 import { isFixturePreview } from '@/app/runtime';
+import { useSessionStore } from '@/app/session-store';
 import { LocalFolderSetup } from '@/features/backups/local-folder-setup';
 import { ExternalTrackingSetup } from '@/features/backups/external-tracking-setup';
 import { relaunchSetupWizard } from '@/features/wizard/persist';
@@ -25,13 +26,49 @@ const PANELS = [
   { id: 'general', label: 'General', icon: ServerCog },
   { id: 'monitoring', label: 'Monitoring', icon: SlidersHorizontal },
   { id: 'backups', label: 'Backups', icon: Wrench },
-  { id: 'rules', label: 'Rules', icon: Info },
+  { id: 'alerts', label: 'Alerts', icon: AlertTriangle },
   { id: 'security', label: 'Security', icon: Shield },
-  { id: 'advanced', label: 'Advanced', icon: Sparkles },
-  { id: 'about', label: 'About', icon: Lock },
+  { id: 'integrations', label: 'Integrations', icon: Package },
+  { id: 'about', label: 'About', icon: Info },
+] as const;
+
+type PanelId = (typeof PANELS)[number]['id'];
+
+const CONF_PANELS: ReadonlySet<PanelId> = new Set(['general', 'monitoring', 'alerts', 'integrations']);
+
+/** Snake keys that participate in dirty tracking / Save. */
+const EDITABLE_KEYS = [
+  'lookback_hours',
+  'incremental',
+  'update_check',
+  'metrics_context_banner',
+  'tps_warn',
+  'mspt_warn',
+  'ops_poll_sec',
+  'ops_log_scan_sec',
+  'baseline_auto_capture',
+  'baseline_regression_threshold_pct',
+  'spark_enabled',
+  'spark_auto_capture_on_lag',
+  'spark_auto_capture_window_sec',
+  'spark_auto_capture_cooldown_sec',
+  'modrinth_lookup',
+  'modrinth_auto_scan_on_mod_changes',
+  'disk_warn_pct',
+  'disk_fill_warn_days',
+  'disk_io_latency_warn_ms',
+  'report_retention_days',
+  'report_retention_count',
 ] as const;
 
 type FormState = Record<string, unknown>;
+
+function resolvePanel(raw: string | undefined): PanelId {
+  if (raw === 'rules') return 'alerts';
+  if (raw === 'advanced') return 'integrations';
+  if (PANELS.some((p) => p.id === raw)) return raw as PanelId;
+  return 'general';
+}
 
 /** Live POST /api/settings only accepts camelCase write keys. */
 function toSettingsWritePayload(form: FormState): Record<string, unknown> {
@@ -39,13 +76,25 @@ function toSettingsWritePayload(form: FormState): Record<string, unknown> {
   const map: Record<string, string> = {
     lookback_hours: 'lookbackHours',
     incremental: 'incremental',
+    update_check: 'updateCheck',
+    metrics_context_banner: 'metricsContextBanner',
     tps_warn: 'tpsWarn',
     mspt_warn: 'msptWarn',
+    ops_poll_sec: 'opsPollSec',
+    ops_log_scan_sec: 'opsLogScanSec',
     modrinth_lookup: 'modrinthLookup',
     modrinth_auto_scan_on_mod_changes: 'modrinthAutoScanOnModChanges',
+    spark_enabled: 'sparkEnabled',
     spark_auto_capture_on_lag: 'sparkAutoCaptureOnLag',
+    spark_auto_capture_window_sec: 'sparkAutoCaptureWindowSec',
+    spark_auto_capture_cooldown_sec: 'sparkAutoCaptureCooldownSec',
     baseline_auto_capture: 'baselineAutoCapture',
     baseline_regression_threshold_pct: 'baselineRegressionThresholdPct',
+    disk_warn_pct: 'diskWarnPct',
+    disk_fill_warn_days: 'diskFillWarnDays',
+    disk_io_latency_warn_ms: 'diskIoLatencyWarnMs',
+    report_retention_days: 'reportRetentionDays',
+    report_retention_count: 'reportRetentionCount',
   };
   for (const [snake, camel] of Object.entries(map)) {
     if (form[snake] !== undefined) out[camel] = form[snake];
@@ -54,29 +103,56 @@ function toSettingsWritePayload(form: FormState): Record<string, unknown> {
   return out;
 }
 
+function pickEditable(form: FormState): FormState {
+  const out: FormState = {};
+  for (const k of EDITABLE_KEYS) {
+    if (form[k] !== undefined) out[k] = form[k];
+  }
+  return out;
+}
+
+function formsEqual(a: FormState, b: FormState): boolean {
+  for (const k of EDITABLE_KEYS) {
+    if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) return false;
+  }
+  return true;
+}
+
 function ToggleField({
   label,
   hint,
   value,
   onChange,
+  disabled,
 }: {
   label: string;
   hint?: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-wt-line bg-wt-bg2/50 px-4 py-3">
-      <div>
+    <div
+      className={`flex items-center justify-between gap-4 rounded-xl border border-wt-line bg-wt-bg2/50 px-4 py-3 ${
+        disabled ? 'opacity-60' : ''
+      }`}
+    >
+      <div className="min-w-0">
         <div className="text-sm font-medium">{label}</div>
-        {hint ? <div className="text-xs text-wt-text-low">{hint}</div> : null}
+        {hint ? <div className="mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={value}
-        onClick={() => onChange(!value)}
-        className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition ${value ? 'bg-wt-accent' : 'bg-wt-bg3'}`}
+        aria-disabled={disabled || undefined}
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) onChange(!value);
+        }}
+        className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition ${
+          value ? 'bg-wt-accent' : 'bg-wt-bg3'
+        } ${disabled ? 'cursor-not-allowed' : ''}`}
       >
         <span
           className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
@@ -94,23 +170,30 @@ function NumberField({
   value,
   unit,
   onChange,
+  disabled,
 }: {
   label: string;
   hint?: string;
   value: number;
   unit?: string;
   onChange: (v: number) => void;
+  disabled?: boolean;
 }) {
   return (
-    <label className="block rounded-xl border border-wt-line bg-wt-bg2/50 px-4 py-3">
+    <label
+      className={`block rounded-xl border border-wt-line bg-wt-bg2/50 px-4 py-3 ${
+        disabled ? 'opacity-60' : ''
+      }`}
+    >
       <div className="text-sm font-medium">{label}</div>
-      {hint ? <div className="mb-1.5 text-xs text-wt-text-low">{hint}</div> : null}
+      {hint ? <div className="mb-1.5 mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
       <div className="mt-1.5 flex items-center gap-2">
         <input
           type="number"
+          disabled={disabled}
           value={Number.isFinite(value) ? value : 0}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-28 rounded-lg border border-wt-line bg-wt-bg1 px-2.5 py-1.5 font-mono text-sm outline-none focus:border-wt-accent"
+          className="w-28 rounded-lg border border-wt-line bg-wt-bg1 px-2.5 py-1.5 font-mono text-sm outline-none focus:border-wt-accent disabled:cursor-not-allowed"
         />
         {unit ? <span className="text-xs text-wt-text-low">{unit}</span> : null}
       </div>
@@ -123,19 +206,24 @@ function TextField({
   hint,
   value,
   onChange,
+  type = 'text',
+  autoComplete,
 }: {
   label: string;
   hint?: string;
   value: string;
   onChange: (v: string) => void;
+  type?: 'text' | 'password';
+  autoComplete?: string;
 }) {
   return (
     <label className="block rounded-xl border border-wt-line bg-wt-bg2/50 px-4 py-3">
       <div className="text-sm font-medium">{label}</div>
-      {hint ? <div className="mb-1.5 text-xs text-wt-text-low">{hint}</div> : null}
+      {hint ? <div className="mb-1.5 mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
       <input
-        type="text"
+        type={type}
         value={value}
+        autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
         className="mt-1.5 w-full rounded-lg border border-wt-line bg-wt-bg1 px-2.5 py-1.5 text-sm outline-none focus:border-wt-accent"
       />
@@ -143,20 +231,62 @@ function TextField({
   );
 }
 
+function ReadOnlyField({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-xl border border-wt-line bg-wt-bg2/40 px-4 py-3">
+      <div className="text-sm font-medium">{label}</div>
+      {hint ? <div className="mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
+      <div className="mt-1.5 font-mono text-sm text-wt-text">{value || '—'}</div>
+    </div>
+  );
+}
+
 export function PageView({ route }: { route: RouteState }) {
-  const panel = (route.panel as (typeof PANELS)[number]['id']) || 'general';
+  const panel = resolvePanel(route.panel);
   const settingsQ = useQuery({ queryKey: ['settings'], queryFn: api.settings });
   const [form, setForm] = useState<FormState>({});
+  const [baseline, setBaseline] = useState<FormState>({});
+  const [saveAck, setSaveAck] = useState(false);
 
   useEffect(() => {
-    if (settingsQ.data) setForm(asRecord(settingsQ.data));
+    if (!settingsQ.data) return;
+    const next = asRecord(settingsQ.data);
+    setForm(next);
+    setBaseline(pickEditable(next));
+    setSaveAck(false);
   }, [settingsQ.data]);
+
+  const dirty = useMemo(() => !formsEqual(pickEditable(form), baseline), [form, baseline]);
 
   const saveMutation = useMutation({
     mutationFn: (payload: FormState) => api.saveSettings(toSettingsWritePayload(payload)),
+    onSuccess: async (res) => {
+      const body = asRecord(res);
+      const settings = asRecord(body.settings);
+      if (Object.keys(settings).length) {
+        setForm(settings);
+        setBaseline(pickEditable(settings));
+      } else {
+        const refreshed = await settingsQ.refetch();
+        if (refreshed.data) {
+          const next = asRecord(refreshed.data);
+          setForm(next);
+          setBaseline(pickEditable(next));
+        }
+      }
+      setSaveAck(true);
+    },
   });
 
-  const set = (key: string, value: unknown) => setForm((f) => ({ ...f, [key]: value }));
+  const set = (key: string, value: unknown) => {
+    setSaveAck(false);
+    setForm((f) => ({ ...f, [key]: value }));
+  };
+
+  const sparkLoaded = bool(form.spark_mod_loaded);
+  const sparkEnabled = bool(form.spark_enabled);
+  const modrinthOn = bool(form.modrinth_lookup);
+  const showSave = CONF_PANELS.has(panel);
 
   if (settingsQ.isLoading) {
     return (
@@ -188,47 +318,209 @@ export function PageView({ route }: { route: RouteState }) {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          {saveMutation.isSuccess ? (
-            <StatusPill tone="ok">
-              <CheckCircle2 size={12} className="mr-1 inline" /> Saved
-            </StatusPill>
-          ) : null}
-          <Button kind="primary" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate(form)}>
-            <Save size={14} className="mr-1.5" /> Save changes
-          </Button>
-        </div>
+        {showSave ? (
+          <div className="flex items-center gap-2">
+            {saveMutation.isError ? (
+              <StatusPill tone="danger">
+                {(saveMutation.error as Error)?.message || 'Save failed'}
+              </StatusPill>
+            ) : null}
+            {saveAck && !dirty ? (
+              <StatusPill tone="ok">
+                <CheckCircle2 size={12} className="mr-1 inline" /> Saved
+              </StatusPill>
+            ) : null}
+            <Button
+              kind="primary"
+              disabled={saveMutation.isPending || !dirty}
+              onClick={() => saveMutation.mutate(form)}
+            >
+              <Save size={14} className="mr-1.5" /> Save changes
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {panel === 'general' ? (
-        <Section title="General" hint="Identity and reporting basics.">
-          <div className="grid gap-3 md:grid-cols-2">
-            <TextField label="Hostname" value={str(form.hostname)} onChange={(v) => set('hostname', v)} />
-            <NumberField label="Dashboard port" value={num(form.dashboard_port)} onChange={(v) => set('dashboard_port', v)} />
-            <NumberField label="Lookback window" unit="hours" value={num(form.lookback_hours)} onChange={(v) => set('lookback_hours', v)} />
-            <ToggleField label="Incremental reports" hint="Only recompute what changed since last run" value={bool(form.incremental)} onChange={(v) => set('incremental', v)} />
-            <ToggleField label="Check for updates" value={bool(form.update_check)} onChange={(v) => set('update_check', v)} />
-            <ToggleField label="Metrics context banner" hint="Show the explainer banner above charts" value={bool(form.metrics_context_banner)} onChange={(v) => set('metrics_context_banner', v)} />
-          </div>
-        </Section>
+        <div className="space-y-6">
+          <Section title="Server identity" hint="Detected for this install — not edited here.">
+            <div className="grid gap-3 md:grid-cols-2">
+              <ReadOnlyField
+                label="Hostname"
+                value={str(form.hostname)}
+                hint="Resolved from the server environment"
+              />
+              <ReadOnlyField
+                label="Hosting panel"
+                value={str(form.panel_display_name) || str(form.panel, 'none')}
+                hint="Auto-detected panel / host type"
+              />
+              <ReadOnlyField
+                label="Dashboard port"
+                value={String(num(form.dashboard_port) || '—')}
+                hint="Change in NeoForge mod config (watchtower-common.toml), then restart"
+              />
+            </div>
+          </Section>
+          <Section title="Dashboard preferences" hint="Applies after Save — next page load for banners.">
+            <div className="grid gap-3 md:grid-cols-2">
+              <ToggleField
+                label="Check for updates"
+                hint="Show when a newer Watchtower release is available"
+                value={bool(form.update_check)}
+                onChange={(v) => set('update_check', v)}
+              />
+              <ToggleField
+                label="Metrics context banner"
+                hint="Show the short explainer above Live / chart pages"
+                value={bool(form.metrics_context_banner)}
+                onChange={(v) => set('metrics_context_banner', v)}
+              />
+            </div>
+          </Section>
+          <Section
+            title="Reports (legacy)"
+            hint="Only for deep audits and Support compose — day-to-day Watching does not use these. NeoForge mod config may reset lookback/incremental on server restart."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <NumberField
+                label="Lookback window"
+                unit="hours"
+                hint="How far back a deep audit / Support facts pass looks (1–720)"
+                value={num(form.lookback_hours)}
+                onChange={(v) => set('lookback_hours', v)}
+              />
+              <ToggleField
+                label="Incremental reports"
+                hint="Only recompute what changed since the last deep audit"
+                value={bool(form.incremental)}
+                onChange={(v) => set('incremental', v)}
+              />
+            </div>
+          </Section>
+        </div>
       ) : null}
 
       {panel === 'monitoring' ? (
-        <Section title="Monitoring thresholds" hint="Values that drive warnings across the dashboard.">
-          <div className="grid gap-3 md:grid-cols-2">
-            <NumberField label="TPS warning threshold" value={num(form.tps_warn)} onChange={(v) => set('tps_warn', v)} />
-            <NumberField label="MSPT warning threshold" unit="ms" value={num(form.mspt_warn)} onChange={(v) => set('mspt_warn', v)} />
-            <NumberField label="Live sample interval" unit="sec" value={num(form.live_sample_interval_seconds)} onChange={(v) => set('live_sample_interval_seconds', v)} />
-            <NumberField label="Ops poll interval" unit="sec" value={num(form.ops_poll_sec)} onChange={(v) => set('ops_poll_sec', v)} />
-            <NumberField label="Log scan interval" unit="sec" value={num(form.ops_log_scan_sec)} onChange={(v) => set('ops_log_scan_sec', v)} />
-            <NumberField label="Baseline regression threshold" unit="%" value={num(form.baseline_regression_threshold_pct)} onChange={(v) => set('baseline_regression_threshold_pct', v)} />
-            <ToggleField label="Auto-capture baseline" value={bool(form.baseline_auto_capture)} onChange={(v) => set('baseline_auto_capture', v)} />
-          </div>
-        </Section>
+        <div className="space-y-6">
+          <Section title="Lag thresholds" hint="When TPS or MSPT crosses these, Issues and Overview treat the window as unhealthy.">
+            <div className="grid gap-3 md:grid-cols-2">
+              <NumberField
+                label="TPS warning"
+                hint="Warn when ticks per second stay below this (typical 19.5)"
+                value={num(form.tps_warn)}
+                onChange={(v) => set('tps_warn', v)}
+              />
+              <NumberField
+                label="MSPT warning"
+                unit="ms"
+                hint="Warn when milliseconds-per-tick stay above this (typical 50)"
+                value={num(form.mspt_warn)}
+                onChange={(v) => set('mspt_warn', v)}
+              />
+            </div>
+          </Section>
+          <Section title="Performance baseline" hint="Freeze a known-good week and get nudged when the last 7 days are clearly slower.">
+            <div className="grid gap-3 md:grid-cols-2">
+              <ToggleField
+                label="Auto-capture baseline when healthy"
+                hint="Once, when the server looks healthy — only Set new baseline on Insights refreshes it"
+                value={bool(form.baseline_auto_capture)}
+                onChange={(v) => set('baseline_auto_capture', v)}
+              />
+              <NumberField
+                label="Regression threshold"
+                unit="%"
+                hint="Flag when the last 7 days are this much worse than the baseline (typical 10)"
+                value={num(form.baseline_regression_threshold_pct)}
+                onChange={(v) => set('baseline_regression_threshold_pct', v)}
+              />
+            </div>
+          </Section>
+          <Section
+            title="Spark on lag"
+            hint="Optional: on critical sustained lag, run a short Spark profile and attach it to the lag Issue. Profiles stay on disk."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-wt-line bg-wt-bg2/40 px-4 py-3">
+                <div className="text-sm font-medium">Spark mod</div>
+                <div className="mt-1.5">
+                  <StatusPill tone={sparkLoaded ? 'ok' : 'warn'}>
+                    {sparkLoaded ? 'Installed' : 'Not installed'}
+                  </StatusPill>
+                </div>
+                <p className="mt-1.5 text-xs text-wt-text-low">
+                  Detected from the running server — install Spark to enable auto-capture
+                </p>
+              </div>
+              <ToggleField
+                label="Spark enabled"
+                hint="Allow Watchtower to use Spark (profiles, auto-capture). Also under Integrations."
+                value={sparkEnabled}
+                onChange={(v) => set('spark_enabled', v)}
+              />
+              <ToggleField
+                label="Auto-capture Spark on critical lag"
+                hint={
+                  !sparkLoaded
+                    ? 'Install Spark on this server to enable'
+                    : !sparkEnabled
+                      ? 'Turn on Spark enabled first'
+                      : 'Critical lag only (not small blips). Leave off while profiling by hand.'
+                }
+                value={bool(form.spark_auto_capture_on_lag)}
+                onChange={(v) => set('spark_auto_capture_on_lag', v)}
+                disabled={!sparkLoaded || !sparkEnabled}
+              />
+              <NumberField
+                label="Capture window"
+                unit="sec"
+                hint="How long each auto-capture runs (about 45s typical)"
+                value={num(form.spark_auto_capture_window_sec)}
+                onChange={(v) => set('spark_auto_capture_window_sec', v)}
+                disabled={!sparkLoaded || !sparkEnabled}
+              />
+              <NumberField
+                label="Cooldown"
+                unit="sec"
+                hint="Minimum wait between auto-captures (900 ≈ 15 minutes)"
+                value={num(form.spark_auto_capture_cooldown_sec)}
+                onChange={(v) => set('spark_auto_capture_cooldown_sec', v)}
+                disabled={!sparkLoaded || !sparkEnabled}
+              />
+            </div>
+          </Section>
+          <Section title="Scan cadence" hint="How often background Watching / Scanning wakes up. Applies on the next poll cycle.">
+            <div className="grid gap-3 md:grid-cols-2">
+              <NumberField
+                label="Ops poll interval"
+                unit="sec"
+                hint="How often ops scans jars, crashes, backups, and Issues (typical 60)"
+                value={num(form.ops_poll_sec)}
+                onChange={(v) => set('ops_poll_sec', v)}
+              />
+              <NumberField
+                label="Log scan interval"
+                unit="sec"
+                hint="How often latest.log is tailed for activity and peeks (typical 60)"
+                value={num(form.ops_log_scan_sec)}
+                onChange={(v) => set('ops_log_scan_sec', v)}
+              />
+              <ReadOnlyField
+                label="Live sample interval"
+                value={`${num(form.live_sample_interval_seconds) || 1} sec`}
+                hint="NeoForge mod config (liveSampleIntervalSeconds) — restart after changing"
+              />
+            </div>
+          </Section>
+        </div>
       ) : null}
 
       {panel === 'backups' ? (
-        <Section title="Backups" hint="Folder paths use /api/backups/dirs; tracking uses /api/backups/external.">
+        <Section
+          title="Backups"
+          hint="Local folders are supported. Panel / cloud tracking is alpha and may not work on every host — each block has its own Save."
+        >
           <div className="space-y-6">
             <LocalFolderSetup
               settingsData={form}
@@ -256,53 +548,144 @@ export function PageView({ route }: { route: RouteState }) {
         </Section>
       ) : null}
 
-      {panel === 'rules' ? (
-        <Section title="Rules & retention" hint="Disk and report-retention guardrails.">
-          <div className="grid gap-3 md:grid-cols-2">
-            <NumberField label="Disk warning threshold" unit="%" value={num(form.disk_warn_pct)} onChange={(v) => set('disk_warn_pct', v)} />
-            <NumberField label="Disk fill warning" unit="days" value={num(form.disk_fill_warn_days)} onChange={(v) => set('disk_fill_warn_days', v)} />
-            <NumberField label="Disk I/O latency warning" unit="ms" value={num(form.disk_io_latency_warn_ms)} onChange={(v) => set('disk_io_latency_warn_ms', v)} />
-            <NumberField label="Report retention" unit="days" value={num(form.report_retention_days)} onChange={(v) => set('report_retention_days', v)} />
-            <NumberField label="Report retention count" value={num(form.report_retention_count)} onChange={(v) => set('report_retention_count', v)} />
-          </div>
-        </Section>
+      {panel === 'alerts' ? (
+        <div className="space-y-6">
+          <Section title="Disk alerts" hint="When disk use, runway, or write latency looks bad, Issues and Overview warn you.">
+            <div className="grid gap-3 md:grid-cols-2">
+              <NumberField
+                label="Disk warning"
+                unit="%"
+                hint="Warn when disk used percent is at or above this (typical 85)"
+                value={num(form.disk_warn_pct)}
+                onChange={(v) => set('disk_warn_pct', v)}
+              />
+              <NumberField
+                label="Disk fill warning"
+                unit="days"
+                hint="Raise an Issue when estimated days-until-full is at or below this"
+                value={num(form.disk_fill_warn_days)}
+                onChange={(v) => set('disk_fill_warn_days', v)}
+              />
+              <NumberField
+                label="Disk write latency warning"
+                unit="ms"
+                hint="Warn when disk write await stays above this (typical 50)"
+                value={num(form.disk_io_latency_warn_ms)}
+                onChange={(v) => set('disk_io_latency_warn_ms', v)}
+              />
+            </div>
+          </Section>
+          <Section
+            title="Report retention"
+            hint="Old facts/brief files are pruned using both limits — whichever is tighter wins."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <NumberField
+                label="Keep reports for"
+                unit="days"
+                hint="Delete report artifacts older than this many days"
+                value={num(form.report_retention_days)}
+                onChange={(v) => set('report_retention_days', v)}
+              />
+              <NumberField
+                label="Keep at most"
+                hint="Maximum number of report artifacts to keep"
+                value={num(form.report_retention_count)}
+                onChange={(v) => set('report_retention_count', v)}
+              />
+            </div>
+          </Section>
+        </div>
       ) : null}
 
       {panel === 'security' ? (
-        <Section title="Security" hint="Passwords, username, and two-factor authentication.">
+        <Section title="Security" hint="Passwords, username, and two-factor authentication. Changes save immediately — no global Save.">
           <SecurityPanel />
         </Section>
       ) : null}
 
-      {panel === 'advanced' ? (
-        <Section title="Advanced integrations" hint="Modrinth lookups and spark profiling.">
-          <div className="grid gap-3 md:grid-cols-2">
-            <ToggleField label="Modrinth lookups" value={bool(form.modrinth_lookup)} onChange={(v) => set('modrinth_lookup', v)} />
-            <ToggleField label="Auto-scan on mod changes" value={bool(form.modrinth_auto_scan_on_mod_changes)} onChange={(v) => set('modrinth_auto_scan_on_mod_changes', v)} />
-            <ToggleField label="Spark enabled" value={bool(form.spark_enabled)} onChange={(v) => set('spark_enabled', v)} />
-            <ToggleField label="Spark mod loaded" value={bool(form.spark_mod_loaded)} onChange={(v) => set('spark_mod_loaded', v)} />
-            <ToggleField label="Auto-capture on lag" value={bool(form.spark_auto_capture_on_lag)} onChange={(v) => set('spark_auto_capture_on_lag', v)} />
-            <NumberField label="Auto-capture window" unit="sec" value={num(form.spark_auto_capture_window_sec)} onChange={(v) => set('spark_auto_capture_window_sec', v)} />
-            <NumberField label="Auto-capture cooldown" unit="sec" value={num(form.spark_auto_capture_cooldown_sec)} onChange={(v) => set('spark_auto_capture_cooldown_sec', v)} />
-          </div>
-        </Section>
+      {panel === 'integrations' ? (
+        <div className="space-y-6">
+          <Section
+            title="Modrinth"
+            hint="Optional jar identity and update checks. Watchtower never downloads jars — scans only send SHA-512 hashes."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <ToggleField
+                label="Modrinth lookups"
+                hint="Allow dedicated Modrinth scans from Mods → Modrinth"
+                value={modrinthOn}
+                onChange={(v) => {
+                  set('modrinth_lookup', v);
+                  if (!v) set('modrinth_auto_scan_on_mod_changes', false);
+                }}
+              />
+              <ToggleField
+                label="Auto-scan when mods change"
+                hint={
+                  modrinthOn
+                    ? 'Start a Modrinth scan when jars are added, removed, or updated'
+                    : 'Turn on Modrinth lookups first'
+                }
+                value={bool(form.modrinth_auto_scan_on_mod_changes)}
+                onChange={(v) => set('modrinth_auto_scan_on_mod_changes', v)}
+                disabled={!modrinthOn}
+              />
+            </div>
+          </Section>
+          <Section title="Spark" hint="Profiler integration. Auto-capture timing lives under Monitoring → Spark on lag.">
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-wt-line bg-wt-bg2/40 px-4 py-3">
+                <div className="text-sm font-medium">Spark mod</div>
+                <div className="mt-1.5">
+                  <StatusPill tone={sparkLoaded ? 'ok' : 'warn'}>
+                    {sparkLoaded ? 'Installed' : 'Not installed'}
+                  </StatusPill>
+                </div>
+              </div>
+              <ToggleField
+                label="Spark enabled"
+                hint="Allow Watchtower to list profiles, import links, and auto-capture"
+                value={sparkEnabled}
+                onChange={(v) => set('spark_enabled', v)}
+              />
+            </div>
+          </Section>
+        </div>
       ) : null}
 
       {panel === 'about' ? (
-        <Section title="About" hint="Build metadata.">
+        <Section title="About this install" hint="Quick facts for this Watchtower dashboard.">
           <Stagger className="grid gap-4 md:grid-cols-2">
             <SpotlightCard className="p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">Panel</div>
-              <div className="mt-1 text-sm">{str(form.panel, 'none')}</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">
+                Hosting panel
+              </div>
+              <div className="mt-1 text-sm">{str(form.panel_display_name) || str(form.panel, 'none')}</div>
             </SpotlightCard>
             <SpotlightCard className="p-5">
               <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">Hostname</div>
-              <div className="mt-1 text-sm">{str(form.hostname)}</div>
+              <div className="mt-1 text-sm">{str(form.hostname) || '—'}</div>
+            </SpotlightCard>
+            <SpotlightCard className="p-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">
+                Dashboard port
+              </div>
+              <div className="mt-1 text-sm">{num(form.dashboard_port) || '—'}</div>
+            </SpotlightCard>
+            <SpotlightCard className="p-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">Spark</div>
+              <div className="mt-1.5">
+                <StatusPill tone={sparkLoaded ? 'ok' : 'neutral'}>
+                  {sparkLoaded ? 'Mod loaded' : 'Mod not loaded'}
+                </StatusPill>
+              </div>
             </SpotlightCard>
             <SpotlightCard className="p-5 md:col-span-2">
               <p className="text-sm text-wt-text-mid">
-                WatchTower React dashboard. Fixture preview skips live auth; embedded and{' '}
-                <code className="rounded bg-wt-bg2 px-1">preview:live</code> use the real server.
+                {isFixturePreview()
+                  ? 'Fixture preview mode — saves stay in the browser session until you reload fixtures.'
+                  : 'Need to walk through first-run setup again? Relaunch the wizard below.'}
               </p>
               <Button
                 kind="primary"
@@ -325,6 +708,8 @@ export function PageView({ route }: { route: RouteState }) {
 
 function SecurityPanel() {
   const live = !isFixturePreview();
+  const session = useSessionStore((s) => s.session);
+  const totpEnabled = !!(session?.totp_enabled || session?.totpEnabled);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [newUsername, setNewUsername] = useState('');
@@ -338,7 +723,12 @@ function SecurityPanel() {
   const [totpError, setTotpError] = useState('');
   const [disablePw, setDisablePw] = useState('');
   const [disableCode, setDisableCode] = useState('');
+  const [localTotpOn, setLocalTotpOn] = useState(totpEnabled);
   const qrSrc = totpQrSrc(qrData);
+
+  useEffect(() => {
+    setLocalTotpOn(totpEnabled);
+  }, [totpEnabled]);
 
   if (!live) {
     return (
@@ -403,6 +793,7 @@ function SecurityPanel() {
       const res = await api.totpConfirm(totpCode);
       setRecoveryCodes(asArray<string>(res.recovery_codes));
       setTotpStep('codes');
+      setLocalTotpOn(true);
     } catch (err) {
       setTotpError(err instanceof Error ? err.message : 'Confirmation failed');
     } finally {
@@ -418,6 +809,7 @@ function SecurityPanel() {
       setDisablePw('');
       setDisableCode('');
       setTotpStep('idle');
+      setLocalTotpOn(false);
       setPwMsg({ ok: true, text: 'Two-factor authentication disabled.' });
     } catch (err) {
       setTotpError(err instanceof Error ? err.message : 'Disable failed');
@@ -430,8 +822,20 @@ function SecurityPanel() {
     <div className="grid gap-6">
       <div className="space-y-3 rounded-xl border border-wt-line bg-wt-bg2/40 p-4">
         <h3 className="text-sm font-semibold">Change password</h3>
-        <TextField label="Current password" value={currentPw} onChange={setCurrentPw} />
-        <TextField label="New password" value={newPw} onChange={setNewPw} />
+        <TextField
+          label="Current password"
+          type="password"
+          autoComplete="current-password"
+          value={currentPw}
+          onChange={setCurrentPw}
+        />
+        <TextField
+          label="New password"
+          type="password"
+          autoComplete="new-password"
+          value={newPw}
+          onChange={setNewPw}
+        />
         {pwMsg ? (
           <p className={`text-sm ${pwMsg.ok ? 'text-wt-ok' : 'text-wt-danger'}`}>{pwMsg.text}</p>
         ) : null}
@@ -460,24 +864,47 @@ function SecurityPanel() {
       </div>
 
       <div className="space-y-3 rounded-xl border border-wt-line bg-wt-bg2/40 p-4">
-        <h3 className="text-sm font-semibold">Two-factor authentication</h3>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">Two-factor authentication</h3>
+          <StatusPill tone={localTotpOn ? 'ok' : 'neutral'}>
+            {localTotpOn ? 'Enabled' : 'Off'}
+          </StatusPill>
+        </div>
         {totpStep === 'idle' ? (
           <>
-            <Button kind="default" disabled={saving} onClick={() => void startTotp()}>
-              Set up two-factor authentication
-            </Button>
-            <div className="grid gap-2 border-t border-wt-line pt-3">
-              <p className="text-xs text-wt-text-low">Disable 2FA (requires password + code)</p>
-              <TextField label="Password" value={disablePw} onChange={setDisablePw} />
-              <TextField label="Authenticator or recovery code" value={disableCode} onChange={setDisableCode} />
-              <Button
-                kind="ghost"
-                disabled={saving || !disablePw || !disableCode}
-                onClick={() => void disableTotp()}
-              >
-                Disable 2FA
+            {!localTotpOn ? (
+              <Button kind="default" disabled={saving} onClick={() => void startTotp()}>
+                Set up two-factor authentication
               </Button>
-            </div>
+            ) : (
+              <p className="text-sm text-wt-text-mid">
+                2FA is on. Use an authenticator app when signing in.
+              </p>
+            )}
+            {localTotpOn ? (
+              <div className="grid gap-2 border-t border-wt-line pt-3">
+                <p className="text-xs text-wt-text-low">Disable 2FA (requires password + code)</p>
+                <TextField
+                  label="Password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={disablePw}
+                  onChange={setDisablePw}
+                />
+                <TextField
+                  label="Authenticator or recovery code"
+                  value={disableCode}
+                  onChange={setDisableCode}
+                />
+                <Button
+                  kind="ghost"
+                  disabled={saving || !disablePw || !disableCode}
+                  onClick={() => void disableTotp()}
+                >
+                  Disable 2FA
+                </Button>
+              </div>
+            ) : null}
           </>
         ) : null}
         {totpStep === 'qr' ? (

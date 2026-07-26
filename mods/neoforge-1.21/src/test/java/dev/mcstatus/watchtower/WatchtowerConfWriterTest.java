@@ -46,4 +46,18 @@ class WatchtowerConfWriterTest {
         assertTrue(updated.contains("LOOKBACK_HOURS=168"));
         assertFalse(updated.contains("LOOKBACK_HOURS=24"));
     }
+
+    @Test
+    void readHelpersPreferMapThenDefault() {
+        Map<String, String> map = Map.of(
+                "DISK_WARN_PCT", "90",
+                "TPS_WARN", "18.5",
+                "SPARK_ENABLED", "false"
+        );
+        assertEquals(90, WatchtowerConfWriter.readInt(map, "DISK_WARN_PCT", 85));
+        assertEquals(85, WatchtowerConfWriter.readInt(map, "MISSING", 85));
+        assertEquals(18.5, WatchtowerConfWriter.readDouble(map, "TPS_WARN", 19.5), 0.001);
+        assertFalse(WatchtowerConfWriter.readBool(map, "SPARK_ENABLED", true));
+        assertTrue(WatchtowerConfWriter.readBool(map, "MISSING", true));
+    }
 }
