@@ -1,127 +1,117 @@
-
-
-# Watchtower
-**What's happening on your server — and what to do next.**
 <p align="center">
-  <a href="https://github.com/djinnbanter/WatchTower/releases"><img src="https://img.shields.io/github/v/release/djinnbanter/WatchTower?style=flat-square" alt="Release"></a>
-  <a href="https://github.com/djinnbanter/WatchTower/actions/workflows/ci.yml"><img src="https://github.com/djinnbanter/WatchTower/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://neoforged.net/"><img src="https://img.shields.io/badge/NeoForge-1.21.x-3b8526?style=flat-square" alt="NeoForge 1.21.x"></a>
-  <a href="https://modrinth.com/mod/watchtower"><img src="https://img.shields.io/modrinth/dt/watchtower?label=Modrinth&style=flat-square" alt="Modrinth downloads"></a>
+  <img src="web/dashboard-alpha/assets/watchtower-logo.png" alt="Watchtower" width="96">
 </p>
 
-[Modrinth](https://modrinth.com/mod/watchtower) · [Wiki](https://github.com/djinnbanter/WatchTower/wiki) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/djinnbanter/WatchTower/issues)
+# Watchtower
 
-[Quick start](#quick-start) · [Features](#at-a-glance) · [Screenshots](#screenshots) · [Sources](#sources) · [Why](#why-this-exists) · [Roadmap](#where-its-headed) · [Docs](#documentation) · [Contributing](#contributing)
+**What's happening on your Minecraft server — and what to do next.**
+
+<p align="center">
+  <a href="https://github.com/djinnbanter/WatchTower/releases"><img src="https://img.shields.io/github/v/release/djinnbanter/WatchTower?style=flat-square" alt="Release"></a>
+  <a href="https://modrinth.com/mod/watchtower"><img src="https://img.shields.io/modrinth/dt/watchtower?label=Modrinth&style=flat-square" alt="Modrinth downloads"></a>
+  <a href="https://neoforged.net/"><img src="https://img.shields.io/badge/NeoForge-1.21.x-3b8526?style=flat-square" alt="NeoForge 1.21.x"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=flat-square" alt="License"></a>
+</p>
+
+<p align="center">
+  <a href="https://modrinth.com/mod/watchtower">Modrinth</a> ·
+  <a href="https://github.com/djinnbanter/WatchTower/releases">Releases</a> ·
+  <a href="https://github.com/djinnbanter/WatchTower/wiki">Wiki</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="https://github.com/djinnbanter/WatchTower/issues">Issues</a>
+</p>
 
 ---
 
-Watchtower is a **NeoForge mod for Linux dedicated servers** — a live ops dashboard, scheduled health reports, and a disaster-recovery toolkit in one install. Built for **modpack admins and self-hosters** who need incident triage, not player analytics. Everything stays on your machine: no cloud account, no telemetry service, no database to run.
+I built Watchtower for the nights when a modded server goes weird and you’re bouncing between the host panel, `latest.log`, crash folders, and backup paths — just to answer two questions:
+
+1. **Is the server okay right now?**
+2. **What should I fix next?**
+
+It’s a **local ops dashboard** for NeoForge dedicated servers. It watches while the game runs, turns lag / crashes / mods / backups into plain next steps, and stays on your machine. No cloud account. No telemetry service. Not a player-stats / analytics mod.
+
+**Works on:** Linux dedicated servers · NeoForge **1.21.x** · Java **21**
+
+---
+
+## What you get
+
+- **Overview** — a clear “how’s my server?” page: health grade, live vitals, what needs attention, and **restart advice** (Safe / Caution / Wait). It does **not** restart the server for you.
+- **Live** — TPS, lag, players, memory, CPU, and host charts while you watch.
+- **Issues & Crashes** — a fix inbox that stays useful without running giant reports every day. Pick a row, see what to do next.
+- **Mods** — inventory with optional [Modrinth](https://modrinth.com/) update / conflict hints. Watchtower **never downloads mod jars for you**.
+- **Spark** — when lag needs proof, read [Spark](https://modrinth.com/mod/spark) profiles in plain steps (needs Spark installed). The deep Spark workspace is still **alpha**.
+- **Backups** — see if backups look fresh. Point it at a **local backup folder** (best path). Panel / cloud tracking exists but is **alpha** — don’t fully trust it yet.
+- **Support pack** — build a zip (logs, crashes, Spark, extras) from the side rail to send to a helper or mod author.
+- **CLI (optional)** — if Minecraft won’t stay up, the matching CLI jar can still build a local disaster-recovery bundle over SSH.
+
+Everything important lives under your server’s `watchtower/` folder on disk.
+
+---
 
 ## Quick start
 
-1. Download from **[GitHub Releases](https://github.com/djinnbanter/WatchTower/releases)** or **[Modrinth](https://modrinth.com/mod/watchtower)**:
-  - `watchtower-neoforge-1.0.0+mc1.21.jar` — required
-  - `watchtower-cli-1.0.0.jar` — optional (DR when the server will not boot)
-2. Copy both JARs into your server `**mods/`** folder.
-3. Start the server, then open `**http://<server-ip>:8787**`, sign in, change your password, and complete the **setup wizard** (initial audit + scheduled reports). Use **Run Report** anytime for a full health check.
+1. Download **[GitHub Releases](https://github.com/djinnbanter/WatchTower/releases)** or **[Modrinth](https://modrinth.com/mod/watchtower)**:
+   - `watchtower-neoforge-1.1.2+mc1.21.jar` — **required** (the mod)
+   - `watchtower-cli-1.1.2.jar` — **recommended** (disaster recovery when the game won’t boot)
+2. Put both files in your server’s **`mods/`** folder (replace older Watchtower jars).
+3. Restart the server.
+4. Open **`http://<server-ip>:8787`** in your browser.
+5. Sign in with **`watchtower` / `password`**, then **change the password** right away and finish first-time setup.
 
-Full walkthrough: [Wiki — Quick Start Checklist](https://github.com/djinnbanter/WatchTower/wiki/Quick-Start-Checklist) · [Installation](https://github.com/djinnbanter/WatchTower/wiki/Installation)
+**Security tip:** Prefer opening the dashboard on the machine itself (or through an SSH tunnel). Don’t leave port **8787** open to the whole internet.
 
-**Requirements, default login, and download details**
+More detail: [Installation](https://github.com/djinnbanter/WatchTower/wiki/Installation) · [Quick Start Checklist](https://github.com/djinnbanter/WatchTower/wiki/Quick-Start-Checklist) · [Security](https://github.com/djinnbanter/WatchTower/wiki/Security-and-Access)
 
-**Requirements:** Linux dedicated server · NeoForge **1.21.x** (1.21.1 through latest 1.21 patch) · Java **21**
-
-**First login:** `watchtower` / `password` — you will be prompted to change it. See [Security and Access](https://github.com/djinnbanter/WatchTower/wiki/Security-and-Access).
-
-
-| File                                   | Purpose                                                         |
-| -------------------------------------- | --------------------------------------------------------------- |
-| `watchtower-neoforge-1.0.0+mc1.21.jar` | Mod — dashboard + reports while the server runs                 |
-| `watchtower-cli-1.0.0.jar`             | Optional — DR bundle when Minecraft never reaches the dashboard |
-
-
-NeoForge does not load the CLI as a mod; run it with `java -jar` over SSH. [Disaster recovery guide →](https://github.com/djinnbanter/WatchTower/wiki/Disaster-Recovery)
-
-Build from source: [CONTRIBUTING.md](CONTRIBUTING.md)
-
-
+The CLI is **not** loaded as a Minecraft mod. Keep it in `mods/` next to Watchtower, and run it with `java -jar` over SSH when you need it. [Disaster recovery →](https://github.com/djinnbanter/WatchTower/wiki/Disaster-Recovery)
 
 ---
 
-## At a glance
+## Screenshots
 
+<p align="center">
+  <img src="docs/assets/screenshots/Overview.png" alt="Overview — server health at a glance" width="900"><br>
+  <em>Overview — health, vitals, and what needs attention</em>
+</p>
 
-|                       |                                                                                                                                                                                                                                         |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Live dashboard**    | TPS, MSPT, players, heap, CPU, RAM, disk, bandwidth — history from ~1 minute to 90 days. Overview, Live, Insights, Issues, Crashes, Mods, Backups, Activity, Session, Spark, and Sources at `:8787`. |
-| **Setup wizard**      | First-run audit, backup discovery, scheduled reports, optional 2FA — reopen from Help anytime |
-| **Health reports**    | On demand or on a schedule — plain-English **brief** + structured **facts** JSON under `watchtower/`. Log and crash analysis, backup age, mod load errors, panel-aware paths. In-game: `/watchtower run`, `status`, `issues`, and more. |
-| **In-app Docs**       | Full operator wiki built into the dashboard — search, categories, same content as GitHub Wiki |
-| **Disaster recovery** | When the JVM will not stay up, the CLI builds a local DR bundle zip; optional browser **DR viewer** (early preview — may not work fully yet). No dashboard required. |
-| **Local by default**  | Rule-based analysis on your server. No external API calls to interpret logs or crashes.                                                                                                                                                 |
-| **Secured access**    | Login required; optional 2FA in **Settings → Security**.                                                                                                                                                                                |
----
+<p align="center">
+  <img src="docs/assets/screenshots/Live-Metrics.png" alt="Live — TPS and host charts" width="900"><br>
+  <em>Live — tick and host charts while the server runs</em>
+</p>
 
-## Sources
+<p align="center">
+  <img src="docs/assets/screenshots/Issues.png" alt="Issues — fix inbox" width="900"><br>
+  <em>Issues — a fix inbox with clear next steps</em>
+</p>
 
-Watchtower uses three update layers — **Live** (charts while you watch), **Scanned** (background log/crash/mod tail ~every 60s), and **Report** (full audit snapshot). The **Sources** tab shows which layer feeds each dashboard area so you know what still needs a scheduled or manual report.
-
-![Sources — what updates how](docs/assets/screenshots/sources.png)
-
-[Understanding Data Sources →](https://github.com/djinnbanter/WatchTower/wiki/Understanding-Data-Sources)
-
----
-
-## Why this exists
-
-Running a modded server often means jumping between a panel, `latest.log`, crash folders, backup paths, and whatever you were last grep-ing — especially when something breaks at 2am.
-
-Watchtower was built to answer two questions **without leaving the server**:
-
-1. **What's happening right now?** — TPS, lag, players, pregen, open issues
-2. **What should I do next?** — plain-English issues, crash summaries, mod hints, backup status
-
-It is **ops and incident triage**, not playtime leaderboards or retention graphs. Reports and charts live under `<server>/watchtower/` on disk — you are not shipping server data to a third party to get a useful summary.
+<p align="center">
+  <img src="docs/assets/screenshots/Crash-Logs.png" alt="Crashes — grouped crash reports" width="900"><br>
+  <em>Crashes — grouped reports you can actually work through</em>
+</p>
 
 ---
 
-## Where it's headed
+## Where it’s going
 
-**1.0.0** is the first public release: live metrics, scheduled reports, a secured dashboard with setup wizard and in-app docs, Spark profiler integration, performance insights, external backup tracking, and DR when the game will not start.
+I keep shipping in small steps: clearer advice, better crash / mod help, then wider loader support later. The long-term goal stays the same — **one place on the server** for what’s happening and what to do next.
 
-From there the plan is incremental — smarter mod advice, crash intelligence, fleet view for multi-server hosts, Fabric support, and more loader lines later.
-
-The long-term goal is simple: **one place on the server** for what's happening right now and what to do next.
-
-See the full version-ordered [roadmap](docs/ROADMAP.md).
+Full plan: [docs/ROADMAP.md](docs/ROADMAP.md) (there’s also a Roadmap page inside the dashboard).
 
 ---
 
-## Documentation
+## Docs & help
 
-The **[GitHub Wiki](https://github.com/djinnbanter/WatchTower/wiki)** is the main guide for server owners.
+- **[GitHub Wiki](https://github.com/djinnbanter/WatchTower/wiki)** — main guide for server owners (same content is in the in-app Help Center)
+- **[Changelog](CHANGELOG.md)** — what changed in each release
+- **[Issues](https://github.com/djinnbanter/WatchTower/issues)** — bugs and ideas
 
-
-| Topic                 | Link                                                                                                                                                                        |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Install & quick start | [Installation](https://github.com/djinnbanter/WatchTower/wiki/Installation) · [Quick Start Checklist](https://github.com/djinnbanter/WatchTower/wiki/Quick-Start-Checklist) |
-| Dashboard             | [Dashboard Overview](https://github.com/djinnbanter/WatchTower/wiki/Dashboard-Overview)                                                                                     |
-| Commands & config     | [Commands](https://github.com/djinnbanter/WatchTower/wiki/Commands) · [Configuration](https://github.com/djinnbanter/WatchTower/wiki/Configuration)                         |
-| Security              | [Security and Access](https://github.com/djinnbanter/WatchTower/wiki/Security-and-Access)                                                                                   |
-| Disaster recovery     | [Disaster Recovery](https://github.com/djinnbanter/WatchTower/wiki/Disaster-Recovery)                                                                                       |
-| Troubleshooting       | [Troubleshooting](https://github.com/djinnbanter/WatchTower/wiki/Troubleshooting)                                                                                           |
-| Roadmap & changelog   | [Roadmap](docs/ROADMAP.md) · [Changelog](CHANGELOG.md)                                                                                                                      |
-
-
-Contributors: [CONTRIBUTING.md](CONTRIBUTING.md) · [docs/ROADMAP.md](docs/ROADMAP.md)
+Something still feels wrong after updating? Open an issue or send a Support pack — I’ll take a look.
 
 ---
 
 ## Contributing
 
-Bug reports and ideas: [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)
-
-Clone, build, and test: [CONTRIBUTING.md](CONTRIBUTING.md)
+Clone, build, and test notes: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 
