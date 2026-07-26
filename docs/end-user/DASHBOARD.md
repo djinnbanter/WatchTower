@@ -8,7 +8,7 @@
 - **[HTTP API](https://github.com/djinnbanter/WatchTower/wiki/HTTP-API)**
 - **[Security and Access](https://github.com/djinnbanter/WatchTower/wiki/Security-and-Access)**
 
-Source: [`docs/wiki/`](../../docs/wiki/) · UI code: `web/dashboard/`
+Source: [`docs/wiki/`](../../docs/wiki/) · UI code: `web/dashboard-alpha/`
 
 ### Mod forensics / jdeps (1.0.17)
 

@@ -6,7 +6,7 @@ import { navigate } from './router.js';
 import { Icon } from '../ui/icons.js';
 import { isEmbedded } from '../api/index.js';
 import { logout } from '../api/endpoints.js';
-import { cycleTheme } from '../theme/theme.js';
+import { cycleTheme, cycleSkin } from '../theme/theme.js';
 import { ReportControls } from './report-controls.js';
 
 // Nav groups shown in main area (not system bottom)
@@ -118,6 +118,11 @@ export function Rail({ forceExpanded = false } = {}) {
     setUi({ theme: next });
   }
 
+  function handleSkin() {
+    const next = cycleSkin();
+    setUi({ skin: next });
+  }
+
   return html`
     <nav
       class=${'ui-rail' + (expanded ? '' : ' ui-rail--collapsed')}
@@ -158,7 +163,7 @@ export function Rail({ forceExpanded = false } = {}) {
 
       <div class="ui-rail__reports" data-tour="report-controls">
         ${expanded
-          ? html`<span class="ui-rail__reports-label">Reports</span>`
+          ? html`<span class="ui-rail__reports-label">Help</span>`
           : null}
         <${ReportControls} compact=${!expanded} />
       </div>
@@ -187,6 +192,17 @@ export function Rail({ forceExpanded = false } = {}) {
           >
             <${Icon} name="sun" size=${18} />
             ${expanded ? html`<span class="ui-rail__tool-label">Theme</span>` : null}
+          </button>
+
+          <button
+            type="button"
+            class="ui-rail__tool-btn"
+            onClick=${handleSkin}
+            title="Cycle look: Aero ? Classic (Sass)"
+            aria-label="Cycle look skin"
+          >
+            <${Icon} name="sparkles" size=${18} />
+            ${expanded ? html`<span class="ui-rail__tool-label">Skin</span>` : null}
           </button>
 
           ${embedded

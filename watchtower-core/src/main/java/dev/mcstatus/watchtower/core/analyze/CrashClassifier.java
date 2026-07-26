@@ -316,7 +316,7 @@ public final class CrashClassifier {
                     details);
         }
 
-        if (isLoader(combined)) {
+        if (isLoader(combined, stackText, scanText)) {
             return new Classification("loader", FK_LOADER, null, primary, null, hintsLoader());
         }
 
@@ -1284,11 +1284,19 @@ public final class CrashClassifier {
     }
 
     private static boolean isLoader(String combined) {
-        return combined.contains("neoforged")
-                || combined.contains("net.neoforged")
-                || combined.contains("cpw.mods")
-                || combined.contains("fml early loading")
-                || combined.contains("bootstrap");
+        return isLoader(combined, null, null);
+    }
+
+    private static boolean isLoader(String combined, String stackText, String scanText) {
+        String blob = ((combined != null ? combined : "") + " "
+                + (stackText != null ? stackText : "") + " "
+                + (scanText != null ? scanText : "")).toLowerCase(Locale.ROOT);
+        return blob.contains("neoforged")
+                || blob.contains("net.neoforged")
+                || blob.contains("cpw.mods")
+                || blob.contains("fml early loading")
+                || blob.contains("bootstraplauncher")
+                || blob.contains("modlauncher");
     }
 
     private static String stallModFrom(JsonObject crash, String primary, String stackText, String combined) {

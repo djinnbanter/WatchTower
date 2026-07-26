@@ -30,7 +30,8 @@ const Labels = {
   issueSummary(i) {
     if (i.id === 'CRASH_REPORT') return 'Crash reports found in the lookback window — review before next session.';
     if (i.id === 'BACKUP_NOT_CONFIGURED') return 'No backup directory configured — set BACKUP_DIR on the host.';
-    if (i.id === 'BACKUP_NOT_FOUND') return 'No backup archive found in the lookback window.';
+    if (i.id === 'BACKUP_NOT_FOUND') return 'No backup archive found.';
+    if (i.id === 'BACKUP_STALE') return 'No backup in the last 24 hours.';
     if (i.id === 'MOD_LOAD_FAILED') return 'One or more mods failed to load correctly.';
     if (i.id === 'MOD_UPDATE_CONFLICT') return i.message || 'Mod versions or compat pairs need alignment.';
     return (i.message || '').split('—')[0].trim().slice(0, 120);
@@ -473,7 +474,7 @@ const Labels = {
       if (backup.reason === 'no_suffix_match') {
         return 'Files in backup folder but none use a recognized archive extension (.zip, .tar.gz, …).';
       }
-      const reason = backup.reason || 'no archive in lookback window';
+      const reason = backup.reason || 'no matching archive in configured folders';
       return `No backup archive found (${reason}). Run a panel backup or check BACKUP_DIRS.`;
     }
     return 'Check backup configuration on the host.';

@@ -1,5 +1,7 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
 import dev.mcstatus.watchtower.core.report.ReportEngine;
 
 /**
@@ -45,13 +47,13 @@ public final class EngineProbe {
                 }
                 available = true;
                 failureReason = "OK";
-                WatchtowerMod.LOGGER.debug("Watchtower engine probe OK ({})", ReportEngine.ENGINE_VERSION);
+                ModRuntime.logger().debug("Watchtower engine probe OK ({})", ReportEngine.ENGINE_VERSION);
             } catch (LinkageError e) {
                 markUnavailable(linkageMessage(e));
-                WatchtowerMod.LOGGER.error("Watchtower engine probe failed: {}", failureReason, e);
+                ModRuntime.logger().error("Watchtower engine probe failed: {}", failureReason, e);
             } catch (Exception e) {
                 markUnavailable(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
-                WatchtowerMod.LOGGER.error("Watchtower engine probe failed: {}", failureReason, e);
+                ModRuntime.logger().error("Watchtower engine probe failed: {}", failureReason, e);
             }
             verified = true;
         }

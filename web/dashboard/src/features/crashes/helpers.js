@@ -194,12 +194,12 @@ export function groupTitle(group, summary) {
   if (weakTitle || unknownKind) {
     const lead = leadMember(group);
     const fallback =
-      summary?.plain_english
-      || summary?.display_label
-      || lead?.plain_english
+      summary?.display_label
       || lead?.display_label
       || exceptionClassName(summary?.exception || lead?.exception)
-      || group?.label;
+      || summary?.plain_english
+      || lead?.plain_english
+      || (group?.label && String(group.label).toLowerCase() !== 'unknown' ? group.label : null);
     if (fallback) title = truncate(String(fallback), 100);
   }
   return title || group?.label || 'Crash group';

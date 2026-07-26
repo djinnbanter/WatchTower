@@ -1,7 +1,8 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ServerContext;
+
 import dev.mcstatus.watchtower.core.auth.DashboardAuthStore;
-import net.minecraft.server.MinecraftServer;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -22,7 +23,7 @@ public final class OpsPollScheduler {
         return t;
     });
     private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
-    private volatile MinecraftServer server;
+    private volatile ServerContext server;
     private volatile int pollSec = 60;
 
     private OpsPollScheduler() {
@@ -32,7 +33,7 @@ public final class OpsPollScheduler {
         return INSTANCE;
     }
 
-    public void bind(MinecraftServer server) {
+    public void bind(ServerContext server) {
         this.server = server;
         try {
             pollSec = ModReportConfig.forServer(server).opsPollSec();
@@ -47,7 +48,7 @@ public final class OpsPollScheduler {
     }
 
     public void refreshSchedule() {
-        MinecraftServer s = server;
+        ServerContext s = server;
         if (s == null) {
             stop();
             return;
@@ -65,7 +66,7 @@ public final class OpsPollScheduler {
         }
         ScheduledFuture<?> f = executor.scheduleAtFixedRate(
                 () -> {
-                    MinecraftServer current = server;
+                    ServerContext current = server;
                     if (current == null || !hasAuthenticatedSession()) {
                         stop();
                         return;

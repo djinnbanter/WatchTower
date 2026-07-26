@@ -30,6 +30,8 @@ The dashboard is protected by **username and password**. Treat it like any admin
 
 After that, login needs your password plus a code from the app (or a recovery code).
 
+> **Coming soon:** some enrollment UI steps may still be illustrative on unfinished builds. If Enable 2FA is incomplete on your install, keep the dashboard on localhost + SSH tunnel and change the password first.
+
 ---
 
 ## Locked out?

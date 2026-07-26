@@ -11,6 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -215,6 +216,22 @@ class ModrinthLookupServiceTest {
     }
 
     @Test
+    void minecraftVersionFromServerDirReadsSnapshotThenPlatform(@TempDir Path dir) throws Exception {
+        Path wt = dir.resolve("watchtower");
+        Files.createDirectories(wt);
+        Files.writeString(wt.resolve("snapshot.json"), """
+                {"source":"watchtower","minecraft_version":"1.21.1","overworld":{"tps":20,"mspt":1}}
+                """);
+        assertEquals("1.21.1", ModrinthLookupService.minecraftVersionFromServerDir(dir.toString()));
+
+        Files.delete(wt.resolve("snapshot.json"));
+        Files.writeString(wt.resolve("platform.json"), """
+                {"loader":"neoforge","minecraft_version":"1.21.1"}
+                """);
+        assertEquals("1.21.1", ModrinthLookupService.minecraftVersionFromServerDir(dir.toString()));
+    }
+
+    @Test
     void minecraftVersionFromFactsUsesSparkWhenModsOmitMinecraft() {
         JsonObject facts = JsonParser.parseString("""
                 {
@@ -240,6 +257,71 @@ class ModrinthLookupServiceTest {
                 }
                 """).getAsJsonObject();
         assertEquals("1.21.1", ModrinthLookupService.minecraftVersionFromFacts(facts));
+    }
+
+    @Test
+    void minecraftVersionFromFactsPrefersPatchOverParentMcTag() {
+        JsonObject facts = JsonParser.parseString("""
+                {
+                  "optional": {
+                    "mods": [
+                      { "id": "appleskin", "version": "3.0.9+mc1.21", "jar_file": "appleskin-neoforge-mc1.21-3.0.9.jar" },
+                      { "id": "farmersdelight", "version": "1.3.2", "jar_file": "FarmersDelight-1.21.1-1.3.2.jar",
+                        "modrinth_version_number": "1.21.1-1.3.2" },
+                      { "id": "create", "version": "6.0.0", "jar_file": "create-1.21.1-6.0.0.jar" },
+                      { "id": "yungs", "version": "1.21.1-NeoForge-5.1.1", "jar_file": "Yungs-1.21.1-NeoForge-5.1.1.jar" }
+                    ]
+                  }
+                }
+                """).getAsJsonObject();
+        assertEquals("1.21.1", ModrinthLookupService.minecraftVersionFromFacts(facts));
+    }
+
+    @Test
+    void pickBestMinecraftVotePrefersSpecificityThenCount() {
+        Map<String, Integer> votes = new HashMap<>();
+        votes.put("1.21", 50);
+        votes.put("1.21.1", 10);
+        assertEquals("1.21.1", ModrinthLookupService.pickBestMinecraftVote(votes));
+    }
+
+    @Test
+    void compareMcTaggedVersionsRejectsParentLineDowngrade() {
+        assertTrue(ModrinthLookupService.compareMcTaggedVersions("1.21.1-1.3.2", "1.21-1.2.4") > 0);
+        assertTrue(ModrinthLookupService.compareMcTaggedVersions("1.21-1.2.4", "1.21.1-1.3.2") < 0);
+        assertTrue(ModrinthLookupService.compareMcTaggedVersions("1.21.1-1.3.2", "1.21.1-1.3.1") > 0);
+    }
+
+    @Test
+    void enrichCompatibleIgnoresOlderParentMcRelease(@TempDir Path dir) throws Exception {
+        Path jar = dir.resolve("farmersdelight.jar");
+        Files.write(jar, "fd-installed".getBytes(StandardCharsets.UTF_8));
+        String installedHash = ModrinthLookupService.sha512Hex(jar);
+
+        ModrinthLookupService.seedTransportForTests(new ModrinthLookupService.HttpTransport() {
+            @Override
+            public String postJson(String url, String body) {
+                return "{}";
+            }
+
+            @Override
+            public String getJson(String url) {
+                // Wrong-line "newest" for game_versions=["1.21"] — older than installed 1.21.1-1.3.2
+                return "[{\"id\":\"ovSzG9pc\",\"version_number\":\"1.21-1.2.4\","
+                        + "\"files\":[{\"primary\":true,\"hashes\":{\"sha512\":\"oldparent\"}}]}]";
+            }
+        });
+
+        Map<String, ModrinthLookupService.SideInfo> byId = new HashMap<>();
+        byId.put("farmersdelight", new ModrinthLookupService.SideInfo(
+                "R2OftAxM", "farmers-delight", "optional", "required", "Farmer's Delight", false,
+                "GbNuOZ4S", "1.21.1-1.3.2", false, null, null, null));
+        ModrinthLookupService.enrichCompatibleUpdates(
+                byId, Map.of("farmersdelight", installedHash), Set.of("farmersdelight"),
+                "neoforge", "1.21", 10);
+        ModrinthLookupService.SideInfo updated = byId.get("farmersdelight");
+        assertFalse(updated.outdated());
+        assertNull(updated.compatibleVersionId());
     }
 
     @Test
@@ -289,5 +371,118 @@ class ModrinthLookupServiceTest {
         assertEquals(4, deps.size());
         assertEquals("required", deps.get(0).dependencyType());
         assertEquals("incompatible", deps.get(1).dependencyType());
+    }
+
+    @Test
+    void persistAfterCompatEnrichPreservesFetchedAtAndDeps(@TempDir Path dir) throws Exception {
+        Path jar = dir.resolve("create.jar");
+        Files.write(jar, "create-payload".getBytes(StandardCharsets.UTF_8));
+        String hash = ModrinthLookupService.sha512Hex(jar);
+        Path cache = dir.resolve("modrinth-cache.json");
+
+        ModrinthLookupService.seedTransportForTests(new ModrinthLookupService.HttpTransport() {
+            @Override
+            public String postJson(String url, String body) {
+                return "{\"" + hash + "\":{\"project_id\":\"proj\",\"id\":\"oldver\",\"version_number\":\"6.0.0\"}}";
+            }
+
+            @Override
+            public String getJson(String url) {
+                if (url.contains("/version_files") || url.contains("version_files")) {
+                    return "{}";
+                }
+                if (url.contains("/projects")) {
+                    return "[{\"id\":\"proj\",\"slug\":\"create\",\"client_side\":\"optional\","
+                            + "\"server_side\":\"required\",\"title\":\"Create\"}]";
+                }
+                // project versions / version detail
+                return "[{\"id\":\"newver\",\"version_number\":\"6.0.1\","
+                        + "\"dependencies\":[{\"project_id\":\"flywheelproj\",\"dependency_type\":\"required\"}],"
+                        + "\"files\":[{\"primary\":true,\"hashes\":{\"sha512\":\"deadbeef\"}}]}]";
+            }
+        });
+
+        ReportConfig config = ReportConfig.builder().modrinthLookup(true).build();
+        Map<String, ModrinthLookupService.SideInfo> byHash = ModrinthLookupService.lookup(
+                List.of(new ModrinthLookupService.Candidate("create", jar)),
+                cache,
+                config);
+        assertNotNull(byHash.get(hash));
+        assertNotNull(byHash.get(hash).fetchedAt());
+        Instant stamped = byHash.get(hash).fetchedAt();
+
+        Map<String, ModrinthLookupService.SideInfo> byId = new HashMap<>();
+        byId.put("create", byHash.get(hash));
+        ModrinthLookupService.enrichCompatibleUpdates(
+                byId, Map.of("create", hash), Set.of("create"), "neoforge", "1.21.1", 10);
+        ModrinthLookupService.SideInfo enriched = byId.get("create");
+        assertTrue(enriched.outdated());
+        assertEquals(1, enriched.compatibleDependencies().size());
+        assertEquals(stamped, enriched.fetchedAt());
+
+        byHash.put(hash, enriched);
+        ModrinthLookupService.persistCache(cache, byHash);
+
+        ModrinthLookupService.resetForTests();
+        Map<String, ModrinthLookupService.SideInfo> reloaded =
+                ModrinthLookupService.lookupCacheOnly(
+                        List.of(new ModrinthLookupService.Candidate("create", jar)), cache);
+        ModrinthLookupService.SideInfo again = reloaded.get(hash);
+        assertNotNull(again, "cache entry must survive reload after compat enrich");
+        assertFalse(again.fetchedAtOrEpoch().equals(java.time.Instant.EPOCH));
+        assertEquals(stamped, again.fetchedAt());
+        assertEquals(1, again.compatibleDependencies().size());
+        assertEquals("flywheelproj", again.compatibleDependencies().get(0).projectId());
+        assertTrue(ModrinthLookupService.isFresh(again, java.time.Instant.now()));
+    }
+
+    @Test
+    void isFreshRespectsHitAndMissTtl() {
+        java.time.Instant now = java.time.Instant.parse("2026-07-21T12:00:00Z");
+        ModrinthLookupService.SideInfo freshHit = new ModrinthLookupService.SideInfo(
+                "p", "s", "required", "required", "T", false)
+                .withFetchedAt(now.minusSeconds(3600));
+        assertTrue(ModrinthLookupService.isFresh(freshHit, now));
+
+        ModrinthLookupService.SideInfo staleHit = new ModrinthLookupService.SideInfo(
+                "p", "s", "required", "required", "T", false)
+                .withFetchedAt(java.time.Instant.EPOCH);
+        assertFalse(ModrinthLookupService.isFresh(staleHit, now));
+
+        ModrinthLookupService.SideInfo freshMiss = ModrinthLookupService.SideInfo.missInfo()
+                .withFetchedAt(now.minusSeconds(3600));
+        assertTrue(ModrinthLookupService.isFresh(freshMiss, now));
+
+        ModrinthLookupService.SideInfo staleMiss = ModrinthLookupService.SideInfo.missInfo()
+                .withFetchedAt(now.minusSeconds(8L * 24 * 3600));
+        assertFalse(ModrinthLookupService.isFresh(staleMiss, now));
+    }
+
+    @Test
+    void normalizeLoaderKeepsPlainForgeAndDisplayNames() {
+        assertEquals("forge", ModrinthLookupService.normalizeLoader("forge"));
+        assertEquals("forge", ModrinthLookupService.normalizeLoader("Forge"));
+        assertEquals("neoforge", ModrinthLookupService.normalizeLoader("neoforge"));
+        assertEquals("neoforge", ModrinthLookupService.normalizeLoader("NeoForge"));
+        assertEquals("fabric", ModrinthLookupService.normalizeLoader("fabric"));
+        assertEquals("Forge", ModrinthLookupService.loaderDisplayName("forge"));
+        assertEquals("Fabric", ModrinthLookupService.loaderDisplayName("fabric"));
+        assertEquals("NeoForge", ModrinthLookupService.loaderDisplayName("neoforge"));
+    }
+
+    @Test
+    void applyIdentityUsesLoaderDisplayName() {
+        JsonArray mods = new JsonArray();
+        JsonObject mod = new JsonObject();
+        mod.addProperty("id", "testmod");
+        mods.add(mod);
+        Map<String, ModrinthLookupService.SideInfo> byId = new HashMap<>();
+        byId.put("testmod", new ModrinthLookupService.SideInfo(
+                "abc", "testmod", "required", "unsupported", "Test Mod", false,
+                "ver1", "1.0.0", true, "ver2", "1.1.0",
+                "https://modrinth.com/mod/testmod/version/ver2"));
+        ModrinthLookupService.applyIdentityToMods(mods, byId, "fabric");
+        assertEquals("Fabric build 1.1.0 available",
+                mods.get(0).getAsJsonObject().get("modrinth_update_label").getAsString());
     }
 }

@@ -6,11 +6,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.mcstatus.watchtower.core.collect.ModChangeDetector;
 import dev.mcstatus.watchtower.core.util.TimeParse;
+import dev.mcstatus.watchtower.core.util.WatchtowerPathLocks;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -32,6 +34,7 @@ public final class StateManager {
 
     public static void updateAfterReport(Path statePath, String windowStart, JsonObject facts, int lookbackHours)
             throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
         ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
         double cutoff = now.toEpochSecond() - (long) lookbackHours * 3600L;
 
@@ -58,11 +61,16 @@ public final class StateManager {
         JsonObject preservedCrashIndex = state.has("crash_mtime_index")
                 ? state.getAsJsonObject("crash_mtime_index").deepCopy()
                 : null;
+        JsonObject preservedCrashFp = state.has("crash_fp_index")
+                ? state.getAsJsonObject("crash_fp_index").deepCopy()
+                : null;
         int preservedOpsSeq = state.has("ops_cache_seq") ? state.get("ops_cache_seq").getAsInt() : 0;
         JsonArray preservedModsSnapshot = state.has("last_mods_snapshot")
                 ? state.getAsJsonArray("last_mods_snapshot").deepCopy() : null;
         JsonObject preservedDiskBaseline = state.has("disk_baseline")
                 ? state.getAsJsonObject("disk_baseline").deepCopy() : null;
+        JsonObject preservedPerfBaseline = state.has("perf_baseline")
+                ? state.getAsJsonObject("perf_baseline").deepCopy() : null;
         JsonObject system = facts.getAsJsonObject("system");
         JsonObject minecraft = facts.has("minecraft") ? facts.getAsJsonObject("minecraft") : new JsonObject();
         JsonObject optional = facts.has("optional") ? facts.getAsJsonObject("optional") : new JsonObject();
@@ -148,6 +156,9 @@ public final class StateManager {
         if (preservedCrashIndex != null) {
             state.add("crash_mtime_index", preservedCrashIndex);
         }
+        if (preservedCrashFp != null) {
+            state.add("crash_fp_index", preservedCrashFp);
+        }
         if (preservedOpsSeq > 0) {
             state.addProperty("ops_cache_seq", preservedOpsSeq);
         }
@@ -163,9 +174,12 @@ public final class StateManager {
         } else if (system != null && system.has("disk_use_pct")) {
             state.add("disk_baseline", dev.mcstatus.watchtower.core.analyze.DiskJumpEvaluator.baselineFromSystem(system));
         }
+        if (preservedPerfBaseline != null) {
+            state.add("perf_baseline", preservedPerfBaseline);
+        }
 
-        Files.createDirectories(statePath.getParent());
-        Files.writeString(statePath, state.toString() + System.lineSeparator(), StandardCharsets.UTF_8);
+        writeState(statePath, state);
+        }
     }
 
     public static void acknowledgeCrash(Path statePath, String crashFile, Instant when) throws IOException {
@@ -182,28 +196,32 @@ public final class StateManager {
         if (crashFile == null || crashFile.isBlank()) {
             return;
         }
-        JsonObject state = loadState(statePath);
-        JsonObject acks = state.has("acknowledged_crashes")
-                ? state.getAsJsonObject("acknowledged_crashes")
-                : new JsonObject();
-        JsonObject record = buildAckRecord(when, by, category, plainEnglish);
-        storeAckKeys(acks, crashFile, record);
-        state.add("acknowledged_crashes", acks);
-        writeState(statePath, state);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject acks = state.has("acknowledged_crashes")
+                    ? state.getAsJsonObject("acknowledged_crashes")
+                    : new JsonObject();
+            JsonObject record = buildAckRecord(when, by, category, plainEnglish);
+            storeAckKeys(acks, crashFile, record);
+            state.add("acknowledged_crashes", acks);
+            writeState(statePath, state);
+        }
     }
 
     public static void unacknowledgeCrash(Path statePath, String crashFile) throws IOException {
         if (crashFile == null || crashFile.isBlank()) {
             return;
         }
-        JsonObject state = loadState(statePath);
-        if (!state.has("acknowledged_crashes")) {
-            return;
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            if (!state.has("acknowledged_crashes")) {
+                return;
+            }
+            JsonObject acks = state.getAsJsonObject("acknowledged_crashes");
+            removeAckKeys(acks, crashFile);
+            state.add("acknowledged_crashes", acks);
+            writeState(statePath, state);
         }
-        JsonObject acks = state.getAsJsonObject("acknowledged_crashes");
-        removeAckKeys(acks, crashFile);
-        state.add("acknowledged_crashes", acks);
-        writeState(statePath, state);
     }
 
     public static JsonObject getAcknowledgedCrashes(Path statePath) throws IOException {
@@ -225,27 +243,29 @@ public final class StateManager {
         if (crashFiles == null || crashFiles.isEmpty()) {
             return 0;
         }
-        JsonObject state = loadState(statePath);
-        JsonObject acks = state.has("acknowledged_crashes")
-                ? state.getAsJsonObject("acknowledged_crashes")
-                : new JsonObject();
-        int n = 0;
-        Instant at = when != null ? when : Instant.now();
-        for (String crashFile : crashFiles) {
-            if (crashFile == null || crashFile.isBlank()) {
-                continue;
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject acks = state.has("acknowledged_crashes")
+                    ? state.getAsJsonObject("acknowledged_crashes")
+                    : new JsonObject();
+            int n = 0;
+            Instant at = when != null ? when : Instant.now();
+            for (String crashFile : crashFiles) {
+                if (crashFile == null || crashFile.isBlank()) {
+                    continue;
+                }
+                if (isCrashAcked(acks, crashFile)) {
+                    continue;
+                }
+                storeAckKeys(acks, crashFile, buildAckRecord(at, by, null, null));
+                n++;
             }
-            if (isCrashAcked(acks, crashFile)) {
-                continue;
+            if (n > 0) {
+                state.add("acknowledged_crashes", acks);
+                writeState(statePath, state);
             }
-            storeAckKeys(acks, crashFile, buildAckRecord(at, by, null, null));
-            n++;
+            return n;
         }
-        if (n > 0) {
-            state.add("acknowledged_crashes", acks);
-            writeState(statePath, state);
-        }
-        return n;
     }
 
     public static void recordAcknowledgedGroup(
@@ -257,18 +277,20 @@ public final class StateManager {
         if (fingerprint == null || fingerprint.isBlank()) {
             return;
         }
-        JsonObject state = loadState(statePath);
-        JsonObject groups = state.has("acknowledged_groups")
-                ? state.getAsJsonObject("acknowledged_groups")
-                : new JsonObject();
-        JsonObject record = new JsonObject();
-        Instant at = when != null ? when : Instant.now();
-        record.addProperty("ackedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
-        record.addProperty("by", by != null && !by.isBlank() ? by : "dashboard");
-        record.addProperty("member_count", memberCount);
-        groups.add(fingerprint, record);
-        state.add("acknowledged_groups", groups);
-        writeState(statePath, state);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject groups = state.has("acknowledged_groups")
+                    ? state.getAsJsonObject("acknowledged_groups")
+                    : new JsonObject();
+            JsonObject record = new JsonObject();
+            Instant at = when != null ? when : Instant.now();
+            record.addProperty("ackedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
+            record.addProperty("by", by != null && !by.isBlank() ? by : "dashboard");
+            record.addProperty("member_count", memberCount);
+            groups.add(fingerprint, record);
+            state.add("acknowledged_groups", groups);
+            writeState(statePath, state);
+        }
     }
 
     public static JsonObject getInboxDismissals(Path statePath) throws IOException {
@@ -295,31 +317,35 @@ public final class StateManager {
         if (issueId == null || issueId.isBlank()) {
             return;
         }
-        JsonObject state = loadState(statePath);
-        JsonObject acks = state.has("acknowledged_issues")
-                ? state.getAsJsonObject("acknowledged_issues")
-                : new JsonObject();
-        JsonObject record = new JsonObject();
-        Instant at = when != null ? when : Instant.now();
-        record.addProperty("ackedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
-        record.addProperty("by", by != null && !by.isBlank() ? by : "dashboard");
-        acks.add(issueId.trim(), record);
-        state.add("acknowledged_issues", acks);
-        writeState(statePath, state);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject acks = state.has("acknowledged_issues")
+                    ? state.getAsJsonObject("acknowledged_issues")
+                    : new JsonObject();
+            JsonObject record = new JsonObject();
+            Instant at = when != null ? when : Instant.now();
+            record.addProperty("ackedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
+            record.addProperty("by", by != null && !by.isBlank() ? by : "dashboard");
+            acks.add(issueId.trim(), record);
+            state.add("acknowledged_issues", acks);
+            writeState(statePath, state);
+        }
     }
 
     public static void unacknowledgeIssue(Path statePath, String issueId) throws IOException {
         if (issueId == null || issueId.isBlank()) {
             return;
         }
-        JsonObject state = loadState(statePath);
-        if (!state.has("acknowledged_issues")) {
-            return;
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            if (!state.has("acknowledged_issues")) {
+                return;
+            }
+            JsonObject acks = state.getAsJsonObject("acknowledged_issues");
+            acks.remove(issueId.trim());
+            state.add("acknowledged_issues", acks);
+            writeState(statePath, state);
         }
-        JsonObject acks = state.getAsJsonObject("acknowledged_issues");
-        acks.remove(issueId.trim());
-        state.add("acknowledged_issues", acks);
-        writeState(statePath, state);
     }
 
     /**
@@ -333,32 +359,34 @@ public final class StateManager {
         if (issueIds == null || issueIds.isEmpty()) {
             return 0;
         }
-        JsonObject state = loadState(statePath);
-        JsonObject acks = state.has("acknowledged_issues")
-                ? state.getAsJsonObject("acknowledged_issues")
-                : new JsonObject();
-        Instant at = when != null ? when : Instant.now();
-        String who = by != null && !by.isBlank() ? by : "dashboard";
-        int n = 0;
-        for (String issueId : issueIds) {
-            if (issueId == null || issueId.isBlank()) {
-                continue;
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject acks = state.has("acknowledged_issues")
+                    ? state.getAsJsonObject("acknowledged_issues")
+                    : new JsonObject();
+            Instant at = when != null ? when : Instant.now();
+            String who = by != null && !by.isBlank() ? by : "dashboard";
+            int n = 0;
+            for (String issueId : issueIds) {
+                if (issueId == null || issueId.isBlank()) {
+                    continue;
+                }
+                String key = issueId.trim();
+                if (acks.has(key)) {
+                    continue;
+                }
+                JsonObject record = new JsonObject();
+                record.addProperty("ackedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
+                record.addProperty("by", who);
+                acks.add(key, record);
+                n++;
             }
-            String key = issueId.trim();
-            if (acks.has(key)) {
-                continue;
+            if (n > 0) {
+                state.add("acknowledged_issues", acks);
+                writeState(statePath, state);
             }
-            JsonObject record = new JsonObject();
-            record.addProperty("ackedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
-            record.addProperty("by", who);
-            acks.add(key, record);
-            n++;
+            return n;
         }
-        if (n > 0) {
-            state.add("acknowledged_issues", acks);
-            writeState(statePath, state);
-        }
-        return n;
     }
 
     public static void dismissInboxItem(Path statePath, String itemId, Instant when, String by)
@@ -366,17 +394,19 @@ public final class StateManager {
         if (itemId == null || itemId.isBlank()) {
             return;
         }
-        JsonObject state = loadState(statePath);
-        JsonObject dismissals = state.has("inbox_dismissals")
-                ? state.getAsJsonObject("inbox_dismissals")
-                : new JsonObject();
-        JsonObject record = new JsonObject();
-        Instant at = when != null ? when : Instant.now();
-        record.addProperty("dismissedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
-        record.addProperty("by", by != null && !by.isBlank() ? by : "dashboard");
-        dismissals.add(itemId, record);
-        state.add("inbox_dismissals", dismissals);
-        writeState(statePath, state);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject dismissals = state.has("inbox_dismissals")
+                    ? state.getAsJsonObject("inbox_dismissals")
+                    : new JsonObject();
+            JsonObject record = new JsonObject();
+            Instant at = when != null ? when : Instant.now();
+            record.addProperty("dismissedAt", at.atZone(ZoneId.systemDefault()).format(ISO));
+            record.addProperty("by", by != null && !by.isBlank() ? by : "dashboard");
+            dismissals.add(itemId, record);
+            state.add("inbox_dismissals", dismissals);
+            writeState(statePath, state);
+        }
     }
 
     public static void ignoreClientMod(Path statePath, String modId, Instant when) throws IOException {
@@ -392,27 +422,31 @@ public final class StateManager {
         if (modId == null || modId.isBlank()) {
             return;
         }
-        JsonObject state = loadState(statePath);
-        JsonObject ignores = state.has("ignored_client_mods")
-                ? state.getAsJsonObject("ignored_client_mods")
-                : new JsonObject();
-        ignores.add(modId, buildIgnoreRecord(when, by, note));
-        state.add("ignored_client_mods", ignores);
-        writeState(statePath, state);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject ignores = state.has("ignored_client_mods")
+                    ? state.getAsJsonObject("ignored_client_mods")
+                    : new JsonObject();
+            ignores.add(modId, buildIgnoreRecord(when, by, note));
+            state.add("ignored_client_mods", ignores);
+            writeState(statePath, state);
+        }
     }
 
     public static void unignoreClientMod(Path statePath, String modId) throws IOException {
         if (modId == null || modId.isBlank()) {
             return;
         }
-        JsonObject state = loadState(statePath);
-        if (!state.has("ignored_client_mods")) {
-            return;
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            if (!state.has("ignored_client_mods")) {
+                return;
+            }
+            JsonObject ignores = state.getAsJsonObject("ignored_client_mods");
+            ignores.remove(modId);
+            state.add("ignored_client_mods", ignores);
+            writeState(statePath, state);
         }
-        JsonObject ignores = state.getAsJsonObject("ignored_client_mods");
-        ignores.remove(modId);
-        state.add("ignored_client_mods", ignores);
-        writeState(statePath, state);
     }
 
     public static JsonObject getIgnoredClientMods(Path statePath) throws IOException {
@@ -436,34 +470,69 @@ public final class StateManager {
         return index;
     }
 
-    public static void updateCrashMtimeIndex(Path statePath, Map<String, Long> index) throws IOException {
+    public static Map<String, String> getCrashFingerprintIndex(Path statePath) throws IOException {
         JsonObject state = loadState(statePath);
-        JsonObject obj = new JsonObject();
-        for (Map.Entry<String, Long> e : index.entrySet()) {
-            obj.addProperty(e.getKey(), e.getValue());
+        Map<String, String> index = new HashMap<>();
+        if (!state.has("crash_fp_index") || !state.get("crash_fp_index").isJsonObject()) {
+            return index;
         }
-        state.add("crash_mtime_index", obj);
-        writeState(statePath, state);
+        JsonObject obj = state.getAsJsonObject("crash_fp_index");
+        for (String key : obj.keySet()) {
+            if (obj.get(key).isJsonPrimitive()) {
+                index.put(key, obj.get(key).getAsString());
+            }
+        }
+        return index;
+    }
+
+    public static void updateCrashMtimeIndex(Path statePath, Map<String, Long> index) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject obj = new JsonObject();
+            for (Map.Entry<String, Long> e : index.entrySet()) {
+                obj.addProperty(e.getKey(), e.getValue());
+            }
+            state.add("crash_mtime_index", obj);
+            writeState(statePath, state);
+        }
+    }
+
+    public static void updateCrashFingerprintIndex(Path statePath, Map<String, String> index) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject obj = new JsonObject();
+            for (Map.Entry<String, String> e : index.entrySet()) {
+                if (e.getValue() != null) {
+                    obj.addProperty(e.getKey(), e.getValue());
+                }
+            }
+            state.add("crash_fp_index", obj);
+            writeState(statePath, state);
+        }
     }
 
     public static int incrementOpsCacheSeq(Path statePath) throws IOException {
-        JsonObject state = loadState(statePath);
-        int seq = state.has("ops_cache_seq") ? state.get("ops_cache_seq").getAsInt() : 0;
-        seq++;
-        state.addProperty("ops_cache_seq", seq);
-        writeState(statePath, state);
-        return seq;
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            int seq = state.has("ops_cache_seq") ? state.get("ops_cache_seq").getAsInt() : 0;
+            seq++;
+            state.addProperty("ops_cache_seq", seq);
+            writeState(statePath, state);
+            return seq;
+        }
     }
 
     /** Persist the last ops-poll mods jar snapshot for change detection. */
     public static void saveLastModsOpsSnapshot(Path statePath, JsonArray snapshot) throws IOException {
-        JsonObject state = loadState(statePath);
-        if (snapshot == null) {
-            state.remove("last_mods_ops_snapshot");
-        } else {
-            state.add("last_mods_ops_snapshot", snapshot.deepCopy());
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            if (snapshot == null) {
+                state.remove("last_mods_ops_snapshot");
+            } else {
+                state.add("last_mods_ops_snapshot", snapshot.deepCopy());
+            }
+            writeState(statePath, state);
         }
-        writeState(statePath, state);
     }
 
     public static long getLastLagIncidentAt(Path statePath) throws IOException {
@@ -472,9 +541,24 @@ public final class StateManager {
     }
 
     public static void setLastLagIncidentAt(Path statePath, long epochSec) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            state.addProperty("last_lag_incident_at", epochSec);
+            writeState(statePath, state);
+        }
+    }
+
+    public static long getLastSparkAutoCaptureAt(Path statePath) throws IOException {
         JsonObject state = loadState(statePath);
-        state.addProperty("last_lag_incident_at", epochSec);
-        writeState(statePath, state);
+        return state.has("last_spark_auto_capture_at") ? state.get("last_spark_auto_capture_at").getAsLong() : 0L;
+    }
+
+    public static void setLastSparkAutoCaptureAt(Path statePath, long epochSec) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            state.addProperty("last_spark_auto_capture_at", epochSec);
+            writeState(statePath, state);
+        }
     }
 
     public static int getLagBreachStreak(Path statePath) throws IOException {
@@ -483,9 +567,11 @@ public final class StateManager {
     }
 
     public static void setLagBreachStreak(Path statePath, int streak) throws IOException {
-        JsonObject state = loadState(statePath);
-        state.addProperty("lag_breach_streak", streak);
-        writeState(statePath, state);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            state.addProperty("lag_breach_streak", streak);
+            writeState(statePath, state);
+        }
     }
 
     public static int getLagHealthyStreak(Path statePath) throws IOException {
@@ -494,9 +580,11 @@ public final class StateManager {
     }
 
     public static void setLagHealthyStreak(Path statePath, int streak) throws IOException {
-        JsonObject state = loadState(statePath);
-        state.addProperty("lag_healthy_streak", streak);
-        writeState(statePath, state);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            state.addProperty("lag_healthy_streak", streak);
+            writeState(statePath, state);
+        }
     }
 
     public static JsonObject getActivityLogOffset(Path statePath) throws IOException {
@@ -519,11 +607,74 @@ public final class StateManager {
     }
 
     public static void updateOpsLogOffset(Path statePath, JsonObject offset) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject copy = offset.deepCopy();
+            state.add("ops_log_offset", copy);
+            state.add("activity_log_offset", copy.deepCopy());
+            writeState(statePath, state);
+        }
+    }
+
+    public static JsonObject getActivityBackfillState(Path statePath) throws IOException {
         JsonObject state = loadState(statePath);
-        JsonObject copy = offset.deepCopy();
-        state.add("ops_log_offset", copy);
-        state.add("activity_log_offset", copy.deepCopy());
-        writeState(statePath, state);
+        if (state.has("activity_backfill") && state.get("activity_backfill").isJsonObject()) {
+            return state.getAsJsonObject("activity_backfill").deepCopy();
+        }
+        return null;
+    }
+
+    public static void setActivityBackfillState(Path statePath, JsonObject backfill) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            state.add("activity_backfill", backfill.deepCopy());
+            writeState(statePath, state);
+        }
+    }
+
+    public static void clearActivityBackfillState(Path statePath) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            state.remove("activity_backfill");
+            writeState(statePath, state);
+        }
+    }
+
+    public record PlayerStatsCursor(long mtime, long ticks) {
+    }
+
+    public static Map<String, PlayerStatsCursor> getPlayerStatsIndex(Path statePath) throws IOException {
+        JsonObject state = loadState(statePath);
+        Map<String, PlayerStatsCursor> out = new HashMap<>();
+        if (!state.has("player_stats_index") || !state.get("player_stats_index").isJsonObject()) {
+            return out;
+        }
+        JsonObject index = state.getAsJsonObject("player_stats_index");
+        for (var entry : index.entrySet()) {
+            if (!entry.getValue().isJsonObject()) {
+                continue;
+            }
+            JsonObject row = entry.getValue().getAsJsonObject();
+            long mtime = row.has("mtime") ? row.get("mtime").getAsLong() : 0;
+            long ticks = row.has("ticks") ? row.get("ticks").getAsLong() : 0;
+            out.put(entry.getKey(), new PlayerStatsCursor(mtime, ticks));
+        }
+        return out;
+    }
+
+    public static void updatePlayerStatsIndex(Path statePath, Map<String, PlayerStatsCursor> index) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject json = new JsonObject();
+            for (var entry : index.entrySet()) {
+                JsonObject row = new JsonObject();
+                row.addProperty("mtime", entry.getValue().mtime());
+                row.addProperty("ticks", entry.getValue().ticks());
+                json.add(entry.getKey(), row);
+            }
+            state.add("player_stats_index", json);
+            writeState(statePath, state);
+        }
     }
 
     public static long getLastTickLagEventAt(Path statePath) throws IOException {
@@ -532,9 +683,11 @@ public final class StateManager {
     }
 
     public static void setLastTickLagEventAt(Path statePath, long epochSec) throws IOException {
-        JsonObject state = loadState(statePath);
-        state.addProperty("last_tick_lag_event_at", epochSec);
-        writeState(statePath, state);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            state.addProperty("last_tick_lag_event_at", epochSec);
+            writeState(statePath, state);
+        }
     }
 
     public static String getLastScheduledSlot(Path statePath) throws IOException {
@@ -548,14 +701,16 @@ public final class StateManager {
     }
 
     public static void updateScheduleState(Path statePath, String slotKey, String reportAtIso) throws IOException {
-        JsonObject state = loadState(statePath);
-        if (slotKey != null && !slotKey.isBlank()) {
-            state.addProperty("last_scheduled_slot", slotKey);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            if (slotKey != null && !slotKey.isBlank()) {
+                state.addProperty("last_scheduled_slot", slotKey);
+            }
+            if (reportAtIso != null && !reportAtIso.isBlank()) {
+                state.addProperty("last_scheduled_report_at", reportAtIso);
+            }
+            writeState(statePath, state);
         }
-        if (reportAtIso != null && !reportAtIso.isBlank()) {
-            state.addProperty("last_scheduled_report_at", reportAtIso);
-        }
-        writeState(statePath, state);
     }
 
     public static boolean isCrashAcked(JsonObject acks, String crashFile) {
@@ -611,11 +766,19 @@ public final class StateManager {
 
     private static void writeState(Path statePath, JsonObject state) throws IOException {
         Files.createDirectories(statePath.getParent());
-        Files.writeString(statePath, state.toString() + System.lineSeparator(), StandardCharsets.UTF_8);
+        Path tmp = statePath.resolveSibling(statePath.getFileName() + ".tmp");
+        Files.writeString(tmp, state.toString() + System.lineSeparator(), StandardCharsets.UTF_8);
+        Files.move(tmp, statePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
     }
 
     public static JsonObject loadStateObject(Path statePath) throws IOException {
         return loadState(statePath);
+    }
+
+    public static void writeStateObject(Path statePath, JsonObject state) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            writeState(statePath, state);
+        }
     }
 
     public static JsonArray getSuppressedIssues(Path statePath) throws IOException {
@@ -627,9 +790,11 @@ public final class StateManager {
     }
 
     public static void setSuppressedIssues(Path statePath, JsonArray suppressed) throws IOException {
-        JsonObject state = loadState(statePath);
-        state.add("suppressed_issues", suppressed != null ? suppressed.deepCopy() : new JsonArray());
-        writeState(statePath, state);
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            state.add("suppressed_issues", suppressed != null ? suppressed.deepCopy() : new JsonArray());
+            writeState(statePath, state);
+        }
     }
 
     private static JsonObject loadState(Path path) throws IOException {

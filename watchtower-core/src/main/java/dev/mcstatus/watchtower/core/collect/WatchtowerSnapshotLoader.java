@@ -85,6 +85,10 @@ public final class WatchtowerSnapshotLoader {
             nativeBlob.add("minecraft_version", data.get("minecraft_version"));
             result.add("minecraft_version", data.get("minecraft_version"));
         }
+        if (data.has("loader") && data.get("loader").isJsonPrimitive()) {
+            nativeBlob.add("loader", data.get("loader"));
+            result.add("loader", data.get("loader"));
+        }
         result.add("_native", nativeBlob);
 
         if (data.has("players_online")) {

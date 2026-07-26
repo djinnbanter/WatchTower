@@ -1,7 +1,7 @@
 {
   "window": "30d",
   "hours": 720,
-  "generated_at": "2026-07-16T17:11:20.821Z",
+  "generated_at": "2026-07-22T11:57:38.651Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -74,13 +74,13 @@
       "tps_avg": 19.4
     },
     {
-      "players_band": "3-5",
+      "players_band": "3-4",
       "minutes": 2236,
       "mspt_avg": 22.8,
       "tps_avg": 18.6
     },
     {
-      "players_band": "6+",
+      "players_band": "5-7",
       "minutes": 946,
       "mspt_avg": 31.5,
       "tps_avg": 17.9
@@ -88,35 +88,35 @@
   ],
   "outlier_minutes": [
     {
-      "ts": "2026-07-16T16:26:20.821Z",
+      "ts": "2026-07-22T11:12:38.651Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-07-12T14:11:20.821Z",
+      "ts": "2026-07-18T08:57:38.651Z",
       "players_max": 6,
       "mspt_avg": 48,
       "mem_used_gb_avg": 13.8,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-07-05T12:11:20.821Z",
+      "ts": "2026-07-11T06:57:38.651Z",
       "players_max": 0,
       "mspt_avg": 58,
       "mem_used_gb_avg": 14,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-06-29T15:11:20.821Z",
+      "ts": "2026-07-05T09:57:38.651Z",
       "players_max": 4,
       "mspt_avg": 52,
       "mem_used_gb_avg": 13.5,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-06-22T11:11:20.821Z",
+      "ts": "2026-06-28T05:57:38.651Z",
       "players_max": 7,
       "mspt_avg": 61,
       "mem_used_gb_avg": 14.4,
@@ -125,22 +125,22 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-07-16T15:41:20.821Z",
-      "ended_at": "2026-07-16T16:26:20.821Z",
+      "started_at": "2026-07-22T10:27:38.651Z",
+      "ended_at": "2026-07-22T11:12:38.651Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
     },
     {
-      "started_at": "2026-07-08T15:11:20.821Z",
-      "ended_at": "2026-07-08T15:33:20.821Z",
+      "started_at": "2026-07-14T09:57:38.651Z",
+      "ended_at": "2026-07-14T10:19:38.651Z",
       "duration_min": 22,
       "peak_mspt": 55,
       "narrative": "MSPT stayed above threshold for 22 min after players left (peak 55 ms)"
     },
     {
-      "started_at": "2026-06-25T14:11:20.821Z",
-      "ended_at": "2026-06-25T14:49:20.821Z",
+      "started_at": "2026-07-01T08:57:38.651Z",
+      "ended_at": "2026-07-01T09:35:38.651Z",
       "duration_min": 38,
       "peak_mspt": 64,
       "narrative": "MSPT stayed above threshold for 38 min after players left (peak 64 ms)"
@@ -168,5 +168,7 @@
       "detail": "2 minute(s) in window had elevated MSPT while idle — check farms, chunk loaders, or background jobs.",
       "tab": "issues"
     }
-  ]
+  ],
+  "players_band_scale": 7,
+  "players_band_scale_source": "observed_peak"
 }

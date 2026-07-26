@@ -192,14 +192,6 @@ export function ModrinthTab({ hasReport }) {
     />`;
   }
 
-  if (!hasReport) {
-    return html`<${EmptyState}
-      title="No report yet"
-      body="Run a full report first so Modrinth has a facts snapshot to enrich. After that, scan from this tab whenever you want fresh Modrinth data."
-      action=${html`<${Button} kind="primary" size="sm" onClick=${() => navigate('overview')}>Go to Overview</${Button}>`}
-    />`;
-  }
-
   const scanned = !!(lastRun.finished_at || stats.matched != null && Number(stats.jars_considered) > 0);
   const coverage = stats.coverage_pct != null ? pct(stats.coverage_pct) : '—';
   const hitRate = stats.cache_hit_rate != null ? pct(stats.cache_hit_rate) : '—';
@@ -211,7 +203,7 @@ export function ModrinthTab({ hasReport }) {
           <h2 class="feat-modrinth__title">Modrinth scan</h2>
           <p class="feat-modrinth__desc">
             Hash installed jars and look them up on Modrinth (batched, rate-limited).
-            Results patch the latest report so Overview, Updates, and Crashes stay in sync.
+            Results land in ops-cache so Overview, Updates, and Crashes stay in sync — no legacy report required.
             Jars are never downloaded. Optional auto-scan after mod changes lives in Settings → Monitoring.
           </p>
         </div>

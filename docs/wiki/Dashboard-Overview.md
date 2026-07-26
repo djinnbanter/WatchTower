@@ -1,74 +1,96 @@
 # Dashboard Overview
 
-The dashboard is a website served by Watchtower on your server — usually **`http://<your-server-ip>:8787`**. It is the main place to see health, live charts, crashes, mods, and backups.
+**Overview** is mission control — health grade, vitals, what needs attention, and shortcuts to the right tab.
 
 ---
 
 ## At a glance
 
 - **You must sign in** — visitors without a login only see the sign-in screen
-- **First login:** `watchtower` / `password` — change password right away ([[Security and Access]])
-- **Overview welcome** — personalized greeting with hostname and a short live status summary
-- **Side menu** — tabs grouped as **Monitor**, **Triage**, and **Ops**, plus **System** (Docs / Settings) with theme and collapse at the bottom
-- **Top bar** — hostname, Live/Offline and report freshness chips, Search (⌘K), and inbox
-- **Reports** — mid-rail glass plate: pick a saved report and **Run Report**
-- **Settings (gear)** — schedule, backups, login security, version info
-- **Help (?)** — short guide and tour; full articles in **Docs**
-- **Docs (book icon)** — all guides built in, with search
+- **First login:** `watchtower` / `password` — change it right away ([[Security-and-Access]])
+- **Side rail** — Monitor / Triage / Ops plus System (**Help Center**, Settings, Roadmap)
+- **Top bar** — hostname, Live/Offline, freshness, Search (⌘K), inbox
+- **Support pack** — rail **Build support pack**, Overview card, or Help Center hub (not Settings → Advanced as the primary path)
 
 ---
 
 ## First visit
 
 1. Sign in and change your password
-2. The **setup wizard** opens automatically on first visit — live discovery audit (logs, crashes, mods, backup configured?), optional 30-day baseline report, then Backups, schedule (default twice daily), and optional 2FA
-3. **Run Report** in the side rail (Reports plate) runs a full health check anytime (same as `/watchtower run`)
-4. Optional: start the **guided tour** from **Help → Tour** or **Settings → About**
+2. Optional **Welcome** tour (`?tab=wizard` or Help Center hub)
+3. Check [[Sources]] — Watching + Scanning fresh (or Waiting)
+4. Skim **Needs attention** and the grade on Overview
+5. Configure [[Backups]] or leave Not tracking on purpose
+
+---
+
+## What you’ll see
+
+| Area | Meaning |
+|------|---------|
+| **Health grade** | Snapshot of overall server health from Watchtower’s signals |
+| **Needs attention** | Queue of things to open next (Issues, crashes, backups, …) |
+| **Right now** | Live vitals (TPS, lag, players, …) |
+| **Incident story** | Recent narrative of what happened — deeper on [[Activity]] |
+| **Lag incidents** | Detected lag windows |
+| **Performance insight** | Teaser into [[Insights]] |
+| **Spark** | Short summary + Open Spark when a fresh profile exists |
+| **Boot profile** | Teaser into [[Startup]] |
+| **Restart** | Safe / Caution / Wait — informational only |
+| **Storage** | Disk used %, world size, runway — detail on Insights → Storage |
+| **First-run cards** | Setup nudges (backups, Support pack, …) |
+
+### What the grade means
+
+| Tone | Operator takeaway |
+|------|-------------------|
+| Strong / OK | Keep the daily check short — Overview → Issues → Sources |
+| Caution | Open Needs attention and the linked tab before peak hours |
+| Poor | Treat as an incident — Issues / Crashes / Live first |
+
+Exact letter or label wording follows what Overview shows on your build.
+
+---
+
+## Restart checklist
+
+| Verdict | Meaning |
+|---------|---------|
+| **Safe** | Fresh backup, no active pregen, disk OK |
+| **Caution** | Restart possible — check listed notes first |
+| **Wait** | Pause — e.g. pregen mid-run, backup too old, disk critical |
+
+Each reason can **Open** the relevant tab. The card never blocks `/stop` or your host panel.
 
 ---
 
 ## Chrome — rail and top bar
 
-### Side rail
-
 | Control | What it does |
 |---------|----------------|
-| **Monitor / Triage / Ops** | Switch primary tabs (see [[Dashboard Tabs]]) |
-| **Reports** | Pick a saved health report; **Run Report** for a new full check |
-| **Docs / Settings** | Guides and configuration (System group) |
-| **Theme** | Cycle light / dark / black (bottom tool row) |
-| **Collapse** | Shrink the rail to icons only |
-
-### Top bar
-
-| Control | What it does |
-|---------|----------------|
-| Hostname | Server host label (falls back to “Unknown host”) |
-| **Live / Offline** | Connection chip (stays quiet when the connection-down banner is already up) |
-| Freshness | Short chip: `Fresh · …` / `Stale · …` / `No report` |
+| Monitor / Triage / Ops | Primary tabs — [[Dashboard-Tabs]] |
+| **Build support pack** | Support compose ([[Health-Reports]]) |
+| **Help Center** | This wiki |
+| **Settings** | Thresholds, backups, security |
+| Theme / Collapse | Appearance and rail width |
 | **Search** | Command palette (Ctrl/Cmd+K) |
 | **Inbox** | Unreviewed crashes and update nudges |
 
 ---
 
-## Settings (gear icon)
+## Settings (gear)
 
-| Section | What you can do |
-|---------|-----------------|
-| **General** | Report schedule, how far back to look, warning levels |
-| **Monitoring** | See (read-only) how often things are checked |
-| **Backups** | Tell Watchtower where backups live |
+| Panel | What you can do |
+|-------|-----------------|
+| **General** | TPS/lag warning levels |
+| **Monitoring** | How often things are checked |
+| **Backups** | Where backups live |
+| **Rules** | Crash / issue rules |
 | **Security** | Password, username, 2FA |
-| **About** | Version and update check |
+| **Advanced** | Advanced options |
+| **About** | Version and tour entry |
 
-Most changes apply immediately. A few advanced options need a server restart — Settings links to those.
-
----
-
-## Help and Docs
-
-- **Help (?)** — quick answers and a ~2 minute tour
-- **Docs** — full guides: installation, tabs, backups, security, troubleshooting, and more. Search or browse by topic.
+Most changes apply immediately. A few need a server restart — Settings says which.
 
 ---
 
@@ -76,31 +98,19 @@ Most changes apply immediately. A few advanced options need a server restart —
 
 | Banner | Meaning |
 |--------|---------|
-| **Exposure warning** | Dashboard may be reachable from outside — see [[Security and Access]] |
-| **Update available** | A newer Watchtower release exists |
+| **Exposure warning** | Dashboard may be reachable from outside — [[Security-and-Access]] |
+| **Update available** | Newer Watchtower release |
 | **Environment** | Hosted server context (e.g. CPU limits) |
-| **Report stale** | No full report in the last 24 hours |
-
----
-
-## Public server? Connect safely
-
-If your server is on the internet, do **not** leave the dashboard open on `0.0.0.0:8787`. Bind to localhost and use an SSH tunnel instead. Steps in [[Security and Access]].
-
----
-
-## Technical details
-
-- **UI layout:** collapsible side rail, command palette (⌘K), wide main area
-- **Report files:** `watchtower-facts-*.json` snapshots in the report dropdown
-- **Support bundle:** Overview can download latest brief + facts zip for Discord or support
-- **`/watchtower url`** — in-game command to print dashboard URL
+| **Legacy facts stale** | Old on-disk facts — day-to-day tabs still use Scanning |
 
 ---
 
 ## Related
 
-- [[Dashboard Tabs]] — what each tab shows
-- [[Understanding-Data-Sources]] — live vs background vs full report
-- [[Commands]]
-- [[Security and Access]]
+- [[Dashboard-Tabs]] — map of every tab
+- [[Issues]] — fix inbox
+- [[Sources]] — is Watchtower working?
+- [[Live-Charts]] — right-now charts
+- [[Activity]] — incident story detail
+- [[Using-Spark-with-Watchtower]] — lag proof
+- [[Understanding-Data-Sources]] — Watching vs Scanning vs Support

@@ -3,6 +3,7 @@ package dev.mcstatus.watchtower.core.collect;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
+import dev.mcstatus.watchtower.core.report.ReportProgress;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,15 +28,36 @@ public final class LogScanner {
     }
 
     public static void scanLogs(String serverDir, JsonObject staging, double cutoff, ReportConfig config) {
+        scanLogs(serverDir, staging, cutoff, config, ReportProgress.NOOP);
+    }
+
+    public static void scanLogs(
+            String serverDir,
+            JsonObject staging,
+            double cutoff,
+            ReportConfig config,
+            ReportProgress progress
+    ) {
+        ReportProgress p = progress != null ? progress : ReportProgress.NOOP;
         JsonObject mc = staging.getAsJsonObject("minecraft");
         List<Path> logFiles = GzipLineReader.iterLogFiles(serverDir, config.logGzipCount(), cutoff);
         ZonedDateTime now = ZonedDateTime.now();
+        int total = logFiles.size();
+        p.found("logs", total);
+        if (total > 0) {
+            p.units(0, total);
+            p.detail("Found " + total + " log file" + (total == 1 ? "" : "s") + "…");
+        }
 
         Set<String> knownModIds = knownModIdsFromJars(serverDir);
         ScanState state = new ScanState(now, config.errorIgnorePatterns(), knownModIds);
 
+        int index = 0;
         for (Path logPath : logFiles) {
+            index++;
             String rel = CollectSupport.relLogPath(serverDir, logPath);
+            p.units(index, total);
+            p.detail("Scanning log " + index + "/" + total + ": " + rel);
             try {
                 GzipLineReader.forEachLine(logPath, (lineNo, line) ->
                         processLine(staging, mc, cutoff, rel, lineNo, line, state));

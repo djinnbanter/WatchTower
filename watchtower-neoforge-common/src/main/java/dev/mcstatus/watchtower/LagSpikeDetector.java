@@ -7,7 +7,8 @@ import dev.mcstatus.watchtower.core.ops.LagIssueBuilder;
 import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
 import dev.mcstatus.watchtower.core.report.StateManager;
-import net.minecraft.server.MinecraftServer;
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+import dev.mcstatus.watchtower.runtime.ServerContext;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -27,7 +28,7 @@ public final class LagSpikeDetector {
     private LagSpikeDetector() {
     }
 
-    public static void onLiveSample(MinecraftServer server, double tps, double mspt) {
+    public static void onLiveSample(ServerContext server, double tps, double mspt) {
         if (server == null) {
             return;
         }
@@ -59,11 +60,11 @@ public final class LagSpikeDetector {
                 }
             }
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.debug("Lag spike detector tick failed: {}", e.toString());
+            ModRuntime.logger().debug("Lag spike detector tick failed: {}", e.toString());
         }
     }
 
-    private static void maybeCapture(MinecraftServer server, ReportConfig config, PathRefs paths,
+    private static void maybeCapture(ServerContext server, ReportConfig config, PathRefs paths,
                                      double tps, double mspt) throws IOException {
         long now = Instant.now().getEpochSecond();
         long last = StateManager.getLastLagIncidentAt(paths.statePath);
@@ -74,10 +75,11 @@ public final class LagSpikeDetector {
         String trigger = mspt > config.msptWarn() ? "auto_mspt" : "auto_tps";
         JsonObject incident = OpsScanService.buildManualIncident(server, null, trigger);
         incident.addProperty("source", "auto");
-        incident.addProperty("severity", severity(mspt, tps, config));
+        String severity = severity(mspt, tps, config);
+        incident.addProperty("severity", severity);
 
         ActivityLedgerScanner.ScanResult tail = ActivityLedgerScanner.scanTail(
-                server.getServerDirectory().toAbsolutePath().toString(),
+                server.serverDirectory().toAbsolutePath().toString(),
                 ActivityLedgerScanner.DEFAULT_TAIL_LINES,
                 config.tickLagThrottleMs());
         JsonObject ctx = tail.context();
@@ -106,9 +108,20 @@ public final class LagSpikeDetector {
         JsonObject lagIssue = LagIssueBuilder.buildPeekEntry(incident);
         JsonObject lagEvent = ActivityLedgerScanner.lagIncidentEvent(id, Instant.now());
         OpsCacheWriter.applyLagIncident(paths.opsCachePath, paths.statePath, incident, lagIssue, lagEvent);
+        OpsScanService.rebuildIncidentStories(server);
 
-        WatchtowerMod.LOGGER.info("Watchtower auto-captured lag incident {} (MSPT {}, TPS {})",
+        ModRuntime.logger().info("Watchtower auto-captured lag incident {} (MSPT {}, TPS {})",
                 id, String.format("%.1f", mspt), String.format("%.1f", tps));
+
+        if (shouldScheduleAutoSpark(severity) && config.sparkAutoCaptureOnLag()) {
+            SparkAutoCaptureTrigger.schedule(
+                    server, id, config, paths.statePath, paths.opsCachePath, paths.incidentsDir);
+        }
+    }
+
+    /** Critical lag only — warning incidents never start auto-Spark. */
+    static boolean shouldScheduleAutoSpark(String severity) {
+        return "critical".equals(severity);
     }
 
     private static String severity(double mspt, double tps, ReportConfig config) {
@@ -123,7 +136,7 @@ public final class LagSpikeDetector {
             java.nio.file.Path opsCachePath,
             java.nio.file.Path incidentsDir
     ) {
-        PathRefs(MinecraftServer server) {
+        PathRefs(ServerContext server) {
             this(
                     WatchtowerPaths.statePath(server),
                     WatchtowerPaths.opsCachePath(server),

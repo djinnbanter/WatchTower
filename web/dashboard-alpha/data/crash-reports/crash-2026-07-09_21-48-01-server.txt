@@ -1,0 +1,5 @@
+---- Minecraft Crash Report ----
+Time: 2026-07-09 21:48:01
+Description: Mod loading has failed
+
+org.spongepowered.asm.mixin.throwables.MixinInitialisationError: Error initialising mixin config create.mixins.json

@@ -7,9 +7,9 @@ import { Badge } from '../../ui/primitives/index.js';
 
 function DataSourcesFlow() {
   const steps = [
-    { kind: 'live', tone: 'ok', label: 'Live', sub: 'Charts while you watch', icon: 'zap' },
-    { kind: 'scanned', tone: 'info', label: 'Scanned', sub: 'Logs & crashes', icon: 'eye' },
-    { kind: 'report', tone: 'info', label: 'Report', sub: 'Full health check', icon: 'clipboard' },
+    { kind: 'live', tone: 'ok', label: 'Watching', sub: 'Charts while you watch', icon: 'zap' },
+    { kind: 'scanned', tone: 'info', label: 'Scanning', sub: 'Logs, Issues, crashes', icon: 'eye' },
+    { kind: 'report', tone: 'info', label: 'Support', sub: 'Zip when you ask', icon: 'clipboard' },
   ];
   return html`
     <div class="docs-widget docs-widget--flow" aria-hidden="true">
@@ -27,10 +27,10 @@ function DataSourcesFlow() {
 
 function FreshnessSample() {
   const cards = [
-    { kind: 'live', tone: 'ok', icon: 'activity', label: 'Live charts', value: 'Just now', hint: 'Updates while dashboard is open' },
-    { kind: 'scanned', tone: 'info', icon: 'eye', label: 'Background scan', value: '42s ago', hint: 'About once a minute on the server' },
-    { kind: 'report', tone: 'info', icon: 'clipboard', label: 'Full report', value: '3h ago', hint: 'Your latest health check' },
-    { kind: 'neutral', tone: 'neutral', icon: 'clock', label: 'Next scheduled', value: 'In 4h', hint: 'From Settings schedule', muted: true },
+    { kind: 'live', tone: 'ok', icon: 'activity', label: 'Watching', value: 'Just now', hint: 'Charts while the server runs' },
+    { kind: 'scanned', tone: 'info', icon: 'eye', label: 'Scanning', value: '42s ago', hint: 'About once a minute on the server' },
+    { kind: 'report', tone: 'info', icon: 'clipboard', label: 'Support compose', value: 'On demand', hint: 'Rail Support or Settings → Advanced' },
+    { kind: 'neutral', tone: 'neutral', icon: 'clock', label: 'Optional schedule', value: 'Off', hint: 'watchtower.conf /watchtower schedule', muted: true },
   ];
   return html`
     <div class="docs-widget docs-widget--freshness">
@@ -40,7 +40,7 @@ function FreshnessSample() {
           <article key=${c.label} class=${`docs-widget-freshness__card docs-widget-freshness__card--${c.kind}`}>
             <div class="docs-widget-freshness__top">
               <span class="docs-widget-freshness__icon"><${Icon} name=${c.icon} size=${18} /></span>
-              ${!c.muted ? html`<${Badge} tone=${c.tone}>${c.kind === 'live' ? 'Live' : c.kind === 'scanned' ? 'Scanned' : 'Report'}</${Badge}>` : null}
+              ${!c.muted ? html`<${Badge} tone=${c.tone}>${c.kind === 'live' ? 'Watching' : c.kind === 'scanned' ? 'Scanning' : 'Support'}</${Badge}>` : null}
             </div>
             <span class="docs-widget-freshness__label">${c.label}</span>
             <span class="docs-widget-freshness__value">${c.value}</span>
@@ -93,7 +93,7 @@ function ConfigCompare() {
           <${Icon} name="sliders" size=${16} />
           <code>watchtower/watchtower.conf</code>
         </div>
-        <p><strong>Change in Settings — no restart.</strong> Report schedule, warning levels, backup paths.</p>
+        <p><strong>Change in Settings — no restart.</strong> Warning levels, backup paths, and related conf keys.</p>
         <ul>
           <li>REPORT_INTERVAL_MINUTES</li>
           <li>OPS_LOG_SCAN_SEC</li>
@@ -150,10 +150,10 @@ function DrFlow() {
 
 function HomeFeatures() {
   const items = [
-    { icon: 'clipboard', title: 'Health reports', sub: 'Checks logs, crashes, mods, and backups on your server' },
+    { icon: 'eye', title: 'Watching + Scanning', sub: 'Charts and continuous Issues without homework' },
     { icon: 'activity', title: 'Live dashboard', sub: 'See speed, lag, CPU, and memory — with history' },
-    { icon: 'inbox', title: 'Fix list', sub: 'What to tackle first, from your latest report' },
-    { icon: 'shield', title: 'Recovery help', sub: 'Tools when the server will not boot' },
+    { icon: 'inbox', title: 'Fix list', sub: 'What to tackle first from continuous Scanning' },
+    { icon: 'download', title: 'Support compose', sub: 'Zip when you need to share with your host' },
   ];
   return html`
     <div class="docs-widget docs-widget--features">

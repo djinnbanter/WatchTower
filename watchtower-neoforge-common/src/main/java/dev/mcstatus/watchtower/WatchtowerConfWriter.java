@@ -1,7 +1,10 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+
 import dev.mcstatus.watchtower.core.report.ReportSchedule;
-import net.minecraft.server.MinecraftServer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -81,12 +84,12 @@ public final class WatchtowerConfWriter {
         return ReportSchedule.fromMap(readMap(conf));
     }
 
-    public static void persistReportIntervalMinutes(MinecraftServer server, int minutes) throws IOException {
+    public static void persistReportIntervalMinutes(ServerContext server, int minutes) throws IOException {
         ReportSchedule schedule = minutes <= 0 ? ReportSchedule.off() : ReportSchedule.interval(minutes);
         persistReportSchedule(server, schedule);
     }
 
-    public static void persistReportSchedule(MinecraftServer server, ReportSchedule schedule) throws IOException {
+    public static void persistReportSchedule(ServerContext server, ReportSchedule schedule) throws IOException {
         Path conf = WatchtowerPaths.confPath(server);
         if (schedule.mode() == ReportSchedule.ScheduleMode.OFF) {
             upsertKey(conf, ReportSchedule.KEY_MODE, "off");
@@ -100,7 +103,10 @@ public final class WatchtowerConfWriter {
                     ReportSchedule.wallClockHoursToString(schedule.wallClockHours()));
             upsertKey(conf, ReportSchedule.KEY_INTERVAL_MINUTES, "720");
         }
-        WatchtowerBootstrap.getScheduler().setReportSchedule(schedule);
+        WatchtowerScheduler scheduler = ModRuntime.scheduler();
+        if (scheduler != null) {
+            scheduler.setReportSchedule(schedule);
+        }
     }
 
     public static void upsertKey(Path conf, String key, String value) throws IOException {

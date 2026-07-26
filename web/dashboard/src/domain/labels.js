@@ -9,19 +9,19 @@
  */
 export function dataSourcesExplainer() {
   return {
-    intro: 'Watchtower collects data three ways. <strong>Live</strong> updates charts every few seconds while the dashboard is open. <strong>Scanned</strong> runs on the server in the background (~60s) — log tail, activity, mod errors, and crash folder — even when nobody has the web UI open. <strong>Report</strong> is a full audit snapshot.',
-    footer: 'Schedule reports for Issues, mod manifests, and session history. Live and scans cover day-to-day ops.',
+    intro: 'Watchtower collects data in two continuous layers plus on-demand Support. <strong>Watching</strong> updates charts every few seconds. <strong>Scanning</strong> runs in the background (~60s) — log tail, activity, continuous Issues, mod errors, and crash folder. <strong>Support compose</strong> packs a zip when you ask (rail Support or Settings → Advanced).',
+    footer: 'Day-to-day tabs use Watching + Scanning only. Support compose is for sharing a frozen snapshot — not BAU dashboard truth.',
     rows: [
       { area: 'Overview vitals / charts', live: true, scan: false, report: false },
-      { area: 'Overview health narrative', live: false, scan: false, report: true },
-      { area: 'Issues action queue', live: false, scan: false, report: true },
+      { area: 'Overview health narrative', live: false, scan: true, report: false },
+      { area: 'Issues Active queue', live: false, scan: true, report: false },
       { area: 'Issues lag cards', live: false, scan: true, report: false },
       { area: 'Mods log errors', live: false, scan: true, report: false },
-      { area: 'Mods manifest / conflicts', live: false, scan: false, report: true },
+      { area: 'Mods manifest / conflicts', live: false, scan: true, report: false },
       { area: 'Crashes folder list', live: false, scan: true, report: false },
       { area: 'Activity recent events', live: false, scan: true, report: false },
       { area: 'Session online roster', live: true, scan: false, report: false },
-      { area: 'Session playtime / peaks', live: false, scan: false, report: true },
+      { area: 'Session playtime / peaks', live: false, scan: true, report: false },
       { area: 'Backups folder scan', live: false, scan: true, report: false },
     ],
   };
@@ -34,10 +34,10 @@ export function dataSourcesExplainer() {
 export function monitoringPanelRows() {
   return [
     { label: 'Watching (live sample rate)', value: 'Chart tick interval', edit: 'config/watchtower-server.toml', editNote: 'Restart server', key: 'live_sample' },
-    { label: 'Scanning (ops log scan)', value: 'Background log, activity, mod errors, crash folder', edit: 'OPS_LOG_SCAN_SEC', editNote: 'watchtower.conf', key: 'ops_log_scan' },
+    { label: 'Scanning (ops log scan)', value: 'Background log, activity, Issues live, crash folder', edit: 'OPS_LOG_SCAN_SEC', editNote: 'watchtower.conf', key: 'ops_log_scan' },
     { label: 'Scanning (dashboard poll)', value: 'Extra crash refresh while dashboard open', edit: 'OPS_POLL_SEC', editNote: 'watchtower.conf', key: 'ops_poll' },
-    { label: 'Auditing (schedule)', value: 'Full report interval', edit: 'Settings → Schedule', editNote: 'REPORT_INTERVAL_MINUTES', key: 'schedule' },
-    { label: 'Auditing (retention)', value: 'How many reports to keep', edit: 'REPORT_RETENTION_COUNT / REPORT_RETENTION_DAYS', editNote: 'watchtower.conf', key: 'retention' },
+    { label: 'Support compose (schedule)', value: 'Optional support bundle interval (Off by default)', edit: 'watchtower.conf or /watchtower schedule', editNote: 'REPORT_INTERVAL_MINUTES', key: 'schedule' },
+    { label: 'Support compose (retention)', value: 'How many support artifacts to keep', edit: 'REPORT_RETENTION_COUNT / REPORT_RETENTION_DAYS', editNote: 'watchtower.conf', key: 'retention' },
   ];
 }
 
@@ -60,13 +60,13 @@ export function formatReportFreshness(meta) {
   if (!meta) return '';
   if (meta.stale) {
     const age = meta.age_hours != null ? `${meta.age_hours}h ago` : 'over 24h ago';
-    return `Report stale — last run ${age}. Run a fresh report for current health.`;
+    return `Legacy on-disk facts stale — last ${age}. Day-to-day tabs use Watching + Scanning; compose Support if you need a fresh bundle.`;
   }
   if (meta.last_report_at) {
     const age = meta.age_hours != null ? `${meta.age_hours}h ago` : 'recently';
-    return `Report fresh — last run ${age}`;
+    return `Legacy on-disk facts — last ${age}`;
   }
-  return 'No report on disk yet';
+  return 'No legacy facts on disk — Watching + Scanning keep tabs current';
 }
 
 /**
@@ -76,7 +76,7 @@ export function formatReportFreshness(meta) {
  */
 export function formatReportFreshnessShort(meta) {
   if (!meta) {
-    return { label: 'No report', tone: 'neutral', title: 'No report on disk yet' };
+    return { label: 'Scanning', tone: 'neutral', title: 'No legacy report on disk — Watching + Scanning keep tabs current' };
   }
   if (meta.stale) {
     const age = meta.age_hours != null ? `${meta.age_hours}h` : '24h+';
@@ -89,12 +89,12 @@ export function formatReportFreshnessShort(meta) {
   if (meta.last_report_at) {
     const age = meta.age_hours != null ? `${meta.age_hours}h` : 'recent';
     return {
-      label: `Fresh · ${age}`,
+      label: `Facts · ${age}`,
       tone: 'ok',
       title: formatReportFreshness(meta),
     };
   }
-  return { label: 'No report', tone: 'neutral', title: 'No report on disk yet' };
+  return { label: 'Scanning', tone: 'neutral', title: 'No legacy report on disk — Watching + Scanning keep tabs current' };
 }
 
 /**
@@ -103,9 +103,9 @@ export function formatReportFreshnessShort(meta) {
  */
 export function sourceLayerLabel(layer) {
   const m = {
-    live: 'Live',
-    scan: 'Scanned',
-    report: 'Report',
+    live: 'Watching',
+    scan: 'Scanning',
+    report: 'Support / legacy',
     unknown: '—',
   };
   return m[layer] ?? '—';
@@ -219,7 +219,7 @@ export function heapHeadroomLabel(heap, sys) {
  * "Run a report" helper blurb for the report runner.
  */
 export function runReportHelperCopy() {
-  return 'Builds an audit snapshot — full Issues list, mod analysis, session stats, and log window. Day-to-day tabs still update from scans between reports.';
+  return 'Composes a support bundle from continuous Watching + Scanning data. Day-to-day tabs stay on Scanning — download when ready.';
 }
 
 function panelDisplayName(panelId) {
@@ -333,7 +333,10 @@ export function overviewStatusPills({ facts, live, opsCache, overviewMeta, backu
     tone: errCount > 0 ? 'warn' : 'neutral',
   };
 
-  const lastBackup = f.optional?.last_backup;
+  const liveBackup = opsCache?.backups_live?.last_backup;
+  const lastBackup = (liveBackup && (liveBackup.status || liveBackup.age_hours != null || liveBackup.age_days != null))
+    ? liveBackup
+    : f.optional?.last_backup;
   const external = f.optional?.backup_external ?? opsCache?.backup_external;
   const trackingOn = backupTrackingEnabled !== false;
 

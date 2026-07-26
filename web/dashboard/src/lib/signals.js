@@ -6,8 +6,8 @@
  * dirty bit is also set. That freezes useState, route changes, modals, inbox,
  * etc. — navigation looks like it "sometimes won't switch pages".
  *
- * Replacing SCU after the signals import restores normal updates while keeping
- * signal-driven re-renders.
+ * We replace SCU with an always-update implementation. Signal subscriptions
+ * still drive targeted updates; this only stops false bails.
  */
 import { Component } from '../../vendor/preact.module.js';
 
@@ -19,23 +19,11 @@ export {
   useSignal,
   useComputed,
   useSignalEffect,
+  untracked,
 } from '../../vendor/signals.module.js';
 
-Component.prototype.shouldComponentUpdate = function (props, state) {
-  // forceUpdate / internal resume
-  if (this.__e || this.__R) return true;
-  // Signal-driven setState({}) — dirty bit set by the signals runtime
-  if (this.__$f & 1) return true;
-  // Class setState with a real next-state object
-  if (state != null && state !== this.state) return true;
-  // Hooks pending (useState / useReducer) — stock signals SCU wrongly bails here
-  if (this.__$f & 2) return true;
-  // Props changed
-  for (const key in props) {
-    if (key !== '__source' && props[key] !== this.props[key]) return true;
-  }
-  for (const key in this.props) {
-    if (!(key in props)) return true;
-  }
-  return false;
+// Always allow updates. The stock signals SCU falsely skips renders on this
+// Preact build (tabs/subtabs appear stuck until a full reload).
+Component.prototype.shouldComponentUpdate = function () {
+  return true;
 };

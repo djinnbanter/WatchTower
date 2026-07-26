@@ -1,7 +1,9 @@
 export const THEMES = ['dark', 'light', 'black'];
+export const SKINS = ['aero', 'sass'];
 
 const STORAGE_KEY = 'wt.theme';
 const LEGACY_KEY = 'watchtower-theme';
+const SKIN_STORAGE_KEY = 'wt.skin';
 
 /** CSS custom properties exposed via chartPalette() (keys without --ui- prefix). */
 const CHART_VARS = [
@@ -69,6 +71,43 @@ export function initTheme() {
   return setTheme(readStoredTheme());
 }
 
+function readStoredSkin() {
+  try {
+    const current = localStorage.getItem(SKIN_STORAGE_KEY);
+    if (current && SKINS.includes(current)) return current;
+  } catch {
+    /* localStorage unavailable */
+  }
+  return 'aero';
+}
+
+export function getSkin() {
+  const attr = document.documentElement.dataset.skin;
+  if (attr && SKINS.includes(attr)) return attr;
+  return readStoredSkin();
+}
+
+export function setSkin(name) {
+  const skin = SKINS.includes(name) ? name : 'aero';
+  document.documentElement.dataset.skin = skin;
+  try {
+    localStorage.setItem(SKIN_STORAGE_KEY, skin);
+  } catch {
+    /* ignore */
+  }
+  return skin;
+}
+
+export function cycleSkin() {
+  const idx = SKINS.indexOf(getSkin());
+  const next = SKINS[(idx + 1) % SKINS.length];
+  return setSkin(next);
+}
+
+export function initSkin() {
+  return setSkin(readStoredSkin());
+}
+
 /**
  * Resolved chart / semantic colors from CSS custom properties.
  * Keys are without the `--ui-` prefix, e.g. `ch-tps`, `ok`, `accent`.
@@ -109,5 +148,8 @@ export function resolveColor(tokenOrHex, palette, seriesKey) {
   if (p[s]) return p[s];
   if (p[`ch-${s}`]) return p[`ch-${s}`];
   if (seriesKey && p[`ch-${seriesKey}`]) return p[`ch-${seriesKey}`];
-  return s;
+  // Last resort: read live CSS var (covers tokens omitted from CHART_VARS)
+  const css = getComputedStyle(document.documentElement).getPropertyValue(`--ui-${s}`).trim();
+  if (css) return css;
+  return p.accent || '#4C9EEA';
 }

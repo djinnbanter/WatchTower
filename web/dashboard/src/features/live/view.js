@@ -2,21 +2,22 @@
  * Live — real-time metrics with fixed chart path (stable series, timestamp join).
  */
 
-import { html, useMemo, useState } from '../../lib/preact.js';
+import { html, useMemo, useState, useEffect } from '../../lib/preact.js';
 import {
   Page, Section, ChartFrame, TimeSeries, ListRow, EmptyState,
-  Gauge, RadarDial,
+  Gauge, RadarDial, FreshnessBadge, AnimatedNumber,
 } from '../../ui/patterns/index.js';
 import { Button, Segmented, Card, Badge, Progress } from '../../ui/primitives/index.js';
 import { Icon } from '../../ui/icons.js';
-import { live, samples, opsCache, settings, ui, setUi } from '../../state/stores.js';
+import { live, samples, opsCache, settings, ui, setUi, dataSources } from '../../state/stores.js';
+import { hasLiveSample } from '../../domain/live-sample.js';
 import { pinIncident } from '../../state/actions.js';
 import { kickTask } from '../../state/scheduler.js';
 import { get as persistGet, set as persistSet } from '../../state/persist.js';
 import { navigate } from '../../app/router.js';
-import { formatTps, formatMspt } from '../../domain/formats.js';
+import { formatTps, formatMspt, formatPct, formatGb } from '../../domain/formats.js';
 import { downsampleSeries } from '../../domain/downsample.js';
-
+import { DUR } from '../../motion/tokens.js';
 // ── Constants (stable identities — never recreate in render) ─────────────────
 
 const POLL_OPTIONS = [
@@ -29,6 +30,7 @@ const POLL_OPTIONS = [
 ];
 
 const WINDOW_OPTS = [
+  { value: '5m',  label: '5m' },
   { value: '15m', label: '15m' },
   { value: '1h',  label: '1h' },
   { value: '3h',  label: '3h' },
@@ -62,17 +64,25 @@ function windowToMs(w) {
   return value * 3_600_000;
 }
 
+function flagsBadgeTone(profile) {
+  if (!profile || profile === 'unknown') return 'neutral';
+  if (profile === 'aikars') return 'ok';
+  if (profile === 'default' || profile === 'g1_basic') return 'warn';
+  return 'info';
+}
+
 /* One series per chart — fixed Y from 0 */
 const SERIES_TPS = [{ key: 'tps', label: 'TPS', unit: '', color: 'ch-tps', ymin: 0, ymax: 20 }];
 const SERIES_MSPT = [{ key: 'mspt', label: 'MSPT', unit: ' ms', color: 'ch-mspt', ymin: 0 }];
 const SERIES_HEAP = [{ key: 'heap_mb', label: 'Heap used', unit: ' MB', color: 'ch-heap', ymin: 0, ymax: 8192 }];
+const SERIES_GC_PAUSE = [{ key: 'gc_pause_pct', label: 'GC pause', unit: '%', color: 'warn', ymin: 0, ymax: 40 }];
 const SERIES_CPU = [{ key: 'host_cpu', label: 'CPU', unit: '%', color: 'ch-cpu', ymin: 0, ymax: 100 }];
-const SERIES_RAM = [{ key: 'mem_available_gb', label: 'RAM free', unit: ' GB', color: 'ok', ymin: 0 }];
+const SERIES_RAM = [{ key: 'mem_used_gb', label: 'RAM used', unit: ' GB', color: 'ch-heap', ymin: 0 }];
 const SERIES_PLAYERS = [{ key: 'players', label: 'Players', unit: '', color: 'ch-players', ymin: 0, ymax: 12 }];
 const SERIES_DISK = [{ key: 'disk_use_pct', label: 'Disk used', unit: '%', color: 'ch-disk', ymin: 0, ymax: 100 }];
 const SERIES_RX = [{ key: 'net_rx_mbps', label: 'Receive', unit: ' Mbps', color: 'ch-rx', ymin: 0 }];
 const SERIES_TX = [{ key: 'net_tx_mbps', label: 'Send', unit: ' Mbps', color: 'ch-tx', ymin: 0 }];
-const SERIES_DISK_READ = [{ key: 'disk_read_mb_s', label: 'Read', unit: ' MB/s', color: 'ok', ymin: 0 }];
+const SERIES_DISK_READ = [{ key: 'disk_read_mb_s', label: 'Read', unit: ' MB/s', color: 'ch-disk', ymin: 0 }];
 const SERIES_DISK_WRITE = [{ key: 'disk_write_mb_s', label: 'Write', unit: ' MB/s', color: 'warn', ymin: 0 }];
 const SERIES_THERMAL_PKG = [{ key: 'thermal_package', label: 'CPU °C', unit: '°', color: 'warn', ymin: 20, ymax: 100 }];
 const SERIES_THERMAL_AMB = [{ key: 'thermal_ambient', label: 'Ambient °C', unit: '°', color: 'ch-cpu', ymin: 15, ymax: 70 }];
@@ -204,7 +214,8 @@ function buildChartData(seriesMap, keys, windowMs) {
 
 export function PageView() {
   const liveVal      = live.value;
-  const latest       = liveVal?.latest ?? null;
+  const latestRaw    = liveVal?.latest ?? null;
+  const latest       = hasLiveSample(latestRaw) ? latestRaw : null;
   const envelope     = liveVal?.envelope ?? null;
   const samplesVal   = samples.value;
   const series       = samplesVal?.series ?? {};
@@ -218,6 +229,10 @@ export function PageView() {
   const chartWindow   = uiVal.chartWindow ?? { kind: 'hours', value: 1 };
   const windowMs      = windowToMs(chartWindow);
   const windowStr     = windowToStr(chartWindow);
+  const isSass        = uiVal.skin === 'sass';
+  const chartH        = isSass ? 208 : 156;
+  const chartHSm      = isSass ? 168 : 120;
+  const thermalChartH = isSass ? 200 : THERMAL_CHART_H;
 
   const setWindow = (v) => {
     setUi({ chartWindow: parseWindowOpt(v) });
@@ -229,6 +244,12 @@ export function PageView() {
     setUi({ liveRefreshMs: ms });
     try { localStorage.setItem('wt.liveRefreshMs', JSON.stringify(ms)); } catch { /* ignore */ }
   };
+
+  // Entering Live from another tab — fetch immediately (samples only poll while on overview/live)
+  useEffect(() => {
+    kickTask('samples');
+    kickTask('live');
+  }, []);
 
   const [liveSections, setLiveSections] = useState(loadLiveSections);
   const setSectionOpen = (id, open) => {
@@ -247,8 +268,9 @@ export function PageView() {
   const tpsPack     = useMemo(() => buildChartData(series, ['tps'], windowMs), [series, windowMs]);
   const msptPack    = useMemo(() => buildChartData(series, ['mspt'], windowMs), [series, windowMs]);
   const heapPack    = useMemo(() => buildChartData(series, ['heap_mb'], windowMs), [series, windowMs]);
+  const gcPausePack = useMemo(() => buildChartData(series, ['gc_pause_pct'], windowMs), [series, windowMs]);
   const cpuPack     = useMemo(() => buildChartData(series, ['host_cpu'], windowMs), [series, windowMs]);
-  const ramPack     = useMemo(() => buildChartData(series, ['mem_available_gb'], windowMs), [series, windowMs]);
+  const ramPack     = useMemo(() => buildChartData(series, ['mem_used_gb'], windowMs), [series, windowMs]);
   const playersPack = useMemo(() => buildChartData(series, ['players'], windowMs), [series, windowMs]);
   const diskPack    = useMemo(() => buildChartData(series, ['disk_use_pct'], windowMs), [series, windowMs]);
   const rxPack = useMemo(
@@ -280,6 +302,12 @@ export function PageView() {
   const msptWarn = settingsData?.mspt_warn ?? 50;
 
   const heapMax   = latest?.heap_mb?.max ?? 8192;
+  const heapPressure = latest?.heap_mb?.pressure_pct
+    ?? (latest?.heap_mb?.max > 0
+      ? Math.min(100, (latest.heap_mb.used / latest.heap_mb.max) * 100)
+      : null);
+  const jvmHealth = latest?.jvm_health_live ?? null;
+  const gcPausePct = latest?.jvm_gc?.pause_pct_of_wall ?? latest?.gc_pause_pct ?? null;
   const thermal   = envelope?.thermal ?? null;
   const rightNow  = opsCacheData?.right_now ?? null;
   const alerts    = rightNow?.signals?.filter((s) => s.severity !== 'info') ?? [];
@@ -303,6 +331,20 @@ export function PageView() {
   const rxMbps = bw?.rx_mbps ?? bw?.rx ?? null;
   const txMbps = bw?.tx_mbps ?? bw?.tx ?? null;
   const fmtMbps = (v) => (v == null || Number.isNaN(Number(v)) ? '—' : Number(v).toFixed(2));
+
+  const diskIo = envelope?.disk_io ?? latest?.disk_io ?? null;
+  const writeAwaitMs = diskIo?.write_await_ms ?? latest?.disk_write_await_ms ?? null;
+  const latencySource = diskIo?.latency_source ?? null;
+  const latencyWarnMs = settingsData?.disk_io_latency_warn_ms ?? 50;
+  const fmtAwait = (v) => (v == null || Number.isNaN(Number(v)) ? '—' : `${Number(v).toFixed(1)} ms`);
+  const awaitTone = writeAwaitMs != null && writeAwaitMs >= latencyWarnMs ? 'warn' : 'ok';
+  const latencyCaption = latencySource === 'unavailable'
+    ? 'Write latency unavailable'
+    : latencySource === 'fsync_probe'
+      ? 'Write latency (probe)'
+      : latencySource === 'diskstats'
+        ? 'Write await'
+        : 'Write latency';
 
   const heapSeries = useMemo(
     () => [{ ...SERIES_HEAP[0], ymax: heapMax || 8192 }],
@@ -336,42 +378,89 @@ export function PageView() {
 
   const statusLabel = isDown ? 'Connection lost' : isPaused ? 'Paused' : 'Live';
   const statusTone = isDown ? 'danger' : isPaused ? 'neutral' : 'ok';
+  const liveAt = dataSources.value?.liveAt ?? latest?.ts ?? latest?.at ?? null;
+
+  const hostCpu = latest?.host_cpu_pct ?? null;
+  const memTotalGb = latest?.mem_total_gb ?? null;
+  const ramUsedGb = latest?.mem_used_gb
+    ?? (memTotalGb != null && latest?.mem_available_gb != null
+      ? Math.max(0, memTotalGb - latest.mem_available_gb)
+      : null);
+  const pkgTempC = thermal?.package_c ?? null;
+  const ambTempC = thermal?.ambient_c ?? null;
+  const fmtTemp = (v) => (v == null || Number.isNaN(Number(v)) ? '—' : `${Math.round(Number(v))}°`);
+
+  const ramMax = useMemo(() => {
+    const vals = series?.mem_used_gb?.map((p) => p.v).filter((v) => v != null) ?? [];
+    const peak = vals.length ? Math.max(...vals) : 0;
+    return Math.max(memTotalGb || 0, Math.ceil(Math.max(peak, 1) * 1.05), 8);
+  }, [series?.mem_used_gb, memTotalGb]);
+  const ramSeries = useMemo(
+    () => [{ ...SERIES_RAM[0], ymax: ramMax }],
+    [ramMax]
+  );
 
   return html`
-    <${Page} title="Live" subtitle="Real-time server metrics" tour="live">
+    <${Page} title="Live" subtitle="Real-time server metrics" tour="live" route="live">
       <div class="ui-page__stack" data-tour="live">
 
       <div class=${`lv-toolbar lv-toolbar--${statusTone}`}>
-        <div class="lv-toolbar__status">
-          <span class=${statusDotClass} aria-hidden="true"></span>
-          <div class="lv-toolbar__status-text">
-            <span class="lv-toolbar__status-label">${statusLabel}</span>
-            <span class="lv-toolbar__status-hint">
-              ${isPaused ? 'Polling paused' : isDown ? 'Retrying…' : `Every ${POLL_OPTIONS.find((o) => o.value === liveRefreshMs)?.label ?? '—'}`}
-            </span>
+        <div class="lv-toolbar__lead">
+          <div class="lv-toolbar__status">
+            <span class=${statusDotClass} aria-hidden="true"></span>
+            <div class="lv-toolbar__status-text">
+              <span class="lv-toolbar__status-label">${statusLabel}</span>
+              <span class="lv-toolbar__status-hint">
+                ${isPaused ? 'Polling paused' : isDown ? 'Retrying…' : `Every ${POLL_OPTIONS.find((o) => o.value === liveRefreshMs)?.label ?? '—'}`}
+                ${!isPaused && !isDown ? html`
+                  <span class="lv-toolbar__status-sep" aria-hidden="true">·</span>
+                  <${FreshnessBadge} layer="live" at=${liveAt} stale=${false} />
+                ` : null}
+              </span>
+            </div>
           </div>
-        </div>
 
-        ${latest ? html`
-          <div class="lv-toolbar__vitals" aria-label="Current vitals">
-            <div class="lv-vital">
-              <span class="lv-vital__label">TPS</span>
-              <span class="lv-vital__value">${formatTps(latest.tps)}</span>
+          ${latest ? html`
+            <div class="lv-toolbar__vitals" aria-label="Current vitals">
+              <div class="lv-vital">
+                <span class="lv-vital__label">TPS</span>
+                <${AnimatedNumber} className="lv-vital__value" value=${latest.tps} format=${formatTps} duration=${DUR[3]} />
+              </div>
+              <div class="lv-vital">
+                <span class="lv-vital__label">MSPT</span>
+                <${AnimatedNumber} className="lv-vital__value" value=${latest.mspt} format=${formatMspt} duration=${DUR[3]} />
+              </div>
+              <div class="lv-vital">
+                <span class="lv-vital__label">Players</span>
+                <${AnimatedNumber} className="lv-vital__value" value=${latest.players_online ?? 0} duration=${DUR[3]} />
+              </div>
+              <div class="lv-vital">
+                <span class="lv-vital__label">CPU</span>
+                <${AnimatedNumber} className="lv-vital__value" value=${hostCpu} format=${(v) => formatPct(v, 0)} duration=${DUR[3]} />
+              </div>
+              <div class="lv-vital">
+                <span class="lv-vital__label">RAM used</span>
+                <${AnimatedNumber} className="lv-vital__value" value=${ramUsedGb} format=${(v) => formatGb(v, 1)} duration=${DUR[3]} />
+              </div>
+              ${pkgTempC != null ? html`
+                <div class="lv-vital">
+                  <span class="lv-vital__label">CPU temp</span>
+                  <${AnimatedNumber} className="lv-vital__value" value=${pkgTempC} format=${fmtTemp} duration=${DUR[3]} />
+                </div>
+              ` : null}
+              ${ambTempC != null ? html`
+                <div class="lv-vital">
+                  <span class="lv-vital__label">Ambient</span>
+                  <${AnimatedNumber} className="lv-vital__value" value=${ambTempC} format=${fmtTemp} duration=${DUR[3]} />
+                </div>
+              ` : null}
             </div>
-            <div class="lv-vital">
-              <span class="lv-vital__label">MSPT</span>
-              <span class="lv-vital__value">${formatMspt(latest.mspt)}</span>
+          ` : html`
+            <div class="lv-toolbar__vitals lv-toolbar__vitals--empty">
+              <span class="ui-text-low">Waiting for samples…</span>
             </div>
-            <div class="lv-vital">
-              <span class="lv-vital__label">Players</span>
-              <span class="lv-vital__value">${latest.players_online ?? 0}</span>
-            </div>
-          </div>
-        ` : html`
-          <div class="lv-toolbar__vitals lv-toolbar__vitals--empty">
-            <span class="ui-text-low">Waiting for samples…</span>
-          </div>
-        `}
+          `}
+        </div>
 
         <div class="lv-toolbar__controls">
           <div class="lv-toolbar__group">
@@ -383,6 +472,7 @@ export function PageView() {
               onChange=${setWindow}
             />
           </div>
+          <div class="lv-toolbar__divider" aria-hidden="true"></div>
           <div class="lv-toolbar__group">
             <label class="lv-toolbar__group-label" for="lv-poll-cadence">Poll</label>
             <select
@@ -412,8 +502,8 @@ export function PageView() {
         <div class="lv-charts">
           <${ChartFrame} title="TPS" layer="live" caption=${tpsPack?.caption}>
             <${TimeSeries}
-              reveal=${false}
-              height=${156}
+              legendPlacement="header"
+              height=${chartH}
               data=${tpsPack?.data}
               series=${SERIES_TPS}
               xMin=${tpsPack?.xMin}
@@ -424,8 +514,8 @@ export function PageView() {
 
           <${ChartFrame} title="MSPT" layer="live" caption=${msptPack?.caption}>
             <${TimeSeries}
-              reveal=${false}
-              height=${156}
+              legendPlacement="header"
+              height=${chartH}
               data=${msptPack?.data}
               series=${msptSeries}
               xMin=${msptPack?.xMin}
@@ -436,8 +526,8 @@ export function PageView() {
 
           <${ChartFrame} title="Java Heap" layer="live" caption=${heapPack?.caption}>
             <${TimeSeries}
-              reveal=${false}
-              height=${156}
+              legendPlacement="header"
+              height=${chartH}
               data=${heapPack?.data}
               series=${heapSeries}
               xMin=${heapPack?.xMin}
@@ -447,14 +537,62 @@ export function PageView() {
 
           <${ChartFrame} title="Players online" layer="live" caption=${playersPack?.caption}>
             <${TimeSeries}
-              reveal=${false}
-              height=${156}
+              legendPlacement="header"
+              height=${chartH}
               data=${playersPack?.data}
               series=${playersSeries}
               xMin=${playersPack?.xMin}
               xMax=${playersPack?.xMax}
             />
           </${ChartFrame}>
+
+          <div class="lv-gc-health" data-verdict=${jvmHealth?.verdict || 'unknown'}>
+            <div class="lv-gc-health__kpis">
+              <div class="lv-gc-health__kpi">
+                <div class="lv-gc-health__kpi-label">GC pause % wall</div>
+                <div class="lv-gc-health__kpi-value">${gcPausePct != null ? `${Number(gcPausePct).toFixed(1)}%` : '—'}</div>
+              </div>
+              <div class="lv-gc-health__kpi">
+                <div class="lv-gc-health__kpi-label">Heap pressure</div>
+                <div class="lv-gc-health__kpi-value">${heapPressure != null ? `${Number(heapPressure).toFixed(0)}%` : '—'}</div>
+              </div>
+              <div class="lv-gc-health__kpi">
+                <div class="lv-gc-health__kpi-label">Flags</div>
+                <div class="lv-gc-health__kpi-value">
+                  <${Badge} tone=${flagsBadgeTone(jvmHealth?.flags_profile)}>
+                    ${jvmHealth?.flags_profile || 'unknown'}
+                  </${Badge}>
+                </div>
+              </div>
+              <div class="lv-gc-health__kpi">
+                <div class="lv-gc-health__kpi-label">Java</div>
+                <div class="lv-gc-health__kpi-value">${jvmHealth?.java_major ?? latest?.java_version ?? '—'}</div>
+              </div>
+            </div>
+            <div class="lv-gc-health__advice">
+              ${jvmHealth?.advice
+                ? 'Flag advice and recommended JVM args are on Insights → Configs.'
+                : 'GC health builds from live JVM samples (pause % of wall, not tick).'}
+              ${jvmHealth ? html`
+                <${Button} kind="neutral" size="sm" onClick=${() => navigate('insights', { view: 'configs' })}>
+                  Open Configs
+                </${Button}>
+              ` : null}
+            </div>
+            ${gcPausePack?.data && (gcPausePack.data.gc_pause_pct || []).some((v) => v != null) ? html`
+              <${ChartFrame} title="GC pause % of wall" layer="live" caption=${gcPausePack?.caption}>
+                <${TimeSeries}
+                  legendPlacement="header"
+                  height=${chartHSm}
+                  data=${gcPausePack.data}
+                  series=${SERIES_GC_PAUSE}
+                  xMin=${gcPausePack.xMin}
+                  xMax=${gcPausePack.xMax}
+                  thresholds=${[{ scale: 'gc_pause_pct', value: 10, color: 'warn' }]}
+                />
+              </${ChartFrame}>
+            ` : null}
+          </div>
         </div>
       </${Section}>
 
@@ -467,8 +605,8 @@ export function PageView() {
         <div class="lv-charts">
           <${ChartFrame} title="Host CPU" layer="live" caption=${cpuPack?.caption}>
             <${TimeSeries}
-              reveal=${false}
-              height=${156}
+              legendPlacement="header"
+              height=${chartH}
               data=${cpuPack?.data}
               series=${SERIES_CPU}
               xMin=${cpuPack?.xMin}
@@ -476,12 +614,12 @@ export function PageView() {
             />
           </${ChartFrame}>
 
-          <${ChartFrame} title="RAM free" layer="live" caption=${ramPack?.caption}>
+          <${ChartFrame} title="RAM used" layer="live" caption=${ramPack?.caption}>
             <${TimeSeries}
-              reveal=${false}
-              height=${156}
+              legendPlacement="header"
+              height=${chartH}
               data=${ramPack?.data}
-              series=${SERIES_RAM}
+              series=${ramSeries}
               xMin=${ramPack?.xMin}
               xMax=${ramPack?.xMax}
             />
@@ -490,8 +628,8 @@ export function PageView() {
           ${diskPack?.data ? html`
             <${ChartFrame} title="Disk used" layer="live" caption=${diskPack.caption}>
               <${TimeSeries}
-              reveal=${false}
-                height=${156}
+                legendPlacement="header"
+                height=${chartH}
                 data=${diskPack.data}
                 series=${SERIES_DISK}
                 xMin=${diskPack.xMin}
@@ -503,8 +641,8 @@ export function PageView() {
           ${diskReadPack?.data ? html`
             <${ChartFrame} title="Disk read" layer="live" caption=${diskReadPack.caption}>
               <${TimeSeries}
-              reveal=${false}
-                height=${156}
+                legendPlacement="header"
+                height=${chartH}
                 data=${diskReadPack.data}
                 series=${SERIES_DISK_READ}
                 xMin=${diskReadPack.xMin}
@@ -516,8 +654,8 @@ export function PageView() {
           ${diskWritePack?.data ? html`
             <${ChartFrame} title="Disk write" layer="live" caption=${diskWritePack.caption}>
               <${TimeSeries}
-              reveal=${false}
-                height=${156}
+                legendPlacement="header"
+                height=${chartH}
                 data=${diskWritePack.data}
                 series=${SERIES_DISK_WRITE}
                 xMin=${diskWritePack.xMin}
@@ -526,57 +664,68 @@ export function PageView() {
             </${ChartFrame}>
           ` : null}
         </div>
+        ${diskIo || writeAwaitMs != null || latencySource === 'unavailable' ? html`
+          <div class="lv-disk-latency" data-tone=${awaitTone}>
+            <span class="lv-disk-latency__label">${latencyCaption}</span>
+            ${latencySource === 'unavailable'
+              ? html`<span class="lv-disk-latency__value">n/a</span>`
+              : html`<${AnimatedNumber} className="lv-disk-latency__value" value=${writeAwaitMs} format=${fmtAwait} duration=${DUR[3]} />`}
+            ${diskIo?.write_mb_s != null ? html`
+              <span class="lv-disk-latency__meta">${Number(diskIo.write_mb_s).toFixed(2)} MB/s write</span>
+            ` : null}
+          </div>
+        ` : null}
       </${Section}>
 
+      <div class="lv-split-row">
       <${Section}
         title="Network"
         collapsible=${true}
         open=${liveSections.network !== false}
         onOpenChange=${(v) => setSectionOpen('network', v)}
       >
-        <div class="lv-net">
-          <div class="lv-net__heroes" aria-label="Current network rates">
-            <div class=${`lv-net__hero lv-net__hero--rx${rxMbps > 0 ? ' lv-net__hero--active' : ''}`}>
-              <span class="lv-net__hero-label">Receive</span>
-              <span class="lv-net__hero-value">${fmtMbps(rxMbps)}</span>
-              <span class="lv-net__hero-unit">Mbps</span>
-            </div>
-            <div class="lv-net__flow" aria-hidden="true">
-              <span class="lv-net__flow-bar lv-net__flow-bar--rx"></span>
-              <span class="lv-net__flow-dot"></span>
-              <span class="lv-net__flow-bar lv-net__flow-bar--tx"></span>
-            </div>
-            <div class=${`lv-net__hero lv-net__hero--tx${txMbps > 0 ? ' lv-net__hero--active' : ''}`}>
-              <span class="lv-net__hero-label">Send</span>
-              <span class="lv-net__hero-value">${fmtMbps(txMbps)}</span>
-              <span class="lv-net__hero-unit">Mbps</span>
-            </div>
-          </div>
-          <div class="lv-charts lv-charts--net">
-            ${rxPack?.data ? html`
-              <${ChartFrame} title="Receive" layer="live" caption=${rxPack.caption}>
+        <div class="lv-net-grid">
+          <div class=${`lv-net-card lv-net-card--rx${rxMbps > 0 ? ' lv-net-card--active' : ''}`}>
+            <div class="lv-net-card__chart">
+              ${rxPack?.data ? html`
                 <${TimeSeries}
-              reveal=${false}
-                  height=${156}
+                  height=${thermalChartH}
                   data=${rxPack.data}
                   series=${SERIES_RX}
                   xMin=${rxPack.xMin}
                   xMax=${rxPack.xMax}
                 />
-              </${ChartFrame}>
-            ` : null}
-            ${txPack?.data ? html`
-              <${ChartFrame} title="Send" layer="live" caption=${txPack.caption}>
+              ` : html`
+                <div class="lv-net-card__empty">Receive history builds as samples arrive</div>
+              `}
+            </div>
+            <div class="lv-net-card__readout" aria-label="Current receive rate">
+              <span class="lv-net-card__label">Receive</span>
+              <${AnimatedNumber} className="lv-net-card__value" value=${rxMbps} format=${fmtMbps} duration=${DUR[3]} />
+              <span class="lv-net-card__unit">Mbps</span>
+              ${rxPack?.caption ? html`<span class="lv-net-card__caption">${rxPack.caption}</span>` : null}
+            </div>
+          </div>
+          <div class=${`lv-net-card lv-net-card--tx${txMbps > 0 ? ' lv-net-card--active' : ''}`}>
+            <div class="lv-net-card__chart">
+              ${txPack?.data ? html`
                 <${TimeSeries}
-              reveal=${false}
-                  height=${156}
+                  height=${thermalChartH}
                   data=${txPack.data}
                   series=${SERIES_TX}
                   xMin=${txPack.xMin}
                   xMax=${txPack.xMax}
                 />
-              </${ChartFrame}>
-            ` : null}
+              ` : html`
+                <div class="lv-net-card__empty">Send history builds as samples arrive</div>
+              `}
+            </div>
+            <div class="lv-net-card__readout" aria-label="Current send rate">
+              <span class="lv-net-card__label">Send</span>
+              <${AnimatedNumber} className="lv-net-card__value" value=${txMbps} format=${fmtMbps} duration=${DUR[3]} />
+              <span class="lv-net-card__unit">Mbps</span>
+              ${txPack?.caption ? html`<span class="lv-net-card__caption">${txPack.caption}</span>` : null}
+            </div>
           </div>
         </div>
       </${Section}>
@@ -591,22 +740,10 @@ export function PageView() {
           <div class="lv-thermal-grid">
             ${thermal?.package_c != null ? html`
               <div class="lv-thermal-card">
-                <div class="lv-thermal-card__dial">
-                  <${Gauge}
-                    value=${thermal.package_c}
-                    max=${100}
-                    label="CPU package"
-                    warnAt=${70}
-                    critAt=${85}
-                    size=${176}
-                    hero=${true}
-                  />
-                </div>
                 <div class="lv-thermal-card__chart">
                   ${thermalPkgPack?.data ? html`
                     <${TimeSeries}
-              reveal=${false}
-                      height=${THERMAL_CHART_H}
+                      height=${thermalChartH}
                       data=${thermalPkgPack.data}
                       series=${SERIES_THERMAL_PKG}
                       xMin=${thermalPkgPack.xMin}
@@ -616,26 +753,26 @@ export function PageView() {
                     <div class="lv-thermal-card__empty">Temp history builds as samples arrive</div>
                   `}
                 </div>
+                <div class="lv-thermal-card__dial">
+                  <${Gauge}
+                    value=${thermal.package_c}
+                    max=${100}
+                    label="CPU package"
+                    labelPlacement="above"
+                    warnAt=${70}
+                    critAt=${85}
+                    size=${152}
+                    hero=${true}
+                  />
+                </div>
               </div>
             ` : null}
             ${thermal?.ambient_c != null ? html`
               <div class="lv-thermal-card">
-                <div class="lv-thermal-card__dial">
-                  <${Gauge}
-                    value=${thermal.ambient_c}
-                    max=${ambientMax}
-                    label="Ambient"
-                    warnAt=${32}
-                    critAt=${40}
-                    size=${176}
-                    hero=${true}
-                  />
-                </div>
                 <div class="lv-thermal-card__chart">
                   ${thermalAmbPack?.data ? html`
                     <${TimeSeries}
-              reveal=${false}
-                      height=${THERMAL_CHART_H}
+                      height=${thermalChartH}
                       data=${thermalAmbPack.data}
                       series=${ambientSeries}
                       xMin=${thermalAmbPack.xMin}
@@ -645,11 +782,24 @@ export function PageView() {
                     <div class="lv-thermal-card__empty">Temp history builds as samples arrive</div>
                   `}
                 </div>
+                <div class="lv-thermal-card__dial">
+                  <${Gauge}
+                    value=${thermal.ambient_c}
+                    max=${ambientMax}
+                    label="Ambient"
+                    labelPlacement="above"
+                    warnAt=${32}
+                    critAt=${40}
+                    size=${152}
+                    hero=${true}
+                  />
+                </div>
               </div>
             ` : null}
           </div>
         </${Section}>
       ` : null}
+      </div>
 
       ${pregenActive ? html`
         <${Section}

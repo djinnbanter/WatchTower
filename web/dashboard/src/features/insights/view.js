@@ -1,8 +1,8 @@
-import { html, useMemo, useEffect, useRef } from '../../lib/preact.js';
-import { performance, ui, opsCache, live, reports } from '../../state/stores.js';
-import { loadPerformance, addToast } from '../../state/actions.js';
-import { Page, Section, MetricTile, DataTable, ListRow, EmptyState, Heatmap, Subnav } from '../../ui/patterns/index.js';
-import { Segmented, Button, Badge, Progress, Card, Tooltip } from '../../ui/primitives/index.js';
+import { html, useMemo, useEffect, useRef, useState } from '../../lib/preact.js';
+import { performance, ui, opsCache, live, reports, dataSources } from '../../state/stores.js';
+import { loadPerformance, addToast, setPerformanceBaselineNow } from '../../state/actions.js';
+import { Page, Section, MetricTile, DataTable, ListRow, EmptyState, Heatmap, Subnav, FreshnessBadge } from '../../ui/patterns/index.js';
+import { Segmented, Button, Badge, Progress, Card, Tooltip, CopyButton } from '../../ui/primitives/index.js';
 import { Icon } from '../../ui/icons.js';
 import { HourBars } from '../../ui/patterns/bar-meter.js';
 import { formatMspt, formatTps, formatPct, formatGb, formatMb } from '../../domain/formats.js';
@@ -10,9 +10,164 @@ import { navigate } from '../../app/router.js';
 
 const SUBNAV = [
   { value: 'patterns', label: 'Patterns' },
+  { value: 'configs', label: 'Configs' },
   { value: 'mod-changes', label: 'Mod changes' },
   { value: 'storage', label: 'Storage' },
 ];
+
+/** Build config recommendation cards (JVM first; server.properties from 1.1.8 audit). */
+function buildConfigRecommendations({ jvmHealth, latest, configAudit }) {
+  const items = [];
+  if (jvmHealth) {
+    const gcPause = latest?.gc_pause_pct ?? latest?.jvm_gc?.pause_pct_of_wall ?? jvmHealth.gc_pause_pct_of_wall ?? null;
+    const heapPressure = latest?.heap_mb?.pressure_pct ?? jvmHealth.heap_pressure_pct ?? null;
+    const flags = jvmHealth.recommended_flags || null;
+    const missing = Array.isArray(jvmHealth.missing_flags)
+      ? jvmHealth.missing_flags.filter((f) => f && f !== 'aikars.marker')
+      : [];
+    const action = jvmHealth.recommend_action || null;
+    const ctx = jvmHealth.context || {};
+    items.push({
+      id: 'jvm-flags',
+      category: 'JVM',
+      title: 'Java memory settings',
+      summary: jvmHealth.advice || 'Watchtower checks your Java launch flags against the best baseline for this server.',
+      profile: jvmHealth.flags_profile ?? null,
+      profileLabel: profileLabel(jvmHealth.flags_profile),
+      verdict: jvmHealth.verdict ?? null,
+      recommendAction: action,
+      actionLabel: recommendActionLabel(action),
+      actionTone: recommendActionTone(action),
+      baselineName: jvmHealth.baseline_name || 'Aikar / flags.sh G1',
+      baselineVariant: jvmHealth.baseline_variant || null,
+      context: ctx,
+      javaMajor: ctx.java_major ?? jvmHealth.java_major ?? null,
+      gcPausePct: gcPause,
+      heapPressurePct: heapPressure,
+      missingFlags: missing,
+      coverage: jvmHealth.flags_coverage || null,
+      copyText: flags,
+      copyLabel: 'Copy flags',
+      flagsDisplay: flags ? formatFlagsForDisplay(flags) : null,
+      optionalZgc: jvmHealth.optional_zgc_flags || null,
+      actionable: !!flags
+        || missing.length > 0
+        || action === 'fix_java_first'
+        || action === 'optional_zgc'
+        || action === 'adopt_baseline'
+        || action === 'complete_baseline'
+        || action === 'apply_large_overrides',
+    });
+  }
+  if (configAudit && configAudit.status !== 'disabled' && Array.isArray(configAudit.properties) && configAudit.properties.length) {
+    const consider = configAudit.summary?.consider ?? configAudit.properties.filter((p) =>
+      p.verdict === 'consider_lowering' || p.verdict === 'consider_raising').length;
+    items.push({
+      id: 'server-properties',
+      category: 'server.properties',
+      title: 'Game settings audit',
+      summary: consider > 0
+        ? `${consider} setting${consider === 1 ? '' : 's'} worth considering — read-only advisory; Watchtower will not change files.`
+        : 'server.properties looks within usual ranges for modded dedicated servers.',
+      properties: configAudit.properties,
+      summaryCounts: configAudit.summary || null,
+      readOnly: true,
+      actionable: false,
+      actionLabel: 'Read-only advisory',
+      actionTone: 'neutral',
+    });
+  }
+  return items;
+}
+
+function recommendActionLabel(action) {
+  switch (action) {
+    case 'fix_java_first': return 'Install correct Java first';
+    case 'adopt_baseline': return 'Worth adopting recommended flags';
+    case 'complete_baseline': return 'Worth adding missing flags';
+    case 'apply_large_overrides': return 'Apply large-heap overrides';
+    case 'keep': return 'Already on recommended setup';
+    case 'keep_advanced': return 'Keep advanced setup';
+    case 'optional_zgc': return 'Optional: try ZGC';
+    default: return action ? String(action).replace(/_/g, ' ') : null;
+  }
+}
+
+function recommendActionTone(action) {
+  switch (action) {
+    case 'keep': return 'ok';
+    case 'keep_advanced': return 'info';
+    case 'fix_java_first': return 'danger';
+    case 'adopt_baseline':
+    case 'complete_baseline':
+    case 'apply_large_overrides':
+    case 'optional_zgc':
+      return 'warn';
+    default: return 'neutral';
+  }
+}
+
+function prettyLoader(loader) {
+  if (!loader) return null;
+  const l = String(loader).toLowerCase();
+  if (l === 'neoforge') return 'NeoForge';
+  if (l === 'forge') return 'Forge';
+  if (l === 'fabric') return 'Fabric';
+  if (l === 'paper' || l === 'purpur') return 'Paper';
+  return String(loader);
+}
+
+function metaLine(it) {
+  const parts = [];
+  if (it.profileLabel) parts.push(it.profileLabel);
+  if (it.verdict) parts.push(verdictLabel(it.verdict));
+  const ctx = it.context || {};
+  const java = ctx.java_major ?? it.javaMajor;
+  if (java != null) parts.push(`Java ${java}`);
+  if (ctx.mc_version) parts.push(`Minecraft ${ctx.mc_version}`);
+  const loader = prettyLoader(ctx.loader);
+  if (loader) parts.push(loader);
+  if (ctx.xmx_gb != null) parts.push(`${Math.round(Number(ctx.xmx_gb))}G memory`);
+  const baseline = it.baselineName || 'Aikar / flags.sh G1';
+  const variant = it.baselineVariant === 'large_heap' ? ' (12G+)' : '';
+  if (it.recommendAction === 'keep_advanced') {
+    parts.push(`Default baseline: ${baseline}${variant}`);
+  } else {
+    parts.push(`Best setup: ${baseline}${variant}`);
+  }
+  return parts.join(' · ');
+}
+
+function profileLabel(profile) {
+  switch (profile) {
+    case 'aikars': return 'Aikar / flags.sh';
+    case 'g1_basic': return 'G1 (basic)';
+    case 'default': return 'Default JVM';
+    case 'g1_bruce': return 'G1 (Bruce)';
+    case 'g1_meowice': return 'G1 (MeowIce)';
+    case 'zgc': return 'ZGC';
+    case 'zgc_meowice': return 'ZGC (MeowIce)';
+    case 'shenandoah': return 'Shenandoah';
+    case 'graal_g1': return 'Graal + G1';
+    case 'openj9': return 'OpenJ9';
+    default: return profile ? String(profile).replace(/_/g, ' ') : 'Unknown';
+  }
+}
+
+function formatFlagsForDisplay(flags) {
+  return String(flags).trim().replace(/\s+/g, ' ');
+}
+
+function verdictLabel(verdict) {
+  switch (verdict) {
+    case 'healthy': return 'Looking good';
+    case 'gc_bound': return 'Cleanup too busy';
+    case 'heap_bound': return 'Memory nearly full';
+    case 'single_thread':
+    case 'single_thread_bound': return 'Not a memory issue';
+    default: return verdict ? String(verdict).replace(/_/g, ' ') : 'Unknown';
+  }
+}
 
 const PATTERNS_PANELS = [
   { value: 'overview', label: 'Overview' },
@@ -58,31 +213,32 @@ function buildHourOfWeekMaps(hourOfWeek) {
 
 function msptColorScale(maxMspt) {
   return (v) => {
-    if (v == null) return 'var(--ui-bg2)';
+    if (v == null) return 'var(--ui-bg3)';
     const norm = Math.min(1, v / Math.max(maxMspt, 1));
-    const r = Math.round(200 * norm);
-    const g = Math.round(160 * (1 - norm));
-    return `rgba(${r}, ${g}, 60, ${0.15 + norm * 0.7})`;
+    const tone = norm < 0.4 ? 'var(--ui-ok)' : norm < 0.72 ? 'var(--ui-warn)' : 'var(--ui-danger)';
+    const pct = Math.round(16 + norm * 68);
+    return `color-mix(in srgb, ${tone} ${pct}%, var(--ui-bg2))`;
   };
 }
 
 /** Lower TPS = warmer (worse). Ideal ~20. */
 function tpsColorScale() {
   return (v) => {
-    if (v == null) return 'var(--ui-bg2)';
+    if (v == null) return 'var(--ui-bg3)';
     const norm = Math.min(1, Math.max(0, (20 - v) / 20));
-    const r = Math.round(200 * norm);
-    const g = Math.round(160 * (1 - norm));
-    return `rgba(${r}, ${g}, 60, ${0.15 + norm * 0.7})`;
+    const tone = norm < 0.35 ? 'var(--ui-ok)' : norm < 0.7 ? 'var(--ui-warn)' : 'var(--ui-danger)';
+    const pct = Math.round(14 + norm * 70);
+    return `color-mix(in srgb, ${tone} ${pct}%, var(--ui-bg2))`;
   };
 }
 
-/** Higher player count = busier (cool blue), not a health signal. */
+/** Higher player count = busier (accent intensity), not a health signal. */
 function playersColorScale(maxPlayers) {
   return (v) => {
-    if (v == null) return 'var(--ui-bg2)';
+    if (v == null) return 'var(--ui-bg3)';
     const norm = Math.min(1, v / Math.max(maxPlayers, 1));
-    return `rgba(76, 158, 234, ${0.12 + norm * 0.72})`;
+    const pct = Math.round(12 + norm * 72);
+    return `color-mix(in srgb, var(--ui-accent) ${pct}%, var(--ui-bg2))`;
   };
 }
 
@@ -306,9 +462,114 @@ function PeriodCompare({ periodCompare, windowKey }) {
   `;
 }
 
+function ramSizingBadge(verdict) {
+  switch (verdict) {
+    case 'over_provisioned': return { label: 'Over-provisioned', tone: 'info' };
+    case 'under_provisioned': return { label: 'Under-provisioned', tone: 'warn' };
+    case 'insufficient_data': return { label: 'Not enough data', tone: 'neutral' };
+    case 'right_sized': return { label: 'Right-sized', tone: 'ok' };
+    default: return { label: 'Unknown', tone: 'neutral' };
+  }
+}
+
+function RamSizingCard({ ram }) {
+  if (!ram) return null;
+  const badge = ramSizingBadge(ram.verdict);
+  const blocked = !!ram.ram_upgrade_blocked;
+  const tone = blocked ? 'warn' : (ram.verdict === 'under_provisioned' ? 'warn'
+    : ram.verdict === 'over_provisioned' ? 'info'
+      : ram.verdict === 'insufficient_data' ? 'neutral' : 'ok');
+  const peak = ram.heap_used_gb_peak;
+  const xmx = ram.xmx_gb;
+  const suggestMin = ram.suggested_xmx_gb_min;
+  const suggestMax = ram.suggested_xmx_gb_max;
+  const suggestLabel = suggestMin != null
+    ? (suggestMax != null && suggestMax !== suggestMin
+      ? `toward ${suggestMin}–${suggestMax}G`
+      : `toward ~${suggestMin}G`)
+    : null;
+
+  return html`
+    <div class=${`feat-ram-sizing ui-instrument ui-instrument--${tone}`} data-verdict=${ram.verdict || 'unknown'}>
+      <div class="feat-ram-sizing__head">
+        <div class="feat-ram-sizing__title-row">
+          <span class="feat-ram-sizing__title">RAM sizing</span>
+          <${Badge} tone=${badge.tone}>${badge.label}</${Badge}>
+        </div>
+        <p class="feat-ram-sizing__advice ui-text-low">${ram.advice || '—'}</p>
+      </div>
+      <div class="feat-ram-sizing__meta">
+        ${xmx != null ? html`<span>Allocated <strong>${formatGb(xmx)}</strong></span>` : null}
+        ${peak != null ? html`<span>Peak <strong>${formatGb(peak)}</strong></span>` : null}
+        ${ram.heap_pressure_pct_p95 != null
+          ? html`<span>Pressure p95 <strong>${Number(ram.heap_pressure_pct_p95).toFixed(0)}%</strong></span>`
+          : null}
+        ${suggestLabel ? html`<span>Suggest <strong>${suggestLabel}</strong></span>` : null}
+      </div>
+      ${blocked && ram.gc_verdict === 'single_thread_bound' ? html`
+        <div class="feat-ram-sizing__actions">
+          <${Button} kind="neutral" size="sm" onClick=${() => navigate('live')}>
+            Open Live
+          </${Button}>
+        </div>
+      ` : null}
+    </div>
+  `;
+}
+
 function PatternsOverview({ dash, windowKey, kpis, insights }) {
+  const [settingBaseline, setSettingBaseline] = useState(false);
+  const regression = dash?.baseline_regression ?? null;
+  const showBanner = !!(regression && (regression.active || !regression.has_baseline));
+
+  async function handleSetBaseline() {
+    if (settingBaseline) return;
+    const ok = typeof window !== 'undefined'
+      ? window.confirm('Replace the saved performance baseline with the last ~24h of samples?')
+      : true;
+    if (!ok) return;
+    setSettingBaseline(true);
+    try {
+      await setPerformanceBaselineNow();
+    } finally {
+      setSettingBaseline(false);
+    }
+  }
+
   return html`
     <div class="feat-insights-panel">
+      ${showBanner ? html`
+        <div class=${`feat-baseline-banner ui-instrument ui-instrument--${regression.active ? 'warn' : 'info'}`}>
+          <div class="feat-baseline-banner__text">
+            <div class="feat-baseline-banner__title">${regression.label || 'Performance baseline'}</div>
+            ${regression.detail ? html`<p class="ui-text-low">${regression.detail}</p>` : null}
+            ${regression.since ? html`<p class="ui-text-low">Since about ${regression.since}</p>` : null}
+          </div>
+          <${Button}
+            kind=${regression.active ? 'accent' : 'neutral'}
+            size="sm"
+            disabled=${settingBaseline || regression.can_set_baseline === false}
+            loading=${settingBaseline}
+            onClick=${handleSetBaseline}
+          >
+            Set new baseline
+          </${Button}>
+        </div>
+      ` : regression?.has_baseline ? html`
+        <div class="feat-baseline-banner feat-baseline-banner--quiet">
+          <span class="ui-text-low">${regression.label || 'On pace with baseline'}</span>
+          <${Button}
+            kind="neutral"
+            size="sm"
+            disabled=${settingBaseline}
+            loading=${settingBaseline}
+            onClick=${handleSetBaseline}
+          >
+            Set new baseline
+          </${Button}>
+        </div>
+      ` : null}
+
       <div class="feat-kpi-row feat-kpi-row--insights">
         ${kpis.map((k) => html`
           <${MetricTile}
@@ -378,7 +639,7 @@ function PatternsSchedule({ hourOfWeek, heatmaps, hourBars }) {
         </${Section}>
 
         <${Section} title="Players by hour of week" defaultOpen=${true}>
-          <p class="ui-text-low feat-hint">Colour = average concurrent players — darker blue means busier (not a health grade). UTC hours.</p>
+          <p class="ui-text-low feat-hint">Colour = average concurrent players — stronger accent means busier (not a health grade). UTC hours.</p>
           <${Heatmap}
             idPrefix="hm-players"
             rows=${DOW_LABELS}
@@ -425,13 +686,20 @@ function PatternsSchedule({ hourOfWeek, heatmaps, hourBars }) {
   `;
 }
 
-function PatternsLoad({ daily, playerBins, dailyCols, playerBinCols }) {
+function PatternsLoad({ daily, playerBins, dailyCols, playerBinCols, loadTakeaway }) {
   if (!daily.length && !playerBins.length) {
     return html`<${EmptyState} title="No load tables yet" body="Daily breakdown and player-count bins appear once enough rollup history exists." />`;
   }
 
   return html`
     <div class="feat-insights-panel feat-insights-panel--load">
+      ${loadTakeaway ? html`
+        <${ListRow}
+          tone=${loadTakeaway.tone || 'warn'}
+          title=${loadTakeaway.title}
+          meta=${loadTakeaway.meta}
+        />
+      ` : null}
       ${daily.length > 0 ? html`
         <${Section} title="Daily breakdown" defaultOpen=${true}>
           <div class="feat-table-scroll">
@@ -541,7 +809,7 @@ function PatternsIncidents({ correlations, relatedEvents, stickyLag, outliers, o
 
 function PatternsTab({ dash, windowKey, panel, onPanelChange }) {
   if (!dash) {
-    return html`<${EmptyState} title="No data yet" body="Run a report or wait for enough live samples to build patterns." />`;
+    return html`<${EmptyState} title="No data yet" body="Wait for enough live samples to build patterns — Watching fills this automatically." />`;
   }
 
   const summary = dash.summary_extended ?? {};
@@ -631,8 +899,32 @@ function PatternsTab({ dash, windowKey, panel, onPanelChange }) {
     { key: 'mspt_p95', label: 'MSPT p95', render: (v) => formatMspt(v) },
     { key: 'tps_avg', label: 'TPS avg', render: (v) => formatTps(v) },
     { key: 'players_peak', label: 'Peak players', render: (v) => v ?? '—' },
+    { key: 'heap_pressure_pct_avg', label: 'Heap pressure', render: (v) => v != null ? `${Number(v).toFixed(0)}%` : '—' },
+    { key: 'gc_pause_pct_avg', label: 'GC pause %', render: (v) => v != null ? `${Number(v).toFixed(1)}%` : '—' },
     { key: 'low_tps_minutes', label: 'Low-TPS min', render: (v) => v ?? '—' },
   ];
+
+  const loadTakeaway = (() => {
+    const withPressure = daily.filter((d) => d.heap_pressure_pct_avg != null || d.gc_pause_pct_avg != null);
+    if (!withPressure.length) return null;
+    const avgHeap = withPressure.reduce((s, d) => s + (Number(d.heap_pressure_pct_avg) || 0), 0) / withPressure.length;
+    const avgGc = withPressure.reduce((s, d) => s + (Number(d.gc_pause_pct_avg) || 0), 0) / withPressure.length;
+    if (avgHeap >= 90) {
+      return {
+        tone: 'danger',
+        title: 'Memory nearly full',
+        meta: `Average memory ~${avgHeap.toFixed(0)}% full — raising -Xmx may help; see Insights → Configs.`,
+      };
+    }
+    if (avgGc >= 10 && avgHeap < 85) {
+      return {
+        tone: 'warn',
+        title: 'Memory cleanup too busy',
+        meta: `Cleanup was busy ~${avgGc.toFixed(0)}% of the time while memory was not full — check Insights → Configs before buying more RAM.`,
+      };
+    }
+    return null;
+  })();
 
   const playerBinCols = [
     { key: 'players_band', label: 'Players' },
@@ -671,6 +963,7 @@ function PatternsTab({ dash, windowKey, panel, onPanelChange }) {
           playerBins=${playerBins}
           dailyCols=${dailyCols}
           playerBinCols=${playerBinCols}
+          loadTakeaway=${loadTakeaway}
         />
       `}
       ${activePanel === 'incidents' && html`
@@ -686,9 +979,195 @@ function PatternsTab({ dash, windowKey, panel, onPanelChange }) {
   `;
 }
 
+function ConfigsTab() {
+  const liveVal = live.value;
+  const latest = liveVal?.latest ?? null;
+  const jvmHealth = reports.value?.facts?.optional?.jvm_health
+    ?? latest?.jvm_health_live
+    ?? null;
+  const configAudit = reports.value?.facts?.optional?.config_launch_audit ?? null;
+  const ram = performance.value?.dashboard?.ram_sizing ?? null;
+
+  const items = buildConfigRecommendations({ jvmHealth, latest, configAudit });
+  const [expandedMissing, setExpandedMissing] = useState({});
+
+  if (!items.length && !ram) {
+    return html`
+      <${EmptyState}
+        title="No recommendations yet"
+        body="Once Watchtower has JVM health from live samples or a report, flag and config suggestions show up here."
+      />
+    `;
+  }
+
+  return html`
+    <div class="feat-insights-configs">
+      <${RamSizingCard} ram=${ram} />
+      ${items.length ? html`
+      <p class="feat-hint ui-text-low">
+        Best Java launch flags for this server — and game settings from server.properties.
+      </p>
+      <div class="feat-configs-list">
+        ${items.map((it) => {
+          if (it.id === 'server-properties') {
+            return html`
+              <article class="feat-configs-card feat-configs-card--audit" data-verdict="audit" key=${it.id}>
+                <header class="feat-configs-card__head">
+                  <div class="feat-configs-card__titles">
+                    <span class="feat-configs-card__category">${it.category}</span>
+                    <h3 class="feat-configs-card__title">${it.title}</h3>
+                  </div>
+                  ${it.actionLabel ? html`
+                    <${Badge} tone=${it.actionTone || 'neutral'}>${it.actionLabel}</${Badge}>
+                  ` : null}
+                </header>
+                <p class="feat-configs-card__summary">${it.summary}</p>
+                <div class="feat-configs-props">
+                  ${(it.properties || []).map((row, i) => {
+                    const tone = row.verdict === 'fine' ? 'ok'
+                      : (row.verdict === 'consider_lowering' || row.verdict === 'consider_raising') ? 'warn'
+                        : 'neutral';
+                    const label = row.verdict === 'fine' ? 'Fine'
+                      : row.verdict === 'consider_lowering' ? 'Consider lowering'
+                        : row.verdict === 'consider_raising' ? 'Consider raising'
+                          : row.verdict === 'missing' ? 'Missing'
+                            : String(row.verdict || 'unknown').replace(/_/g, ' ');
+                    return html`
+                      <${ListRow}
+                        key=${row.key}
+                        className="feat-configs-props__row"
+                        staggerIndex=${i}
+                        icon=${html`<${Icon} name="settings" size=${14} />`}
+                        tone=${tone}
+                        title=${`${row.title || row.key}${row.value != null ? ` · ${row.value}` : ''}`}
+                        meta=${row.detail}
+                        badge=${html`<${Badge} tone=${tone}>${label}</${Badge}>`}
+                      />
+                    `;
+                  })}
+                </div>
+                <div class="feat-configs-card__actions">
+                  <${Button} kind="neutral" size="sm" onClick=${() => navigate('startup')}>Open Startup audit</${Button}>
+                </div>
+              </article>
+            `;
+          }
+
+          const missingAll = (it.missingFlags || []).filter((f) => f !== 'aikars.marker');
+          const missingOpen = !!expandedMissing[it.id];
+          const missingShown = missingOpen || missingAll.length <= 5
+            ? missingAll
+            : missingAll.slice(0, 5);
+          const missingHidden = Math.max(0, missingAll.length - missingShown.length);
+          const coveragePct = it.coverage?.matched != null && it.coverage?.expected
+            ? Math.round((it.coverage.matched / Math.max(1, it.coverage.expected)) * 100)
+            : null;
+
+          return html`
+            <article class="feat-configs-card" data-verdict=${it.verdict || 'unknown'} data-action=${it.recommendAction || ''} key=${it.id}>
+              <header class="feat-configs-card__head">
+                <div class="feat-configs-card__titles">
+                  <span class="feat-configs-card__category">${it.category}</span>
+                  <h3 class="feat-configs-card__title">${it.title}</h3>
+                </div>
+                ${it.actionLabel ? html`
+                  <${Badge} tone=${it.actionTone || 'neutral'}>${it.actionLabel}</${Badge}>
+                ` : null}
+              </header>
+
+              <p class="feat-configs-card__meta">${metaLine(it)}</p>
+
+              <div class="feat-configs-vitals" role="list">
+                ${it.gcPausePct != null ? html`
+                  <div class="feat-configs-vital" role="listitem">
+                    <span class="feat-configs-vital__label">Cleanup busy</span>
+                    <span class="feat-configs-vital__value">${Number(it.gcPausePct).toFixed(0)}%</span>
+                  </div>
+                ` : null}
+                ${it.heapPressurePct != null ? html`
+                  <div class="feat-configs-vital" role="listitem">
+                    <span class="feat-configs-vital__label">Memory full</span>
+                    <span class="feat-configs-vital__value">${Number(it.heapPressurePct).toFixed(0)}%</span>
+                  </div>
+                ` : null}
+                ${coveragePct != null ? html`
+                  <div class="feat-configs-vital" role="listitem">
+                    <span class="feat-configs-vital__label">Baseline coverage</span>
+                    <span class="feat-configs-vital__value">${coveragePct}%</span>
+                    <span class="feat-configs-vital__sub">${it.coverage.matched}/${it.coverage.expected} flags</span>
+                  </div>
+                ` : null}
+              </div>
+
+              <p class="feat-configs-card__summary">${it.summary}</p>
+
+              ${missingAll.length ? html`
+                <section class="feat-configs-missing">
+                  <div class="feat-configs-section__head">
+                    <h4 class="feat-configs-section__title">Worth adding</h4>
+                    <span class="feat-configs-section__count">${missingAll.length}</span>
+                  </div>
+                  <div class="feat-configs-missing__chips">
+                    ${missingShown.map((f) => html`
+                      <code class="feat-configs-missing__chip" key=${f}>${f}</code>
+                    `)}
+                    ${missingHidden > 0 && !missingOpen ? html`
+                      <button
+                        type="button"
+                        class="feat-configs-missing__more"
+                        onClick=${() => setExpandedMissing((m) => ({ ...m, [it.id]: true }))}
+                      >+${missingHidden} more</button>
+                    ` : null}
+                    ${missingOpen && missingAll.length > 5 ? html`
+                      <button
+                        type="button"
+                        class="feat-configs-missing__more"
+                        onClick=${() => setExpandedMissing((m) => ({ ...m, [it.id]: false }))}
+                      >Show less</button>
+                    ` : null}
+                  </div>
+                </section>
+              ` : null}
+
+              ${it.flagsDisplay ? html`
+                <section class="feat-configs-flags">
+                  <div class="feat-configs-section__head">
+                    <h4 class="feat-configs-section__title">Recommended flags</h4>
+                  </div>
+                  <pre class="feat-configs-flags__box" tabindex="0">${it.flagsDisplay}</pre>
+                  <p class="feat-configs-flags__hint">Paste into your start script or hosting panel Java args, then restart. Keep start and max memory the same.</p>
+                </section>
+              ` : null}
+
+              ${it.optionalZgc ? html`
+                <section class="feat-configs-flags feat-configs-flags--optional">
+                  <div class="feat-configs-section__head">
+                    <h4 class="feat-configs-section__title">Optional ZGC trial</h4>
+                  </div>
+                  <pre class="feat-configs-flags__box" tabindex="0">${formatFlagsForDisplay(it.optionalZgc)}</pre>
+                  <p class="feat-configs-flags__hint">Only try after measuring with Spark. Not the default for typical Temurin servers.</p>
+                </section>
+              ` : null}
+
+              <div class="feat-configs-card__actions">
+                <${Button} kind="neutral" size="sm" onClick=${() => navigate('live')}>View memory charts</${Button}>
+              </div>
+            </article>
+          `;
+        })}
+      </div>
+      ` : html`
+        <${EmptyState}
+          title="No flag recommendations yet"
+          body="Once Watchtower has JVM health from live samples or a report, flag suggestions show up here."
+        />
+      `}
+    </div>
+  `;
+}
 function ModChangesTab({ modsInventory }) {
   if (!modsInventory) {
-    return html`<${EmptyState} title="No mod inventory" body="Run a report to populate the mod-changes diff." />`;
+    return html`<${EmptyState} title="No mod inventory" body="Waiting for Scanning to populate mods inventory — check Mods after the next scan." />`;
   }
 
   const diff = modsInventory.diff ?? {};
@@ -734,6 +1213,10 @@ function StorageTab({ diskJump }) {
   const latest = liveVal?.latest ?? null;
   const envelope = liveVal?.envelope ?? null;
   const factsStorage = reports.value?.facts?.optional?.storage ?? null;
+  const diskProjection = reports.value?.facts?.optional?.disk_projection
+    ?? performance.value?.data?.disk_projection
+    ?? opsCache.value?.data?.disk_projection
+    ?? null;
 
   const byDimension = latest?.by_dimension
     ?? envelope?.storage?.by_dimension
@@ -771,7 +1254,7 @@ function StorageTab({ diskJump }) {
     return html`
       <${EmptyState}
         title="No disk data"
-        body="Storage metrics come from live samples and the latest report. Run a report or wait for the next scan."
+        body="Storage metrics come from live samples and Scanning. Wait for the next scan if this is empty."
       />
     `;
   }
@@ -789,6 +1272,35 @@ function StorageTab({ diskJump }) {
       ${diskJump?.active ? html`
         <div class="feat-card feat-card--warn">
           <div class="feat-card__title">${diskJump.message ?? diskJump.label ?? 'Disk use jumped since last report'}</div>
+        </div>
+      ` : null}
+
+      ${diskProjection ? html`
+        <div class=${`feat-card ${diskProjection.verdict === 'filling' ? 'feat-card--warn' : ''}`}
+          style=${{ padding: 'var(--ui-sp-16) var(--ui-sp-20)' }}>
+          <div class="feat-card__title">Disk fill projection</div>
+          <div class="feat-card__body">${diskProjection.message
+            ?? (diskProjection.verdict === 'stable'
+              ? 'Disk free space is stable / not filling at current growth.'
+              : 'Not enough disk history to project fill rate.')}</div>
+          ${diskProjection.driver_hint ? html`
+            <div class="ui-text-low" style=${{ marginTop: 'var(--ui-sp-8)' }}>${diskProjection.driver_hint}</div>
+          ` : null}
+          ${diskProjection.fill_rate_gb_per_day != null && diskProjection.verdict === 'filling' ? html`
+            <div class="ui-text-low" style=${{ marginTop: 'var(--ui-sp-8)' }}>
+              ≈${Number(diskProjection.fill_rate_gb_per_day).toFixed(2)} GB/day · confidence ${diskProjection.confidence ?? '—'}
+            </div>
+          ` : null}
+        </div>
+      ` : null}
+
+      ${(performance.value?.data?.insights || []).some((i) => i?.id === 'disk_io_lag_align') ? html`
+        <div class="feat-card feat-card--warn" style=${{ padding: 'var(--ui-sp-16) var(--ui-sp-20)' }}>
+          <div class="feat-card__title">Lag aligned with slow disk writes</div>
+          <div class="feat-card__body">${
+            (performance.value.data.insights.find((i) => i.id === 'disk_io_lag_align') || {}).summary
+            || 'High MSPT minutes often coincide with elevated disk write activity.'
+          }</div>
         </div>
       ` : null}
 
@@ -948,6 +1460,7 @@ export function PageView() {
       title="Performance Insights"
       subtitle="Trend analysis and regression detection (${win})"
       actions=${html`
+        <${FreshnessBadge} layer="report" at=${dataSources.value?.reportAt} />
         <${Segmented}
           options=${WINDOW_OPTS}
           value=${win}
@@ -970,6 +1483,7 @@ export function PageView() {
           onPanelChange=${handlePatternsPanel}
         />
       `}
+      ${activeView === 'configs' && html`<${ConfigsTab} />`}
       ${activeView === 'mod-changes' && html`<${ModChangesTab} modsInventory=${modsInventory} />`}
       ${activeView === 'storage' && html`<${StorageTab} diskJump=${diskJump} />`}
     </${Page}>

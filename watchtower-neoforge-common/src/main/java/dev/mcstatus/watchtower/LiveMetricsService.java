@@ -1,14 +1,21 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+import dev.mcstatus.watchtower.runtime.WatchtowerSample;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.mcstatus.watchtower.core.analyze.GcAdvisor;
 import dev.mcstatus.watchtower.core.analyze.PerformanceInsightEngine;
 import dev.mcstatus.watchtower.core.collect.DimensionStorageScanner;
 import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.collect.ExtrasCollector;
 import dev.mcstatus.watchtower.core.collect.HostEnvironmentDetector;
 import dev.mcstatus.watchtower.core.collect.HostMetricsCollector;
+import dev.mcstatus.watchtower.core.collect.JvmHealthCollector;
 import dev.mcstatus.watchtower.core.collect.LivePregenTailer;
 import dev.mcstatus.watchtower.core.collect.PerCoreCpuSampler;
 import dev.mcstatus.watchtower.core.collect.ThermalCollector;
@@ -18,7 +25,6 @@ import dev.mcstatus.watchtower.core.live.LiveHistoryStore;
 import dev.mcstatus.watchtower.core.panel.PanelInfo;
 import dev.mcstatus.watchtower.core.panel.PanelResolver;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
-import net.minecraft.server.MinecraftServer;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,7 +46,7 @@ public final class LiveMetricsService {
     private final PerformanceRollupWriter rollupWriter = new PerformanceRollupWriter();
     private final PerformanceRollupAccumulator rollupAccumulator = new PerformanceRollupAccumulator();
     private final PerCoreCpuSampler perCoreCpuSampler = new PerCoreCpuSampler();
-    private MinecraftServer boundServer;
+    private ServerContext boundServer;
     private long lastEntityScanEpoch;
     private long lastStorageScanEpoch;
     private long lastPregenTailEpoch;
@@ -63,7 +69,11 @@ public final class LiveMetricsService {
     private volatile long prevBandwidthSampleEpoch;
     private volatile long prevReadBytes = -1;
     private volatile long prevWriteBytes = -1;
+    private volatile long prevWritesCompleted = -1;
+    private volatile long prevTimeWritingMs = -1;
     private volatile long prevDiskIoSampleEpoch;
+    private volatile long lastIoProbeEpoch;
+    private boolean diskIoProbeEnabled = true;
     private final LivePregenTailer pregenTailer = new LivePregenTailer();
     private long entities = -1;
     private long chunks = -1;
@@ -72,6 +82,10 @@ public final class LiveMetricsService {
     private volatile String cachedPanelId = "unknown";
     private volatile JsonObject cachedHostEnvironment;
     private volatile boolean storageScanRunning;
+    private volatile boolean thermalScanRunning;
+
+    /** Host thermal poll interval (seconds). Faster than the old 60s so Live temp charts move. */
+    private static final int THERMAL_SCAN_INTERVAL_SEC = 15;
 
     private LiveMetricsService() {
     }
@@ -88,22 +102,22 @@ public final class LiveMetricsService {
         return rollupWriter;
     }
 
-    public void bindServer(MinecraftServer server) {
+    public void bindServer(ServerContext server) {
         this.boundServer = server;
         Path path = WatchtowerPaths.liveHistoryPath(server);
-        int sampleSec = configInt(1, () -> WatchtowerConfig.LIVE_SAMPLE_INTERVAL_SECONDS.get());
-        int retention = configInt(2160, () -> WatchtowerConfig.LIVE_RETENTION_HOURS.get());
-        int flushSec = configInt(30, () -> WatchtowerConfig.LIVE_FLUSH_INTERVAL_SECONDS.get());
+        int sampleSec = configInt(1, () -> ModRuntime.config().liveSampleIntervalSeconds());
+        int retention = configInt(2160, () -> ModRuntime.config().liveRetentionHours());
+        int flushSec = configInt(30, () -> ModRuntime.config().liveFlushIntervalSeconds());
         store.configure(sampleSec, retention, flushSec, path);
         ZonedDateTime started = ZonedDateTime.now(ZoneId.systemDefault());
-        pregenTailer.reset(server.getServerDirectory(), started);
+        pregenTailer.reset(server.serverDirectory(), started);
         lastPregenTailEpoch = 0;
         openRollupMinuteEpoch = -1;
         rollupAccumulator.reset();
         loadRollupConfig(server);
         try {
             Map<String, String> conf = WatchtowerConfWriter.readMap(WatchtowerPaths.confPath(server));
-            PanelInfo panel = PanelResolver.resolve(conf, server.getServerDirectory());
+            PanelInfo panel = PanelResolver.resolve(conf, server.serverDirectory());
             cachedPanelId = panel.panelId();
             cachedHostEnvironment = HostEnvironmentDetector.detect(cachedPanelId);
         } catch (Exception e) {
@@ -113,23 +127,24 @@ public final class LiveMetricsService {
         try {
             store.loadFromDisk();
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.warn("Failed to load live history: {}", e.toString());
+            ModRuntime.logger().warn("Failed to load live history: {}", e.toString());
         }
         try {
             rollupWriter.loadFromDisk();
             maybeBackfillRollups(server);
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.warn("Failed to load performance rollups: {}", e.toString());
+            ModRuntime.logger().warn("Failed to load performance rollups: {}", e.toString());
         }
         refreshHostEnvironment(server);
     }
 
-    private void loadRollupConfig(MinecraftServer server) {
+    private void loadRollupConfig(ServerContext server) {
         try {
             ReportConfig config = ModReportConfig.forServer(server);
             tpsWarn = config.tpsWarn();
             l1Enabled = config.l1RollupEnabled();
             dimensionStorageScan = config.dimensionStorageScan();
+            diskIoProbeEnabled = config.diskIoProbeEnabled();
             rollupWriter.configure(
                     WatchtowerPaths.performanceRollupsPath(server),
                     config.l1RetentionDays(),
@@ -138,11 +153,12 @@ public final class LiveMetricsService {
             tpsWarn = 19.5;
             l1Enabled = true;
             dimensionStorageScan = true;
+            diskIoProbeEnabled = true;
             rollupWriter.configure(WatchtowerPaths.performanceRollupsPath(server), 90, true);
         }
     }
 
-    private void maybeBackfillRollups(MinecraftServer server) {
+    private void maybeBackfillRollups(ServerContext server) {
         if (!l1Enabled || !rollupWriter.isEmpty()) {
             return;
         }
@@ -156,16 +172,16 @@ public final class LiveMetricsService {
             int added = rollupWriter.backfillFromLiveHistory(liveHistory, tpsWarn);
             if (added > 0) {
                 rollupWriter.flushToDisk();
-                WatchtowerMod.LOGGER.info("Backfilled {} minute rollups from live history", added);
+                ModRuntime.logger().info("Backfilled {} minute rollups from live history", added);
             }
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.debug("L1 backfill skipped: {}", e.toString());
+            ModRuntime.logger().debug("L1 backfill skipped: {}", e.toString());
         }
     }
 
-    private void refreshHostEnvironment(MinecraftServer server) {
+    private void refreshHostEnvironment(ServerContext server) {
         try {
-            String serverDir = server.getServerDirectory().toAbsolutePath().toString();
+            String serverDir = server.serverDirectory().toAbsolutePath().toString();
             JsonObject sys = HostMetricsCollector.collectSystemBasics(serverDir);
             cachedHostEnvironment = HostEnvironmentDetector.detect(cachedPanelId, sys);
         } catch (Exception e) {
@@ -178,12 +194,12 @@ public final class LiveMetricsService {
             flushOpenRollupMinute(Instant.now().getEpochSecond());
             rollupWriter.flushToDisk();
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.debug("Performance rollup flush on stop: {}", e.toString());
+            ModRuntime.logger().debug("Performance rollup flush on stop: {}", e.toString());
         }
         try {
             store.flushToDisk();
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.debug("Live history flush on stop: {}", e.toString());
+            ModRuntime.logger().debug("Live history flush on stop: {}", e.toString());
         }
         boundServer = null;
     }
@@ -230,7 +246,7 @@ public final class LiveMetricsService {
         return body;
     }
 
-    public void recordTick(MinecraftServer server) {
+    public void recordTick(ServerContext server) {
         long now = Instant.now().getEpochSecond();
         refreshSlowMetrics(server, now);
 
@@ -258,17 +274,48 @@ public final class LiveMetricsService {
         Double mspt = snap.has("mspt") && !snap.get("mspt").isJsonNull() ? snap.get("mspt").getAsDouble() : null;
         int players = snap.has("players_online") ? snap.get("players_online").getAsInt() : 0;
         Double heapGb = null;
+        Double heapPressurePct = null;
         if (snap.has("heap_mb") && snap.get("heap_mb").isJsonObject()) {
             JsonObject heap = snap.getAsJsonObject("heap_mb");
             if (heap.has("used")) {
                 heapGb = heap.get("used").getAsDouble() / 1024.0;
+            }
+            if (heap.has("pressure_pct") && !heap.get("pressure_pct").isJsonNull()) {
+                heapPressurePct = heap.get("pressure_pct").getAsDouble();
             }
         }
         Double memUsed = snap.has("mem_used_gb") && !snap.get("mem_used_gb").isJsonNull()
                 ? snap.get("mem_used_gb").getAsDouble() : null;
         Double cpu = snap.has("host_cpu_pct") && !snap.get("host_cpu_pct").isJsonNull()
                 ? snap.get("host_cpu_pct").getAsDouble() : null;
-        rollupAccumulator.addSample(tps, mspt, players, heapGb, memUsed, cpu, tpsWarn);
+        Double gcPausePct = null;
+        if (snap.has("jvm_gc") && snap.get("jvm_gc").isJsonObject()) {
+            JsonObject gc = snap.getAsJsonObject("jvm_gc");
+            if (gc.has("pause_pct_of_wall") && !gc.get("pause_pct_of_wall").isJsonNull()) {
+                gcPausePct = gc.get("pause_pct_of_wall").getAsDouble();
+            }
+        }
+        Double diskUse = snap.has("disk_use_pct") && !snap.get("disk_use_pct").isJsonNull()
+                ? snap.get("disk_use_pct").getAsDouble() : null;
+        Double diskFree = snap.has("disk_free_gb") && !snap.get("disk_free_gb").isJsonNull()
+                ? snap.get("disk_free_gb").getAsDouble() : null;
+        Double diskWriteMbS = snap.has("disk_write_mb_s") && !snap.get("disk_write_mb_s").isJsonNull()
+                ? snap.get("disk_write_mb_s").getAsDouble() : null;
+        Double diskWriteAwait = snap.has("disk_write_await_ms") && !snap.get("disk_write_await_ms").isJsonNull()
+                ? snap.get("disk_write_await_ms").getAsDouble() : null;
+        if (diskWriteMbS == null || diskWriteAwait == null) {
+            JsonObject diskIo = cachedDiskIo.get();
+            if (diskIo != null) {
+                if (diskWriteMbS == null && diskIo.has("write_mb_s") && !diskIo.get("write_mb_s").isJsonNull()) {
+                    diskWriteMbS = diskIo.get("write_mb_s").getAsDouble();
+                }
+                if (diskWriteAwait == null && diskIo.has("write_await_ms") && !diskIo.get("write_await_ms").isJsonNull()) {
+                    diskWriteAwait = diskIo.get("write_await_ms").getAsDouble();
+                }
+            }
+        }
+        rollupAccumulator.addSample(tps, mspt, players, heapGb, memUsed, cpu, tpsWarn,
+                heapPressurePct, gcPausePct, diskUse, diskFree, diskWriteMbS, diskWriteAwait);
     }
 
     private void flushOpenRollupMinute(long minuteEpoch) {
@@ -285,13 +332,13 @@ public final class LiveMetricsService {
                 rollupWriter.flushToDisk();
                 maybeRecordStickyLagEpisodes();
             } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Performance rollup periodic flush failed: {}", e.toString());
+                ModRuntime.logger().debug("Performance rollup periodic flush failed: {}", e.toString());
             }
         }
     }
 
     private void maybeRecordStickyLagEpisodes() {
-        MinecraftServer server = boundServer;
+        ServerContext server = boundServer;
         if (server == null || !l1Enabled) {
             return;
         }
@@ -311,28 +358,28 @@ public final class LiveMetricsService {
                         insights.getAsJsonArray("sticky_lag"));
             }
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.debug("Sticky lag activity hook failed: {}", e.toString());
+            ModRuntime.logger().debug("Sticky lag activity hook failed: {}", e.toString());
         }
     }
 
-    private void refreshSlowMetrics(MinecraftServer server, long now) {
-        int entityInterval = configInt(30, () -> WatchtowerConfig.LIVE_COUNT_ENTITIES_INTERVAL_SECONDS.get());
-        if (now - lastEntityScanEpoch >= entityInterval && WatchtowerConfig.COUNT_ENTITIES.get()) {
+    private void refreshSlowMetrics(ServerContext server, long now) {
+        int entityInterval = configInt(30, () -> ModRuntime.config().liveCountEntitiesIntervalSeconds());
+        if (now - lastEntityScanEpoch >= entityInterval && ModRuntime.config().countEntities()) {
             lastEntityScanEpoch = now;
             try {
-                WatchtowerSampler.Sample sample = WatchtowerSampler.collect(server);
+                WatchtowerSample.Sample sample = server.collectSample();
                 entities = sample.entities();
                 chunks = sample.chunks();
             } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Live entity scan failed: {}", e.toString());
+                ModRuntime.logger().debug("Live entity scan failed: {}", e.toString());
             }
         }
 
-        int storageInterval = configInt(300, () -> WatchtowerConfig.LIVE_STORAGE_INTERVAL_SECONDS.get());
+        int storageInterval = configInt(300, () -> ModRuntime.config().liveStorageIntervalSeconds());
         if (now - lastStorageScanEpoch >= storageInterval && !storageScanRunning) {
             lastStorageScanEpoch = now;
             storageScanRunning = true;
-            String serverDir = server.getServerDirectory().toAbsolutePath().toString();
+            String serverDir = server.serverDirectory().toAbsolutePath().toString();
             boolean dimScan = dimensionStorageScan;
             Thread.ofVirtual().name("watchtower-live-storage").start(() -> {
                 try {
@@ -341,38 +388,44 @@ public final class LiveMetricsService {
                             : ExtrasCollector.collectStorage(serverDir);
                     cachedStorage.set(storage);
                 } catch (Exception e) {
-                    WatchtowerMod.LOGGER.debug("Live storage scan failed: {}", e.toString());
+                    ModRuntime.logger().debug("Live storage scan failed: {}", e.toString());
                 } finally {
                     storageScanRunning = false;
                 }
             });
         }
 
-        int pregenInterval = configInt(5, () -> WatchtowerConfig.LIVE_PREGEN_TAIL_INTERVAL_SECONDS.get());
+        int pregenInterval = configInt(5, () -> ModRuntime.config().livePregenTailIntervalSeconds());
         if (now - lastPregenTailEpoch >= pregenInterval) {
             lastPregenTailEpoch = now;
             try {
                 pregenTailer.tail();
             } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Live pregen tail failed: {}", e.toString());
+                ModRuntime.logger().debug("Live pregen tail failed: {}", e.toString());
             }
         }
 
-        if (now - lastThermalScanEpoch >= 60) {
+        if (now - lastThermalScanEpoch >= THERMAL_SCAN_INTERVAL_SEC && !thermalScanRunning) {
             lastThermalScanEpoch = now;
-            try {
-                JsonObject thermal = ThermalCollector.collect();
-                cachedThermal.set(thermal);
-                Double packageC = thermal.has("package_c") && !thermal.get("package_c").isJsonNull()
-                        ? thermal.get("package_c").getAsDouble() : null;
-                Double ambientC = thermal.has("ambient_c") && !thermal.get("ambient_c").isJsonNull()
-                        ? thermal.get("ambient_c").getAsDouble() : null;
-                if (packageC != null || ambientC != null) {
-                    store.appendThermal(now, packageC, ambientC);
+            thermalScanRunning = true;
+            // lm-sensors can block briefly — keep it off the live tick thread.
+            Thread.ofVirtual().name("watchtower-live-thermal").start(() -> {
+                try {
+                    JsonObject thermal = ThermalCollector.collect();
+                    cachedThermal.set(thermal);
+                    Double packageC = thermal.has("package_c") && !thermal.get("package_c").isJsonNull()
+                            ? thermal.get("package_c").getAsDouble() : null;
+                    Double ambientC = thermal.has("ambient_c") && !thermal.get("ambient_c").isJsonNull()
+                            ? thermal.get("ambient_c").getAsDouble() : null;
+                    if (packageC != null || ambientC != null) {
+                        store.appendThermal(now, packageC, ambientC);
+                    }
+                } catch (Exception e) {
+                    ModRuntime.logger().debug("Live thermal scan failed: {}", e.toString());
+                } finally {
+                    thermalScanRunning = false;
                 }
-            } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Live thermal scan failed: {}", e.toString());
-            }
+            });
         }
 
         if (now - lastPerCoreCpuScanEpoch >= 30) {
@@ -383,7 +436,7 @@ public final class LiveMetricsService {
                     cachedPerCoreCpu.set(cores);
                 }
             } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Per-core CPU sample failed: {}", e.toString());
+                ModRuntime.logger().debug("Per-core CPU sample failed: {}", e.toString());
             }
         }
 
@@ -391,14 +444,14 @@ public final class LiveMetricsService {
             lastJavaRssScanEpoch = now;
             try {
                 ReportConfig cfg = ReportConfig.builder()
-                        .serverDir(server.getServerDirectory().toAbsolutePath().toString())
+                        .serverDir(server.serverDirectory().toAbsolutePath().toString())
                         .build();
                 JsonObject javaInfo = HostMetricsCollector.javaProcessInfo(cfg);
                 if (javaInfo.has("java_rss_gb")) {
                     cachedJavaRssGb = javaInfo.get("java_rss_gb").getAsDouble();
                 }
             } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Java RSS sample failed: {}", e.toString());
+                ModRuntime.logger().debug("Java RSS sample failed: {}", e.toString());
             }
         }
 
@@ -426,18 +479,23 @@ public final class LiveMetricsService {
                     cachedBandwidth.set(net);
                 }
             } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Live bandwidth scan failed: {}", e.toString());
+                ModRuntime.logger().debug("Live bandwidth scan failed: {}", e.toString());
             }
         }
 
         if (now - lastDiskIoScanEpoch >= 30) {
             lastDiskIoScanEpoch = now;
             try {
-                String serverDir = server.getServerDirectory().toAbsolutePath().toString();
+                String serverDir = server.serverDirectory().toAbsolutePath().toString();
                 JsonObject disk = ExtrasCollector.readServerDiskIo(serverDir);
                 if (disk != null && disk.has("read_bytes")) {
                     long read = disk.get("read_bytes").getAsLong();
                     long write = disk.get("write_bytes").getAsLong();
+                    long writesCompleted = disk.has("writes_completed")
+                            ? disk.get("writes_completed").getAsLong() : -1;
+                    long timeWritingMs = disk.has("time_writing_ms")
+                            ? disk.get("time_writing_ms").getAsLong() : -1;
+                    boolean awaitSet = false;
                     if (prevReadBytes >= 0 && prevDiskIoSampleEpoch > 0) {
                         long dt = Math.max(1, now - prevDiskIoSampleEpoch);
                         double readMbS = (read - prevReadBytes) / (1024.0 * 1024.0) / dt;
@@ -448,35 +506,178 @@ public final class LiveMetricsService {
                         disk.addProperty("write_mb_s", writeMbS);
                         disk.addProperty("sample_age_sec", dt);
                         store.appendIoMetrics(now, null, null, readMbS, writeMbS);
+
+                        if (writesCompleted >= 0 && timeWritingMs >= 0
+                                && prevWritesCompleted >= 0 && prevTimeWritingMs >= 0) {
+                            long dWrites = writesCompleted - prevWritesCompleted;
+                            long dTime = timeWritingMs - prevTimeWritingMs;
+                            if (dWrites > 0 && dTime >= 0) {
+                                double awaitMs = (double) dTime / (double) dWrites;
+                                disk.addProperty("write_await_ms", round1(awaitMs));
+                                disk.addProperty("latency_source", "diskstats");
+                                awaitSet = true;
+                            }
+                        }
                     }
                     prevReadBytes = read;
                     prevWriteBytes = write;
+                    if (writesCompleted >= 0) {
+                        prevWritesCompleted = writesCompleted;
+                    }
+                    if (timeWritingMs >= 0) {
+                        prevTimeWritingMs = timeWritingMs;
+                    }
                     prevDiskIoSampleEpoch = now;
+
+                    if (!awaitSet) {
+                        maybeApplyLatencyProbe(serverDir, disk, now);
+                    }
                     cachedDiskIo.set(disk);
+                } else {
+                    JsonObject fallback = new JsonObject();
+                    maybeApplyLatencyProbe(serverDir, fallback, now);
+                    if (fallback.has("write_await_ms") || fallback.has("latency_source")) {
+                        cachedDiskIo.set(fallback);
+                    }
                 }
             } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Live disk I/O scan failed: {}", e.toString());
+                ModRuntime.logger().debug("Live disk I/O scan failed: {}", e.toString());
             }
         }
     }
 
-    private JsonObject buildFastSnapshot(MinecraftServer server, long now) {
+    private void maybeApplyLatencyProbe(String serverDir, JsonObject disk, long now) {
+        if (ExtrasCollector.isNetworkFilesystem(serverDir)) {
+            disk.addProperty("latency_source", "unavailable");
+            disk.addProperty("latency_unavailable_reason", "network_mount");
+            return;
+        }
+        if (!diskIoProbeEnabled) {
+            if (!disk.has("latency_source")) {
+                disk.addProperty("latency_source", "unavailable");
+            }
+            return;
+        }
+        if (now - lastIoProbeEpoch < 60) {
+            JsonObject prev = cachedDiskIo.get();
+            if (prev != null && prev.has("write_await_ms")
+                    && "fsync_probe".equals(prev.has("latency_source")
+                    ? prev.get("latency_source").getAsString() : "")) {
+                disk.addProperty("write_await_ms", prev.get("write_await_ms").getAsDouble());
+                disk.addProperty("latency_source", "fsync_probe");
+            } else if (!disk.has("latency_source")) {
+                disk.addProperty("latency_source", "unavailable");
+            }
+            return;
+        }
+        lastIoProbeEpoch = now;
+        JsonObject probe = ExtrasCollector.probeWriteLatency(serverDir);
+        if (probe != null && probe.has("write_latency_ms")) {
+            disk.addProperty("write_await_ms", probe.get("write_latency_ms").getAsDouble());
+            disk.addProperty("latency_source", "fsync_probe");
+        } else if (!disk.has("latency_source")) {
+            disk.addProperty("latency_source", "unavailable");
+        }
+    }
+
+    private JsonObject buildFastSnapshot(ServerContext server, long now) {
         JsonObject o = new JsonObject();
         o.addProperty("polled_at", Instant.now().toString());
         o.addProperty("source", "watchtower");
 
-        double mspt = TickMetrics.smoothedMspt();
+        double mspt = server.smoothedMspt();
         double tps = Math.min(20.0, 1000.0 / Math.max(mspt, 0.001));
         o.addProperty("tps", round2(tps));
         o.addProperty("mspt", round1(mspt));
-        o.addProperty("players_online", server.getPlayerCount());
+        o.addProperty("players_online", server.playerCount());
 
-        WatchtowerSampler.HeapMb heap = WatchtowerSampler.sampleHeapOnly();
+        WatchtowerSample.HeapMb heap = WatchtowerSample.sampleHeapOnly();
+        Double xmxHint = null;
         if (heap != null) {
             JsonObject heapMb = new JsonObject();
             heapMb.addProperty("used", heap.used());
             heapMb.addProperty("max", heap.max());
+            if (heap.max() > 0) {
+                double pressure = Math.min(100.0, (heap.used() * 100.0) / heap.max());
+                heapMb.addProperty("pressure_pct", round1(pressure));
+            }
             o.add("heap_mb", heapMb);
+            if (heap.max() > 0) {
+                xmxHint = heap.max() / 1024.0;
+            }
+        }
+
+        try {
+            JsonObject jvmSample = JvmHealthCollector.sampleLive(xmxHint);
+            if (jvmSample.has("jvm_gc")) {
+                o.add("jvm_gc", jvmSample.get("jvm_gc"));
+            }
+            // Prefer MemoryMXBean pressure when available.
+            if (jvmSample.has("heap") && jvmSample.get("heap").isJsonObject()) {
+                JsonObject h = jvmSample.getAsJsonObject("heap");
+                if (o.has("heap_mb") && h.has("pressure_pct")) {
+                    o.getAsJsonObject("heap_mb").addProperty("pressure_pct", h.get("pressure_pct").getAsDouble());
+                }
+                if (h.has("max_mb") && h.get("max_mb").getAsDouble() > 0) {
+                    xmxHint = h.get("max_mb").getAsDouble() / 1024.0;
+                }
+            }
+            JsonObject advisorIn = new JsonObject();
+            if (jvmSample.has("java_major")) {
+                advisorIn.add("java_major", jvmSample.get("java_major"));
+            }
+            if (jvmSample.has("flags") && jvmSample.get("flags").isJsonObject()) {
+                JsonObject flags = jvmSample.getAsJsonObject("flags");
+                if (flags.has("flags_profile")) {
+                    advisorIn.add("flags_profile", flags.get("flags_profile"));
+                }
+                if (flags.has("xms_equals_xmx")) {
+                    advisorIn.add("xms_equals_xmx", flags.get("xms_equals_xmx"));
+                }
+                if (flags.has("large_heap_overrides_ok")) {
+                    advisorIn.add("large_heap_overrides_ok", flags.get("large_heap_overrides_ok"));
+                }
+                if (flags.has("xmx_gb")) {
+                    advisorIn.add("xmx_gb", flags.get("xmx_gb"));
+                } else if (xmxHint != null) {
+                    advisorIn.addProperty("xmx_gb", round2(xmxHint));
+                }
+                if (flags.has("missing_flags")) {
+                    advisorIn.add("missing_flags", flags.get("missing_flags").deepCopy());
+                }
+                if (flags.has("flags_coverage")) {
+                    advisorIn.add("flags_coverage", flags.get("flags_coverage").deepCopy());
+                }
+            }
+            if (o.has("heap_mb") && o.getAsJsonObject("heap_mb").has("pressure_pct")) {
+                advisorIn.add("heap_pressure_pct", o.getAsJsonObject("heap_mb").get("pressure_pct"));
+            }
+            if (o.has("jvm_gc") && o.getAsJsonObject("jvm_gc").has("pause_pct_of_wall")) {
+                advisorIn.add("gc_pause_pct_of_wall", o.getAsJsonObject("jvm_gc").get("pause_pct_of_wall"));
+            }
+            if (o.has("jvm_gc") && o.getAsJsonObject("jvm_gc").has("pause_source")) {
+                advisorIn.add("pause_source", o.getAsJsonObject("jvm_gc").get("pause_source"));
+            }
+            advisorIn.addProperty("mspt", mspt);
+            if (o.has("cpu_count") && !o.get("cpu_count").isJsonNull()) {
+                advisorIn.add("cpu_count", o.get("cpu_count"));
+            }
+            if (server != null) {
+                String mcVer = server.minecraftVersion();
+                if (mcVer != null && !mcVer.isBlank()) {
+                    advisorIn.addProperty("mc_version", mcVer);
+                }
+            }
+            advisorIn.addProperty("loader", "neoforge");
+            // Same payload shape as report optional.jvm_health (avoid live/report drift).
+            JsonObject liveHealth = GcAdvisor.buildJvmHealth(jvmSample, advisorIn);
+            o.add("jvm_health_live", liveHealth);
+            if (o.has("jvm_gc") && jvmSample.getAsJsonObject("jvm_gc").has("pause_pct_of_wall")) {
+                o.addProperty("gc_pause_pct",
+                        jvmSample.getAsJsonObject("jvm_gc").get("pause_pct_of_wall").getAsDouble());
+            }
+        } catch (Exception e) {
+            ModRuntime.logger().debug("Live JVM health sample failed: {}", e.toString());
         }
 
         Double hostCpu = HostCpuProbe.readHostCpuPct();
@@ -484,7 +685,7 @@ public final class LiveMetricsService {
             o.addProperty("host_cpu_pct", round1(hostCpu));
         }
 
-        String serverDir = server.getServerDirectory().toAbsolutePath().toString();
+        String serverDir = server.serverDirectory().toAbsolutePath().toString();
         JsonObject sys = HostMetricsCollector.collectSystemBasics(serverDir);
         copySystemFields(o, sys);
         String javaVersion = System.getProperty("java.version");

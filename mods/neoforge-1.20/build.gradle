@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+}
+
+version = rootProject.findProperty('mod_version') ?: '1.0.0'
+group = 'dev.mcstatus.watchtower'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+// WT-026 / WT-027: intentional stub until NeoForge 1.20.x glue (roadmap 1.3.0).
+tasks.named('compileJava').configure {
+    doFirst {
+        throw new GradleException(
+                'WT-027 not implemented — :neoforge-1.20 is a stub until roadmap 1.3.0 (NeoForge 1.20.x backport).'
+        )
+    }
+}
+
+tasks.register('verifyStub') {
+    doLast {
+        logger.lifecycle('neoforge-1.20 stub present (compile intentionally fails until WT-027)')
+    }
+}

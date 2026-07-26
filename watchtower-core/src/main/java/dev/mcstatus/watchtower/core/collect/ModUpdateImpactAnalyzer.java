@@ -80,8 +80,10 @@ public final class ModUpdateImpactAnalyzer {
                 String localId = resolveLocalId(dep, projectToModId, modsById);
                 if ("required".equals(type)) {
                     if (localId == null) {
+                        String key = dep.projectId() != null ? dep.projectId() : "unknown";
                         blockers.add(blocker(
-                                dep.projectId() != null ? dep.projectId() : "unknown",
+                                key,
+                                displayNameForDep(dep, null, modsById),
                                 "need_install",
                                 "Required dependency is not installed in this pack."));
                         continue;
@@ -90,12 +92,12 @@ public final class ModUpdateImpactAnalyzer {
                     String installedVer = local != null ? str(local, "version") : null;
                     if (installedVer == null || "?".equals(installedVer)) {
                         hadUnknown = true;
-                        coUpdates.add(coUpdate(localId, installedVer, null,
+                        coUpdates.add(coUpdate(localId, displayNameForMod(localId, modsById), installedVer, null,
                                 "Required dependency is present but version is unknown."));
                     }
                 } else if ("incompatible".equals(type)) {
                     if (localId != null) {
-                        blockers.add(blocker(localId, "conflict",
+                        blockers.add(blocker(localId, displayNameForMod(localId, modsById), "conflict",
                                 "Candidate update marks this mod as incompatible."));
                     }
                 }
@@ -107,6 +109,10 @@ public final class ModUpdateImpactAnalyzer {
             for (String dependentId : graph.dependentsOf(modId)) {
                 JsonObject depRow = new JsonObject();
                 depRow.addProperty("mod_id", dependentId);
+                String dependentName = displayNameForMod(dependentId, modsById);
+                if (dependentName != null) {
+                    depRow.addProperty("display_name", dependentName);
+                }
                 depRow.addProperty("mandatory", true);
                 dependents.add(depRow);
 
@@ -115,22 +121,25 @@ public final class ModUpdateImpactAnalyzer {
                 if (range != null && candidateVer != null) {
                     ModVersionRange.Match match = ModVersionRange.parse(range).contains(candidateVer);
                     if (match == ModVersionRange.Match.NOT_SATISFIED) {
-                        blockers.add(blocker(dependentId, "need_co_update",
-                                "Depends on " + modId + " " + range + "; candidate "
+                        blockers.add(blocker(dependentId, displayNameForMod(dependentId, modsById), "need_co_update",
+                                "Depends on " + displayNameForMod(modId, modsById) + " " + range + "; candidate "
                                         + candidateVer + " is outside that range."));
-                        coUpdates.add(coUpdate(dependentId, str(modsById.get(dependentId), "version"),
+                        coUpdates.add(coUpdate(dependentId, displayNameForMod(dependentId, modsById),
+                                str(modsById.get(dependentId), "version"),
                                 null, "Update or replace so it accepts " + candidateVer + "."));
                     } else if (match == ModVersionRange.Match.UNKNOWN) {
                         hadUnknown = true;
-                        coUpdates.add(coUpdate(dependentId, str(modsById.get(dependentId), "version"),
+                        coUpdates.add(coUpdate(dependentId, displayNameForMod(dependentId, modsById),
+                                str(modsById.get(dependentId), "version"),
                                 null, "Version range " + range + " could not be evaluated."));
                     }
                 } else if (range != null) {
                     hadUnknown = true;
                 } else {
                     // No range — informational retest
-                    coUpdates.add(coUpdate(dependentId, str(modsById.get(dependentId), "version"),
-                            null, "Depends on " + modId + " — retest after updating."));
+                    coUpdates.add(coUpdate(dependentId, displayNameForMod(dependentId, modsById),
+                            str(modsById.get(dependentId), "version"),
+                            null, "Depends on " + displayNameForMod(modId, modsById) + " — retest after updating."));
                 }
             }
         }
@@ -140,10 +149,11 @@ public final class ModUpdateImpactAnalyzer {
         if (related != null && !related.isBlank()) {
             JsonObject partner = modsById.get(related);
             if (partner != null) {
-                coUpdates.add(coUpdate(related, str(partner, "version"), null,
-                        "Update " + related + " together with " + modId + "."));
+                coUpdates.add(coUpdate(related, displayNameForMod(related, modsById), str(partner, "version"), null,
+                        "Update " + displayNameForMod(related, modsById) + " together with "
+                                + displayNameForMod(modId, modsById) + "."));
             } else {
-                blockers.add(blocker(related, "need_install",
+                blockers.add(blocker(related, related, "need_install",
                         "Paired mod " + related + " is missing from the pack."));
             }
         }
@@ -225,17 +235,23 @@ public final class ModUpdateImpactAnalyzer {
         return arr;
     }
 
-    private static JsonObject blocker(String modId, String kind, String detail) {
+    private static JsonObject blocker(String modId, String displayName, String kind, String detail) {
         JsonObject o = new JsonObject();
         o.addProperty("mod_id", modId);
+        if (displayName != null && !displayName.isBlank()) {
+            o.addProperty("display_name", displayName);
+        }
         o.addProperty("kind", kind);
         o.addProperty("detail", detail);
         return o;
     }
 
-    private static JsonObject coUpdate(String modId, String current, String suggested, String detail) {
+    private static JsonObject coUpdate(String modId, String displayName, String current, String suggested, String detail) {
         JsonObject o = new JsonObject();
         o.addProperty("mod_id", modId);
+        if (displayName != null && !displayName.isBlank()) {
+            o.addProperty("display_name", displayName);
+        }
         if (current != null) {
             o.addProperty("current", current);
         }
@@ -246,6 +262,41 @@ public final class ModUpdateImpactAnalyzer {
             o.addProperty("detail", detail);
         }
         return o;
+    }
+
+    private static String displayNameForDep(
+            ModrinthLookupService.VersionDependency dep,
+            String localId,
+            Map<String, JsonObject> modsById) {
+        if (localId != null) {
+            return displayNameForMod(localId, modsById);
+        }
+        if (dep == null) {
+            return null;
+        }
+        String fromDep = dep.displayName();
+        if (fromDep != null && !fromDep.isBlank()) {
+            return fromDep;
+        }
+        return dep.projectId();
+    }
+
+    private static String displayNameForMod(String modId, Map<String, JsonObject> modsById) {
+        if (modId == null) {
+            return null;
+        }
+        JsonObject mod = modsById != null ? modsById.get(modId) : null;
+        if (mod != null) {
+            String title = str(mod, "modrinth_title");
+            if (title != null && !title.isBlank()) {
+                return title;
+            }
+            String display = str(mod, "display_name");
+            if (display != null && !display.isBlank()) {
+                return display;
+            }
+        }
+        return modId;
     }
 
     private static String resolveLocalId(
@@ -261,6 +312,9 @@ public final class ModUpdateImpactAnalyzer {
         // Heuristic: project id sometimes equals slug/mod id
         if (dep.projectId() != null && modsById.containsKey(dep.projectId())) {
             return dep.projectId();
+        }
+        if (dep.slug() != null && modsById.containsKey(dep.slug())) {
+            return dep.slug();
         }
         return null;
     }

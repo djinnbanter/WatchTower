@@ -5,14 +5,17 @@ import { Icon } from '../ui/icons.js';
 import { Kbd } from '../ui/primitives/kbd.js';
 import { InboxBell } from '../features/inbox/popover.js';
 
-function StatusChip({ tone, dot, children, title }) {
+function StatusChip({ tone, dot, pulse, children, title }) {
   return html`
     <span
       class=${'ui-topbar__chip ui-topbar__chip--' + tone}
       title=${title || null}
     >
       ${dot
-        ? html`<span class=${'ui-topbar__chip-dot ui-topbar__chip-dot--' + tone} aria-hidden="true"></span>`
+        ? html`<span
+            class=${'ui-topbar__chip-dot ui-topbar__chip-dot--' + tone + (pulse ? ' ui-live-pulse is-live' : '')}
+            aria-hidden="true"
+          ></span>`
         : null}
       <span class="ui-topbar__chip-text">${children}</span>
     </span>
@@ -61,6 +64,7 @@ export function TopBar() {
           <${StatusChip}
             tone=${connectionDown ? 'muted' : 'ok'}
             dot=${true}
+            pulse=${!connectionDown}
             title=${connectionDown ? 'Connection lost' : 'Connected'}
           >${connectionDown ? 'Offline' : 'Live'}</${StatusChip}>
           <${StatusChip}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-skin="aero">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -27,14 +27,17 @@
   <link rel="modulepreload" href="src/api/source-live.js">
   <link rel="modulepreload" href="src/api/source-fixture.js">
   <link rel="modulepreload" href="src/lib/signals.js">
+  <link rel="modulepreload" href="src/motion/mount-enter.js">
+  <link rel="modulepreload" href="src/motion/tokens.js">
   <link rel="modulepreload" href="src/app/registry.js">
   <link rel="modulepreload" href="src/app/rail.js">
   <link rel="modulepreload" href="src/app/topbar.js">
   <link rel="modulepreload" href="src/app/palette.js">
-  <link rel="modulepreload" href="src/app/report-controls.js">
   <link rel="modulepreload" href="src/app/shell-banners.js">
   <link rel="modulepreload" href="src/ui/primitives/index.js">
   <link rel="modulepreload" href="src/domain/formats.js">
+  <link rel="modulepreload" href="src/app/router.js">
+  <link rel="modulepreload" href="src/features/support/bundle-builder-modal.js">
   <link rel="modulepreload" href="src/api/endpoints.js">
   <link rel="modulepreload" href="src/ui/primitives/button.js">
   <link rel="modulepreload" href="src/ui/primitives/text-field.js">
@@ -42,16 +45,16 @@
   <link rel="modulepreload" href="src/ui/primitives/toggle.js">
   <link rel="modulepreload" href="src/ui/primitives/card.js">
   <link rel="modulepreload" href="src/ui/primitives/stack.js">
-  <link rel="modulepreload" href="src/app/router.js">
+  <link rel="modulepreload" href="src/state/scheduler.js">
   <link rel="modulepreload" href="src/ui/primitives/progress.js">
-  <link rel="modulepreload" href="src/ui/primitives/combobox.js">
-  <link rel="modulepreload" href="src/ui/primitives/segmented.js">
   <link rel="modulepreload" href="src/ui/primitives/spinner.js">
   <link rel="modulepreload" href="src/ui/icons.js">
-  <link rel="modulepreload" href="src/state/scheduler.js">
+  <link rel="modulepreload" href="src/domain/live-sample.js">
   <link rel="modulepreload" href="src/api/mock-physics.js">
   <link rel="modulepreload" href="src/domain/crash-groups.js">
   <link rel="modulepreload" href="vendor/signals.module.js">
+  <link rel="modulepreload" href="src/motion/reduced.js">
+  <link rel="modulepreload" href="src/app/report-controls.js">
   <link rel="modulepreload" href="src/domain/labels.js">
   <link rel="modulepreload" href="src/ui/primitives/kbd.js">
   <link rel="modulepreload" href="src/features/inbox/popover.js">
@@ -59,14 +62,53 @@
   <link rel="modulepreload" href="src/domain/freshness.js">
   <link rel="modulepreload" href="src/ui/primitives/icon-button.js">
   <link rel="modulepreload" href="src/ui/primitives/number-field.js">
+  <link rel="modulepreload" href="src/ui/primitives/combobox.js">
   <link rel="modulepreload" href="src/ui/primitives/path-field.js">
+  <link rel="modulepreload" href="src/ui/primitives/segmented.js">
   <link rel="modulepreload" href="src/ui/primitives/badge.js">
   <link rel="modulepreload" href="src/ui/primitives/tooltip.js">
   <link rel="modulepreload" href="src/ui/primitives/grid.js">
   <link rel="modulepreload" href="src/ui/primitives/scroll-region.js">
   <link rel="modulepreload" href="src/ui/primitives/copy-button.js">
+  <link rel="modulepreload" href="src/ui/patterns/index.js">
   <link rel="modulepreload" href="src/api/http.js">
   <link rel="modulepreload" href="vendor/signals-core.module.js">
+  <link rel="modulepreload" href="src/ui/patterns/page.js">
+  <link rel="modulepreload" href="src/ui/patterns/section.js">
+  <link rel="modulepreload" href="src/ui/patterns/metric-readout.js">
+  <link rel="modulepreload" href="src/ui/patterns/animated-number.js">
+  <link rel="modulepreload" href="src/ui/patterns/metric-tile.js">
+  <link rel="modulepreload" href="src/ui/patterns/dual-metric-tile.js">
+  <link rel="modulepreload" href="src/ui/patterns/sparkline.js">
+  <link rel="modulepreload" href="src/ui/patterns/timeseries.js">
+  <link rel="modulepreload" href="src/ui/patterns/chart-frame.js">
+  <link rel="modulepreload" href="src/ui/patterns/data-table.js">
+  <link rel="modulepreload" href="src/ui/patterns/list-row.js">
+  <link rel="modulepreload" href="src/ui/patterns/accordion.js">
+  <link rel="modulepreload" href="src/ui/patterns/filter-bar.js">
+  <link rel="modulepreload" href="src/ui/patterns/empty-state.js">
+  <link rel="modulepreload" href="src/ui/patterns/error-state.js">
+  <link rel="modulepreload" href="src/ui/patterns/freshness-badge.js">
+  <link rel="modulepreload" href="src/ui/patterns/freshness-footer.js">
+  <link rel="modulepreload" href="src/ui/patterns/toast-host.js">
+  <link rel="modulepreload" href="src/ui/patterns/banner-host.js">
+  <link rel="modulepreload" href="src/ui/patterns/modal.js">
+  <link rel="modulepreload" href="src/ui/patterns/heatmap.js">
+  <link rel="modulepreload" href="src/ui/patterns/timeline.js">
+  <link rel="modulepreload" href="src/ui/patterns/health-grade.js">
+  <link rel="modulepreload" href="src/ui/patterns/key-value.js">
+  <link rel="modulepreload" href="src/ui/patterns/subnav.js">
+  <link rel="modulepreload" href="src/ui/patterns/skeleton.js">
+  <link rel="modulepreload" href="src/ui/patterns/gauge.js">
+  <link rel="modulepreload" href="src/ui/patterns/bar-meter.js">
+  <link rel="modulepreload" href="src/ui/patterns/status-pill.js">
+  <link rel="modulepreload" href="src/ui/patterns/beacon-card.js">
+  <link rel="modulepreload" href="src/ui/patterns/stagger-list.js">
+  <link rel="modulepreload" href="src/motion/transitions.js">
+  <link rel="modulepreload" href="src/motion/use-count-up.js">
+  <link rel="modulepreload" href="src/lib/uplot.js">
+  <link rel="modulepreload" href="src/motion/tween.js">
+  <link rel="modulepreload" href="vendor/uplot.esm.js">
   <!-- modulepreload:end -->
 </head>
 <body>

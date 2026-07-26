@@ -25,7 +25,7 @@ Watchtower labels metrics so you know what to trust. **Charts show memory in use
 | **Host RAM** | Looks like you have tons of free RAM | Shows **Java heap** on Overview; **used/total** on Live |
 | **Host CPU %** | Hard to compare without core count | Shows quota when known |
 | **Temperature** | Often missing in Docker | Clear “unavailable” message |
-| **Backups** | Panel backups may be outside the container | Badge + **Settings → Backups** for panel signal |
+| **Backups** | Panel backups may be outside the container | Badge + [[Backups]] tab / Settings → Backups |
 
 ---
 

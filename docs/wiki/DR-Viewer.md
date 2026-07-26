@@ -1,26 +1,26 @@
 # DR Viewer
 
-A **web page you open in your browser** to understand a recovery zip when the server will not boot. No login, no live dashboard — just diagnosis from the bundle.
+A **web page in your browser** to understand a recovery zip when the server will not boot. No login, no live dashboard — diagnosis from the bundle only.
 
-> **Early preview:** The DR viewer is in **very early development**. Tabs, upload flows, and Fix-tab guidance may be incomplete or behave unexpectedly. Prefer the **DR CLI** bundle and manual log review when you need a reliable path; report issues on [GitHub](https://github.com/djinnbanter/WatchTower/issues).
+> **Coming soon:** some Fix-tab guidance, upload flows, and tabs may still be incomplete. Prefer the **DR CLI** zip plus manual log review when you need a reliable path today. Report issues on [GitHub](https://github.com/djinnbanter/WatchTower/issues).
 
 ---
 
 ## At a glance
 
-- **Upload:** `watchtower-dr-bundle-*.zip` from [[Disaster Recovery]]
+- **Upload:** `watchtower-dr-bundle-*.zip` from [[Disaster-Recovery]]
 - **Or:** drop log folders / old facts JSON manually
-- **Privacy:** everything runs in your browser — files are not uploaded to a remote server
+- **Privacy:** runs in your browser — files are not uploaded to a remote Watchtower server
 
 ---
 
 ## How to use it
 
-1. Get a bundle zip (see [[Disaster Recovery]])
-2. Open the DR viewer URL (your host may set one in config — check `DR-README.txt`)
-3. Upload the zip on the landing screen
-4. Start on **Fix** — follow prioritized steps
-5. Use **Logs**, **Mods**, **Report** tabs as needed
+1. Get a bundle zip ([[Disaster-Recovery]] / [[DR-CLI-Reference]])
+2. Open the DR viewer URL (often in `DR-README.txt`)
+3. Upload the zip
+4. Start on **Fix** when available — otherwise open Logs / files in the zip
+5. Use **Logs**, **Mods**, **Report** tabs as they appear on your build
 
 ### No zip?
 
@@ -30,7 +30,7 @@ Expand **Advanced: analyze log files locally** and drop a folder with `logs/`, `
 
 ## Host it yourself (optional)
 
-Publish the `web/dr-viewer/` folder to any static website (GitHub Pages, Cloudflare Pages, etc.).
+Publish the `web/dr-viewer/` folder to any static host.
 
 Optional in `watchtower.conf`:
 
@@ -38,24 +38,15 @@ Optional in `watchtower.conf`:
 DR_VIEWER_URL=https://your-site.example/watchtower-dr/
 ```
 
-That URL is written into `DR-README.txt` after each successful report.
-
 ---
 
 ## What's not included
 
-Compared to the live dashboard: no Live charts, no Backups tab, no sign-in.
+No Live charts, no Backups tab, no sign-in — this is recovery-only.
 
 ---
 
-## Technical details
+## Related
 
-- Local dev: `npm run serve` in `web/dr-viewer` → http://localhost:8790
-- Must be served over **HTTP** — opening `index.html` as `file://` breaks some features
-
----
-
-## See also
-
-- [[Disaster Recovery]]
-- [[DR CLI Reference]]
+- [[Disaster-Recovery]]
+- [[DR-CLI-Reference]]

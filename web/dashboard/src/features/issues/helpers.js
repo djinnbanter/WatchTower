@@ -8,7 +8,10 @@ import { addToast } from '../../state/actions.js';
 export const SOURCE_FILTERS = [
   { value: 'all', label: 'All' },
   { value: 'live', label: 'Live' },
-  { value: 'report', label: 'Report' },
+  { value: 'ops', label: 'Scanning' },
+  { value: 'event', label: 'Event' },
+  { value: 'catchup', label: 'Deep audit' },
+  { value: 'report', label: 'Deep audit' },
   { value: 'updates', label: 'Updates' },
   { value: 'crashes', label: 'Crashes' },
   { value: 'backups', label: 'Backups' },
@@ -44,7 +47,10 @@ export function mapGrade(status) {
 export function sourceLabel(source) {
   const m = {
     live: 'Live',
-    report: 'Report',
+    ops: 'Scanning',
+    event: 'Event',
+    catchup: 'Deep audit',
+    report: 'Deep audit',
     updates: 'Update',
     crashes: 'Crash',
     backups: 'Backup',
@@ -58,6 +64,18 @@ export function sourceForKind(kind) {
   if (kind === 'crash') return 'crashes';
   if (kind === 'backup') return 'backups';
   return 'report';
+}
+
+/** Prefer ledger provenance (`meta.source`) when present. */
+export function resolveItemSource(item) {
+  const fromMeta = item?.meta?.source;
+  if (fromMeta && typeof fromMeta === 'string') {
+    const s = fromMeta.toLowerCase();
+    if (s === 'live' || s === 'ops' || s === 'event' || s === 'catchup' || s === 'report') {
+      return s;
+    }
+  }
+  return sourceForKind(item?.kind);
 }
 
 export function confidenceFromSteps(steps, hints) {
@@ -101,7 +119,7 @@ export function fromActionItem(item, band) {
   return {
     key: item.key,
     kind: item.kind,
-    source: sourceForKind(item.kind),
+    source: resolveItemSource(item),
     band,
     severity: item.severity || 'warning',
     title: item.title,
@@ -123,6 +141,17 @@ export function fromActionItem(item, band) {
 
 export function fromLagEntry(entry, ackKey, band, ackedAt = null) {
   const hints = Array.isArray(entry.hints) ? entry.hints : [];
+  const topMods = Array.isArray(entry.top_mods) ? entry.top_mods : [];
+  const top = topMods.find((m) => m?.mod_id && !['minecraft', 'neoforge', 'forge'].includes(String(m.mod_id).toLowerCase()))
+    || topMods[0]
+    || null;
+  let sparkChip = null;
+  if (top?.mod_id != null && top?.pct != null) {
+    const label = top.display_name || top.mod_id;
+    sparkChip = `${label} ~${Math.round(Number(top.pct))}% (auto-profiled)`;
+  } else if (entry.primary_suspect && String(entry.primary_suspect).includes('auto-profiled')) {
+    sparkChip = entry.primary_suspect;
+  }
   return {
     key: ackKey,
     kind: 'lag',
@@ -146,6 +175,9 @@ export function fromLagEntry(entry, ackKey, band, ackedAt = null) {
     issueId: null,
     metrics: entry.metrics || null,
     primarySuspect: entry.primary_suspect || null,
+    sparkChip,
+    sparkProfilePath: entry.spark_profile_path || null,
+    sparkAutoCaptureStatus: entry.spark_auto_capture_status || null,
     confidence: confidenceFromSteps([], hints),
     raw: entry,
   };

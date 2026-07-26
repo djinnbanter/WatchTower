@@ -48,6 +48,19 @@ public final class OpsLogTailScanner {
 
     public static ScanResult scanIncremental(String serverDir, Path statePath, int tickLagThrottleMs)
             throws IOException {
+        return scanIncremental(serverDir, statePath, tickLagThrottleMs, 0);
+    }
+
+    /**
+     * Incremental tail scan. When {@code deferGapBytes} &gt; 0 and unread bytes exceed it,
+     * returns a tail-only scan and leaves the cursor for {@link ActivityGapBackfill}.
+     */
+    public static ScanResult scanIncremental(
+            String serverDir,
+            Path statePath,
+            int tickLagThrottleMs,
+            long deferGapBytes
+    ) throws IOException {
         Path logPath = Path.of(serverDir, "logs", "latest.log");
         if (!Files.isRegularFile(logPath)) {
             return emptyResult(StateManager.getOpsLogOffset(statePath));
@@ -60,7 +73,23 @@ public final class OpsLogTailScanner {
             return emptyResult(priorOffset);
         }
 
-        long bytesToRead = Math.min(fileSize - startOffset, MAX_BYTES_PER_SCAN);
+        long unread = fileSize - startOffset;
+        if (deferGapBytes > 0 && unread > deferGapBytes) {
+            ScanResult tail = scanTail(serverDir, DEFAULT_TAIL_LINES, tickLagThrottleMs);
+            return new ScanResult(
+                    tail.scannedAt(),
+                    tail.newActivityCount(),
+                    tail.activityEvents(),
+                    tail.modLogErrors(),
+                    tail.kubejsFailures(),
+                    tail.backgroundJobs(),
+                    priorOffset,
+                    tail.context(),
+                    tail.hadNewData()
+            );
+        }
+
+        long bytesToRead = Math.min(unread, MAX_BYTES_PER_SCAN);
         String chunk = readUtf8Chunk(logPath, startOffset, bytesToRead);
         long newOffset = startOffset + bytesToRead;
         boolean truncated = bytesToRead < fileSize - startOffset;
@@ -138,7 +167,93 @@ public final class OpsLogTailScanner {
         );
     }
 
-    private static long resolveStartOffset(Path logPath, JsonObject priorOffset, long fileSize) {
+    /** Unread bytes in {@code latest.log} from the persisted cursor (0 when caught up). */
+    public static long gapBytes(Path logPath, JsonObject priorOffset) throws IOException {
+        if (!Files.isRegularFile(logPath)) {
+            return 0;
+        }
+        long fileSize = Files.size(logPath);
+        return Math.max(0, fileSize - resolveStartOffset(logPath, priorOffset, fileSize));
+    }
+
+    /**
+     * Activity-only backfill chunk — advances {@code ops_log_offset} when complete.
+     */
+    public record BackfillChunkResult(
+            Instant scannedAt,
+            int newActivityCount,
+            List<JsonObject> activityEvents,
+            JsonObject updatedOffset,
+            long fileSize,
+            boolean complete
+    ) {
+    }
+
+    public static BackfillChunkResult scanBackfillChunk(
+            String serverDir,
+            Path statePath,
+            long startOffset,
+            long maxBytes,
+            int tickLagThrottleMs
+    ) throws IOException {
+        Path logPath = Path.of(serverDir, "logs", "latest.log");
+        if (!Files.isRegularFile(logPath)) {
+            JsonObject offset = StateManager.getOpsLogOffset(statePath);
+            return new BackfillChunkResult(Instant.now(), 0, List.of(), offset, 0, true);
+        }
+
+        long fileSize = Files.size(logPath);
+        long safeStart = Math.min(Math.max(0, startOffset), fileSize);
+        if (safeStart >= fileSize) {
+            JsonObject offset = new JsonObject();
+            offset.addProperty("file", logPath.toString());
+            offset.addProperty("byte_offset", fileSize);
+            offset.addProperty("size", fileSize);
+            StateManager.updateOpsLogOffset(statePath, offset);
+            return new BackfillChunkResult(Instant.now(), 0, List.of(), offset, fileSize, true);
+        }
+
+        long bytesToRead = Math.min(fileSize - safeStart, maxBytes);
+        String chunk = readUtf8Chunk(logPath, safeStart, bytesToRead);
+        long newOffset = safeStart + bytesToRead;
+        boolean complete = newOffset >= fileSize;
+
+        List<String> lines = chunk.lines().toList();
+        if (safeStart > 0 && !lines.isEmpty()) {
+            lines = lines.subList(1, lines.size());
+        }
+
+        long now = Instant.now().getEpochSecond();
+        long lastTickLagAt = StateManager.getLastTickLagEventAt(statePath);
+        ParseState state = new ParseState(tickLagThrottleMs, lastTickLagAt, now);
+        for (String line : lines) {
+            processLine(line, state);
+        }
+        if (state.lastTickLagAt > lastTickLagAt) {
+            StateManager.setLastTickLagEventAt(statePath, state.lastTickLagAt);
+        }
+
+        JsonObject updatedOffset = new JsonObject();
+        updatedOffset.addProperty("file", logPath.toString());
+        updatedOffset.addProperty("byte_offset", newOffset);
+        updatedOffset.addProperty("size", fileSize);
+        updatedOffset.addProperty("backfill", true);
+        if (!complete) {
+            updatedOffset.addProperty("truncated", true);
+        }
+        StateManager.updateOpsLogOffset(statePath, updatedOffset);
+
+        return new BackfillChunkResult(
+                Instant.now(),
+                state.events.size(),
+                state.events,
+                updatedOffset,
+                fileSize,
+                complete
+        );
+    }
+
+    static long resolveStartOffset(Path logPath, JsonObject priorOffset, long fileSize) {
         if (!priorOffset.has("file") || !logPath.toString().equals(priorOffset.get("file").getAsString())) {
             return 0;
         }

@@ -139,21 +139,22 @@ public final class ModSideScorer {
             Path cacheFile = serverDir != null && !serverDir.isBlank()
                     ? Path.of(serverDir, "watchtower", "modrinth-cache.json")
                     : null;
+            Map<Path, String> hashByPath = new HashMap<>();
+            ModrinthLookupService.hashCandidates(candidates, hashByPath, ModrinthScanProgress.NOOP);
             Map<String, ModrinthLookupService.SideInfo> byHash =
-                    ModrinthLookupService.lookupCacheOnly(candidates, cacheFile);
+                    ModrinthLookupService.lookupCacheOnly(candidates, cacheFile, hashByPath);
             Map<String, ModrinthLookupService.SideInfo> byId = new HashMap<>();
             for (ModrinthLookupService.Candidate c : candidates) {
-                try {
-                    String hash = ModrinthLookupService.sha512Hex(c.jarPath());
-                    ModrinthLookupService.SideInfo info = byHash.get(hash);
-                    if (info != null && !info.miss()) {
-                        byId.put(c.modId(), info);
-                    }
-                } catch (Exception ex) {
-                    // never block scoring
+                String hash = hashByPath.get(c.jarPath());
+                if (hash == null) {
+                    continue;
+                }
+                ModrinthLookupService.SideInfo info = byHash.get(hash);
+                if (info != null && !info.miss()) {
+                    byId.put(c.modId(), info);
                 }
             }
-            ModrinthLookupService.applyIdentityToMods(mods, byId);
+            ModrinthLookupService.applyIdentityToMods(mods, byId, config.loader());
             JsonArray updates = ModrinthLookupService.buildUpdatesSummary(mods);
             updates = ModUpdateImpactAnalyzer.enrich(mods, updates, byId);
             if (updates.size() > 0) {

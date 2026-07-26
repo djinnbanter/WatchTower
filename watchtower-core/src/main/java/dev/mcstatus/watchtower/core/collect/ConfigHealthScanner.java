@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -58,22 +57,7 @@ public final class ConfigHealthScanner {
     }
 
     private static Path resolveWorldServerConfig(Path serverDir) {
-        Path levelName = serverDir.resolve("server.properties");
-        String world = "world";
-        if (Files.isRegularFile(levelName)) {
-            try {
-                Properties props = new Properties();
-                try (Reader r = Files.newBufferedReader(levelName, StandardCharsets.UTF_8)) {
-                    props.load(r);
-                }
-                String ln = props.getProperty("level-name");
-                if (ln != null && !ln.isBlank()) {
-                    world = ln.strip();
-                }
-            } catch (IOException ignored) {
-                // default world
-            }
-        }
+        String world = ServerPropertiesReader.read(serverDir).levelName();
         Path sc = serverDir.resolve(world).resolve("serverconfig");
         return Files.isDirectory(sc) ? sc : null;
     }

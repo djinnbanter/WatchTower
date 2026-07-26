@@ -85,6 +85,144 @@ class PerformanceInsightEngineTest {
     }
 
     @Test
+    void playerBinsScaleToObservedPeakMedium() {
+        Instant now = Instant.now();
+        List<JsonObject> rows = new java.util.ArrayList<>();
+        int[] counts = {0, 0, 1, 2, 3, 4, 5, 6, 7};
+        for (int i = 0; i < counts.length; i++) {
+            JsonObject row = new JsonObject();
+            row.addProperty("ts", now.minus(counts.length - i, ChronoUnit.MINUTES).toString());
+            row.addProperty("players_max", counts[i]);
+            row.addProperty("mspt_avg", 8.0 + counts[i] * 2);
+            row.addProperty("tps_avg", 20.0 - counts[i] * 0.1);
+            rows.add(row);
+        }
+        JsonObject out = PerformanceInsightEngine.analyze(rows, "7d", 50, 19.5);
+        assertTrue(out.get("players_band_scale").getAsInt() == 7);
+        assertTrue("observed_peak".equals(out.get("players_band_scale_source").getAsString()));
+        JsonArray bins = out.getAsJsonArray("player_bins");
+        java.util.Set<String> labels = new java.util.LinkedHashSet<>();
+        for (var el : bins) {
+            labels.add(el.getAsJsonObject().get("players_band").getAsString());
+        }
+        assertTrue(labels.contains("0"));
+        assertTrue(labels.contains("1-2"));
+        assertTrue(labels.contains("3-4"));
+        assertTrue(labels.contains("5-7"));
+        assertFalse(labels.contains("6+"));
+    }
+
+    @Test
+    void playerBinsScaleToObservedPeakLarge() {
+        int[][] ranges = PerformanceInsightEngine.occupiedPlayerRanges(40);
+        assertTrue(ranges.length == 3);
+        assertTrue(ranges[0][0] == 1 && ranges[0][1] == 13);
+        assertTrue(ranges[1][0] == 14 && ranges[1][1] == 26);
+        assertTrue(ranges[2][0] == 27 && ranges[2][1] == 40);
+
+        Instant now = Instant.now();
+        List<JsonObject> rows = new java.util.ArrayList<>();
+        for (int p : new int[]{0, 5, 20, 40}) {
+            JsonObject row = new JsonObject();
+            row.addProperty("ts", now.minus(p + 1, ChronoUnit.MINUTES).toString());
+            row.addProperty("players_max", p);
+            row.addProperty("mspt_avg", 10.0 + p);
+            row.addProperty("tps_avg", 19.5);
+            rows.add(row);
+        }
+        JsonObject out = PerformanceInsightEngine.analyze(rows, "7d", 50, 19.5);
+        assertTrue(out.get("players_band_scale").getAsInt() == 40);
+        JsonArray bins = out.getAsJsonArray("player_bins");
+        java.util.Set<String> labels = new java.util.LinkedHashSet<>();
+        for (var el : bins) {
+            labels.add(el.getAsJsonObject().get("players_band").getAsString());
+        }
+        assertTrue(labels.contains("0"));
+        assertTrue(labels.contains("1-13"));
+        assertTrue(labels.contains("14-26"));
+        assertTrue(labels.contains("27-40"));
+    }
+
+    @Test
+    void playerBinsCollapseForTinyPeaks() {
+        int[][] one = PerformanceInsightEngine.occupiedPlayerRanges(1);
+        assertTrue(one.length == 1 && one[0][0] == 1 && one[0][1] == 1);
+        int[][] two = PerformanceInsightEngine.occupiedPlayerRanges(2);
+        assertTrue(two.length == 2);
+
+        Instant now = Instant.now();
+        List<JsonObject> rows = new java.util.ArrayList<>();
+        for (int p : new int[]{0, 1, 1}) {
+            JsonObject row = new JsonObject();
+            row.addProperty("ts", now.minus(p + 1, ChronoUnit.MINUTES).toString());
+            row.addProperty("players_max", p);
+            row.addProperty("mspt_avg", p == 0 ? 5.0 : 12.0);
+            row.addProperty("tps_avg", 20.0);
+            rows.add(row);
+        }
+        JsonObject out = PerformanceInsightEngine.analyze(rows, "7d", 50, 19.5);
+        assertTrue(out.get("players_band_scale").getAsInt() == 1);
+        JsonArray bins = out.getAsJsonArray("player_bins");
+        assertTrue(bins.size() == 2);
+        assertTrue("0".equals(bins.get(0).getAsJsonObject().get("players_band").getAsString()));
+        assertTrue("1".equals(bins.get(1).getAsJsonObject().get("players_band").getAsString()));
+    }
+
+    @Test
+    void playerBinsAllIdleOnlyEmptyBand() {
+        Instant now = Instant.now();
+        List<JsonObject> rows = new java.util.ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            JsonObject row = new JsonObject();
+            row.addProperty("ts", now.minus(10 - i, ChronoUnit.MINUTES).toString());
+            row.addProperty("players_max", 0);
+            row.addProperty("mspt_avg", 6.0);
+            row.addProperty("tps_avg", 20.0);
+            rows.add(row);
+        }
+        JsonObject out = PerformanceInsightEngine.analyze(rows, "7d", 50, 19.5);
+        assertTrue(out.get("players_band_scale").getAsInt() == 0);
+        JsonArray bins = out.getAsJsonArray("player_bins");
+        assertTrue(bins.size() == 1);
+        assertTrue("0".equals(bins.get(0).getAsJsonObject().get("players_band").getAsString()));
+    }
+
+    @Test
+    void playerCorrelationUsesHighestOccupiedBand() {
+        Instant now = Instant.now();
+        List<JsonObject> rows = new java.util.ArrayList<>();
+        // idle minutes
+        for (int i = 0; i < 5; i++) {
+            JsonObject row = new JsonObject();
+            row.addProperty("ts", now.minus(20 - i, ChronoUnit.MINUTES).toString());
+            row.addProperty("players_max", 0);
+            row.addProperty("mspt_avg", 10.0);
+            row.addProperty("tps_avg", 20.0);
+            rows.add(row);
+        }
+        // busy peak-7 minutes
+        for (int i = 0; i < 5; i++) {
+            JsonObject row = new JsonObject();
+            row.addProperty("ts", now.minus(10 - i, ChronoUnit.MINUTES).toString());
+            row.addProperty("players_max", 7);
+            row.addProperty("mspt_avg", 30.0);
+            row.addProperty("tps_avg", 18.0);
+            rows.add(row);
+        }
+        JsonObject out = PerformanceInsightEngine.analyze(rows, "7d", 50, 19.5);
+        boolean found = false;
+        for (var el : out.getAsJsonArray("insights")) {
+            JsonObject insight = el.getAsJsonObject();
+            if ("player_correlation".equals(insight.get("id").getAsString())) {
+                found = true;
+                assertTrue(insight.get("detail").getAsString().contains("10"));
+                assertTrue(insight.get("detail").getAsString().contains("30"));
+            }
+        }
+        assertTrue(found, "expected player_correlation insight");
+    }
+
+    @Test
     void csvExportIncludesHeaders() {
         JsonObject row = new JsonObject();
         row.addProperty("ts", Instant.now().toString());

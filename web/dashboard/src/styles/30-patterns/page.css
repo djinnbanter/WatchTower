@@ -78,17 +78,16 @@
   min-width: 0;
 }
 
-/* Stagger children entrance animation.
+/* Stagger children entrance — mount-once via data-motion="entering".
    Do NOT use transform here — fill-mode leaves transform on .ui-page__body > *,
    which creates a containing block and breaks position:sticky detail panes. */
 @media (prefers-reduced-motion: no-preference) {
-  .ui-page__body > * {
+  .ui-page[data-motion="entering"] .ui-page__body > * {
     animation: ui-page-child-enter var(--ui-dur-4) var(--ui-ease-out) both;
     animation-delay: calc(var(--ui-stagger-index, 0) * 60ms);
   }
 
-  /* Live charts must paint immediately */
-  .ui-page[data-tour="live"] .ui-page__body > * {
+  .ui-page[data-motion="settled"] .ui-page__body > * {
     animation: none;
   }
 

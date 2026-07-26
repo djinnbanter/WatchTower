@@ -5,6 +5,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.mcstatus.watchtower.core.collect.ModJarMetadataReader;
+import dev.mcstatus.watchtower.core.collect.ReportArtifactFinder;
+import dev.mcstatus.watchtower.core.ops.OpsCacheReader;
+import dev.mcstatus.watchtower.core.ops.OpsCacheSchema;
+import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
 
 import java.nio.charset.StandardCharsets;
@@ -32,6 +37,17 @@ public final class ModrinthScanJob {
 
     public static ScanResult run(
             String serverDir, ReportConfig config, Path reportDir, ModrinthScanProgress progress) {
+        Path opsCache = serverDir != null && !serverDir.isBlank()
+                ? Path.of(serverDir, "watchtower", "ops-cache.json") : null;
+        return run(serverDir, config, reportDir, opsCache, progress);
+    }
+
+    public static ScanResult run(
+            String serverDir,
+            ReportConfig config,
+            Path reportDir,
+            Path opsCachePath,
+            ModrinthScanProgress progress) {
         ModrinthScanProgress observer = progress != null ? progress : ModrinthScanProgress.NOOP;
         Instant started = Instant.now();
         JsonObject status = baseStatus(config);
@@ -44,17 +60,27 @@ public final class ModrinthScanJob {
 
             observer.stage("prepare", "Preparing Modrinth scan");
             Path factsFile = ReportArtifactFinder.findLatestFacts(reportDir);
-            if (factsFile == null) {
-                return finish(statusFile, status, started, false,
-                        "No Watchtower facts report is available to enrich.", observer);
+            JsonObject facts;
+            JsonObject optional;
+            boolean persistToFacts = factsFile != null && Files.isRegularFile(factsFile);
+
+            if (persistToFacts) {
+                facts = JsonParser.parseString(Files.readString(factsFile, StandardCharsets.UTF_8))
+                        .getAsJsonObject();
+                optional = facts.has("optional") && facts.get("optional").isJsonObject()
+                        ? facts.getAsJsonObject("optional") : new JsonObject();
+                if (!facts.has("optional")) {
+                    facts.add("optional", optional);
+                }
+            } else {
+                facts = buildSyntheticFacts(serverDir, config, opsCachePath);
+                optional = facts.getAsJsonObject("optional");
             }
-            JsonObject facts = JsonParser.parseString(Files.readString(factsFile, StandardCharsets.UTF_8))
-                    .getAsJsonObject();
-            JsonObject optional = facts.has("optional") && facts.get("optional").isJsonObject()
-                    ? facts.getAsJsonObject("optional") : null;
-            if (optional == null || !optional.has("mods") || !optional.get("mods").isJsonArray()) {
+
+            if (optional == null || !optional.has("mods") || !optional.get("mods").isJsonArray()
+                    || optional.getAsJsonArray("mods").isEmpty()) {
                 return finish(statusFile, status, started, false,
-                        "Latest facts report does not contain optional.mods.", observer);
+                        "No mod inventory available — wait for Scanning or add jars to mods/.", observer);
             }
             JsonArray mods = optional.getAsJsonArray("mods");
             List<ModrinthLookupService.Candidate> candidates = buildCandidates(optional, serverDir);
@@ -64,8 +90,10 @@ public final class ModrinthScanJob {
 
             observer.progress(0, candidates.size());
             Path cacheFile = Path.of(serverDir, "watchtower", "modrinth-cache.json");
+            Map<Path, String> hashByPath = new HashMap<>();
+            ModrinthLookupService.hashCandidates(candidates, hashByPath, observer);
             Map<String, ModrinthLookupService.SideInfo> cachedByHash =
-                    ModrinthLookupService.lookupCacheOnly(candidates, cacheFile);
+                    ModrinthLookupService.lookupCacheOnly(candidates, cacheFile, hashByPath);
             int cacheHits = cachedByHash.size();
             int cacheMisses = Math.max(0, candidates.size() - cacheHits);
             stats(status).addProperty("cache_hits", cacheHits);
@@ -73,22 +101,25 @@ public final class ModrinthScanJob {
             stats(status).addProperty("cache_hit_rate",
                     candidates.isEmpty() ? 0 : cacheHits * 100.0 / candidates.size());
             Map<String, ModrinthLookupService.SideInfo> byHash =
-                    ModrinthLookupService.lookup(candidates, cacheFile, config, new StageProgress(observer));
+                    ModrinthLookupService.lookup(candidates, cacheFile, config,
+                            new StageProgress(observer), hashByPath);
             Map<String, ModrinthLookupService.SideInfo> byId = new HashMap<>();
             Map<String, String> hashById = new HashMap<>();
             for (ModrinthLookupService.Candidate candidate : candidates) {
-                try {
-                    String hash = ModrinthLookupService.sha512Hex(candidate.jarPath());
-                    hashById.put(candidate.modId(), hash);
-                    ModrinthLookupService.SideInfo info = byHash.get(hash);
-                    if (info != null && !info.miss()) {
-                        byId.put(candidate.modId(), info);
-                    }
-                } catch (Exception ignored) {
-                    // a vanished jar should not fail a scan
+                String hash = hashByPath.get(candidate.jarPath());
+                if (hash == null) {
+                    continue;
+                }
+                hashById.put(candidate.modId(), hash);
+                ModrinthLookupService.SideInfo info = byHash.get(hash);
+                if (info != null && !info.miss()) {
+                    byId.put(candidate.modId(), info);
                 }
             }
             String minecraftVersion = ModrinthLookupService.minecraftVersionFromFacts(facts);
+            if (minecraftVersion == null || minecraftVersion.isBlank()) {
+                minecraftVersion = ModrinthLookupService.minecraftVersionFromServerDir(serverDir);
+            }
             String loader = resolveLoader(config, facts);
             if (minecraftVersion != null && !minecraftVersion.isBlank()) {
                 stats(status).addProperty("minecraft_version", minecraftVersion);
@@ -103,7 +134,7 @@ public final class ModrinthScanJob {
                     loader, minecraftVersion, config.modrinthRateLimit(), observer);
 
             observer.stage("impact", "Analyzing update impact");
-            ModrinthLookupService.applyIdentityToMods(mods, byId);
+            ModrinthLookupService.applyIdentityToMods(mods, byId, loader);
             JsonArray updates = ModUpdateImpactAnalyzer.enrich(
                     mods, ModrinthLookupService.buildUpdatesSummary(mods), byId);
             if (updates.isEmpty()) {
@@ -122,8 +153,12 @@ public final class ModrinthScanJob {
             // Persist cache before side re-score so ModSideScorer can apply fresh Modrinth hits.
             ModrinthLookupService.persistCache(cacheFile, byHash);
             ModSideScorer.apply(optional, config, serverDir);
-            Files.writeString(factsFile, new GsonBuilder().setPrettyPrinting().create().toJson(facts),
-                    StandardCharsets.UTF_8);
+            if (persistToFacts) {
+                Files.writeString(factsFile, new GsonBuilder().setPrettyPrinting().create().toJson(facts),
+                        StandardCharsets.UTF_8);
+            } else if (opsCachePath != null) {
+                OpsCacheWriter.applyModrinthScan(opsCachePath, optional);
+            }
 
             enrichStats(status, candidates, byHash, byId, updates, started);
             observer.stage("done", "Modrinth scan complete");
@@ -177,6 +212,76 @@ public final class ModrinthScanJob {
             }
         }
         return out;
+    }
+
+    private static JsonObject buildSyntheticFacts(String serverDir, ReportConfig config, Path opsCachePath) {
+        JsonObject facts = new JsonObject();
+        JsonObject meta = new JsonObject();
+        if (config != null) {
+            if (config.loader() != null) {
+                meta.addProperty("loader", config.loader());
+            }
+            if (config.hostname() != null) {
+                meta.addProperty("hostname", config.hostname());
+            }
+        }
+        facts.add("meta", meta);
+
+        JsonObject optional = new JsonObject();
+        JsonArray mods = null;
+        try {
+            if (opsCachePath != null && Files.isRegularFile(opsCachePath)) {
+                JsonObject cache = OpsCacheReader.load(opsCachePath);
+                if (cache.has(OpsCacheSchema.RUNNING_MODS)
+                        && cache.get(OpsCacheSchema.RUNNING_MODS).isJsonObject()) {
+                    JsonObject running = cache.getAsJsonObject(OpsCacheSchema.RUNNING_MODS);
+                    if (running.has(OpsCacheSchema.RUNNING_MODS_MODS)
+                            && running.get(OpsCacheSchema.RUNNING_MODS_MODS).isJsonArray()) {
+                        mods = running.getAsJsonArray(OpsCacheSchema.RUNNING_MODS_MODS).deepCopy();
+                    }
+                }
+                mergeCrashSummariesFromOps(optional, cache);
+            }
+        } catch (Exception ignored) {
+        }
+        if (mods == null || mods.isEmpty()) {
+            mods = ModJarMetadataReader.listModsFromDir(serverDir);
+        }
+        optional.add("mods", mods != null ? mods : new JsonArray());
+        facts.add("optional", optional);
+        return facts;
+    }
+
+    private static void mergeCrashSummariesFromOps(JsonObject optional, JsonObject cache) {
+        if (cache == null || !cache.has(OpsCacheSchema.CRASHES)
+                || !cache.get(OpsCacheSchema.CRASHES).isJsonObject()) {
+            return;
+        }
+        JsonObject crashes = cache.getAsJsonObject(OpsCacheSchema.CRASHES);
+        if (!crashes.has(OpsCacheSchema.CRASHES_ENTRIES)
+                || !crashes.get(OpsCacheSchema.CRASHES_ENTRIES).isJsonArray()) {
+            return;
+        }
+        JsonArray summaries = new JsonArray();
+        for (JsonElement el : crashes.getAsJsonArray(OpsCacheSchema.CRASHES_ENTRIES)) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject entry = el.getAsJsonObject();
+            JsonObject summary = new JsonObject();
+            if (entry.has("primary_mod_id")) {
+                summary.add("primary_mod_id", entry.get("primary_mod_id"));
+            }
+            if (entry.has("stall_mod_id")) {
+                summary.add("stall_mod_id", entry.get("stall_mod_id"));
+            }
+            if (summary.size() > 0) {
+                summaries.add(summary);
+            }
+        }
+        if (!summaries.isEmpty()) {
+            optional.add("crash_summaries", summaries);
+        }
     }
 
     private static ScanResult finish(Path statusFile, JsonObject status, Instant started, boolean success,
@@ -249,8 +354,55 @@ public final class ModrinthScanJob {
         s.addProperty("bytes_hashed", candidates.stream().mapToLong(c -> {
             try { return Files.size(c.jarPath()); } catch (Exception ignored) { return 0; }
         }).sum());
-        s.addProperty("jars_per_minute", candidates.isEmpty() ? 0 : candidates.size() * 60_000L
-                / Math.max(1, Duration.between(started, Instant.now()).toMillis()));
+        long elapsedMs = Math.max(1, Duration.between(started, Instant.now()).toMillis());
+        s.addProperty("jars_per_minute", candidates.isEmpty() ? 0 : candidates.size() * 60_000L / elapsedMs);
+        ModrinthLookupService.ScanStats scanStats = ModrinthLookupService.lastScanStats();
+        s.addProperty("api_requests", scanStats.apiRequests());
+        s.addProperty("rate_limit_waits", scanStats.rateLimitWaits());
+        s.addProperty("hash_batches", scanStats.hashBatches());
+        s.addProperty("project_batches", scanStats.projectBatches());
+        s.addProperty("rps", scanStats.apiRequests() * 1000.0 / elapsedMs);
+        Instant now = Instant.now();
+        long oldestAge = 0;
+        int serverRequired = 0;
+        int clientOnly = 0;
+        int both = 0;
+        int other = 0;
+        for (ModrinthLookupService.SideInfo info : byHash.values()) {
+            if (info == null) {
+                continue;
+            }
+            long age = now.getEpochSecond() - info.fetchedAtOrEpoch().getEpochSecond();
+            if (age > oldestAge) {
+                oldestAge = age;
+            }
+            if (info.miss()) {
+                other++;
+                continue;
+            }
+            String client = info.clientSide() != null ? info.clientSide() : "unknown";
+            String server = info.serverSide() != null ? info.serverSide() : "unknown";
+            boolean serverReq = "required".equalsIgnoreCase(server);
+            boolean clientReq = "required".equalsIgnoreCase(client);
+            boolean clientUnsup = "unsupported".equalsIgnoreCase(client);
+            boolean serverUnsup = "unsupported".equalsIgnoreCase(server);
+            if (serverReq && clientUnsup) {
+                serverRequired++;
+            } else if (clientReq && serverUnsup) {
+                clientOnly++;
+            } else if (serverReq && clientReq) {
+                both++;
+            } else {
+                other++;
+            }
+        }
+        s.addProperty("oldest_cache_age_seconds", oldestAge);
+        JsonObject sides = new JsonObject();
+        sides.addProperty("server_required", serverRequired);
+        sides.addProperty("client_only", clientOnly);
+        sides.addProperty("both", both);
+        sides.addProperty("other", other);
+        s.add("side_tag_mix", sides);
         JsonArray top = new JsonArray();
         for (JsonElement update : updates) {
             if (top.size() == 5) break;
@@ -258,6 +410,21 @@ public final class ModrinthScanJob {
             JsonObject compact = new JsonObject();
             compact.addProperty("mod_id", string(row, "mod_id"));
             compact.addProperty("title", string(row, "title"));
+            String icon = string(row, "icon_url");
+            if (icon != null && !icon.isBlank()) {
+                compact.addProperty("icon_url", icon);
+            }
+            String current = string(row, "current_version");
+            if (current != null && !current.isBlank()) {
+                compact.addProperty("current_version", current);
+            }
+            String latest = string(row, "latest_compatible");
+            if (latest == null || latest.isBlank()) {
+                latest = string(row, "compatible_version_number");
+            }
+            if (latest != null && !latest.isBlank()) {
+                compact.addProperty("latest_compatible", latest);
+            }
             top.add(compact);
         }
         s.add("top_outdated", top);
@@ -300,7 +467,14 @@ public final class ModrinthScanJob {
         return ids;
     }
     private static JsonObject findMod(JsonArray mods, String id) {
-        for (JsonElement e : mods) if (e.isJsonObject() && id.equals(string(e.getAsJsonObject(), "id"))) return e.getAsJsonObject();
+        if (id == null) {
+            return null;
+        }
+        for (JsonElement e : mods) {
+            if (e.isJsonObject() && id.equalsIgnoreCase(string(e.getAsJsonObject(), "id"))) {
+                return e.getAsJsonObject();
+            }
+        }
         return null;
     }
     private static Path resolveJar(JsonArray mods, String id, String serverDir) {

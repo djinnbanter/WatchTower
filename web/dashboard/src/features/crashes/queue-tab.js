@@ -1,4 +1,4 @@
-import { html, useState, useEffect, useMemo } from '../../lib/preact.js';
+import { html, useState, useEffect, useMemo, useRef } from '../../lib/preact.js';
 import {
   ackCrash,
   acknowledgeAllCrashes,
@@ -30,6 +30,8 @@ import {
   groupEnrichedByDay,
   todayDayKey,
 } from './helpers.js';
+import { useQueueKeyboard } from '../shared/use-queue-keyboard.js';
+import { getCrashesSelection, selectCrash } from '../shared/queue-selection.js';
 
 export { formatAge, enrichGroups, toast } from './helpers.js';
 
@@ -72,7 +74,7 @@ function PreCrashPanel({ file }) {
   if (!ctx) {
     return html`
       <div class="crashes-pre-crash crashes-pre-crash--empty">
-        <p class="crashes-ctx-unavailable">No pre-crash TPS or events for this log. Run a full report to enrich context.</p>
+        <p class="crashes-ctx-unavailable">No pre-crash TPS or events for this log yet — Scanning enriches context on the next pass.</p>
       </div>
     `;
   }
@@ -503,8 +505,7 @@ export function QueueTab({
   mode,
   enriched,
   mods,
-  selectedFp,
-  onSelect,
+  routeKey,
   onScan,
   scanning,
 }) {
@@ -513,9 +514,19 @@ export function QueueTab({
   const [panel, setPanel] = useState('fix');
   const [markingFp, setMarkingFp] = useState(null);
   const [collapsedDays, setCollapsedDays] = useState(() => new Set());
+  const searchRef = useRef(null);
+  const didSeedFromRoute = useRef(false);
+  const didPickDefault = useRef(false);
 
   const needsReviewOnly = mode === 'review';
   const reviewedOnly = mode === 'reviewed';
+  const localFp = getCrashesSelection();
+
+  useEffect(() => {
+    didPickDefault.current = false;
+    didSeedFromRoute.current = false;
+  }, [mode]);
+
   const filtered = useMemo(
     () => filterEnriched(enriched, { search, kind, needsReviewOnly, reviewedOnly }),
     [enriched, search, kind, needsReviewOnly, reviewedOnly],
@@ -524,9 +535,39 @@ export function QueueTab({
   const dayGroups = useMemo(() => groupEnrichedByDay(filtered), [filtered]);
   const todayKey = useMemo(() => todayDayKey(), []);
   const dayKeysSig = dayGroups.map((g) => g.key).join('|');
+  const filteredKeys = useMemo(
+    () => filtered.map((r) => r.group.fingerprint),
+    [filtered],
+  );
+  const filteredKeysSig = filteredKeys.join('\0');
+
+  useEffect(() => {
+    if (didSeedFromRoute.current) return;
+    if (!routeKey) {
+      didSeedFromRoute.current = true;
+      return;
+    }
+    if (!filteredKeys.length) return;
+    didSeedFromRoute.current = true;
+    if (filteredKeys.includes(routeKey)) {
+      selectCrash(routeKey, { syncUrl: false, view: mode });
+      didPickDefault.current = true;
+    }
+  }, [routeKey, filteredKeysSig, mode]);
+
+  useEffect(() => {
+    if (didPickDefault.current) return;
+    if (!filteredKeys.length) return;
+    if (localFp && filteredKeys.includes(localFp)) {
+      didPickDefault.current = true;
+      return;
+    }
+    didPickDefault.current = true;
+    // Signal only — never navigate('crashes') from an effect (that trapped the tab).
+    selectCrash(filteredKeys[0], { syncUrl: true, view: mode });
+  }, [filteredKeysSig, localFp, mode]);
 
   // Default: only Today expanded (if none today, expand the newest day).
-  // Re-seed when switching Review/Reviewed or when the set of days changes.
   useEffect(() => {
     const preferred = dayGroups.some((g) => g.key === todayKey)
       ? todayKey
@@ -540,13 +581,13 @@ export function QueueTab({
 
   useEffect(() => {
     setPanel('fix');
-  }, [selectedFp]);
+  }, [localFp]);
 
   // Expand the day that contains the selected group (deep links / selection).
   useEffect(() => {
-    if (!selectedFp || !dayGroups.length) return;
+    if (!localFp || !dayGroups.length) return;
     const day = dayGroups.find((g) =>
-      g.items.some((r) => r.group.fingerprint === selectedFp));
+      g.items.some((r) => r.group.fingerprint === localFp));
     if (!day) return;
     setCollapsedDays((prev) => {
       if (!prev.has(day.key)) return prev;
@@ -554,16 +595,24 @@ export function QueueTab({
       next.delete(day.key);
       return next;
     });
-  }, [selectedFp, dayGroups]);
+  }, [localFp, dayKeysSig]);
 
-  useEffect(() => {
-    if (!filtered.length) return;
-    if (selectedFp && filtered.some((r) => r.group.fingerprint === selectedFp)) return;
-    if (selectedFp) return;
-    onSelect(filtered[0].group.fingerprint);
-  }, [filtered, selectedFp, onSelect]);
+  function selectRow(fp) {
+    selectCrash(fp, { syncUrl: true, view: mode });
+  }
 
-  const selected = filtered.find((r) => r.group.fingerprint === selectedFp) || null;
+  const selected = filtered.find((r) => r.group.fingerprint === localFp) || null;
+
+  function selectNextAfter(fp) {
+    const idx = filtered.findIndex((r) => r.group.fingerprint === fp);
+    const remaining = filtered.filter((r) => r.group.fingerprint !== fp);
+    if (!remaining.length) {
+      selectCrash(null, { syncUrl: true, view: mode });
+      return;
+    }
+    const next = remaining[Math.min(Math.max(idx, 0), remaining.length - 1)];
+    selectCrash(next.group.fingerprint, { syncUrl: true, view: mode });
+  }
 
   function toggleDay(dayKey) {
     setCollapsedDays((prev) => {
@@ -583,14 +632,32 @@ export function QueueTab({
     setMarkingFp(fingerprint);
     await acknowledgeAllCrashes({ fingerprint });
     setMarkingFp(null);
+    if (needsReviewOnly) selectNextAfter(fingerprint);
   }
+
+  useQueueKeyboard({
+    enabled: filtered.length > 0,
+    searchRef,
+    keys: filteredKeys,
+    selectedKey: localFp,
+    onSelect: selectRow,
+    onMarkReviewed: needsReviewOnly
+      ? (fp) => {
+        if (markingFp) return;
+        handleMarkGroup(fp);
+      }
+      : undefined,
+  });
 
   function renderRow({ group, summary }) {
     const title = groupTitle(group, summary);
     const plan = buildFixPlan(summary, mods);
     const chip = kindChip(group, summary);
+    const sevTone = chip.tone === 'danger' ? 'danger' : chip.tone === 'warn' ? 'warn' : 'info';
+    const sevLabel = chip.tone === 'danger' ? 'critical' : chip.tone === 'warn' ? 'warning' : 'info';
     const active = selected?.group?.fingerprint === group.fingerprint;
     const cause = truncate(summary?.plain_english || group.label || title, 90);
+    const age = formatAge(group.last_at || group.first_at);
     return html`
       <button
         type="button"
@@ -598,18 +665,16 @@ export function QueueTab({
         key=${group.fingerprint}
         role="option"
         aria-selected=${active}
-        onClick=${() => onSelect(group.fingerprint)}
+        onClick=${() => selectRow(group.fingerprint)}
       >
         <div class="crashes-row__top">
+          <${Badge} tone=${sevTone}>${sevLabel}</${Badge}>
           <span class="crashes-row__title">${title}</span>
-          <${Badge} tone="neutral">${group.count}×</${Badge}>
+          ${age ? html`<span class="crashes-row__age">${age}</span>` : null}
           <${Badge} tone=${chip.tone}>${chip.label}</${Badge}>
+          <${Badge} tone="neutral">${group.count}×</${Badge}>
         </div>
-        <p class="crashes-row__cause">${cause}</p>
-        <div class="crashes-row__meta">
-          <span>${formatAge(group.last_at || group.first_at)}</span>
-          ${plan.primaryActionPeek ? html`<span class="crashes-row__peek">${plan.primaryActionPeek}</span>` : null}
-        </div>
+        <p class="crashes-row__cause">${cause}${plan.primaryActionPeek ? ` · ${plan.primaryActionPeek}` : ''}</p>
       </button>
     `;
   }
@@ -620,8 +685,9 @@ export function QueueTab({
         icon="search"
         value=${search}
         onInput=${(e) => setSearch(e.target.value)}
-        placeholder="Search groups, mods, files…"
+        placeholder="Search groups, mods, files… (/)"
         aria-label="Search crashes"
+        inputRef=${searchRef}
       />
       <${Segmented} options=${KIND_FILTERS} value=${kind} onChange=${setKind} size="sm" />
       <span class="feat-queue-chrome__count crashes-queue__count">${filtered.length} group${filtered.length === 1 ? '' : 's'}</span>

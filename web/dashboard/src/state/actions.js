@@ -6,8 +6,10 @@
 import { batch } from '../lib/signals.js';
 import {
   reports, spark, performance, activity, opsCache,
-  ui, setUi, issueSuppressions, modrinthScan,
+  ui, setUi, issueSuppressions, modrinthScan, discovery,
 } from './stores.js';
+import { get as persistGet, set as persistSet } from './persist.js';
+import { kickRenderNow } from '../app/kick-render.js';
 
 let _source = null;
 let _modrinthWasRunning = false;
@@ -21,6 +23,8 @@ function kickReportPoll() {
   // Dynamic import avoids a circular dependency with scheduler.js
   import('./scheduler.js').then((m) => m.kickTask?.('reportStatus')).catch(() => {});
 }
+
+export { kickReportPoll };
 
 function kickModrinthPoll() {
   import('./scheduler.js').then((m) => m.kickTask?.('modrinthStatus')).catch(() => {});
@@ -52,12 +56,14 @@ function _endScan(key) {
 
 let _reportWasRunning = false;
 
-export async function runReport({ lookbackHours, since, incremental } = {}) {
+export async function runReport({ lookbackHours, since, incremental, firstRun, disableTimeout } = {}) {
   if (!_source) return;
   const payload = {};
   if (lookbackHours != null) payload.lookback_hours = lookbackHours;
   if (since != null) payload.since = since;
   if (incremental != null) payload.incremental = incremental;
+  if (firstRun || disableTimeout) payload.disable_timeout = true;
+  if (firstRun) payload.first_run = true;
 
   const startedAt = Date.now();
   try {
@@ -66,11 +72,11 @@ export async function runReport({ lookbackHours, since, incremental } = {}) {
       run: {
         running: true,
         startedAt,
-        message: 'Starting report…',
+        message: 'Starting support compose…',
         success: null,
-        stage: 'window',
-        stageLabel: 'Computing time window',
-        stageDetail: 'Starting report…',
+        stage: 'compose',
+        stageLabel: 'Composing support bundle',
+        stageDetail: 'Starting support compose…',
       },
       error: null,
     };
@@ -111,7 +117,7 @@ export async function runReport({ lookbackHours, since, incremental } = {}) {
       run: { running: false, startedAt: null, message: null, success: false, stage: null, stageLabel: null, stageDetail: null },
       error: err.message,
     };
-    addToast(err.message || 'Report start failed', 'error');
+    addToast(err.message || 'Support compose start failed', 'error');
     _reportWasRunning = false;
     return null;
   }
@@ -144,8 +150,8 @@ export async function pollReportStatus() {
             ...reports.value.run,
             running: true,
             success: null,
-            stage: prevStage || 'window',
-            stageLabel: prevLabel || 'Computing time window',
+            stage: prevStage || 'compose',
+            stageLabel: prevLabel || 'Composing support bundle',
             stageDetail: prevDetail || 'Waiting for server…',
           },
         };
@@ -156,11 +162,19 @@ export async function pollReportStatus() {
     if (wasRunning && !nowRunning) {
       const success = reports.value.run?.success;
       if (success) {
-        addToast('Report completed', 'success');
+        addToast('Support bundle ready', 'success');
+        try {
+          persistSet('initial_collection_done', true);
+          const wiz = persistGet('setupWizard', null);
+          if (wiz && wiz.baseline === 'pending') {
+            persistSet('setupWizard', { ...wiz, baseline: 'ok' });
+          }
+        } catch { /* ignore */ }
         await _source.fetchReportsLatest();
         await _source.fetchReportsIndex();
+        await _source.fetchDataSources?.();
       } else if (success === false) {
-        addToast(reports.value.run?.message || 'Report failed', 'error');
+        addToast(reports.value.run?.message || 'Support compose failed', 'error');
       }
     }
     _reportWasRunning = nowRunning;
@@ -273,6 +287,117 @@ export async function pollModrinthStatus() {
   }
 }
 
+let _discoveryWasRunning = false;
+
+export async function startDiscovery() {
+  if (!_source) return;
+  const startedAt = Date.now();
+  try {
+    discovery.value = {
+      startedAt,
+      error: null,
+      status: {
+        ...discovery.value.status,
+        running: true,
+        success: null,
+        error: null,
+        message: null,
+        stage: 'window',
+        stage_label: 'Computing time window',
+        stage_detail: 'Starting deep audit…',
+        progress: { done: 0, total: 7 },
+        counts: discovery.value.status?.counts ?? {},
+        elapsed_ms: 0,
+      },
+    };
+    _discoveryWasRunning = true;
+    const data = await _source.startDiscovery();
+    if (data?.status === 'already_running') {
+      _discoveryWasRunning = true;
+      return data;
+    }
+    discovery.value = {
+      ...discovery.value,
+      status: {
+        ...discovery.value.status,
+        running: data?.running !== false,
+        message: data?.message ?? null,
+      },
+    };
+    return data;
+  } catch (err) {
+    if (err?.status === 409 || err?.body?.status === 'already_running') {
+      _discoveryWasRunning = true;
+      return err?.body ?? { status: 'already_running', running: true };
+    }
+    discovery.value = {
+      ...discovery.value,
+      error: err.message,
+      status: {
+        ...discovery.value.status,
+        running: false,
+        success: false,
+        error: err.message || 'Discovery start failed',
+      },
+    };
+    _discoveryWasRunning = false;
+    addToast(err.message || 'Discovery start failed', 'error');
+    return null;
+  }
+}
+
+export async function pollDiscoveryStatus() {
+  if (!_source) return discovery.value.status;
+  const wasRunning = _discoveryWasRunning || discovery.value?.status?.running === true;
+  try {
+    const data = await _source.fetchDiscoveryStatus();
+    const nowRunning = !!data?.running;
+    if (wasRunning && !nowRunning) {
+      if (data?.success) {
+        try {
+          const wiz = persistGet('setupWizard', null);
+          if (wiz && typeof wiz === 'object') {
+            persistSet('setupWizard', { ...wiz, discovery: 'ok' });
+          }
+        } catch { /* ignore */ }
+        // Load baseline facts + ops-cache as soon as the deep audit finishes
+        await hydrateAfterDiscovery();
+      } else if (data?.success === false) {
+        try {
+          const wiz = persistGet('setupWizard', null);
+          if (wiz && typeof wiz === 'object') {
+            persistSet('setupWizard', { ...wiz, discovery: 'failed' });
+          }
+        } catch { /* ignore */ }
+      }
+    }
+    _discoveryWasRunning = nowRunning;
+    return data;
+  } catch {
+    return discovery.value.status;
+  }
+}
+
+/** After Initial discovery / deep audit: pull facts, ops-cache, live, and meta into stores. */
+export async function hydrateAfterDiscovery() {
+  if (!_source) return;
+  await Promise.allSettled([
+    typeof _source.hydrateReports === 'function'
+      ? _source.hydrateReports()
+      : Promise.allSettled([
+        _source.fetchReportsIndex?.(),
+        _source.fetchReportsLatest?.(),
+      ]),
+    _source.fetchOpsCache?.(),
+    _source.fetchMeta?.(),
+    _source.fetchDataSources?.(),
+    _source.fetchLive?.(),
+    _source.fetchIssuesPeek?.(),
+    _source.fetchCrashAcks?.(),
+    _source.fetchIssueAcks?.(),
+  ]);
+}
+
 export async function selectReport(id) {
   if (!_source) return;
   const rep = reports.value.index.find((r) => r.id === id);
@@ -322,6 +447,7 @@ export async function scanActivity(force = false) {
     const result = await _source.scanActivity();
     await _source.fetchOpsCache?.();
     await _source.fetchIssuesPeek?.();
+    await _source.fetchActivity?.(48);
     return result;
   } catch (err) {
     console.warn('activity scan failed', err);
@@ -352,7 +478,10 @@ export async function scanBackups(force = false) {
   if (!_source || !_canScan('backups', force)) return null;
   _beginScan('backups');
   try {
-    return await _source.scanBackups();
+    const result = await _source.scanBackups();
+    await _source.fetchOpsCache?.();
+    await _source.fetchMeta?.();
+    return result;
   } catch (err) {
     console.warn('backup scan failed', err);
     return null;
@@ -390,13 +519,13 @@ export async function fetchIssueSuppressions() {
   }
 }
 
-/** Apply suppression snapshot from API and patch in-memory facts for Hidden list. */
+/** Apply suppression snapshot — always updates issueSuppressions; patches facts when present. */
 export function applyIssueSuppressions(snapshot) {
   if (!snapshot) return;
   issueSuppressions.value = { data: snapshot, at: Date.now() };
 
   const facts = reports.value.facts;
-  if (!facts) return;
+  if (!facts) return; // store already updated — Hidden list reads issueSuppressions directly
 
   const merged = Array.isArray(snapshot.merged) ? snapshot.merged : [];
   const issues = facts.issues ?? [];
@@ -549,11 +678,13 @@ export async function saveBackupExternal(payload) {
   }
 }
 
-export async function saveSettings(partial) {
+export async function saveSettings(partial, opts = {}) {
   if (!_source) return;
   try {
     await _source.saveSettings(partial);
-    addToast('Settings saved', 'success');
+    if (!opts.quiet) {
+      addToast('Settings saved', 'success');
+    }
   } catch (err) {
     addToast(`Settings save failed: ${err.message}`, 'error');
     throw err;
@@ -578,9 +709,11 @@ export async function pinIncident(note) {
 
 export async function loadSparkProfiles() {
   if (!_source) return;
+  spark.value = { ...spark.value, listLoading: true, importError: null };
   try {
     await _source.fetchSparkProfiles();
   } catch (err) {
+    spark.value = { ...spark.value, listLoading: false };
     addToast(`Spark profiles unavailable: ${err.message}`, 'error');
   }
 }
@@ -590,9 +723,28 @@ export async function loadSparkProfile(path) {
   spark.value = { ...spark.value, loading: true, error: null };
   try {
     await _source.fetchSparkProfile(path);
+    try {
+      localStorage.setItem('wt.sparkActivePath', JSON.stringify(path));
+    } catch { /* ignore */ }
   } catch (err) {
     spark.value = { ...spark.value, loading: false, error: err.message };
     addToast(`Spark profile unavailable: ${err.message}`, 'error');
+  }
+}
+
+export async function importSparkFromUrl(url) {
+  if (!_source) return null;
+  spark.value = { ...spark.value, importing: true, importError: null };
+  try {
+    const data = await _source.importSparkProfile?.(url);
+    spark.value = { ...spark.value, importing: false, importError: null, importOpen: false };
+    addToast('Spark profile imported', 'success');
+    return data;
+  } catch (err) {
+    const message = err?.message || 'Import failed';
+    spark.value = { ...spark.value, importing: false, importError: message };
+    addToast(`Spark import failed: ${message}`, 'error');
+    return null;
   }
 }
 
@@ -656,6 +808,23 @@ export async function loadPerformance(window) {
   }
 }
 
+/** Capture a new performance baseline from recent L1 history (manual refresh). */
+export async function setPerformanceBaselineNow() {
+  if (!_source?.setPerformanceBaselineNow) {
+    addToast('Set baseline is only available on a live server', 'error');
+    return null;
+  }
+  try {
+    const out = await _source.setPerformanceBaselineNow();
+    await loadPerformance(performance.value.window || '7d');
+    addToast('New performance baseline saved', 'success');
+    return out;
+  } catch (err) {
+    addToast(`Could not set baseline: ${err.message ?? err}`, 'error');
+    return null;
+  }
+}
+
 // ── Activity ──────────────────────────────────────────────────────────────────
 
 export async function loadActivity(hours) {
@@ -673,10 +842,12 @@ export async function loadActivity(hours) {
 
 export function openModal(type, props = {}) {
   setUi({ modal: { type, props } });
+  kickRenderNow();
 }
 
 export function closeModal() {
   setUi({ modal: null });
+  kickRenderNow();
 }
 
 let _toastSeq = 0;

@@ -1,6 +1,7 @@
 package dev.mcstatus.watchtower.core.report;
 
 import dev.mcstatus.watchtower.core.collect.ExternalBackupDetector;
+import dev.mcstatus.watchtower.core.ops.ActivityGapBackfill;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -54,7 +55,6 @@ public final class ReportConfig {
     private final int rconPort;
     private final String rconPassword;
     private final String rconTpsCommand;
-    private final boolean rconSparkTps;
     private final boolean rconEntityPoll;
     private final String craftyUrl;
     private final String craftyApiToken;
@@ -89,6 +89,23 @@ public final class ReportConfig {
     private final boolean sparkEnabled;
     private final int sparkFreshHours;
     private final String sparkUploadDir;
+    private final boolean sparkAutoCaptureOnLag;
+    private final int sparkAutoCaptureWindowSec;
+    private final int sparkAutoCaptureCooldownSec;
+    private final boolean sparkAutoCaptureCopyToUpload;
+    private final boolean baselineAutoCapture;
+    private final double baselineRegressionThresholdPct;
+    private final int diskFillWarnDays;
+    private final int diskFillLookbackHours;
+    private final int diskFillMinSpanHours;
+    private final double diskFillOutlierGb;
+    private final double diskIoLatencyWarnMs;
+    private final boolean diskIoProbeEnabled;
+    private final boolean incidentStoryEnabled;
+    private final int incidentStoryWindowMin;
+    private final int incidentStoryLookbackHours;
+    private final int incidentStoryMax;
+    private final boolean configAuditEnabled;
     private final int reportRetentionCount;
     private final int reportRetentionDays;
     private final boolean modForensicsScan;
@@ -99,6 +116,18 @@ public final class ReportConfig {
     private final boolean crashRuleBuiltin;
     private final String issueSuppressions;
     private final String issueSuppressionRegex;
+    private final boolean issuesLiveEnabled;
+    private final boolean startupProfileOnBoot;
+    private final int startupProfileBootDelaySec;
+    private final boolean modsLightOnJarChange;
+    private final boolean modsDeepOnJarChange;
+    private final boolean modsDeepSeedOnBoot;
+    private final int modsDeepMaxJarsPerWake;
+    private final int playerDirectoryPollSec;
+    private final boolean crashEnrichOnMtime;
+    private final boolean activityGapBackfillEnabled;
+    private final long activityGapThresholdBytes;
+    private final long activityGapChunkBytes;
 
     private ReportConfig(Builder b) {
         this.serverDir = b.serverDir;
@@ -133,7 +162,6 @@ public final class ReportConfig {
         this.rconPort = b.rconPort;
         this.rconPassword = b.rconPassword;
         this.rconTpsCommand = b.rconTpsCommand;
-        this.rconSparkTps = b.rconSparkTps;
         this.rconEntityPoll = b.rconEntityPoll;
         this.craftyUrl = b.craftyUrl;
         this.craftyApiToken = b.craftyApiToken;
@@ -168,6 +196,23 @@ public final class ReportConfig {
         this.sparkEnabled = b.sparkEnabled;
         this.sparkFreshHours = b.sparkFreshHours;
         this.sparkUploadDir = b.sparkUploadDir;
+        this.sparkAutoCaptureOnLag = b.sparkAutoCaptureOnLag;
+        this.sparkAutoCaptureWindowSec = b.sparkAutoCaptureWindowSec;
+        this.sparkAutoCaptureCooldownSec = b.sparkAutoCaptureCooldownSec;
+        this.sparkAutoCaptureCopyToUpload = b.sparkAutoCaptureCopyToUpload;
+        this.baselineAutoCapture = b.baselineAutoCapture;
+        this.baselineRegressionThresholdPct = b.baselineRegressionThresholdPct;
+        this.diskFillWarnDays = b.diskFillWarnDays;
+        this.diskFillLookbackHours = b.diskFillLookbackHours;
+        this.diskFillMinSpanHours = b.diskFillMinSpanHours;
+        this.diskFillOutlierGb = b.diskFillOutlierGb;
+        this.diskIoLatencyWarnMs = b.diskIoLatencyWarnMs;
+        this.diskIoProbeEnabled = b.diskIoProbeEnabled;
+        this.incidentStoryEnabled = b.incidentStoryEnabled;
+        this.incidentStoryWindowMin = b.incidentStoryWindowMin;
+        this.incidentStoryLookbackHours = b.incidentStoryLookbackHours;
+        this.incidentStoryMax = b.incidentStoryMax;
+        this.configAuditEnabled = b.configAuditEnabled;
         this.reportRetentionCount = b.reportRetentionCount;
         this.reportRetentionDays = b.reportRetentionDays;
         this.modForensicsScan = b.modForensicsScan;
@@ -178,6 +223,18 @@ public final class ReportConfig {
         this.crashRuleBuiltin = b.crashRuleBuiltin;
         this.issueSuppressions = b.issueSuppressions;
         this.issueSuppressionRegex = b.issueSuppressionRegex;
+        this.issuesLiveEnabled = b.issuesLiveEnabled;
+        this.startupProfileOnBoot = b.startupProfileOnBoot;
+        this.startupProfileBootDelaySec = b.startupProfileBootDelaySec;
+        this.modsLightOnJarChange = b.modsLightOnJarChange;
+        this.modsDeepOnJarChange = b.modsDeepOnJarChange;
+        this.modsDeepSeedOnBoot = b.modsDeepSeedOnBoot;
+        this.modsDeepMaxJarsPerWake = b.modsDeepMaxJarsPerWake;
+        this.playerDirectoryPollSec = b.playerDirectoryPollSec;
+        this.crashEnrichOnMtime = b.crashEnrichOnMtime;
+        this.activityGapBackfillEnabled = b.activityGapBackfillEnabled;
+        this.activityGapThresholdBytes = b.activityGapThresholdBytes;
+        this.activityGapChunkBytes = b.activityGapChunkBytes;
     }
 
     public static Builder builder() {
@@ -222,7 +279,6 @@ public final class ReportConfig {
         b.rconPort = parseInt(env.get("RCON_PORT"), 25575);
         b.rconPassword = env.getOrDefault("RCON_PASSWORD", "");
         b.rconTpsCommand = env.getOrDefault("RCON_TPS_COMMAND", "neoforge tps");
-        b.rconSparkTps = isTruthy(env.get("RCON_SPARK_TPS"), false);
         b.rconEntityPoll = isTruthy(env.get("RCON_ENTITY_POLL"), false);
         b.craftyUrl = env.getOrDefault("CRAFTY_URL", "");
         b.craftyApiToken = env.getOrDefault("CRAFTY_API_TOKEN", "");
@@ -262,6 +318,23 @@ public final class ReportConfig {
         b.sparkEnabled = isTruthy(env.get("SPARK_ENABLED"), true);
         b.sparkFreshHours = parseInt(env.get("SPARK_FRESH_HOURS"), 24);
         b.sparkUploadDir = env.getOrDefault("SPARK_UPLOAD_DIR", "");
+        b.sparkAutoCaptureOnLag = isTruthy(env.get("SPARK_AUTO_CAPTURE_ON_LAG"), false);
+        b.sparkAutoCaptureWindowSec = parseInt(env.get("SPARK_AUTO_CAPTURE_WINDOW_SEC"), 45);
+        b.sparkAutoCaptureCooldownSec = parseInt(env.get("SPARK_AUTO_CAPTURE_COOLDOWN_SEC"), 900);
+        b.sparkAutoCaptureCopyToUpload = isTruthy(env.get("SPARK_AUTO_CAPTURE_COPY_TO_UPLOAD"), true);
+        b.baselineAutoCapture = isTruthy(env.get("BASELINE_AUTO_CAPTURE"), true);
+        b.baselineRegressionThresholdPct = parseDouble(env.get("BASELINE_REGRESSION_THRESHOLD_PCT"), 10.0);
+        b.diskFillWarnDays = parseInt(env.get("DISK_FILL_WARN_DAYS"), 14);
+        b.diskFillLookbackHours = parseInt(env.get("DISK_FILL_LOOKBACK_HOURS"), 24);
+        b.diskFillMinSpanHours = parseInt(env.get("DISK_FILL_MIN_SPAN_HOURS"), 6);
+        b.diskFillOutlierGb = parseDouble(env.get("DISK_FILL_OUTLIER_GB"), 5.0);
+        b.diskIoLatencyWarnMs = parseDouble(env.get("DISK_IO_LATENCY_WARN_MS"), 50.0);
+        b.diskIoProbeEnabled = isTruthy(env.get("DISK_IO_PROBE_ENABLED"), true);
+        b.incidentStoryEnabled = isTruthy(env.get("INCIDENT_STORY_ENABLED"), true);
+        b.incidentStoryWindowMin = parseInt(env.get("INCIDENT_STORY_WINDOW_MIN"), 30);
+        b.incidentStoryLookbackHours = parseInt(env.get("INCIDENT_STORY_LOOKBACK_HOURS"), 48);
+        b.incidentStoryMax = parseInt(env.get("INCIDENT_STORY_MAX"), 10);
+        b.configAuditEnabled = isTruthy(env.get("CONFIG_AUDIT_ENABLED"), true);
         b.reportRetentionCount = parseInt(env.get("REPORT_RETENTION_COUNT"), ReportRetentionPolicy.DEFAULT_RETENTION_COUNT);
         b.reportRetentionDays = parseInt(env.get("REPORT_RETENTION_DAYS"), ReportRetentionPolicy.DEFAULT_RETENTION_DAYS);
         b.modForensicsScan = isTruthy(env.get("MOD_FORENSICS_SCAN"), true);
@@ -273,6 +346,20 @@ public final class ReportConfig {
         b.crashRuleBuiltin = isTruthy(env.get("CRASH_RULE_BUILTIN"), true);
         b.issueSuppressions = env.getOrDefault("ISSUE_SUPPRESSIONS", "");
         b.issueSuppressionRegex = env.getOrDefault("ISSUE_SUPPRESSION_REGEX", "");
+        b.issuesLiveEnabled = isTruthy(env.get("ISSUES_LIVE_ENABLED"), true);
+        b.startupProfileOnBoot = isTruthy(env.get("STARTUP_PROFILE_ON_BOOT"), true);
+        b.startupProfileBootDelaySec = parseInt(env.get("STARTUP_PROFILE_BOOT_DELAY_SEC"), 60);
+        b.modsLightOnJarChange = isTruthy(env.get("MODS_LIGHT_ON_JAR_CHANGE"), true);
+        b.modsDeepOnJarChange = isTruthy(env.get("MODS_DEEP_ON_JAR_CHANGE"), true);
+        b.modsDeepSeedOnBoot = isTruthy(env.get("MODS_DEEP_SEED_ON_BOOT"), true);
+        b.modsDeepMaxJarsPerWake = parseInt(env.get("MODS_DEEP_MAX_JARS_PER_WAKE"), 32);
+        b.playerDirectoryPollSec = parseInt(env.get("PLAYER_DIRECTORY_POLL_SEC"), 900);
+        b.crashEnrichOnMtime = isTruthy(env.get("CRASH_ENRICH_ON_MTIME"), true);
+        b.activityGapBackfillEnabled = isTruthy(env.get("ACTIVITY_GAP_BACKFILL_ENABLED"), true);
+        b.activityGapThresholdBytes = parseLongBytes(
+                env.get("ACTIVITY_GAP_THRESHOLD_MB"), ActivityGapBackfill.DEFAULT_GAP_THRESHOLD_BYTES, 1024 * 1024);
+        b.activityGapChunkBytes = parseLongBytes(
+                env.get("ACTIVITY_GAP_CHUNK_MB"), ActivityGapBackfill.DEFAULT_CHUNK_BYTES, 1024 * 1024);
         return b.build();
     }
 
@@ -332,6 +419,17 @@ public final class ReportConfig {
             return Double.parseDouble(value.trim());
         } catch (NumberFormatException e) {
             return defaultValue;
+        }
+    }
+
+    private static long parseLongBytes(String value, long defaultBytes, long unit) {
+        if (value == null || value.isBlank()) {
+            return defaultBytes;
+        }
+        try {
+            return Math.max(1024, (long) Double.parseDouble(value.trim()) * unit);
+        } catch (NumberFormatException e) {
+            return defaultBytes;
         }
     }
 
@@ -432,7 +530,6 @@ public final class ReportConfig {
     public int rconPort() { return rconPort; }
     public String rconPassword() { return rconPassword; }
     public String rconTpsCommand() { return rconTpsCommand; }
-    public boolean rconSparkTps() { return rconSparkTps; }
     public boolean rconEntityPoll() { return rconEntityPoll; }
     public String craftyUrl() { return craftyUrl; }
     public String craftyApiToken() { return craftyApiToken; }
@@ -479,6 +576,23 @@ public final class ReportConfig {
     public boolean sparkEnabled() { return sparkEnabled; }
     public int sparkFreshHours() { return sparkFreshHours; }
     public String sparkUploadDir() { return sparkUploadDir; }
+    public boolean sparkAutoCaptureOnLag() { return sparkAutoCaptureOnLag; }
+    public int sparkAutoCaptureWindowSec() { return sparkAutoCaptureWindowSec; }
+    public int sparkAutoCaptureCooldownSec() { return sparkAutoCaptureCooldownSec; }
+    public boolean sparkAutoCaptureCopyToUpload() { return sparkAutoCaptureCopyToUpload; }
+    public boolean baselineAutoCapture() { return baselineAutoCapture; }
+    public double baselineRegressionThresholdPct() { return baselineRegressionThresholdPct; }
+    public int diskFillWarnDays() { return diskFillWarnDays; }
+    public int diskFillLookbackHours() { return diskFillLookbackHours; }
+    public int diskFillMinSpanHours() { return diskFillMinSpanHours; }
+    public double diskFillOutlierGb() { return diskFillOutlierGb; }
+    public double diskIoLatencyWarnMs() { return diskIoLatencyWarnMs; }
+    public boolean diskIoProbeEnabled() { return diskIoProbeEnabled; }
+    public boolean incidentStoryEnabled() { return incidentStoryEnabled; }
+    public int incidentStoryWindowMin() { return incidentStoryWindowMin; }
+    public int incidentStoryLookbackHours() { return incidentStoryLookbackHours; }
+    public int incidentStoryMax() { return incidentStoryMax; }
+    public boolean configAuditEnabled() { return configAuditEnabled; }
     public int reportRetentionCount() { return reportRetentionCount; }
     public int reportRetentionDays() { return reportRetentionDays; }
     public boolean modForensicsScan() { return modForensicsScan; }
@@ -489,6 +603,18 @@ public final class ReportConfig {
     public boolean crashRuleBuiltin() { return crashRuleBuiltin; }
     public String issueSuppressions() { return issueSuppressions; }
     public String issueSuppressionRegex() { return issueSuppressionRegex; }
+    public boolean issuesLiveEnabled() { return issuesLiveEnabled; }
+    public boolean startupProfileOnBoot() { return startupProfileOnBoot; }
+    public int startupProfileBootDelaySec() { return startupProfileBootDelaySec; }
+    public boolean modsLightOnJarChange() { return modsLightOnJarChange; }
+    public boolean modsDeepOnJarChange() { return modsDeepOnJarChange; }
+    public boolean modsDeepSeedOnBoot() { return modsDeepSeedOnBoot; }
+    public int modsDeepMaxJarsPerWake() { return modsDeepMaxJarsPerWake; }
+    public int playerDirectoryPollSec() { return playerDirectoryPollSec; }
+    public boolean crashEnrichOnMtime() { return crashEnrichOnMtime; }
+    public boolean activityGapBackfillEnabled() { return activityGapBackfillEnabled; }
+    public long activityGapThresholdBytes() { return activityGapThresholdBytes; }
+    public long activityGapChunkBytes() { return activityGapChunkBytes; }
 
     public static final class Builder {
         private String serverDir = "";
@@ -523,7 +649,6 @@ public final class ReportConfig {
         private int rconPort = 25575;
         private String rconPassword = "";
         private String rconTpsCommand = "neoforge tps";
-        private boolean rconSparkTps;
         private boolean rconEntityPoll;
         private String craftyUrl = "";
         private String craftyApiToken = "";
@@ -558,6 +683,23 @@ public final class ReportConfig {
         private boolean sparkEnabled = true;
         private int sparkFreshHours = 24;
         private String sparkUploadDir = "";
+        private boolean sparkAutoCaptureOnLag;
+        private int sparkAutoCaptureWindowSec = 45;
+        private int sparkAutoCaptureCooldownSec = 900;
+        private boolean sparkAutoCaptureCopyToUpload = true;
+        private boolean baselineAutoCapture = true;
+        private double baselineRegressionThresholdPct = 10.0;
+        private int diskFillWarnDays = 14;
+        private int diskFillLookbackHours = 24;
+        private int diskFillMinSpanHours = 6;
+        private double diskFillOutlierGb = 5.0;
+        private double diskIoLatencyWarnMs = 50.0;
+        private boolean diskIoProbeEnabled = true;
+        private boolean incidentStoryEnabled = true;
+        private int incidentStoryWindowMin = 30;
+        private int incidentStoryLookbackHours = 48;
+        private int incidentStoryMax = 10;
+        private boolean configAuditEnabled = true;
         private int reportRetentionCount = ReportRetentionPolicy.DEFAULT_RETENTION_COUNT;
         private int reportRetentionDays = ReportRetentionPolicy.DEFAULT_RETENTION_DAYS;
         private boolean modForensicsScan = true;
@@ -568,6 +710,18 @@ public final class ReportConfig {
         private boolean crashRuleBuiltin = true;
         private String issueSuppressions = "";
         private String issueSuppressionRegex = "";
+        private boolean issuesLiveEnabled = true;
+        private boolean startupProfileOnBoot = true;
+        private int startupProfileBootDelaySec = 60;
+        private boolean modsLightOnJarChange = true;
+        private boolean modsDeepOnJarChange = true;
+        private boolean modsDeepSeedOnBoot = true;
+        private int modsDeepMaxJarsPerWake = 32;
+        private int playerDirectoryPollSec = 900;
+        private boolean crashEnrichOnMtime = true;
+        private boolean activityGapBackfillEnabled = true;
+        private long activityGapThresholdBytes = ActivityGapBackfill.DEFAULT_GAP_THRESHOLD_BYTES;
+        private long activityGapChunkBytes = ActivityGapBackfill.DEFAULT_CHUNK_BYTES;
 
         public Builder serverDir(String v) { this.serverDir = v; return this; }
         public Builder lookbackHours(int v) { this.lookbackHours = v; return this; }
@@ -611,7 +765,6 @@ public final class ReportConfig {
         public Builder rconPort(int v) { this.rconPort = v; return this; }
         public Builder rconPassword(String v) { this.rconPassword = v; return this; }
         public Builder rconTpsCommand(String v) { this.rconTpsCommand = v; return this; }
-        public Builder rconSparkTps(boolean v) { this.rconSparkTps = v; return this; }
         public Builder rconEntityPoll(boolean v) { this.rconEntityPoll = v; return this; }
         public Builder craftyUrl(String v) { this.craftyUrl = v; return this; }
         public Builder craftyApiToken(String v) { this.craftyApiToken = v; return this; }
@@ -626,6 +779,23 @@ public final class ReportConfig {
         public Builder sparkEnabled(boolean v) { this.sparkEnabled = v; return this; }
         public Builder sparkFreshHours(int v) { this.sparkFreshHours = v; return this; }
         public Builder sparkUploadDir(String v) { this.sparkUploadDir = v; return this; }
+        public Builder sparkAutoCaptureOnLag(boolean v) { this.sparkAutoCaptureOnLag = v; return this; }
+        public Builder sparkAutoCaptureWindowSec(int v) { this.sparkAutoCaptureWindowSec = v; return this; }
+        public Builder sparkAutoCaptureCooldownSec(int v) { this.sparkAutoCaptureCooldownSec = v; return this; }
+        public Builder sparkAutoCaptureCopyToUpload(boolean v) { this.sparkAutoCaptureCopyToUpload = v; return this; }
+        public Builder baselineAutoCapture(boolean v) { this.baselineAutoCapture = v; return this; }
+        public Builder baselineRegressionThresholdPct(double v) { this.baselineRegressionThresholdPct = v; return this; }
+        public Builder diskFillWarnDays(int v) { this.diskFillWarnDays = v; return this; }
+        public Builder diskFillLookbackHours(int v) { this.diskFillLookbackHours = v; return this; }
+        public Builder diskFillMinSpanHours(int v) { this.diskFillMinSpanHours = v; return this; }
+        public Builder diskFillOutlierGb(double v) { this.diskFillOutlierGb = v; return this; }
+        public Builder diskIoLatencyWarnMs(double v) { this.diskIoLatencyWarnMs = v; return this; }
+        public Builder diskIoProbeEnabled(boolean v) { this.diskIoProbeEnabled = v; return this; }
+        public Builder incidentStoryEnabled(boolean v) { this.incidentStoryEnabled = v; return this; }
+        public Builder incidentStoryWindowMin(int v) { this.incidentStoryWindowMin = v; return this; }
+        public Builder incidentStoryLookbackHours(int v) { this.incidentStoryLookbackHours = v; return this; }
+        public Builder incidentStoryMax(int v) { this.incidentStoryMax = v; return this; }
+        public Builder configAuditEnabled(boolean v) { this.configAuditEnabled = v; return this; }
         public Builder reportRetentionCount(int v) { this.reportRetentionCount = v; return this; }
         public Builder reportRetentionDays(int v) { this.reportRetentionDays = v; return this; }
         public Builder modForensicsScan(boolean v) { this.modForensicsScan = v; return this; }
@@ -640,6 +810,66 @@ public final class ReportConfig {
         public Builder issueSuppressions(String v) { this.issueSuppressions = v != null ? v : ""; return this; }
         public Builder issueSuppressionRegex(String v) {
             this.issueSuppressionRegex = v != null ? v : "";
+            return this;
+        }
+
+        public Builder issuesLiveEnabled(boolean v) {
+            this.issuesLiveEnabled = v;
+            return this;
+        }
+
+        public Builder startupProfileOnBoot(boolean v) {
+            this.startupProfileOnBoot = v;
+            return this;
+        }
+
+        public Builder startupProfileBootDelaySec(int v) {
+            this.startupProfileBootDelaySec = Math.max(5, v);
+            return this;
+        }
+
+        public Builder modsLightOnJarChange(boolean v) {
+            this.modsLightOnJarChange = v;
+            return this;
+        }
+
+        public Builder modsDeepOnJarChange(boolean v) {
+            this.modsDeepOnJarChange = v;
+            return this;
+        }
+
+        public Builder modsDeepSeedOnBoot(boolean v) {
+            this.modsDeepSeedOnBoot = v;
+            return this;
+        }
+
+        public Builder modsDeepMaxJarsPerWake(int v) {
+            this.modsDeepMaxJarsPerWake = Math.max(1, v);
+            return this;
+        }
+
+        public Builder playerDirectoryPollSec(int v) {
+            this.playerDirectoryPollSec = Math.max(60, v);
+            return this;
+        }
+
+        public Builder crashEnrichOnMtime(boolean v) {
+            this.crashEnrichOnMtime = v;
+            return this;
+        }
+
+        public Builder activityGapBackfillEnabled(boolean v) {
+            this.activityGapBackfillEnabled = v;
+            return this;
+        }
+
+        public Builder activityGapThresholdBytes(long v) {
+            this.activityGapThresholdBytes = Math.max(1024, v);
+            return this;
+        }
+
+        public Builder activityGapChunkBytes(long v) {
+            this.activityGapChunkBytes = Math.max(1024, v);
             return this;
         }
 
@@ -681,7 +911,6 @@ public final class ReportConfig {
             this.rconPort = c.rconPort();
             this.rconPassword = c.rconPassword();
             this.rconTpsCommand = c.rconTpsCommand();
-            this.rconSparkTps = c.rconSparkTps();
             this.rconEntityPoll = c.rconEntityPoll();
             this.craftyUrl = c.craftyUrl();
             this.craftyApiToken = c.craftyApiToken();
@@ -711,6 +940,23 @@ public final class ReportConfig {
             this.sparkEnabled = c.sparkEnabled();
             this.sparkFreshHours = c.sparkFreshHours();
             this.sparkUploadDir = c.sparkUploadDir();
+            this.sparkAutoCaptureOnLag = c.sparkAutoCaptureOnLag();
+            this.sparkAutoCaptureWindowSec = c.sparkAutoCaptureWindowSec();
+            this.sparkAutoCaptureCooldownSec = c.sparkAutoCaptureCooldownSec();
+            this.sparkAutoCaptureCopyToUpload = c.sparkAutoCaptureCopyToUpload();
+            this.baselineAutoCapture = c.baselineAutoCapture();
+            this.baselineRegressionThresholdPct = c.baselineRegressionThresholdPct();
+            this.diskFillWarnDays = c.diskFillWarnDays();
+            this.diskFillLookbackHours = c.diskFillLookbackHours();
+            this.diskFillMinSpanHours = c.diskFillMinSpanHours();
+            this.diskFillOutlierGb = c.diskFillOutlierGb();
+            this.diskIoLatencyWarnMs = c.diskIoLatencyWarnMs();
+            this.diskIoProbeEnabled = c.diskIoProbeEnabled();
+            this.incidentStoryEnabled = c.incidentStoryEnabled();
+            this.incidentStoryWindowMin = c.incidentStoryWindowMin();
+            this.incidentStoryLookbackHours = c.incidentStoryLookbackHours();
+            this.incidentStoryMax = c.incidentStoryMax();
+            this.configAuditEnabled = c.configAuditEnabled();
             this.reportRetentionCount = c.reportRetentionCount();
             this.reportRetentionDays = c.reportRetentionDays();
             this.modForensicsScan = c.modForensicsScan();
@@ -721,6 +967,18 @@ public final class ReportConfig {
             this.crashRuleBuiltin = c.crashRuleBuiltin();
             this.issueSuppressions = c.issueSuppressions();
             this.issueSuppressionRegex = c.issueSuppressionRegex();
+            this.issuesLiveEnabled = c.issuesLiveEnabled();
+            this.startupProfileOnBoot = c.startupProfileOnBoot();
+            this.startupProfileBootDelaySec = c.startupProfileBootDelaySec();
+            this.modsLightOnJarChange = c.modsLightOnJarChange();
+            this.modsDeepOnJarChange = c.modsDeepOnJarChange();
+            this.modsDeepSeedOnBoot = c.modsDeepSeedOnBoot();
+            this.modsDeepMaxJarsPerWake = c.modsDeepMaxJarsPerWake();
+            this.playerDirectoryPollSec = c.playerDirectoryPollSec();
+            this.crashEnrichOnMtime = c.crashEnrichOnMtime();
+            this.activityGapBackfillEnabled = c.activityGapBackfillEnabled();
+            this.activityGapThresholdBytes = c.activityGapThresholdBytes();
+            this.activityGapChunkBytes = c.activityGapChunkBytes();
             return this;
         }
 

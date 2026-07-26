@@ -1,10 +1,13 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.collect.ModrinthScanJob;
 import dev.mcstatus.watchtower.core.collect.ModrinthScanProgress;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
-import net.minecraft.server.MinecraftServer;
 
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -21,7 +24,7 @@ public final class ModrinthScanRunner {
      * so status polls never race the async start.
      */
     public static CompletableFuture<Void> continueAfterBegin(
-            MinecraftServer server,
+            ServerContext server,
             WatchtowerRuntimeState state,
             Consumer<String> feedback
     ) {
@@ -45,7 +48,7 @@ public final class ModrinthScanRunner {
                 .handle((result, err) -> {
                     if (err != null) {
                         String msg = err.getMessage() != null ? err.getMessage() : "Modrinth scan failed";
-                        WatchtowerMod.LOGGER.warn("[Watchtower] Modrinth scan error", err);
+                        ModRuntime.logger().warn("[Watchtower] Modrinth scan error", err);
                         return new ModrinthScanJob.ScanResult(false, msg, null);
                     }
                     return result;
@@ -56,19 +59,20 @@ public final class ModrinthScanRunner {
                     JsonObject status = result != null ? result.status() : null;
                     state.finishModrinthScan(ok, msg, status);
                     if (ok) {
-                        WatchtowerMod.LOGGER.info("[Watchtower] {}", msg);
+                        ModRuntime.logger().info("[Watchtower] {}", msg);
                     } else {
-                        WatchtowerMod.LOGGER.warn("[Watchtower] {}", msg);
+                        ModRuntime.logger().warn("[Watchtower] {}", msg);
                     }
                     feedback.accept(msg);
                 });
     }
 
-    private static ModrinthScanJob.ScanResult runScan(MinecraftServer server, WatchtowerRuntimeState state) {
+    private static ModrinthScanJob.ScanResult runScan(ServerContext server, WatchtowerRuntimeState state) {
         try {
             ReportConfig config = ModReportConfig.forServer(server, ReportRunOptions.empty());
-            String serverDir = server.getServerDirectory().toAbsolutePath().normalize().toString();
+            String serverDir = server.serverDirectory().toAbsolutePath().normalize().toString();
             Path reportDir = WatchtowerPaths.reportDir(server);
+            Path opsCachePath = WatchtowerPaths.opsCachePath(server);
             ModrinthScanProgress progress = new ModrinthScanProgress() {
                 @Override
                 public void stage(String id, String label) {
@@ -95,9 +99,9 @@ public final class ModrinthScanRunner {
                     state.setModrinthScanEtaSeconds(seconds);
                 }
             };
-            return ModrinthScanJob.run(serverDir, config, reportDir, progress);
+            return ModrinthScanJob.run(serverDir, config, reportDir, opsCachePath, progress);
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.warn("[Watchtower] Modrinth scan failed", e);
+            ModRuntime.logger().warn("[Watchtower] Modrinth scan failed", e);
             return new ModrinthScanJob.ScanResult(
                     false,
                     e.getMessage() != null ? e.getMessage() : "Modrinth scan failed",

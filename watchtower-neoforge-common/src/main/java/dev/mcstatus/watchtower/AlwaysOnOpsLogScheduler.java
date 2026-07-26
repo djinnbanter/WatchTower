@@ -1,6 +1,8 @@
 package dev.mcstatus.watchtower;
 
-import net.minecraft.server.MinecraftServer;
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,7 +22,7 @@ public final class AlwaysOnOpsLogScheduler {
         return t;
     });
     private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
-    private volatile MinecraftServer server;
+    private volatile ServerContext server;
     private volatile int scanSec = 60;
 
     private AlwaysOnOpsLogScheduler() {
@@ -30,7 +32,7 @@ public final class AlwaysOnOpsLogScheduler {
         return INSTANCE;
     }
 
-    public void bind(MinecraftServer server) {
+    public void bind(ServerContext server) {
         this.server = server;
         try {
             scanSec = ModReportConfig.forServer(server).opsLogScanSec();
@@ -46,7 +48,7 @@ public final class AlwaysOnOpsLogScheduler {
     }
 
     public void refreshSchedule() {
-        MinecraftServer s = server;
+        ServerContext s = server;
         if (s == null) {
             stop();
             return;
@@ -72,7 +74,7 @@ public final class AlwaysOnOpsLogScheduler {
         }
         ScheduledFuture<?> f = executor.scheduleAtFixedRate(
                 () -> {
-                    MinecraftServer current = server;
+                    ServerContext current = server;
                     if (current == null) {
                         stop();
                         return;
@@ -82,7 +84,7 @@ public final class AlwaysOnOpsLogScheduler {
                         OpsScanService.scanRunningMods(current);
                         OpsScanService.scanCrashes(current);
                     } catch (Exception e) {
-                        WatchtowerMod.LOGGER.debug("Always-on ops log scan failed: {}", e.toString());
+                        ModRuntime.logger().debug("Always-on ops log scan failed: {}", e.toString());
                     }
                 },
                 scanSec,

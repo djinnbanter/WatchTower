@@ -71,13 +71,17 @@ export function kickTask(key) {
 // ── Built-in tasks ─────────────────────────────────────────────────────────────
 
 function _registerBuiltinTasks() {
-  // Live — fast poll on overview / live / session tabs
+  // Live — 1s on Overview (vitals only); Live/Session respect user poll rate
   registerTask({
     key: 'live',
     run: async (source, signal) => {
       await source.fetchLive(signal);
     },
-    every: () => ui.value.liveRefreshMs || 5000,
+    every: () => {
+      const tab = ui.value.route?.tab;
+      if (tab === 'overview') return 1000;
+      return ui.value.liveRefreshMs || 5000;
+    },
     activeWhen: () => {
       const tab = ui.value.route?.tab;
       return tab === 'overview' || tab === 'live' || tab === 'session';
@@ -94,17 +98,14 @@ function _registerBuiltinTasks() {
     activeWhen: () => ui.value.route?.tab === 'session',
   });
 
-  // Samples — medium cadence based on window size
+  // Samples — Live tab charts only (Overview does not render series; avoid extra churn)
   registerTask({
     key: 'samples',
     run: async (source, signal) => {
       await source.fetchSamples(ui.value.chartWindow, signal);
     },
     every: () => _samplesPollMs(ui.value.chartWindow),
-    activeWhen: () => {
-      const tab = ui.value.route?.tab;
-      return tab === 'overview' || tab === 'live';
-    },
+    activeWhen: () => ui.value.route?.tab === 'live',
   });
 
   // Meta — slow, 60s — overview + issues
@@ -226,7 +227,9 @@ async function _maybeRun(key) {
 
     _failCounts[key] = (_failCounts[key] ?? 0) + 1;
 
-    if (key === 'live' && _failCounts[key] >= LIVE_FAIL_THRESHOLD) {
+    // Only flip the flag once — setUi every poll would thrash the whole shell
+    // (kickRender) and make rail/tab clicks feel broken while offline.
+    if (key === 'live' && _failCounts[key] >= LIVE_FAIL_THRESHOLD && !ui.value.connectionDown) {
       setUi({ connectionDown: true });
     }
   } finally {

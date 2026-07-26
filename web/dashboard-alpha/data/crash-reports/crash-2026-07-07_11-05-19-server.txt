@@ -1,0 +1,5 @@
+---- Minecraft Crash Report ----
+Time: 2026-07-07 11:05:19
+Description: Exception in server tick loop
+
+java.lang.OutOfMemoryError: Java heap space

@@ -1,7 +1,11 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+import dev.mcstatus.watchtower.runtime.WatchtowerSample;
+
 import dev.mcstatus.watchtower.core.report.ReportSchedule;
-import net.minecraft.server.MinecraftServer;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -123,7 +127,7 @@ public final class WatchtowerScheduler {
         return lastWallClockSlotFired;
     }
 
-    public void onServerTick(MinecraftServer server, WatchtowerRuntimeState state, Runnable reportTrigger) {
+    public void onServerTick(ServerContext server, WatchtowerRuntimeState state, Runnable reportTrigger) {
         int liveIntervalSec = liveIntervalSeconds();
         int liveTicks = Math.max(20, liveIntervalSec * 20);
         liveTickCounter++;
@@ -132,11 +136,11 @@ public final class WatchtowerScheduler {
             try {
                 LiveMetricsService.get().recordTick(server);
             } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Live metrics tick failed: {}", e.toString());
+                ModRuntime.logger().debug("Live metrics tick failed: {}", e.toString());
             }
         }
 
-        int sampleIntervalSeconds = WatchtowerConfig.SAMPLE_INTERVAL_SECONDS.get();
+        int sampleIntervalSeconds = ModRuntime.config().sampleIntervalSeconds();
         int sampleTicks = Math.max(20, sampleIntervalSeconds * 20);
         sampleTickCounter++;
         if (sampleTickCounter >= sampleTicks) {
@@ -186,7 +190,7 @@ public final class WatchtowerScheduler {
         return effectiveSchedule;
     }
 
-    void applyScheduleFromConf(ReportSchedule schedule) {
+    public void applyScheduleFromConf(ReportSchedule schedule) {
         effectiveSchedule = schedule == null ? ReportSchedule.off() : schedule;
         if (scheduleOverride == null) {
             configuredReportMinutes = effectiveReportMinutes();
@@ -197,23 +201,23 @@ public final class WatchtowerScheduler {
 
     private static int liveIntervalSeconds() {
         try {
-            return WatchtowerConfig.LIVE_SAMPLE_INTERVAL_SECONDS.get();
+            return ModRuntime.config().liveSampleIntervalSeconds();
         } catch (IllegalStateException e) {
             return 1;
         }
     }
 
-    private void sample(MinecraftServer server) {
+    private void sample(ServerContext server) {
         try {
-            WatchtowerSampler.Sample sample = WatchtowerSampler.collect(server);
+            WatchtowerSample.Sample sample = server.collectSample();
             SnapshotWriter.write(server, sample);
             StateSampler.recordSample(server, sample);
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.warn("Failed to write watchtower snapshot: {}", e.toString());
+            ModRuntime.logger().warn("Failed to write watchtower snapshot: {}", e.toString());
         }
     }
 
-    public void sampleNow(MinecraftServer server) {
+    public void sampleNow(ServerContext server) {
         sample(server);
         LiveMetricsService.get().recordTick(server);
     }

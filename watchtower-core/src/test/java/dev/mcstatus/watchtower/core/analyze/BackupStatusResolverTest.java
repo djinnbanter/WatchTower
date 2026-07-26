@@ -58,7 +58,7 @@ class BackupStatusResolverTest {
     }
 
     @Test
-    void hybridStaleWhenEitherStale() {
+    void hybridNotStaleWhenLocalFreshAndExternalStale() {
         JsonObject local = new JsonObject();
         local.addProperty("status", "success");
         local.addProperty("stale", false);
@@ -74,6 +74,28 @@ class BackupStatusResolverTest {
                 .build();
 
         BackupStatusResolver.Resolved r = BackupStatusResolver.resolve(local, external, config);
-        assertTrue(r.overallStale());
+        assertTrue(r.overallOk());
+        assertFalse(r.overallStale());
+    }
+
+    @Test
+    void hybridNotStaleWhenLocalStaleAndExternalFresh() {
+        JsonObject local = new JsonObject();
+        local.addProperty("status", "stale");
+        local.addProperty("stale", true);
+
+        JsonObject external = new JsonObject();
+        external.addProperty("configured", true);
+        external.addProperty("status", "success");
+        external.addProperty("stale", false);
+
+        ReportConfig config = ReportConfig.builder()
+                .backupDirs("/backups")
+                .backupWebhookToken("tok")
+                .build();
+
+        BackupStatusResolver.Resolved r = BackupStatusResolver.resolve(local, external, config);
+        assertTrue(r.overallOk());
+        assertFalse(r.overallStale());
     }
 }

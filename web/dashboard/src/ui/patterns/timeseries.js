@@ -1,7 +1,8 @@
-import { html, useEffect, useRef, useLayoutEffect } from '../../lib/preact.js';
+import { html, useEffect, useRef, useLayoutEffect, useState } from '../../lib/preact.js';
 import { uPlot } from '../../lib/uplot.js';
-import { chartPalette, resolveColor } from '../../theme/theme.js';
+import { chartPalette, resolveColor, getSkin } from '../../theme/theme.js';
 import { Motion } from '../../motion/reduced.js';
+import { DUR } from '../../motion/tokens.js';
 
 /**
  * Stable identity for series config (avoid destroy on every parent render).
@@ -62,6 +63,11 @@ function formatAxisValue(v, s) {
  *
  * Y scales default to [0, ymax] (fixed or data-capped) — never auto-zoom.
  * Hover updates legend via DOM (no React setState).
+ * legendPlacement: 'inline' (below/over plot) | 'header' (ChartFrame header slot)
+ *
+ * Plot host is created imperatively (not in the VNode tree). Root kickRender()
+ * reconciles empty JSX divs and would otherwise strip uPlot's canvas children,
+ * leaving charts blank until a full page reload.
  */
 export function TimeSeries({
   series = [],
@@ -73,22 +79,91 @@ export function TimeSeries({
   xMin = null,
   xMax = null,
   reveal = true,
+  legendPlacement = 'inline',
 }) {
   const wrapRef = useRef(null);
-  const containerRef = useRef(null);
+  const hostRef = useRef(null);
+  const emptyRef = useRef(null);
   const legendRef = useRef(null);
+  const headerLegendRef = useRef(null);
   const plotRef = useRef(null);
   const seriesRef = useRef(series);
   const dataRef = useRef(data);
+  const legendPlacementRef = useRef(legendPlacement);
   const hoveringRef = useRef(false);
   const pendingDataRef = useRef(null);
+  const hasRevealedRef = useRef(false);
+  const [revealActive, setRevealActive] = useState(false);
   const sk = seriesKeyOf(series);
   const n = pointCount(data);
   const hasData = n >= 2;
   const xKey = xMin != null && xMax != null ? `${xMin}:${xMax}` : '';
+  const legendInHeader = legendPlacement === 'header';
 
   seriesRef.current = series;
   dataRef.current = data;
+  legendPlacementRef.current = legendPlacement;
+
+  function resolveLegendEl() {
+    if (legendPlacementRef.current === 'header') {
+      if (!headerLegendRef.current || !headerLegendRef.current.isConnected) {
+        const frame = wrapRef.current?.closest('.ui-chart-frame');
+        headerLegendRef.current = frame?.querySelector('.ui-chart-frame__legend') ?? null;
+      }
+      if (headerLegendRef.current) return headerLegendRef.current;
+    }
+    return legendRef.current;
+  }
+
+  function ensureHost() {
+    const wrap = wrapRef.current;
+    if (!wrap) return null;
+    let host = hostRef.current;
+    if (!host || !host.isConnected) {
+      host = document.createElement('div');
+      host.className = 'ui-timeseries__plot';
+      hostRef.current = host;
+    }
+    host.style.height = `${height}px`;
+    // Keep plot host before the inline legend; never put it in the VNode tree.
+    const legend = legendRef.current;
+    if (host.parentNode !== wrap) {
+      if (legend && legend.parentNode === wrap) {
+        wrap.insertBefore(host, legend);
+      } else {
+        wrap.appendChild(host);
+      }
+    }
+    if (emptyRef.current?.parentNode) {
+      emptyRef.current.remove();
+    }
+    return host;
+  }
+
+  function showEmpty(message) {
+    destroyPlot();
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    if (hostRef.current?.parentNode) {
+      hostRef.current.remove();
+    }
+    let empty = emptyRef.current;
+    if (!empty) {
+      empty = document.createElement('div');
+      empty.className = 'ui-timeseries__empty';
+      emptyRef.current = empty;
+    }
+    empty.style.height = `${height}px`;
+    empty.textContent = message;
+    const legend = legendRef.current;
+    if (empty.parentNode !== wrap) {
+      if (legend && legend.parentNode === wrap) {
+        wrap.insertBefore(empty, legend);
+      } else {
+        wrap.appendChild(empty);
+      }
+    }
+  }
 
   function buildUPlotData(ser, d) {
     if (!d?.t?.length) return null;
@@ -96,7 +171,7 @@ export function TimeSeries({
   }
 
   function writeLegend(items) {
-    const el = legendRef.current;
+    const el = resolveLegendEl();
     if (!el) return;
     if (!items?.length) {
       // Show last-sample values as idle legend
@@ -133,13 +208,19 @@ export function TimeSeries({
   function buildOpts(palette, containerWidth, ser, d) {
     const grid = palette['ch-grid'] || 'rgba(255,255,255,0.06)';
     const textLow = palette['text-low'] || '#5F6B78';
+    const compact = getSkin() === 'sass';
+    const xAxisSize = compact ? 22 : 50;
+    const yAxisSize = compact ? 40 : 48;
+    const tickSpace = compact ? 40 : 48;
 
     const axes = [
       {
         stroke: textLow,
         grid: { stroke: grid, width: 1 },
         ticks: { show: true, stroke: grid, width: 1 },
-        space: 48,
+        space: tickSpace,
+        size: xAxisSize,
+        gap: compact ? 1 : 5,
         values: (_u, vals) =>
           vals.map((v) => {
             if (v == null) return '';
@@ -162,7 +243,8 @@ export function TimeSeries({
           stroke: textLow,
           grid: { show: true, stroke: grid, width: 1 },
           ticks: { show: true, stroke: grid, width: 1 },
-          size: 48,
+          size: yAxisSize,
+          gap: compact ? 4 : 5,
           values: (_u, vals) => vals.map((v) => formatAxisValue(v, s)),
         });
       }
@@ -170,7 +252,7 @@ export function TimeSeries({
       return {
         label: s.label,
         stroke,
-        width: 2.25,
+        width: compact ? 2 : 2.25,
         fill: fillOn ? stroke : undefined,
         fillTo: fillOn ? 0 : undefined,
         scale,
@@ -180,8 +262,6 @@ export function TimeSeries({
       };
     });
 
-    // Soft fill via paths override — uPlot fill needs rgba; apply via hooks drawClear path
-    // Use series.fill as color with alpha via custom paths
     const scales = {
       x: xMin != null && xMax != null && Number.isFinite(xMin) && Number.isFinite(xMax) && xMax > xMin
         ? { time: true, auto: false, range: () => [xMin, xMax] }
@@ -201,6 +281,7 @@ export function TimeSeries({
     return {
       width: containerWidth,
       height,
+      padding: compact ? [10, 4, 0, 2] : undefined,
       cursor: {
         drag: { x: false, y: false, setScale: false },
         focus: { prox: 24 },
@@ -217,8 +298,7 @@ export function TimeSeries({
         { label: 'Time' },
         ...ySeries.map((ys) => {
           if (!ys.fill) return ys;
-          // Convert hex stroke to translucent fill
-          const fill = hexToRgba(ys.stroke, 0.14);
+          const fill = hexToRgba(ys.stroke, compact ? 0.12 : 0.14);
           return { ...ys, fill };
         }),
       ],
@@ -299,7 +379,7 @@ export function TimeSeries({
   }
 
   function measurePlotWidth() {
-    const el = containerRef.current;
+    const el = hostRef.current;
     if (!el) return 0;
     return Math.max(0, Math.floor(el.clientWidth || 0));
   }
@@ -313,8 +393,30 @@ export function TimeSeries({
     } catch { /* ignore */ }
   }
 
+  function destroyPlot() {
+    if (plotRef.current) {
+      try {
+        plotRef.current.destroy();
+      } catch { /* ignore */ }
+      plotRef.current = null;
+    }
+  }
+
+  function plotIsLive() {
+    const plot = plotRef.current;
+    const host = hostRef.current;
+    if (!plot || !host?.isConnected) return false;
+    try {
+      return host.contains(plot.root) || host.contains(plot.over);
+    } catch {
+      return host.childNodes.length > 0;
+    }
+  }
+
   function createPlot() {
-    if (!containerRef.current || !hasData) return;
+    if (!hasData) return;
+    const host = ensureHost();
+    if (!host) return;
     const ser = seriesRef.current;
     const d = dataRef.current;
     const palette = chartPalette();
@@ -323,16 +425,11 @@ export function TimeSeries({
     const udata = buildUPlotData(ser, d);
     if (!udata) return;
 
-    if (plotRef.current) {
-      plotRef.current.destroy();
-      plotRef.current = null;
-    }
-    // Clear container (uPlot appends)
-    containerRef.current.innerHTML = '';
+    destroyPlot();
+    host.innerHTML = '';
     try {
-      plotRef.current = new uPlot(opts, udata, containerRef.current);
+      plotRef.current = new uPlot(opts, udata, host);
       writeLegend(null);
-      // Sync after layout settles (RO may have fired before the plot existed)
       requestAnimationFrame(() => applyPlotSize(plotRef.current));
     } catch (e) {
       console.warn('TimeSeries: uPlot init failed', e);
@@ -342,30 +439,24 @@ export function TimeSeries({
   // Init / re-init only when series shape, height, window domain, or data presence changes
   useEffect(() => {
     if (!hasData) {
-      if (plotRef.current) {
-        plotRef.current.destroy();
-        plotRef.current = null;
-      }
+      showEmpty(n === 1 ? 'Waiting for live samples…' : 'No data');
       return undefined;
     }
     createPlot();
     return () => {
-      if (plotRef.current) {
-        plotRef.current.destroy();
-        plotRef.current = null;
-      }
+      destroyPlot();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sk, height, hasData, dual, xKey]);
 
-  // Data updates — setData only; buffer while hovering
+  // Data updates — setData only; buffer while hovering; recreate if VDOM wipe orphaned the plot
   useEffect(() => {
     if (!hasData) return;
     const ser = seriesRef.current;
     const udata = buildUPlotData(ser, data);
     if (!udata) return;
 
-    if (!plotRef.current) {
+    if (!plotIsLive()) {
       createPlot();
       return;
     }
@@ -384,30 +475,35 @@ export function TimeSeries({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, hasData]);
 
-  // Theme changes — rebuild with new resolved colors
+  // Theme / skin changes — rebuild with new resolved colors
   useEffect(() => {
     const observer = new MutationObserver(() => {
       if (!hasData) return;
       createPlot();
     });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-skin'] });
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sk, hasData, height, xKey]);
 
-  // Resize — observe plot container, coalesce with rAF
+  // Resize — observe wrap (host may be width 0 until layout); recreate if needed
   useLayoutEffect(() => {
-    const el = containerRef.current;
+    const el = wrapRef.current;
     if (!el || !hasData) return undefined;
     let raf = 0;
     const ro = new ResizeObserver(() => {
       if (raf) cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         raf = 0;
+        if (!plotIsLive()) {
+          createPlot();
+          return;
+        }
         applyPlotSize();
       });
     });
     ro.observe(el);
+    if (hostRef.current) ro.observe(hostRef.current);
     return () => {
       if (raf) cancelAnimationFrame(raf);
       ro.disconnect();
@@ -415,23 +511,41 @@ export function TimeSeries({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [height, hasData, sk]);
 
-  const revealClass = reveal && Motion.enabled && hasData ? 'ui-timeseries--reveal' : '';
+  // Unmount: remove imperative nodes; clear header legend slot if we owned it
+  useEffect(() => () => {
+    destroyPlot();
+    hostRef.current?.remove();
+    hostRef.current = null;
+    emptyRef.current?.remove();
+    emptyRef.current = null;
+    if (headerLegendRef.current) {
+      headerLegendRef.current.innerHTML = '';
+      headerLegendRef.current = null;
+    }
+  }, []);
+
+  // One-shot clip reveal on first non-empty series — never again on live updates
+  useEffect(() => {
+    if (!reveal || !Motion.enabled || !hasData || hasRevealedRef.current) return undefined;
+    hasRevealedRef.current = true;
+    setRevealActive(true);
+    const t = setTimeout(() => setRevealActive(false), DUR[5] + 40);
+    return () => clearTimeout(t);
+  }, [reveal, hasData]);
+
+  const revealClass = revealActive ? 'ui-timeseries--reveal' : '';
+  const legendClass = legendInHeader ? 'ui-timeseries--legend-header' : '';
+  const legendReserve = legendInHeader ? 0 : (getSkin() === 'sass' ? 10 : 36);
 
   return html`
     <div
       ref=${wrapRef}
-      class=${`ui-timeseries ${revealClass}`}
+      class=${`ui-timeseries ${revealClass} ${legendClass}`.trim()}
       role="img"
       aria-label=${`Time series: ${series.map((s) => s.label).join(', ')}`}
-      style=${{ minHeight: `${height + 36}px` }}
+      style=${{ minHeight: `${height + legendReserve}px` }}
     >
-      ${hasData
-        ? html`<div class="ui-timeseries__plot" ref=${containerRef} style=${{ height: `${height}px` }}></div>`
-        : html`<div class="ui-timeseries__empty" style=${{ height: `${height}px` }}>
-            ${n === 1 ? 'Waiting for live samples…' : 'No data'}
-          </div>`
-      }
-      <div class="ui-timeseries__legend" ref=${legendRef}></div>
+      ${!legendInHeader ? html`<div class="ui-timeseries__legend" ref=${legendRef}></div>` : null}
     </div>
   `;
 }

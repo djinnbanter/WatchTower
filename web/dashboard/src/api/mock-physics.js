@@ -15,6 +15,9 @@ export function round2(v) {
   return Math.round(v * 100) / 100;
 }
 
+/** Preview host RAM total used to derive mem_used from mem_available. */
+export const MOCK_MEM_TOTAL_GB = 32;
+
 /** Rough Gaussian via Box–Muller. */
 export function gauss(rng = Math.random) {
   let u = 0;
@@ -260,6 +263,8 @@ export function stepSim(state, tMs, stepSec = 30, rng = Math.random) {
     host_cpu: round1(cpu),
     heap_mb: Math.round(state.heap),
     mem_available_gb: round2(state.memAvail),
+    mem_used_gb: round2(clamp(MOCK_MEM_TOTAL_GB - state.memAvail, 0, MOCK_MEM_TOTAL_GB)),
+    mem_total_gb: MOCK_MEM_TOTAL_GB,
     disk_use_pct: round2(state.diskPct),
     rx,
     tx,
@@ -284,10 +289,16 @@ export function generateCorrelatedLiveSamples(nowMs, {
     host_cpu: [],
     heap_mb: [],
     mem_available_gb: [],
+    mem_used_gb: [],
+    mem_total_gb: [],
     disk_use_pct: [],
     players: [],
     thermal_package: [],
     thermal_ambient: [],
+    net_rx_mbps: [],
+    net_tx_mbps: [],
+    disk_read_mb_s: [],
+    disk_write_mb_s: [],
   };
   const bandwidth = [];
   const diskIo = [];
@@ -302,10 +313,16 @@ export function generateCorrelatedLiveSamples(nowMs, {
     series.host_cpu.push({ t: iso, v: m.host_cpu });
     series.heap_mb.push({ t: iso, v: m.heap_mb });
     series.mem_available_gb.push({ t: iso, v: m.mem_available_gb });
+    series.mem_used_gb.push({ t: iso, v: m.mem_used_gb });
+    series.mem_total_gb.push({ t: iso, v: m.mem_total_gb });
     series.disk_use_pct.push({ t: iso, v: m.disk_use_pct });
     series.players.push({ t: iso, v: m.players });
     series.thermal_package.push({ t: iso, v: m.thermal_c });
     series.thermal_ambient.push({ t: iso, v: m.ambient_c });
+    series.net_rx_mbps.push({ t: iso, v: m.rx });
+    series.net_tx_mbps.push({ t: iso, v: m.tx });
+    series.disk_read_mb_s.push({ t: iso, v: m.read });
+    series.disk_write_mb_s.push({ t: iso, v: m.write });
     bandwidth.push({ t: iso, rx: m.rx, tx: m.tx });
     diskIo.push({ t: iso, read: m.read, write: m.write });
   }

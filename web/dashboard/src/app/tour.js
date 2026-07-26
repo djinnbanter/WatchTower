@@ -60,7 +60,7 @@ const STEPS = [
     tab: 'issues',
     target: '[data-tour="issues"]',
     title: 'Issues',
-    body: 'Prioritized fix list from reports plus live peeks — mark items reviewed when done.',
+    body: 'Prioritized fix list from continuous Scanning plus peeks — mark items reviewed when done.',
     placement: 'bottom',
   },
   {
@@ -109,14 +109,14 @@ const STEPS = [
     tab: 'sources',
     target: '[data-tour="sources"]',
     title: 'Sources',
-    body: 'When live, scanned, and report data last updated — and what each layer powers.',
+    body: 'Watching, Scanning, and Support compose — when each layer last updated and what it powers.',
     placement: 'bottom',
   },
   {
     tab: 'settings',
     target: '[data-tour="settings"]',
     title: 'Settings',
-    body: 'Schedule, monitoring, backups, security, rules, and About / updates.',
+    body: 'Schedule (Off by default), monitoring, backups, security, Advanced support bundle, and About.',
     placement: 'bottom',
   },
   {
@@ -130,7 +130,7 @@ const STEPS = [
     tab: 'roadmap',
     target: '[data-tour="roadmap"]',
     title: 'Roadmap',
-    body: 'What’s coming next — lag auto-forensics, fleet command, alerts, and more on the workbench.',
+    body: 'What works today, what’s coming next by situation, and what we’re not building — plain English.',
     placement: 'bottom',
   },
 ];

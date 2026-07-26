@@ -16,6 +16,42 @@ class StartupProfileScannerTest {
     private static final Path FIXTURES = Path.of("..", "samples", "fixtures", "crash-intelligence");
 
     @Test
+    void modernFixFullLoadPreferredOverVanillaDone() {
+        List<String> lines = List.of(
+                "[26Jul2026 16:40:11.870] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher starting: java version 21",
+                "[26Jul2026 16:40:36.537] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting minecraft server version 1.21.1",
+                "[26Jul2026 16:40:37.209] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Preparing level \"world\"",
+                "[26Jul2026 16:41:06.849] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (30.183s)! For help, type \"help\"",
+                "[26Jul2026 16:41:39.339] [Server thread/WARN] [ModernFix/]: Dedicated server took 91.574 seconds to load"
+        );
+        List<String> window = StartupProfileScanner.extractLastBootWindow(lines);
+        assertTrue(window.stream().anyMatch(StartupProfileScanner::isModernFixFullLoadLine));
+
+        JsonObject profile = StartupProfileScanner.scan(window);
+        assertEquals(91.6, profile.get("total_sec").getAsDouble(), 0.05);
+        assertEquals("modernfix", profile.get("total_source").getAsString());
+        assertEquals(30.2, profile.get("vanilla_done_sec").getAsDouble(), 0.05);
+        assertEquals(91.6, profile.get("modernfix_sec").getAsDouble(), 0.05);
+        // ModLauncher → Done wall clock (~55s), used for phase budget not headline when ModernFix exists
+        assertTrue(profile.get("wall_clock_sec").getAsDouble() > 50.0);
+        assertTrue(profile.get("wall_clock_sec").getAsDouble() < 60.0);
+    }
+
+    @Test
+    void wallClockPreferredWhenVanillaDoneOmitsModLoading() {
+        List<String> lines = List.of(
+                "[26Jul2026 16:40:11.870] [main/INFO]: ModLauncher starting: java version 21",
+                "[26Jul2026 16:40:36.537] [Server thread/INFO]: Starting minecraft server version 1.21.1",
+                "[26Jul2026 16:40:37.209] [Server thread/INFO]: Preparing level \"world\"",
+                "[26Jul2026 16:41:06.849] [Server thread/INFO]: Done (30.183s)! For help, type \"help\""
+        );
+        JsonObject profile = StartupProfileScanner.scan(lines);
+        assertEquals("wall_clock", profile.get("total_source").getAsString());
+        assertTrue(profile.get("total_sec").getAsDouble() > 50.0);
+        assertEquals(30.2, profile.get("vanilla_done_sec").getAsDouble(), 0.05);
+    }
+
+    @Test
     void bootLootProfile() throws Exception {
         List<String> lines = Files.readAllLines(resolve("boot-loot.log"));
         JsonObject profile = StartupProfileScanner.scan(lines);
@@ -163,6 +199,49 @@ class StartupProfileScannerTest {
         JsonObject profile = StartupProfileScanner.scan(lines);
         assertEquals("unknown", profile.get("status").getAsString());
         assertTrue(StartupProfileScanner.extractLastBootWindow(lines).isEmpty());
+    }
+
+    @Test
+    void attachBootHistoryRollsAndCaps() {
+        JsonObject prev = new JsonObject();
+        prev.addProperty("total_sec", 120.0);
+        prev.addProperty("done_at", "2026-07-01T10:00:00Z");
+        prev.addProperty("status", "ok");
+
+        JsonObject next = new JsonObject();
+        next.addProperty("total_sec", 130.0);
+        next.addProperty("done_at", "2026-07-02T10:00:00Z");
+        next.addProperty("status", "warnings");
+
+        StartupProfileScanner.attachBootHistory(next, prev);
+        assertTrue(next.has("boot_history"));
+        assertEquals(2, next.getAsJsonArray("boot_history").size());
+        assertEquals(130.0, next.getAsJsonArray("boot_history").get(1).getAsJsonObject().get("total_sec").getAsDouble(), 0.01);
+
+        JsonObject third = new JsonObject();
+        third.addProperty("total_sec", 140.0);
+        third.addProperty("done_at", "2026-07-03T10:00:00Z");
+        third.addProperty("status", "ok");
+        StartupProfileScanner.attachBootHistory(third, next);
+        assertEquals(3, third.getAsJsonArray("boot_history").size());
+
+        JsonObject withPhases = new JsonObject();
+        withPhases.addProperty("total_sec", 100.0);
+        withPhases.addProperty("done_at", "2026-07-04T10:00:00Z");
+        withPhases.addProperty("status", "ok");
+        JsonArray phases = new JsonArray();
+        JsonObject phase = new JsonObject();
+        phase.addProperty("id", "mod_init");
+        phase.addProperty("label", "Mod initialization");
+        phase.addProperty("sec", 40.0);
+        phases.add(phase);
+        withPhases.add("phases", phases);
+        StartupProfileScanner.attachBootHistory(withPhases, third);
+        JsonObject last = withPhases.getAsJsonArray("boot_history")
+                .get(withPhases.getAsJsonArray("boot_history").size() - 1)
+                .getAsJsonObject();
+        assertTrue(last.has("phases"));
+        assertEquals(1, last.getAsJsonArray("phases").size());
     }
 
     private static Path resolve(String name) {

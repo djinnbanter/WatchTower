@@ -533,7 +533,7 @@ const Health = {
 
     const blockers = [];
     const backup = this.backupDriver(facts);
-    if (backup && backup.severity !== 'ok') blockers.push('backup not found in the lookback window');
+    if (backup && backup.severity !== 'ok') blockers.push('no backup in the last 24 hours');
     const unackedCount = this.countUnreviewedCrashes(facts, acks);
     if (unackedCount) blockers.push(`${unackedCount} unacknowledged crash report${unackedCount === 1 ? '' : 's'}`);
     const modErrs = (facts?.optional?.mod_log_errors ?? []).filter((e) => e.mod_id !== 'client_noise');

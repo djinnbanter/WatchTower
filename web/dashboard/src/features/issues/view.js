@@ -1,7 +1,7 @@
 /**
  * Issues page shell — Active / Reviewed / Tools + URL deep links.
  */
-import { html, useState, useCallback, useEffect, useMemo } from '../../lib/preact.js';
+import { html, useState, useEffect, useMemo } from '../../lib/preact.js';
 import {
   reports, opsCache, issuesPeek, acks, noReportYet, crashGroups, settings, issueSuppressions, ui,
 } from '../../state/stores.js';
@@ -19,6 +19,7 @@ import {
   buildActionQueue,
   displayHealth,
   isIssueAcked,
+  opsCanDriveActionQueue,
   peekIssueAckKey,
 } from '../../domain/health.js';
 import { Page, Subnav, FreshnessBadge, HealthGrade, EmptyState } from '../../ui/patterns/index.js';
@@ -66,16 +67,16 @@ export function issueBadgeCount() {
 
   let count = 0;
 
-  if (facts) {
-    const queue = buildActionQueue(facts, crashAcks, opsCacheData, groups, issueAcks, queueOpts);
+  if (facts || opsCanDriveActionQueue(opsCacheData)) {
+    const queue = buildActionQueue(facts ?? null, crashAcks, opsCacheData, groups, issueAcks, queueOpts);
     count += [...queue.now, ...queue.soon].filter((i) => i.kind !== 'crash').length;
   }
 
   const ug = groups?.unreviewed_groups;
   if (typeof ug === 'number' && ug > 0) {
     count += ug;
-  } else if (facts && (ug == null)) {
-    const queue = buildActionQueue(facts, crashAcks, opsCacheData, groups, issueAcks, queueOpts);
+  } else if ((facts || opsCanDriveActionQueue(opsCacheData)) && (ug == null)) {
+    const queue = buildActionQueue(facts ?? null, crashAcks, opsCacheData, groups, issueAcks, queueOpts);
     if ([...queue.now, ...queue.soon].some((i) => i.kind === 'crash')) count += 1;
   }
 
@@ -90,7 +91,15 @@ export function issueBadgeCount() {
 
 export function PageView() {
   const { params } = ui.value.route;
-  const routeIssue = params?.issue ? decodeURIComponent(String(params.issue)) : null;
+  let routeIssue = null;
+  if (params?.issue) {
+    const raw = String(params.issue);
+    try {
+      routeIssue = decodeURIComponent(raw);
+    } catch {
+      routeIssue = raw;
+    }
+  }
   const rawView = params?.view;
 
   const facts = reports.value.facts;
@@ -116,9 +125,11 @@ export function PageView() {
     facts?.optional?.active_suppressions,
   ]);
 
+  const hasOpsIssues = Array.isArray(opsCacheData?.issues_live) && opsCacheData.issues_live.length > 0;
   const health = facts ? displayHealth(facts, crashAcks, opsCacheData, queueOpts) : null;
-  const queue = facts
-    ? buildActionQueue(facts, crashAcks, opsCacheData, groups, issueAcks, queueOpts)
+  // Ledger-first: build Active queue from ops-cache even when no report/facts yet
+  const queue = (facts || opsCanDriveActionQueue(opsCacheData))
+    ? buildActionQueue(facts ?? null, crashAcks, opsCacheData, groups, issueAcks, queueOpts)
     : { now: [], soon: [], historical: [], reviewed: [] };
 
   const activeItems = useMemo(
@@ -130,7 +141,28 @@ export function PageView() {
     [peek, queue, issueAcks],
   );
 
-  const hidden = facts?.optional?.suppressed_issues ?? [];
+  const suppressSnap = issueSuppressions.value?.data;
+  const hidden = useMemo(() => {
+    const fromFacts = facts?.optional?.suppressed_issues ?? [];
+    const merged = Array.isArray(suppressSnap?.merged) ? suppressSnap.merged : [];
+    if (!merged.length) return fromFacts;
+    const byId = new Map();
+    for (const h of fromFacts) {
+      if (h?.id != null) byId.set(String(h.id).toLowerCase(), h);
+    }
+    return merged.map((entry) => {
+      const id = entry?.id;
+      if (!id) return null;
+      const existing = byId.get(String(id).toLowerCase());
+      if (existing) return existing;
+      return {
+        id,
+        message: `Suppressed (${entry.source ?? 'dashboard'})`,
+        severity: 'warning',
+        suppressed: true,
+      };
+    }).filter(Boolean);
+  }, [facts?.optional?.suppressed_issues, suppressSnap]);
   const hiddenIds = useMemo(() => {
     const set = new Set();
     for (const h of hidden) {
@@ -145,7 +177,7 @@ export function PageView() {
   const hasActiveWork = needsCount > 0 || watchingCount > 0
     || activeItems.some((i) => i.band === 'older');
 
-  // Deep link / view normalize
+  // Deep link / view normalize — once; does not drive row selection
   useEffect(() => {
     if (deepLinkApplied) return;
     if (VALID_VIEWS.has(rawView)) {
@@ -156,9 +188,10 @@ export function PageView() {
       setDeepLinkApplied(true);
       return;
     }
-    // Wait until we have something to resolve against (or empty queue is fine)
     const view = resolveDeepLinkView(routeIssue, activeItems, reviewedItems, hiddenIds);
-    navigate('issues', { view, issue: routeIssue }, { replace: true });
+    if (ui.value.route?.tab === 'issues') {
+      navigate('issues', { view, issue: routeIssue }, { replace: true });
+    }
     setDeepLinkApplied(true);
   }, [routeIssue, activeItems, reviewedItems, hiddenIds, deepLinkApplied, rawView]);
 
@@ -173,12 +206,6 @@ export function PageView() {
       ? { ...opt, label: `Active (${needsCount})` }
       : opt
   )), [needsCount]);
-
-  const handleSelect = useCallback((key) => {
-    const next = { view: effectiveView };
-    if (key) next.issue = key;
-    navigate('issues', next, { replace: true });
-  }, [effectiveView]);
 
   function handleViewChange(v) {
     if (v === 'tools') {
@@ -253,13 +280,18 @@ export function PageView() {
     }
   }
 
-  if (isNoReport && !peek && !activeItems.length && !reviewedItems.length) {
+  if (isNoReport && !peek && !activeItems.length && !reviewedItems.length && !hasOpsIssues) {
     return html`
       <${Page} title="Issues" subtitle="Prioritized fixes and alerts">
         <${EmptyState}
-          title="No report yet"
-          body="Run a report from the top bar to start receiving issue analysis and guided fixes. Live lag peek can still appear after the ops scan warms up."
-          action=${html`<${Button} kind="accent" onClick=${() => openModal('run-report')}>Run Report</${Button}>`}
+          title="Waiting for scans…"
+          body="Continuous Scanning fills this queue from logs, lag, and crashes — no deep audit required. Check back in a minute, or open Live while Watching warms up."
+          action=${html`
+            <div class="issues-empty-actions">
+              <${Button} kind="accent" onClick=${() => navigate('live')}>Open Live</${Button}>
+              <${Button} kind="neutral" onClick=${() => navigate('sources')}>Sources</${Button}>
+            </div>
+          `}
         />
       </${Page}>
     `;
@@ -329,8 +361,7 @@ export function PageView() {
           <${QueueTab}
             mode=${effectiveView}
             items=${effectiveView === 'reviewed' ? reviewedItems : activeItems}
-            selectedKey=${routeIssue}
-            onSelect=${handleSelect}
+            routeKey=${routeIssue}
             onAck=${handleAck}
             onUnack=${handleUnack}
             onSuppress=${handleSuppress}

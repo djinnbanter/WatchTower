@@ -225,11 +225,12 @@ function mockPerfWindowConfig(window = '7d') {
 function generateMockPlayerBins(window = '7d') {
   const scale = mockPerfWindowConfig(window).scale;
   const s = (n) => Math.round(n * scale);
+  // Peak concurrent in fixtures is ~7 → empty + terciles 1-2 / 3-4 / 5-7
   return [
     { players_band: '0', minutes: s(420), mspt_avg: 8.4, tps_avg: 19.7 },
     { players_band: '1-2', minutes: s(280), mspt_avg: 14.2, tps_avg: 19.4 },
-    { players_band: '3-5', minutes: s(520), mspt_avg: 22.8, tps_avg: 18.6 },
-    { players_band: '6+', minutes: s(220), mspt_avg: 31.5, tps_avg: 17.9 },
+    { players_band: '3-4', minutes: s(520), mspt_avg: 22.8, tps_avg: 18.6 },
+    { players_band: '5-7', minutes: s(220), mspt_avg: 31.5, tps_avg: 17.9 },
   ];
 }
 
@@ -558,6 +559,8 @@ function generatePerformanceInsightsMock(now, window = '7d') {
     tps_warn: 19.5,
     busy_quiet: busyQuiet,
     player_bins: generateMockPlayerBins(window),
+    players_band_scale: 7,
+    players_band_scale_source: 'observed_peak',
     outlier_minutes: outliers,
     sticky_lag: stickyLag,
     insights: generateMockInsights(now, window, busyQuiet, stickyLag, outliers),

@@ -2,6 +2,7 @@ package dev.mcstatus.watchtower.core.collect;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.report.ReportProgress;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,8 +24,19 @@ public final class CrashReportScanner {
     }
 
     public static void scanCrashReports(String serverDir, JsonObject staging, double cutoff) {
+        scanCrashReports(serverDir, staging, cutoff, ReportProgress.NOOP);
+    }
+
+    public static void scanCrashReports(
+            String serverDir,
+            JsonObject staging,
+            double cutoff,
+            ReportProgress progress
+    ) {
+        ReportProgress prog = progress != null ? progress : ReportProgress.NOOP;
         Path cr = Path.of(serverDir, "crash-reports");
         if (!Files.isDirectory(cr)) {
+            prog.found("crashes", 0);
             return;
         }
         JsonObject mc = staging.getAsJsonObject("minecraft");
@@ -35,28 +47,45 @@ public final class CrashReportScanner {
 
         List<Path> files;
         try (Stream<Path> stream = Files.list(cr)) {
-            files = stream.filter(p -> p.getFileName().toString().endsWith(".txt"))
+            files = stream.filter(path -> path.getFileName().toString().endsWith(".txt"))
                     .sorted(Comparator.comparingLong(CrashReportScanner::mtime).reversed())
                     .toList();
         } catch (IOException e) {
             return;
         }
 
-        for (Path p : files) {
-            double mtime = mtime(p);
-            if (mtime < cutoff) {
+        int inWindow = 0;
+        for (Path candidate : files) {
+            if (mtime(candidate) >= cutoff) {
+                inWindow++;
+            }
+        }
+        prog.found("crashes", inWindow);
+        if (inWindow > 0) {
+            prog.units(0, inWindow);
+            prog.detail("Found " + inWindow + " crash report" + (inWindow == 1 ? "" : "s") + "…");
+        }
+
+        int processed = 0;
+        for (Path path : files) {
+            double fileMtime = mtime(path);
+            if (fileMtime < cutoff) {
                 continue;
             }
-            ZonedDateTime when = Instant.ofEpochSecond((long) mtime).atZone(ZoneId.systemDefault());
+            processed++;
+            String fileName = path.getFileName().toString();
+            prog.units(processed, inWindow);
+            prog.detail("Reading crash " + processed + "/" + inWindow + ": " + fileName);
+            ZonedDateTime when = Instant.ofEpochSecond((long) fileMtime).atZone(ZoneId.systemDefault());
             String quote = "";
             String summary = "";
             String modFile = "";
             String exception = "";
-            String detail = p.getFileName().toString();
+            String detail = fileName;
             String label = "";
             CrashReportParser.ParsedCrash parsed = null;
             try {
-                String body = Files.readString(p, StandardCharsets.UTF_8);
+                String body = Files.readString(path, StandardCharsets.UTF_8);
                 String[] lines = body.split("\\R");
                 quote = lines.length > 0 ? lines[0] : "";
                 if (quote.length() > 200) {
@@ -82,7 +111,7 @@ public final class CrashReportScanner {
                 }
             }
             JsonObject report = new JsonObject();
-            report.addProperty("file", p.getFileName().toString());
+            report.addProperty("file", fileName);
             report.addProperty("time", CollectSupport.iso(when));
             report.addProperty("quote", quote);
             report.addProperty("summary", summary);
@@ -104,7 +133,7 @@ public final class CrashReportScanner {
             ev.addProperty("detail", detail);
             ev.addProperty("importance", 10);
             JsonArray evArr = new JsonArray();
-            evArr.add(CollectSupport.evidence("crash-reports/" + p.getFileName(), null, quote, CollectSupport.iso(when)));
+            evArr.add(CollectSupport.evidence("crash-reports/" + fileName, null, quote, CollectSupport.iso(when)));
             ev.add("evidence", evArr);
             CollectSupport.appendEvent(staging, ev);
         }

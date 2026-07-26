@@ -1,0 +1,102 @@
+{
+  "id": "2026-06-24T13-13-40Z",
+  "pinned_at": "2026-06-24T13:13:40.299Z",
+  "source": "auto",
+  "trigger": "auto_mspt",
+  "severity": "critical",
+  "tps": 8.4,
+  "mspt": 118.2,
+  "players_online": 4,
+  "entities": 1247,
+  "chunks": 3842,
+  "heap_used_gb": 6.1,
+  "heap_max_gb": 8,
+  "players": [
+    {
+      "name": "Steve",
+      "uuid": "00000000-0000-0000-0000-000000000001",
+      "ping": 42,
+      "dimension": "minecraft:overworld"
+    },
+    {
+      "name": "Alex",
+      "uuid": "00000000-0000-0000-0000-000000000002",
+      "ping": 55,
+      "dimension": "minecraft:overworld"
+    },
+    {
+      "name": "NotchFan42",
+      "uuid": "00000000-0000-0000-0000-000000000003",
+      "ping": 68,
+      "dimension": "minecraft:the_nether"
+    },
+    {
+      "name": "BuilderBob",
+      "uuid": "00000000-0000-0000-0000-000000000004",
+      "ping": 31,
+      "dimension": "minecraft:overworld"
+    }
+  ],
+  "context": {
+    "recent_commands": [
+      {
+        "time": "2026-06-24T13:11:40.299Z",
+        "player": "Admin",
+        "command": "/chunky continue"
+      },
+      {
+        "time": "2026-06-24T12:59:40.299Z",
+        "player": "Steve",
+        "command": "/fill ~ ~ ~ ~10 ~10 ~10 stone"
+      }
+    ],
+    "recent_joins_leaves": [
+      {
+        "time": "2026-06-24T13:09:40.299Z",
+        "type": "player_join",
+        "detail": "Steve"
+      },
+      {
+        "time": "2026-06-24T13:07:40.299Z",
+        "type": "player_leave",
+        "detail": "Alex"
+      }
+    ],
+    "background_jobs": [
+      {
+        "type": "chunky_pregen",
+        "detail": "overworld 43%"
+      }
+    ],
+    "host_cpu_pct": 78.2,
+    "log_tail": [
+      "[Server thread/WARN]: Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
+      "[Server thread/INFO]: Admin issued server command: /chunky continue",
+      "[Server thread/INFO]: [Chunky] Task running for minecraft:overworld — 43.54% complete"
+    ]
+  },
+  "narrative": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
+  "findings": [
+    {
+      "kind": "confirmed",
+      "category": "players",
+      "text": "4 player(s) online at spike time"
+    },
+    {
+      "kind": "confirmed",
+      "category": "pregen",
+      "text": "World pregen was running — overworld 43%"
+    },
+    {
+      "kind": "confirmed",
+      "category": "command",
+      "text": "Recent heavy command — Admin: /chunky continue"
+    },
+    {
+      "kind": "confirmed",
+      "category": "entities",
+      "text": "Entity count elevated (1247)"
+    }
+  ],
+  "primary_suspect": "World pregen was running — overworld 43%"
+}

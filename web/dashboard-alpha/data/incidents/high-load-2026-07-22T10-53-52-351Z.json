@@ -1,0 +1,24 @@
+{
+  "id": "high-load-2026-07-22T10-53-52-351Z",
+  "pinned_at": "2026-07-22T10:53:52.351Z",
+  "source": "auto",
+  "trigger": "auto_mspt",
+  "severity": "critical",
+  "tps": 14.2,
+  "mspt": 68,
+  "players_online": 6,
+  "narrative": "Can't keep up — MSPT sustained above 65 ms with 6 players online",
+  "findings": [
+    {
+      "kind": "confirmed",
+      "category": "load",
+      "text": "MSPT remained above 65 ms"
+    },
+    {
+      "kind": "confirmed",
+      "category": "players",
+      "text": "6 players online during the spike"
+    }
+  ],
+  "primary_suspect": "Chunk generation and entity load overlapped during peak traffic"
+}

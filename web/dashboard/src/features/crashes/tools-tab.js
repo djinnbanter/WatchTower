@@ -114,7 +114,7 @@ export function ToolsTab({
         ` : result && !result.matches?.length ? html`
           <${EmptyState}
             title="No matches"
-            body=${result.error || 'Nothing in the class index matched that name. Run a full report if the index is empty.'}
+            body=${result.error || 'Nothing in the class index matched that name. Wait for Scanning to index jars, or open Mods → Forensics.'}
           />
         ` : null}
       </${Section}>
@@ -128,7 +128,7 @@ export function ToolsTab({
             <strong>Mark reviewed</strong> — moves the group from Review to Reviewed and clears the inbox bell. Files stay on disk; use Logs to read them anytime.
           </li>
           <li>
-            <strong>Scan vs full report</strong> — Scan re-reads the crash folder quickly. A full report refreshes richer facts (pre-crash context, rule hits, Modrinth cache).
+            <strong>Scan vs Support compose</strong> — Scan re-reads the crash folder quickly. Support compose packs a shareable zip; continuous Scanning keeps groups fresh day-to-day.
           </li>
           <li>
             More tooling: <button type="button" class="ui-link" onClick=${() => navigate('mods', { view: 'forensics' })}>Mods → Forensics</button>

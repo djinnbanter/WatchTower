@@ -6,27 +6,37 @@
 import { html, useState, useEffect, useRef } from '../../lib/preact.js';
 import {
   Page, Section, MetricTile, ListRow, HealthGrade, Skeleton,
-  Gauge, RadarDial,
+  Gauge, RadarDial, FreshnessBadge, StaggerList,
 } from '../../ui/patterns/index.js';
 import { Button, Badge, Progress } from '../../ui/primitives/index.js';
 import { Icon } from '../../ui/icons.js';
 import {
   live, reports, overviewMeta, opsCache, issuesPeek,
   performance, ui, noReportYet, acks, crashGroups, settings, auth, issueSuppressions,
+  dataSources,
 } from '../../state/stores.js';
-import { now } from '../../state/clock.js';
+import { untracked, useSignalEffect } from '../../lib/signals.js';
 import { openModal, saveBackupExternal, addToast } from '../../state/actions.js';
+import { openSupportBuilder } from '../support/bundle-builder-modal.js';
 import { navigate } from '../../app/router.js';
-import { displayHealth, buildActionQueue } from '../../domain/health.js';
+import { displayHealth, buildActionQueue, opsCanDriveActionQueue } from '../../domain/health.js';
 import { formatTps, formatPct, formatGb, formatMb, formatDuration } from '../../domain/formats.js';
 import { isStaleReport } from '../../domain/freshness.js';
 import { overviewStatusPills, healthStatus } from '../../domain/labels.js';
+import { hasLiveSample } from '../../domain/live-sample.js';
 import { buildWelcomeLead } from '../../domain/overview-welcome.js';
 import { get as persistGet } from '../../state/persist.js';
 import { resumeSetupWizard } from '../wizard/view.js';
+import { useCountUp } from '../../motion/use-count-up.js';
+import { DUR } from '../../motion/tokens.js';
 
 const ATTENTION_CAP = 3;
 const LAG_CAP = 3;
+
+/** Read live without subscribing — keeps Overview body from re-rendering on every poll. */
+function peekLive() {
+  return untracked(() => live.value);
+}
 
 function backupsConfiguredFromSettings(data) {
   if (!data) return false;
@@ -54,20 +64,8 @@ function setupResumeChip() {
     };
   }
 
-  if (wiz.baseline === 'pending') {
-    return {
-      text: 'Your optional 30-day baseline report is still running in the background.',
-      actionLabel: 'Report status',
-      onClick: () => openModal('run-report'),
-    };
-  }
-
-  if (wiz.baseline === 'failed') {
-    return {
-      text: 'The optional 30-day baseline did not finish. You can run a report anytime.',
-      actionLabel: 'Run Report',
-      onClick: () => openModal('run-report'),
-    };
+  if (wiz.baseline === 'pending' || wiz.baseline === 'failed') {
+    return null;
   }
 
   if (!backupsConfiguredFromSettings(settings.value?.data)) {
@@ -138,7 +136,7 @@ function missionTone(grade, attentionCount, isDown) {
 function heroSubtext(layoutMode, attentionCount, isDown) {
   if (isDown) return 'Live metrics may be stale until the connection recovers.';
   if (attentionCount > 0) {
-    return 'Fix the items below, then re-run a report to refresh the grade.';
+    return 'Fix the items below — Scanning refreshes the grade as Issues clear.';
   }
   if (layoutMode === 'steady') {
     return 'No active issues. Vitals look steady — open Live for charts or Insights for trends.';
@@ -162,9 +160,9 @@ function pregenVisible(pregen) {
 }
 
 const DIM_BAR_GRADIENTS = [
-  'linear-gradient(90deg, var(--ui-sky), color-mix(in srgb, var(--ui-sky) 55%, var(--ui-accent)))',
-  'linear-gradient(90deg, var(--ui-accent), color-mix(in srgb, var(--ui-accent) 50%, #22d3ee))',
-  'linear-gradient(90deg, var(--ui-ok), color-mix(in srgb, var(--ui-ok) 45%, var(--ui-sky)))',
+  'linear-gradient(90deg, var(--ui-ch-disk, var(--ui-sky)), color-mix(in srgb, var(--ui-ch-disk, var(--ui-sky)) 55%, var(--ui-accent)))',
+  'linear-gradient(90deg, var(--ui-accent), color-mix(in srgb, var(--ui-accent) 55%, var(--ui-warn)))',
+  'linear-gradient(90deg, var(--ui-ok), color-mix(in srgb, var(--ui-ok) 50%, var(--ui-sky)))',
   'linear-gradient(90deg, var(--ui-info), color-mix(in srgb, var(--ui-info) 50%, var(--ui-accent)))',
   'linear-gradient(90deg, var(--ui-warn), color-mix(in srgb, var(--ui-warn) 55%, var(--ui-accent)))',
 ];
@@ -283,52 +281,6 @@ function deriveMcVersion(facts) {
   return null;
 }
 
-// ── Count-up hook ──────────────────────────────────────────────────────────────
-
-function prefersReducedMotion() {
-  return typeof matchMedia === 'function'
-    && matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-/** rAF tween toward `value`; snaps when reduced-motion. Returns display number. */
-function useCountUp(value, { duration = 420 } = {}) {
-  const [display, setDisplay] = useState(value ?? null);
-  const fromRef = useRef(value ?? 0);
-  const rafRef = useRef(0);
-
-  useEffect(() => {
-    if (value == null) {
-      setDisplay(null);
-      return undefined;
-    }
-    const from = Number(fromRef.current ?? value) || 0;
-    const to = Number(value);
-    if (prefersReducedMotion() || from === to || !Number.isFinite(from)) {
-      fromRef.current = to;
-      setDisplay(to);
-      return undefined;
-    }
-    const start = performance.now();
-    const tick = (t) => {
-      const p = Math.min(1, (t - start) / duration);
-      // easeOutCubic
-      const eased = 1 - Math.pow(1 - p, 3);
-      const current = from + (to - from) * eased;
-      setDisplay(current);
-      if (p < 1) {
-        rafRef.current = requestAnimationFrame(tick);
-      } else {
-        fromRef.current = to;
-        setDisplay(to);
-      }
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [value, duration]);
-
-  return display;
-}
-
 // ── Local UI pieces ───────────────────────────────────────────────────────────
 
 function DisableBackupAlerts() {
@@ -364,7 +316,7 @@ function VitalLive({
   label, raw, format, unit, tone = 'neutral', channel,
   caption, online,
 }) {
-  const animated = useCountUp(online ? raw : null);
+  const animated = useCountUp(online ? raw : null, { duration: DUR[5] });
   const display = animated == null ? '—' : fmtVital(animated, format);
 
   return html`
@@ -384,6 +336,80 @@ function VitalLive({
   `;
 }
 
+function MissionVitals() {
+  // Root kickRender skips Overview on live polls — force this strip alone to refresh.
+  const [, setTick] = useState(0);
+  useSignalEffect(() => {
+    void live.value?.at;
+    setTick((n) => n + 1);
+  });
+  const liveVal = live.value;
+  const latest = liveVal?.latest ?? null;
+  const online = hasLiveSample(latest);
+  const tps = latest?.tps;
+  const mspt = latest?.mspt;
+  const players = latest?.players_online;
+  const cpu = latest?.host_cpu_pct;
+  const heapUsed = latest?.heap_mb?.used ?? null;
+  const heapMax = latest?.heap_mb?.max ?? null;
+  const showCpu = cpu != null;
+
+  return html`
+    <div class=${`ov-mission__vitals${online ? ' ov-mission__vitals--live' : ''}`} aria-label="Live vitals">
+      ${online ? html`
+        <${VitalLive}
+          label="TPS"
+          raw=${tps}
+          format=${(v) => formatTps(v)}
+          tone=${tpsTone(tps)}
+          channel="tps"
+          online=${true}
+        />
+        <${VitalLive}
+          label="MSPT"
+          raw=${mspt}
+          format=${(v) => Number(v).toFixed(1)}
+          unit="ms"
+          tone=${msptTone(mspt)}
+          channel="mspt"
+          online=${true}
+        />
+        <${VitalLive}
+          label="Players"
+          raw=${players}
+          format=${(v) => String(Math.round(v))}
+          tone="neutral"
+          channel="players"
+          online=${true}
+        />
+        <${VitalLive}
+          label="Heap"
+          raw=${heapUsed}
+          format=${(v) => formatMb(v)}
+          tone="neutral"
+          channel="heap"
+          caption=${heapMax != null ? `Max ${formatMb(heapMax)}` : null}
+          online=${true}
+        />
+        ${showCpu ? html`
+          <${VitalLive}
+            label="CPU"
+            raw=${cpu}
+            format=${(v) => formatPct(v)}
+            tone=${cpuTone(cpu)}
+            channel="cpu"
+            online=${true}
+          />
+        ` : null}
+      ` : html`
+        <div class="ov-mission__vitals-empty">
+          ${[1, 2, 3].map((i) => html`<${Skeleton} key=${i} height=${64} className="ov-mission__vital-skel" />`)}
+        </div>
+      `}
+    </div>
+  `;
+}
+
 function MissionBand({
   grade,
   gradeLabel,
@@ -393,105 +419,59 @@ function MissionBand({
   sub,
   kpis,
   latestCrash,
-  latest,
-  showCpu,
+  reportAt,
+  reportStale,
 }) {
-  const online = latest != null;
-  const tps = latest?.tps;
-  const mspt = latest?.mspt;
-  const players = latest?.players_online;
-  const cpu = latest?.host_cpu_pct;
-  const heapUsed = latest?.heap_mb?.used ?? null;
-  const heapMax = latest?.heap_mb?.max ?? null;
+  const [beaconSettled, setBeaconSettled] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setBeaconSettled(true), 900);
+    return () => window.clearTimeout(id);
+  }, []);
 
   return html`
-    <div class=${`ov-mission ov-mission--${tone}`} data-tour="overview">
-      <div class="ov-mission__grade">
-        <div class=${`ov-beacon ov-beacon--${tone}`}>
-          <span class="ov-beacon__halo" aria-hidden="true"></span>
-          <${HealthGrade}
-            grade=${grade}
-            label=${gradeLabel}
-            size=${96}
-          />
-        </div>
-        <span class="ov-mission__grade-word">${gradeLabel}</span>
-      </div>
-
-      <div class="ov-mission__verdict">
-        ${greeting ? html`<p class="ov-mission__greeting">${greeting}</p>` : null}
-        <h2 class="ov-mission__headline">${headline}</h2>
-        <p class="ov-mission__sub">${sub}</p>
-        ${kpis?.length ? html`
-          <div class="ov-mission__kpis">
-            ${kpis.map((k) => html`
-              <div class=${`ov-kpi ov-kpi--${k.tone || 'neutral'}`} key=${k.label}>
-                <span class="ov-kpi__label">${k.label}</span>
-                <span class="ov-kpi__value">${k.value}</span>
-              </div>
-            `)}
-          </div>
-        ` : null}
-        ${latestCrash ? html`
-          <p class="ov-verdict-latest-crash">
-            <${Icon} name="bug" size=${12} />
-            ${latestCrash}
-          </p>
-        ` : null}
-      </div>
-
-      <div class=${`ov-mission__vitals${online ? ' ov-mission__vitals--live' : ''}`} aria-label="Live vitals">
-        ${online ? html`
-          <${VitalLive}
-            label="TPS"
-            raw=${tps}
-            format=${(v) => formatTps(v)}
-            tone=${tpsTone(tps)}
-            channel="tps"
-            online=${true}
-          />
-          <${VitalLive}
-            label="MSPT"
-            raw=${mspt}
-            format=${(v) => Number(v).toFixed(1)}
-            unit="ms"
-            tone=${msptTone(mspt)}
-            channel="mspt"
-            online=${true}
-          />
-          <${VitalLive}
-            label="Players"
-            raw=${players}
-            format=${(v) => String(Math.round(v))}
-            tone="neutral"
-            channel="players"
-            online=${true}
-          />
-          <${VitalLive}
-            label="Heap"
-            raw=${heapUsed}
-            format=${(v) => formatMb(v)}
-            tone="neutral"
-            channel="heap"
-            caption=${heapMax != null ? `Max ${formatMb(heapMax)}` : null}
-            online=${true}
-          />
-          ${showCpu ? html`
-            <${VitalLive}
-              label="CPU"
-              raw=${cpu}
-              format=${(v) => formatPct(v)}
-              tone=${cpuTone(cpu)}
-              channel="cpu"
-              online=${true}
+    <div class=${`ov-mission ov-mission--${tone}${reportStale ? ' is-stale' : ''}`} data-tour="overview">
+      <div class="ov-mission__status">
+        <div class="ov-mission__grade">
+          <div class=${`ov-beacon ov-beacon--${tone}${beaconSettled ? ' is-settled' : ''}`}>
+            <span class="ov-beacon__halo" aria-hidden="true"></span>
+            <${HealthGrade}
+              grade=${grade}
+              label=${gradeLabel}
+              size=${72}
             />
-          ` : null}
-        ` : html`
-          <div class="ov-mission__vitals-empty">
-            ${[1, 2, 3].map((i) => html`<${Skeleton} key=${i} height=${64} className="ov-mission__vital-skel" />`)}
           </div>
-        `}
+          <span class="ov-mission__grade-word">${gradeLabel}</span>
+        </div>
+
+        <div class="ov-mission__verdict">
+          ${greeting ? html`<p class="ov-mission__greeting">${greeting}</p>` : null}
+          <h2 class="ov-mission__headline">${headline}</h2>
+          <p class="ov-mission__sub">${sub}</p>
+          ${reportAt ? html`
+            <div class="ov-mission__provenance">
+              <${FreshnessBadge} layer="report" at=${reportAt} stale=${reportStale} />
+            </div>
+          ` : null}
+          ${kpis?.length ? html`
+            <div class="ov-mission__kpis">
+              ${kpis.map((k) => html`
+                <div class=${`ov-kpi ov-kpi--${k.tone || 'neutral'}`} key=${k.label}>
+                  <span class="ov-kpi__label">${k.label}</span>
+                  <span class="ov-kpi__value">${k.value}</span>
+                </div>
+              `)}
+            </div>
+          ` : null}
+          ${latestCrash ? html`
+            <p class="ov-verdict-latest-crash">
+              <${Icon} name="bug" size=${12} />
+              ${latestCrash}
+            </p>
+          ` : null}
+        </div>
       </div>
+
+      <${MissionVitals} />
     </div>
   `;
 }
@@ -502,6 +482,9 @@ function TrustChips({ uptimeSec, sessionWord, sessionTone, pills, facts, latest 
   const mc = deriveMcVersion(facts);
   const loader = loaderInfo(facts);
   const javaRaw = latest?.java_version ?? facts?.system?.java_version ?? null;
+  const jvmHealth = latest?.jvm_health_live ?? facts?.optional?.jvm_health ?? null;
+  const javaMajor = jvmHealth?.java_major;
+  const flagsProfile = jvmHealth?.flags_profile;
 
   if (mc) chips.push({ key: 'mc', label: 'Minecraft', value: mc, tone: 'info' });
   if (loader) {
@@ -512,7 +495,13 @@ function TrustChips({ uptimeSec, sessionWord, sessionTone, pills, facts, latest 
       tone: 'info',
     });
   }
-  if (javaRaw) chips.push({ key: 'java', label: 'Java', value: String(javaRaw), tone: 'info' });
+  if (javaRaw || javaMajor != null) {
+    const javaLabel = javaMajor != null ? String(javaMajor) : String(javaRaw);
+    chips.push({ key: 'java', label: 'Java', value: javaLabel, tone: 'info' });
+  }
+  if (flagsProfile) {
+    chips.push({ key: 'jvm_flags', label: 'JVM flags', value: String(flagsProfile), tone: 'info' });
+  }
 
   if (uptimeSec != null) {
     chips.push({ key: 'uptime', label: 'Uptime', value: formatDuration(uptimeSec), tone: 'info' });
@@ -609,8 +598,12 @@ function PregenJobCard({ title, pregen, radarKind = 'circle' }) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function PageView() {
-  const liveVal       = live.value;
-  const latest        = liveVal?.latest ?? null;
+  const noReport      = noReportYet.value;
+  // Subscribe to live only during first-run (exit the empty gate). Otherwise peek so
+  // MissionVitals alone re-renders on the 1s poll — not the whole Overview.
+  const liveVal       = noReport ? live.value : peekLive();
+  const latestRaw     = liveVal?.latest ?? null;
+  const latest        = hasLiveSample(latestRaw) ? latestRaw : null;
   const envelope      = liveVal?.envelope ?? null;
   const reportsVal    = reports.value;
   const facts         = reportsVal?.facts ?? null;
@@ -622,16 +615,19 @@ export function PageView() {
   const ovData        = ovMeta?.data ?? null;
   const perfVal       = performance.value;
   const uiVal         = ui.value;
-  const noReport      = noReportYet.value;
-  const nowMs         = now.value;
+  const nowMs         = Date.now();
   const isDown        = uiVal.connectionDown;
   const lagIssues     = issuesPeek.value?.data?.lag_issues ?? [];
+  const incidentStories = Array.isArray(opsCacheData?.incident_stories)
+    ? opsCacheData.incident_stories
+    : (Array.isArray(facts?.optional?.incident_stories) ? facts.optional.incident_stories : []);
+  const latestStory = incidentStories[0] ?? null;
 
   const health = facts ? displayHealth(facts, acksMap, opsCacheData, {
     backupTrackingEnabled: settings.value?.data?.backup_tracking_enabled !== false,
   }) : null;
-  const queue  = facts
-    ? buildActionQueue(facts, acksMap, opsCacheData, crashGroups.value, acksVal?.issues ?? {}, {
+  const queue  = (facts || opsCanDriveActionQueue(opsCacheData))
+    ? buildActionQueue(facts ?? null, acksMap, opsCacheData, crashGroups.value, acksVal?.issues ?? {}, {
       backupTrackingEnabled: settings.value?.data?.backup_tracking_enabled !== false,
       issueSuppressions: issueSuppressions.value?.data
         ?? facts?.optional?.active_suppressions
@@ -641,9 +637,16 @@ export function PageView() {
 
   const scorecard   = ovData?.scorecard ?? null;
   const rightNow    = opsCacheData?.right_now ?? null;
-  const perfTldr    = ovData?.performance_insights_tldr ?? null;
+  const perfTldr    = ovData?.baseline_regression_tldr
+    ?? ovData?.performance_insights_tldr
+    ?? null;
+  const sparkTldr   = ovData?.spark_tldr ?? null;
   const rssHint     = ovData?.rss_hint ?? null;
   const diskJump    = ovData?.disk_jump_tldr ?? null;
+  const diskProjection = ovData?.disk_projection
+    ?? ovData?.disk_projection_tldr
+    ?? null;
+  const safeRestart = ovData?.safe_restart ?? null;
   const reportMeta  = facts?.meta ?? null;
   const stale       = reportMeta ? isStaleReport(reportMeta, nowMs) : false;
 
@@ -656,7 +659,6 @@ export function PageView() {
   });
 
   const diskPct   = latest?.disk_use_pct ?? null;
-  const memAvGb   = latest?.mem_available_gb ?? null;
   const worldGb   = latest?.world_gb ?? null;
   const uptimeSec = latest?.java_uptime_sec ?? null;
   const byDimension = latest?.by_dimension
@@ -664,7 +666,9 @@ export function PageView() {
     ?? [];
   const chunkyPregen = envelope?.chunky_pregen ?? facts?.optional?.chunky_pregen ?? null;
   const dhPregen     = envelope?.dh_pregen ?? facts?.optional?.dh_pregen ?? null;
-  const startupProfile = facts?.optional?.startup_profile ?? null;
+  const startupProfile = facts?.optional?.startup_profile
+    ?? opsCacheData?.startup_profile
+    ?? null;
 
   const grade = ovData?.health_grade ?? (health ? gradeFromHealth(health.effective) : '?');
   const gradeLabel = gradeWord(grade, health?.label ?? healthStatus(health?.effective));
@@ -681,13 +685,13 @@ export function PageView() {
       ? 'incident'
       : 'steady';
 
-  const showCpu = latest?.host_cpu_pct != null;
   const hasInsight = !!(perfTldr?.label || perfTldr?.detail || perfVal?.insights?.length);
   const hasRightNow = !!(rightNow?.signals?.length);
   const hasLag = lagIssues.length > 0;
+  const hasStory = !!latestStory;
   const showTriage =
-    (layoutMode === 'incident' && (attentionItems.length > 0 || hasRightNow || hasLag))
-    || (layoutMode === 'steady' && hasRightNow);
+    (layoutMode === 'incident' && (attentionItems.length > 0 || hasRightNow || hasLag || hasStory))
+    || (layoutMode === 'steady' && (hasRightNow || hasStory));
 
   const headline = gradeHeadline(grade, attentionItems.length, isDown);
   const tone = missionTone(grade, attentionItems.length, isDown);
@@ -698,29 +702,31 @@ export function PageView() {
 
   // ── No-report / first-run gate ─────────────────────────────────────────────
   if (noReport && !latest) {
+    const wiz = persistGet('setupWizard', null);
+    const setupIncomplete = wiz != null && wiz.completed !== true;
     return html`
-      <${Page} title="Overview" subtitle=${welcomeLead.hostLine || 'Your server control center'}>
+      <${Page} title="Overview" subtitle=${welcomeLead.hostLine || 'Your server control center'} route="overview" tour="overview">
         <div class="ui-page__stack" data-tour="overview">
           <p class="ov-mission__greeting ov-mission__greeting--solo">${welcomeLead.lead}</p>
-          <p class="ov-firstrun-lead">Run a report to build your health grade and issue queue — or open Live to watch vitals stream in.</p>
+          <p class="ov-firstrun-lead">Watching and Scanning are already updating Issues and Live. Open Live for vitals, or Issues for continuous triage.</p>
           <div class="ov-firstrun">
-            <div class="ov-firstrun__card">
-              <span class="ov-firstrun__icon"><${Icon} name="file-text" size=${22} /></span>
-              <strong>Run your first report</strong>
-              <p>Builds the health grade, issue queue, and crash summaries.</p>
-              <${Button} kind="accent" onClick=${() => openModal('run-report')}>Run Report</${Button}>
-            </div>
             <div class="ov-firstrun__card">
               <span class="ov-firstrun__icon"><${Icon} name="activity" size=${22} /></span>
               <strong>Open Live</strong>
               <p>Watch TPS, MSPT, heap, and players stream in real time.</p>
-              <${Button} kind="neutral" onClick=${() => navigate('live')}>Go to Live</${Button}>
+              <${Button} kind="accent" onClick=${() => navigate('live')}>Go to Live</${Button}>
             </div>
             <div class="ov-firstrun__card">
-              <span class="ov-firstrun__icon"><${Icon} name="map" size=${22} /></span>
-              <strong>Take the tour</strong>
-              <p>A short walkthrough of every panel and what it’s for.</p>
-              <${Button} kind="neutral" onClick=${startTour}>Start tour</${Button}>
+              <span class="ov-firstrun__icon"><${Icon} name="alert-triangle" size=${22} /></span>
+              <strong>Open Issues</strong>
+              <p>Continuous scanning fills the fix queue even before a deep audit.</p>
+              <${Button} kind="neutral" onClick=${() => navigate('issues')}>Go to Issues</${Button}>
+            </div>
+            <div class="ov-firstrun__card">
+              <span class="ov-firstrun__icon"><${Icon} name="package" size=${22} /></span>
+              <strong>Support pack</strong>
+              <p>Build a redacted zip to share when something’s wrong — pick what to include.</p>
+              <${Button} kind="neutral" onClick=${() => openSupportBuilder()}>Build support pack</${Button}>
             </div>
           </div>
         </div>
@@ -743,8 +749,13 @@ export function PageView() {
   if (scorecard?.performance?.subtitle) {
     missionKpis.push({ label: 'Performance', value: scorecard.performance.subtitle });
   }
-  if (stale) missionKpis.push({ label: 'Report', value: 'Stale', tone: 'warn' });
-  if (!facts) missionKpis.push({ label: 'Next step', value: 'Run a report', tone: 'accent' });
+  if (stale) missionKpis.push({ label: 'Scanning', value: 'Check Sources', tone: 'warn' });
+  if (!facts) {
+    const wiz = persistGet('setupWizard', null);
+    if (wiz != null && wiz.completed !== true) {
+      missionKpis.push({ label: 'Next step', value: 'Finish setup', tone: 'accent' });
+    }
+  }
 
   const sessionWord = isDown
     ? 'Offline'
@@ -761,9 +772,19 @@ export function PageView() {
     backupTrackingEnabled: settings.value?.data?.backup_tracking_enabled !== false,
   });
 
+  const reportAt = dataSources.value?.reportAt
+    ?? reportMeta?.last_report_at
+    ?? reportMeta?.generated
+    ?? null;
+  const liveAt = dataSources.value?.liveAt ?? latest?.ts ?? latest?.at ?? null;
+  const scanAt = dataSources.value?.scanAt ?? null;
+
   const insightSection = hasInsight ? html`
-    <${Section} title="Performance insight">
-      <div class="ov-instrument ov-instrument--insight">
+    <${Section}
+      title="Performance insight"
+      badge=${html`<${FreshnessBadge} layer="report" at=${reportAt} stale=${stale} />`}
+    >
+      <div class=${`ov-instrument ov-instrument--insight${stale ? ' is-stale' : ''}`}>
         <div class="ov-insight-row">
           <div class="ov-insight-text">
             <div class="ov-insight-label">
@@ -785,6 +806,99 @@ export function PageView() {
     </${Section}>
   ` : null;
 
+  const hasSpark = !!(sparkTldr?.label || sparkTldr?.mod_id);
+  const sparkSection = hasSpark ? html`
+    <${Section}
+      title="Spark"
+      badge=${html`<${FreshnessBadge} layer="report" at=${reportAt} stale=${stale} />`}
+    >
+      <div class=${`ov-instrument ov-instrument--insight${stale ? ' is-stale' : ''}`}>
+        <div class="ov-insight-row">
+          <div class="ov-insight-text">
+            <div class="ov-insight-label">
+              ${sparkTldr?.label ?? 'Spark profile available'}
+            </div>
+            ${sparkTldr?.mod_id ? html`
+              <div class="ov-insight-detail">
+                Top mod: ${sparkTldr.mod_id}${sparkTldr.pct != null ? ` ~${Math.round(sparkTldr.pct)}%` : ''}
+              </div>
+            ` : null}
+          </div>
+          <${Button}
+            kind="neutral"
+            size="sm"
+            onClick=${() => navigate('spark', sparkTldr?.source_path ? { profile: sparkTldr.source_path } : {})}
+          >
+            Open Spark
+          </${Button}>
+        </div>
+      </div>
+    </${Section}>
+  ` : null;
+
+  const restartSection = safeRestart?.verdict ? (() => {
+    const verdict = safeRestart.verdict;
+    const tone = verdict === 'wait' ? 'danger' : verdict === 'caution' ? 'warn' : 'ok';
+    const badgeLabel = verdict === 'wait' ? 'Wait' : verdict === 'caution' ? 'Caution' : 'Safe';
+    const reasons = Array.isArray(safeRestart.reasons) ? safeRestart.reasons.slice(0, 5) : [];
+                const checkedAt = safeRestart.checked_at ?? liveAt ?? scanAt;
+
+    function openReason(reason) {
+      const tab = reason?.tab || 'overview';
+      const params = reason?.tab_params && typeof reason.tab_params === 'object'
+        ? { ...reason.tab_params }
+        : {};
+      if (tab === 'insights' && !params.view) {
+        navigate('insights', { view: 'storage' });
+        return;
+      }
+      if (tab === 'settings' && params.panel) {
+        navigate('settings', { panel: params.panel });
+        return;
+      }
+      navigate(tab, params);
+    }
+
+    return html`
+      <${Section}
+        title="Restart"
+        badge=${html`<${FreshnessBadge} layer="live" at=${checkedAt} />`}
+      >
+        <div class=${`ov-instrument ov-instrument--restart ov-restart`} data-verdict=${verdict}>
+          <div class="ov-restart__hero">
+            <${Badge} tone=${tone}>${badgeLabel}</${Badge}>
+            <div class="ov-restart__titles">
+              <div class="ov-restart__headline">${safeRestart.headline || badgeLabel}</div>
+              ${safeRestart.summary ? html`
+                <p class="ov-restart__summary">${safeRestart.summary}</p>
+              ` : null}
+            </div>
+          </div>
+
+          ${reasons.length ? html`
+            <ul class="ov-restart__reasons">
+              ${reasons.map((r) => html`
+                <li class=${`ov-restart-reason ov-restart-reason--${r.severity || 'info'}`} key=${r.id || r.label}>
+                  <div class="ov-restart-reason__text">
+                    <span class="ov-restart-reason__label">${r.label}</span>
+                    ${r.detail ? html`<span class="ov-restart-reason__detail">${r.detail}</span>` : null}
+                  </div>
+                  ${r.tab ? html`
+                    <${Button} kind="neutral" size="sm" onClick=${() => openReason(r)}>
+                      Open
+                    </${Button}>
+                  ` : null}
+                </li>
+              `)}
+            </ul>
+          ` : null}
+
+          <p class="ov-restart__hint">Informational only — your panel or /stop still controls the restart.</p>
+        </div>
+      </${Section}>
+    `;
+  })() : null;
+
   const storageSection = (worldGb != null || latest?.java_rss_gb != null || byDimension.length || diskPct != null) ? (() => {
     const backupTrackingOn = settings.value?.data?.backup_tracking_enabled !== false;
     const showDisableBackup = backupTrackingOn
@@ -796,53 +910,50 @@ export function PageView() {
     const dimTotalGb = byDimension.reduce((sum, d) => sum + (d.gb ?? 0), 0);
 
     return html`
-    <${Section} title="Storage">
+    <${Section}
+      title="Storage"
+      badge=${html`<${FreshnessBadge} layer="live" at=${liveAt} />`}
+    >
       <div class="ov-instrument ov-instrument--storage ov-storage">
         <div class="ov-storage__hero">
           ${diskPct != null ? html`
-            <div class="ov-instrument__dial">
+            <div class="ov-storage__dial">
               <${Gauge}
                 value=${diskPct}
                 max=${100}
                 label="Disk used"
+                labelPlacement="above"
                 unit="%"
                 warnAt=${75}
                 critAt=${90}
-                size=${160}
+                size=${168}
                 hero=${true}
                 tone=${diskTone(diskPct)}
               />
             </div>
           ` : null}
-          <div class="ov-storage__side">
-            ${worldGb != null ? html`
-              <${MetricTile}
-                label="World size"
-                value=${worldGb}
-                format=${(v) => formatGb(v)}
-                size="sm"
-                padding="12"
-              />
-            ` : null}
-            ${latest?.java_rss_gb != null ? html`
-              <${MetricTile}
-                label="Java RSS"
-                value=${latest.java_rss_gb}
-                format=${(v) => formatGb(v)}
-                size="sm"
-                padding="12"
-              />
-            ` : null}
-            ${memAvGb != null ? html`
-              <${MetricTile}
-                label="RAM free"
-                value=${memAvGb}
-                format=${(v) => formatGb(v)}
-                size="sm"
-                padding="12"
-              />
-            ` : null}
-          </div>
+          ${(worldGb != null || latest?.java_rss_gb != null) ? html`
+            <div class="ov-storage__kpis">
+              ${worldGb != null ? html`
+                <${MetricTile}
+                  label="World size"
+                  value=${worldGb}
+                  format=${(v) => formatGb(v)}
+                  size="sm"
+                  padding="12"
+                />
+              ` : null}
+              ${latest?.java_rss_gb != null ? html`
+                <${MetricTile}
+                  label="Java RSS"
+                  value=${latest.java_rss_gb}
+                  format=${(v) => formatGb(v)}
+                  size="sm"
+                  padding="12"
+                />
+              ` : null}
+            </div>
+          ` : null}
         </div>
 
         ${byDimension.length ? html`
@@ -861,7 +972,10 @@ export function PageView() {
                     <div class="ov-dim-row" key=${dim.id ?? dim.path ?? dim.label}>
                       <div class="ov-dim-row__head">
                         <span class="ov-dim-row__label">${formatDimLabel(dim)}</span>
-                        <span class="ov-dim-row__gb">${formatGb(dim.gb ?? 0)}</span>
+                        <span class="ov-dim-row__meta">
+                          ${sharePct > 0 ? html`<span class="ov-dim-row__share">${sharePct}%</span>` : null}
+                          <span class="ov-dim-row__gb">${formatGb(dim.gb ?? 0)}</span>
+                        </span>
                       </div>
                       <div class="ov-dim-row__track" aria-hidden="true">
                         <div
@@ -879,13 +993,28 @@ export function PageView() {
           </div>
         ` : null}
 
-        ${showDisableBackup ? html`<${DisableBackupAlerts} />` : null}
+        ${(showDisableBackup || (diskJump?.active && diskJump?.label) || diskProjection || (rssHint?.show && rssHint?.message)) ? html`
+          <div class="ov-storage__footer">
+            ${showDisableBackup ? html`<${DisableBackupAlerts} />` : null}
 
-        ${diskJump?.active && diskJump?.label ? html`
-          <p class="ov-storage__note ov-storage__note--warn">${diskJump.label}</p>
-        ` : null}
-        ${rssHint?.show && rssHint?.message ? html`
-          <p class="ov-storage__note">${rssHint.message}</p>
+            ${diskJump?.active && diskJump?.label ? html`
+              <p class="ov-storage__note ov-storage__note--warn">${diskJump.label}</p>
+            ` : null}
+            ${(() => {
+              const proj = diskProjection;
+              if (!proj) return null;
+              const msg = proj.message || proj.label || null;
+              if (!msg) return null;
+              const days = proj.days_until_full;
+              const warnDays = settings.value?.data?.disk_fill_warn_days ?? 14;
+              const warn = proj.verdict === 'filling' && days != null && days <= warnDays;
+              const tone = warn ? 'ov-storage__note--warn' : '';
+              return html`<p class=${`ov-storage__note ${tone}`.trim()}>${msg}</p>`;
+            })()}
+            ${rssHint?.show && rssHint?.message ? html`
+              <p class="ov-storage__note">${rssHint.message}</p>
+            ` : null}
+          </div>
         ` : null}
       </div>
     </${Section}>
@@ -893,7 +1022,10 @@ export function PageView() {
   })() : null;
 
   const pregenSection = (pregenVisible(chunkyPregen) || pregenVisible(dhPregen)) ? html`
-    <${Section} title="World background jobs">
+    <${Section}
+      title="World background jobs"
+      badge=${html`<${FreshnessBadge} layer="live" at=${liveAt || scanAt} />`}
+    >
       <div class="ov-pregen-list">
         <${PregenJobCard} title="Chunky pregen" pregen=${chunkyPregen} radarKind="circle" />
         <${PregenJobCard} title="Distant Horizons pregen" pregen=${dhPregen} radarKind="square" />
@@ -927,8 +1059,11 @@ export function PageView() {
       ? '—'
       : (Number(total) >= 100 ? `${Math.round(total)}` : `${Number(total).toFixed(1)}`);
     return html`
-      <${Section} title="Boot profile">
-        <div class="ov-instrument ov-instrument--boot ov-boot">
+      <${Section}
+        title="Boot profile"
+        badge=${html`<${FreshnessBadge} layer="report" at=${reportAt} stale=${stale} />`}
+      >
+        <div class=${`ov-instrument ov-instrument--boot ov-boot${stale ? ' is-stale' : ''}`}>
           <div class="ov-boot__heroes">
             <div class="ov-boot__hero ov-boot__hero--primary">
               <span class="ov-boot__hero-label">Boot time</span>
@@ -974,7 +1109,7 @@ export function PageView() {
           title="Needs attention"
           badge=${html`<${Badge} tone="danger">${attentionItems.length}</${Badge}>`}
         >
-          <div class="ov-queue">
+          <${StaggerList} className="ov-queue" resetKey=${'attn-' + attentionItems.length}>
             ${attentionItems.slice(0, ATTENTION_CAP).map((item) => html`
               <${ListRow}
                 key=${item.key}
@@ -1000,7 +1135,7 @@ export function PageView() {
                 `}
               />
             `)}
-          </div>
+          </${StaggerList}>
           ${attentionMore > 0 ? html`
             <div class="ov-attention-more">
               <${Button} kind="neutral" size="sm" onClick=${() => navigate('issues', { view: 'active' })}>
@@ -1016,7 +1151,7 @@ export function PageView() {
 
       ${hasRightNow ? html`
         <${Section} title="Right now">
-          <div class="ov-queue">
+          <${StaggerList} className="ov-queue" resetKey=${'rn-' + rightNow.signals.length}>
             ${rightNow.signals.map((sig, i) => html`
               <${ListRow}
                 key=${sig.type + String(i)}
@@ -1038,7 +1173,36 @@ export function PageView() {
                 ` : null}
               />
             `)}
-          </div>
+          </${StaggerList}>
+        </${Section}>
+      ` : null}
+
+      ${hasStory ? html`
+        <${Section}
+          title="Incident story"
+          badge=${html`<${Badge} tone="warn">${incidentStories.length}</${Badge}>`}
+          collapsible=${true}
+          defaultOpen=${layoutMode === 'incident'}
+        >
+          <${ListRow}
+            tone="warn"
+            icon=${html`<${Icon} name="activity" size=${14} />`}
+            title=${latestStory.narrative
+              ? (latestStory.narrative.length > 120
+                ? latestStory.narrative.slice(0, 117) + '…'
+                : latestStory.narrative)
+              : 'Correlated overnight events'}
+            meta=${latestStory.started_at
+              ? new Date(latestStory.started_at).toLocaleString(undefined, {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+              })
+              : null}
+            actions=${html`
+              <${Button} kind="neutral" size="sm" onClick=${() => navigate('activity')}>
+                Open on Activity
+              </${Button}>
+            `}
+          />
         </${Section}>
       ` : null}
 
@@ -1049,7 +1213,7 @@ export function PageView() {
           collapsible=${true}
           defaultOpen=${false}
         >
-          <div class="ov-queue">
+          <${StaggerList} className="ov-queue" resetKey=${'lag-' + lagIssues.length}>
             ${lagIssues.slice(0, LAG_CAP).map((lag) => html`
               <${ListRow}
                 key=${lag.id}
@@ -1068,7 +1232,7 @@ export function PageView() {
                 `}
               />
             `)}
-          </div>
+          </${StaggerList}>
           ${lagMore > 0 ? html`
             <div class="ov-attention-more">
               <${Button} kind="neutral" size="sm" onClick=${() => navigate('issues')}>
@@ -1087,6 +1251,8 @@ export function PageView() {
     <${Page}
       title="Overview"
       subtitle=${subtitleText}
+      tour="overview"
+      route="overview"
     >
       <div data-tour="overview" class="ui-page__stack">
 
@@ -1099,8 +1265,8 @@ export function PageView() {
         sub=${heroSubtext(layoutMode, attentionItems.length, isDown)}
         kpis=${missionKpis}
         latestCrash=${scorecard?.crashes?.latest_label ?? null}
-        latest=${latest}
-        showCpu=${showCpu}
+        reportAt=${reportAt}
+        reportStale=${stale}
       />
 
       ${setupChip ? html`
@@ -1123,10 +1289,10 @@ export function PageView() {
       ${!facts && latest ? html`
         <div class="ov-firstrun">
           <div class="ov-firstrun__card">
-            <span class="ov-firstrun__icon"><${Icon} name="file-text" size=${20} /></span>
-            <strong>Live is flowing — run a report</strong>
-            <p>Live metrics are here. A report unlocks the health grade, issues queue, and crash analysis.</p>
-            <${Button} kind="accent" size="sm" onClick=${() => openModal('run-report')}>Run Report</${Button}>
+            <span class="ov-firstrun__icon"><${Icon} name="activity" size=${20} /></span>
+            <strong>Live is flowing</strong>
+            <p>Issues and Crashes update from continuous Scanning. Deep Mods deltas keep building in the background; use rail <strong>Build pack</strong> only when you need a shareable zip.</p>
+            <${Button} kind="neutral" size="sm" onClick=${() => navigate('issues')}>Open Issues</${Button}>
           </div>
         </div>
       ` : null}
@@ -1136,6 +1302,8 @@ export function PageView() {
         <div class="ov-wide-grid__metrics">
           <div class="ov-secondary">
             ${insightSection}
+            ${sparkSection}
+            ${restartSection}
             ${storageSection}
             ${pregenSection}
             ${bootSection}

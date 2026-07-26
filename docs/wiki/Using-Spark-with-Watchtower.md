@@ -1,13 +1,13 @@
 # Using Spark with Watchtower
 
-Spark is a mod that records **what is using server time** when lag happens. Watchtower reads Spark’s saved profile and turns it into plain advice on the **Spark** tab — which mods and code paths are slowing ticks down.
+Spark records **what is using server time** when lag happens. Watchtower reads Spark’s saved profile and turns it into plain advice on the **Spark** tab — which mods and code paths are slowing ticks down.
 
 ---
 
 ## What you need
 
 - [Spark](https://modrinth.com/mod/spark) installed on the server
-- Watchtower **1.0.0**
+- Current Watchtower release from [[Downloads-and-Releases]] (Spark tab + on-demand parse)
 - A saved `.sparkprofile` file (see below)
 
 ---
@@ -15,10 +15,11 @@ Spark is a mod that records **what is using server time** when lag happens. Watc
 ## Quick workflow (Spark tab)
 
 1. **Capture while lagging:** `/spark profiler start` → wait **30–60 seconds** → `/spark profiler stop --save-to-file`
-2. **Open the Spark tab** and use the **profile dropdown** to pick the file you want (click **Refresh** if you just saved a new one)
-3. **Read the breakdown** — use the sub-tabs (**Summary**, **Mods & code**, **World**, **Capture window**, **Advanced**) to explore the profile; your last tab choice is remembered per browser
+2. **Open the Spark tab** and click **Refresh** if you just saved a new profile, then use the **profile dropdown** to pick the file
+3. **Or** click **Import from URL** and paste a `https://spark.lucko.me/…` link (downloads once into `watchtower/spark-upload/`)
+4. **Read the evidence** — Overview, Findings, World, **Sources** (profile share), Timeline, Call paths, Technical, Compare
 
-You do **not** need to run a full Watchtower report to view profiles on the Spark tab. A full report is **optional** — it only adds a Spark summary to **Overview** and `brief.txt`.
+Day-to-day lag triage starts on [[Live-Charts]] and [[Issues]]. Spark is for proof when you need it — not a required daily “run report” step.
 
 ---
 
@@ -28,7 +29,7 @@ You do **not** need to run a full Watchtower report to view profiles on the Spar
 2. Wait **30–60 seconds** while lag is happening
 3. `/spark profiler stop --save-to-file`
 
-Spark saves a file like `config/spark/profile-2026-06-23_14.30.00.sparkprofile`.
+Spark saves a file like `config/spark/profile-….sparkprofile`.
 
 **Optional:** copy the file to `<server>/watchtower/spark-upload/` so it appears first in the dropdown.
 
@@ -38,85 +39,65 @@ Spark saves a file like `config/spark/profile-2026-06-23_14.30.00.sparkprofile`.
 
 On the **Spark** tab:
 
-- Use the **Profile** dropdown in the header to switch between saved `.sparkprofile` files on disk (newest first)
+- Use the **Profile** dropdown (newest first)
 - Click **Refresh** to rescan `watchtower/spark-upload/` and `config/spark/`
-- Your last selection is remembered per server
+- Click **Import from URL** for a spark.lucko.me link or 10-character key
+- Unreadable files show a short notice instead of failing silently
+- Last selected path is remembered in this browser
 
-Watchtower lists up to **25** profiles. The newest capture time wins when sorting.
-
----
-
-## Run a health report (optional)
-
-To surface Spark on **Overview** and in `brief.txt`, run a **full health report**:
-
-- Click **Run report** on the Spark tab or Overview, or
-- `/watchtower run`, or
-- Wait for a scheduled report
-
-The report embeds the **newest** profile on disk at report time. The Spark tab dropdown can still show any older file on disk.
+Watchtower lists up to **25** profiles. To turn Spark ingest off, set `SPARK_ENABLED=false` in `watchtower.conf` and restart.
 
 ---
 
 ## Read the Spark tab
 
-Open **Spark** in the sidebar (under Fix problems). After you pick a profile, five sub-tabs organize the report:
-
 | Sub-tab | What it shows |
 | -------- | ----------------- |
-| **Summary** | Verdict, KPIs (TPS, MSPT, players, entities), key findings, recommended actions |
-| **Mods & code** | Mod tick usage, mod signals, hot methods |
-| **World** | Top entities, entity hotspots, dimension breakdown |
-| **Capture window** | Timeline and host CPU/RAM/disk during the capture |
-| **Advanced** | Performance chart, full method table, JVM heap, server config, capture metadata |
+| **Overview** | Capture health, findings, next actions, quality limits |
+| **Findings** | Ranked evidence |
+| **World** | Entity/chunk context when present |
+| **Sources** | **Profile** source/mod attribution (own-time vs stack involvement) |
+| **Timeline** | One-minute windows for TPS, MSPT, CPU, players, entities, chunks |
+| **Call paths** | Searchable thread trees |
+| **Technical** | Sampler settings, JVM metadata, provenance |
+| **Compare** | Baseline vs target deltas |
 
-The **How to use Spark** workflow panel stays at the top (collapses after first profile load).
+> **Name clash:** Spark → **Sources** explains which mod owns time in a **profile**. Ops → [[Sources]] explains Watchtower **pollers**. They are different tabs.
 
-| Other UI | What it tells you |
-| -------- | ----------------- |
-| **Profile dropdown** | Switch between saved `.sparkprofile` files on disk |
-| **Refresh** | Rescan `watchtower/spark-upload/` and `config/spark/` |
+### When Spark helps / when it doesn’t
 
-Profiles from the last **24 hours** are highlighted as fresh on Overview. Older profiles still show with a note to capture a new one.
+| Helps | Does not prove |
+|-------|----------------|
+| Which mods dominate tick time during a capture | That a mod is “bad” forever |
+| Call paths for a lag window | Network or client-only issues |
+| Compare two captures | Memory leaks from allocation mode alone |
 
 ---
 
-## Technical details
+## How Watchtower interprets a profile
 
-### Search paths
+- **Execution mode** — where CPU/wall time was spent (milliseconds)
+- **Allocation mode** — newly allocated memory (bytes); not CPU time; cannot alone prove a leak
+- **Inclusive** vs **Self / own** — whole stack vs this frame only
+- **Source involvement** — inclusive weight at each source’s entry points (not double-counted nested frames)
+- Timeline windows describe the capture; rolling TPS/MSPT metadata is labeled separately
 
-Watchtower checks `watchtower/spark-upload/` first, then `config/spark/profile-*.sparkprofile`.
+Watchtower labels jar-index attribution as a fallback when Spark’s class sources are missing. Unknown and native frames stay visible. Evidence limits are shown on Overview — trust the quality notes.
 
-### API (dashboard)
+---
 
-| Endpoint | Purpose |
-| -------- | ------- |
-| `GET /api/spark/profiles` | List profiles on disk |
-| `GET /api/spark/profile?path=…` | Parse one profile on demand |
+## Overview teaser
 
-### Configuration (`watchtower.conf`)
+When a fresh profile exists, [[Dashboard-Overview]] may show a short Spark summary with **Open Spark**. That is a shortcut into this tab — not a separate “run report” button for day-to-day use.
 
-| Key | Default | Purpose |
-| ----- | ------- | ------- |
-| `SPARK_ENABLED` | `true` | Turn Spark ingest on/off |
-| `SPARK_FRESH_HOURS` | `24` | “Fresh” window for brief / Overview |
-| `SPARK_UPLOAD_DIR` | *(empty)* | Custom upload folder |
-
-### Limits
-
-- Does not download from spark.lucko.me automatically — file must be on disk
-- Does not replace Spark’s interactive flame graph — use **Open in Spark viewer** for the full tree
-
-### Maintainer tooling
-
-```bash
-./gradlew :watchtower-core:sparkAuditFixtures
-node web/dashboard/scripts/generate-spark-mocks.mjs
-```
+Optional Support compose can attach Spark context when you share a pack ([[Health-Reports]]).
 
 ---
 
 ## Related
 
-- [[Roadmap]] — Spark integration history
-- [[Understanding-Data-Sources]] — report-time vs live data
+- [[Issues]] — fix inbox during lag
+- [[Live-Charts]] — right-now TPS / tick lag
+- [[Mods]] — inventory and conflicts
+- [[Sources]] — Ops pollers (not Spark Sources)
+- [[Troubleshooting]]

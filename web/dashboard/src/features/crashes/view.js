@@ -112,12 +112,6 @@ export function PageView() {
       : opt
   )), [unreviewedCount]);
 
-  const handleSelect = useCallback((fp) => {
-    const next = { view: effectiveView };
-    if (fp) next.group = fp;
-    navigate('crashes', next, { replace: true });
-  }, [effectiveView]);
-
   function handleViewChange(v) {
     if (v === 'tools') {
       navigate('crashes', { view: v });
@@ -192,8 +186,7 @@ export function PageView() {
             mode=${effectiveView}
             enriched=${enriched}
             mods=${mods}
-            selectedFp=${routeGroup}
-            onSelect=${handleSelect}
+            routeKey=${routeGroup}
             onScan=${handleScan}
             scanning=${scanning}
           />

@@ -4,12 +4,13 @@
  */
 
 import {
-  live, samples, overviewMeta, players, reports, opsCache,
+  live, samples, overviewMeta, players, reports, opsCache, dataSources,
   issuesPeek, activity, updateCheck, spark,
   performance, settings, noReportYet, acks, crashGroups, inbox, issueSuppressions,
-  modrinthScan,
+  modrinthScan, discovery,
 } from '../state/stores.js';
 import { createSimState, stepSim } from './mock-physics.js';
+import { MOCK_MEM_TOTAL_GB } from './mock-physics.js';
 import { groupCrashes, mergeCrashRows } from '../domain/crash-groups.js';
 
 async function loadJson(path) {
@@ -82,16 +83,30 @@ export class FixtureSource {
       loadJson(PATHS.perfDashboard).catch(() => null),
     ]);
 
-    // Live
+    // Live — enrich latest with derived mem_used when fixtures only ship available
+    const latestBase = envelope?.latest ?? null;
+    const memTotal = latestBase?.mem_total_gb ?? MOCK_MEM_TOTAL_GB;
+    const latest = latestBase ? {
+      ...latestBase,
+      mem_total_gb: latestBase.mem_total_gb ?? memTotal,
+      mem_used_gb: latestBase.mem_used_gb
+        ?? (latestBase.mem_available_gb != null
+          ? Math.round(Math.max(0, memTotal - latestBase.mem_available_gb) * 100) / 100
+          : null),
+    } : null;
+    const envelopeHydrated = envelope ? { ...envelope, latest } : envelope;
+
     live.value = {
-      envelope,
-      latest: envelope?.latest ?? null,
+      envelope: envelopeHydrated,
+      latest,
       error: null,
       at: Date.now(),
     };
 
-    // Samples — rebase timestamps to "now" if fixture went stale (e.g. locked regen)
-    const seriesHydrated = _ensureThermalSeries(_rebaseSeriesToNow(samplesRaw ?? {}));
+    // Samples — hydrate IO + mem used, then rebase timestamps to "now"
+    const seriesHydrated = _ensureThermalSeries(
+      _rebaseSeriesToNow(_ensureMemUsedSeries(_ensureIoSeries(samplesRaw ?? {}, envelopeHydrated), envelopeHydrated)),
+    );
     samples.value = {
       series: seriesHydrated,
       window: { kind: 'hours', value: 1 },
@@ -102,6 +117,18 @@ export class FixtureSource {
 
     // Ops cache
     if (opsCacheData) opsCache.value = { data: opsCacheData, at: Date.now() };
+
+    const rep0 = index?.reports?.[0];
+    dataSources.value = {
+      liveAt: latest?.ts ?? latest?.at ?? envelope?.latest?.at ?? null,
+      scanAt: opsCacheData?.updated_at ?? null,
+      reportAt: rep0?.generated ?? null,
+      supportComposeAt: opsCacheData?.last_support_compose_at ?? null,
+      issuesLiveAt: opsCacheData?.issues_live_updated_at ?? opsCacheData?.updated_at ?? null,
+      nextScheduledMin: null,
+      opsPollSec: 60,
+      opsLogScanSec: 60,
+    };
 
     // Overview meta
     if (overviewMetaData) overviewMeta.value = { data: overviewMetaData, at: Date.now() };
@@ -181,7 +208,14 @@ export class FixtureSource {
       const tb = Date.parse(String(b?.time || '').replace(',', '.').replace(' ', 'T'));
       return (isNaN(tb) ? 0 : tb) - (isNaN(ta) ? 0 : ta);
     });
-    activity.value = { events: merged, at: Date.now(), loading: false };
+    activity.value = {
+      events: merged,
+      incidentStories: Array.isArray(opsCacheData?.incident_stories)
+        ? opsCacheData.incident_stories
+        : (Array.isArray(facts?.optional?.incident_stories) ? facts.optional.incident_stories : []),
+      at: Date.now(),
+      loading: false,
+    };
   }
 
   // ── Live & samples ─────────────────────────────────────────────────────────
@@ -511,7 +545,7 @@ export class FixtureSource {
   }
 
   async fetchActivity() {
-    return { events: activity.value.events };
+    return { events: activity.value.events, incident_stories: activity.value.incidentStories ?? [] };
   }
 
   // ── Scans ──────────────────────────────────────────────────────────────────
@@ -839,21 +873,28 @@ export class FixtureSource {
     const data = await loadJson(PATHS.sparkProfiles).catch(() => null);
     if (data) {
       const profiles = data?.profiles ?? [];
+      const reportPath = data?.report_profile_path ?? null;
       spark.value = {
         ...spark.value,
         profiles,
+        skipped: data?.skipped ?? [],
         searchDirs: data?.search_dirs ?? [],
+        reportProfilePath: reportPath,
         enabled: data?.spark_enabled !== false && data?.enabled !== false,
+        listLoading: false,
+        lastRefreshedAt: Date.now(),
       };
       // Auto-open report profile (or first) so preview isn't stuck on empty.
       if (!spark.value.activePath && !spark.value.profile && profiles.length > 0) {
         const preferred =
-          data?.report_profile_path
+          reportPath
           ?? profiles[0]?.source_path
           ?? profiles[0]?.path
           ?? null;
         if (preferred) await this.fetchSparkProfile(preferred);
       }
+    } else {
+      spark.value = { ...spark.value, listLoading: false };
     }
     return data;
   }
@@ -863,9 +904,23 @@ export class FixtureSource {
       this._sparkProfileMocks = await loadJson(PATHS.sparkProfileMocks).catch(() => ({}));
     }
     const map = this._sparkProfileMocks?.profiles ?? this._sparkProfileMocks;
-    const profile = map?.[path] ?? map?.default ?? null;
+    let profile = map?.[path] ?? map?.default ?? null;
+    if (!profile && map && typeof map === 'object') {
+      const keys = Object.keys(map);
+      if (keys.length) profile = map[keys[0]];
+    }
     spark.value = { ...spark.value, profile, activePath: path, loading: false, error: null };
     return profile;
+  }
+
+  async importSparkProfile(url) {
+    // Preview: pretend import succeeded using the first mock profile.
+    await this.fetchSparkProfiles();
+    const path = spark.value.reportProfilePath
+      ?? spark.value.profiles?.[0]?.source_path
+      ?? null;
+    if (path) await this.fetchSparkProfile(path);
+    return { ok: true, source_path: path, preview: true, url };
   }
 
   // ── Performance ────────────────────────────────────────────────────────────
@@ -877,8 +932,11 @@ export class FixtureSource {
       loadJson(w === '30d' ? PATHS.perfInsights30d : PATHS.perfInsights).catch(() => null),
       loadJson(w === '30d' ? PATHS.perfRollups30d : w === '7d' ? PATHS.perfRollups7d : PATHS.perfRollups).catch(() => null),
     ]);
-    performance.value = { window: w, dashboard, insights, rollups, at: Date.now() };
-    return { dashboard, insights, rollups };
+    const dash = dashboard && this._baselineRegressionOverride
+      ? { ...dashboard, baseline_regression: this._baselineRegressionOverride }
+      : dashboard;
+    performance.value = { window: w, dashboard: dash, insights, rollups, at: Date.now() };
+    return { dashboard: dash, insights, rollups };
   }
 
   async fetchPerformanceRollups(hours) {
@@ -886,6 +944,27 @@ export class FixtureSource {
     const data = await loadJson(path).catch(() => null);
     performance.value = { ...performance.value, rollups: data, at: Date.now() };
     return data;
+  }
+
+  async setPerformanceBaselineNow() {
+    const dash = performance.value?.dashboard ?? {};
+    const next = {
+      ...(dash.baseline_regression ?? {}),
+      active: false,
+      has_baseline: true,
+      baseline_source: 'manual',
+      severity: 'ok',
+      label: 'On pace with baseline',
+      detail: 'Last 7 days are within 10% of your saved baseline (preview — baseline reset locally).',
+      baseline_captured_at: new Date().toISOString(),
+    };
+    this._baselineRegressionOverride = next;
+    performance.value = {
+      ...performance.value,
+      dashboard: { ...dash, baseline_regression: next },
+      at: Date.now(),
+    };
+    return { ok: true, baseline_regression: next };
   }
 
   // ── Settings ───────────────────────────────────────────────────────────────
@@ -905,37 +984,90 @@ export class FixtureSource {
       mapped.modrinth_auto_scan_on_mod_changes = !!mapped.modrinthAutoScanOnModChanges;
       delete mapped.modrinthAutoScanOnModChanges;
     }
+    if ('sparkAutoCaptureOnLag' in mapped) {
+      mapped.spark_auto_capture_on_lag = !!mapped.sparkAutoCaptureOnLag;
+      delete mapped.sparkAutoCaptureOnLag;
+    }
+    if ('baselineAutoCapture' in mapped) {
+      mapped.baseline_auto_capture = !!mapped.baselineAutoCapture;
+      delete mapped.baselineAutoCapture;
+    }
+    if ('baselineRegressionThresholdPct' in mapped) {
+      mapped.baseline_regression_threshold_pct = Number(mapped.baselineRegressionThresholdPct);
+      delete mapped.baselineRegressionThresholdPct;
+    }
     settings.value = {
       ...settings.value,
       data: { ...(settings.value.data ?? {}), ...mapped },
     };
-    return { ok: true };
+    return { ok: true, settings: settings.value.data };
   }
 
   async onboardingAudit() {
-    await new Promise((r) => setTimeout(r, 350));
-    const data = settings.value.data ?? {};
-    const trackingDisabled = data.backup_tracking_enabled === false;
-    const dirs = String(data.backup_dirs || '').split(',').map((s) => s.trim()).filter(Boolean);
-    const backupConfigured = trackingDisabled
-      || dirs.length > 0
-      || !!data.backup_external_configured
-      || ((data.backup_tracking_mode ?? 'off') !== 'off');
-    return {
-      phase: 'discovery',
-      items: {
-        activity_new: 3,
-        activity_events: 42,
-        crashes_new: 0,
-        crashes_unreviewed: 1,
-        mods_running: 87,
-        backups_scanned: true,
-        backup_configured: backupConfigured,
-        backup_tracking_disabled: trackingDisabled,
-        has_facts_report: true,
-        schedule_summary: 'twice daily at 00:00 and 12:00 (server time)',
+    return this.startDiscovery();
+  }
+
+  async startDiscovery() {
+    const stages = [
+      { id: 'window', label: 'Computing time window', detail: 'Resolving lookback window…', done: 1, total: 7, ms: 400 },
+      { id: 'collect', label: 'Collecting logs, crashes, mods, host metrics', detail: 'Reading logs and crash-reports…', done: 2, total: 7, ms: 800 },
+      { id: 'collect', label: 'Collecting logs, crashes, mods, host metrics', detail: 'Scanning mods and host metrics…', done: 2, total: 7, ms: 700 },
+      { id: 'analyze', label: 'Analyzing health and crashes', detail: 'Building facts from collected data…', done: 3, total: 7, ms: 700 },
+      { id: 'enrich', label: 'Enriching incidents and scorecard', detail: 'Attaching lag incidents and stories…', done: 4, total: 7, ms: 500 },
+      { id: 'write', label: 'Writing facts and brief', detail: 'Writing watchtower-facts-…json', done: 5, total: 7, ms: 400 },
+      { id: 'finalize', label: 'Saving state and ops cache', detail: 'Reconciling ops-cache from facts…', done: 6, total: 7, ms: 400 },
+      { id: 'done', label: 'Done', detail: null, done: 7, total: 7, ms: 200 },
+    ];
+    const startedAt = Date.now();
+    discovery.value = {
+      startedAt,
+      error: null,
+      status: {
+        running: true,
+        success: null,
+        error: null,
+        stage: 'window',
+        stage_label: 'Computing time window',
+        stage_detail: 'Starting deep audit…',
+        progress: { done: 0, total: 7 },
+        counts: { crashes: 3, jars: 87, active_issues: 2 },
+        elapsed_ms: 0,
+        last_run: { started_at: new Date(startedAt).toISOString() },
       },
     };
+    // Fire-and-forget stage simulation
+    (async () => {
+      const counts = { crashes: 3, jars: 87, active_issues: 2 };
+      for (const s of stages) {
+        await new Promise((r) => setTimeout(r, s.ms));
+        const done = s.id === 'done';
+        discovery.value = {
+          startedAt,
+          error: null,
+          status: {
+            running: !done,
+            success: done ? true : null,
+            error: null,
+            message: done ? 'Initial deep audit complete (preview)' : null,
+            stage: s.id,
+            stage_label: s.label,
+            stage_detail: s.detail,
+            progress: { done: s.done, total: s.total },
+            counts: { ...counts },
+            elapsed_ms: Date.now() - startedAt,
+            last_run: {
+              started_at: new Date(startedAt).toISOString(),
+              finished_at: done ? new Date().toISOString() : undefined,
+            },
+          },
+        };
+      }
+    })();
+    return { status: 'started', running: true };
+  }
+
+  async fetchDiscoveryStatus() {
+    return discovery.value.status;
   }
 
   // ── Auth (preview always authenticated) ────────────────────────────────────
@@ -997,6 +1129,8 @@ export class FixtureSource {
       mspt: m.mspt,
       host_cpu_pct: m.host_cpu,
       mem_available_gb: m.mem_available_gb,
+      mem_used_gb: m.mem_used_gb,
+      mem_total_gb: m.mem_total_gb,
       disk_use_pct: m.disk_use_pct,
       heap_mb: latest.heap_mb ? {
         ...latest.heap_mb,
@@ -1061,8 +1195,14 @@ export class FixtureSource {
     appendPoint('disk_use_pct', updated.disk_use_pct);
     if (updated.heap_mb?.used != null) appendPoint('heap_mb', updated.heap_mb.used);
     if (updated.mem_available_gb != null) appendPoint('mem_available_gb', updated.mem_available_gb);
+    if (updated.mem_used_gb != null) appendPoint('mem_used_gb', updated.mem_used_gb);
+    if (updated.mem_total_gb != null) appendPoint('mem_total_gb', updated.mem_total_gb);
     appendPoint('thermal_package', m.thermal_c);
     appendPoint('thermal_ambient', m.ambient_c);
+    appendPoint('net_rx_mbps', m.rx);
+    appendPoint('net_tx_mbps', m.tx);
+    appendPoint('disk_read_mb_s', m.read);
+    appendPoint('disk_write_mb_s', m.write);
 
     samples.value = {
       ...samples.value,
@@ -1079,7 +1219,7 @@ function _countPoints(raw) {
   if (!raw) return 0;
   return [
     'tps', 'mspt', 'host_cpu', 'players', 'heap_mb',
-    'mem_available_gb', 'disk_use_pct', 'net_rx_mbps',
+    'mem_available_gb', 'mem_used_gb', 'mem_total_gb', 'disk_use_pct', 'net_rx_mbps',
     'net_tx_mbps', 'disk_read_mb_s', 'disk_write_mb_s',
     'thermal_package', 'thermal_ambient',
   ].reduce((n, k) => n + (raw[k]?.length ?? 0), 0);
@@ -1088,6 +1228,49 @@ function _countPoints(raw) {
 function _appendHistory(arr, point, max = 720) {
   const next = Array.isArray(arr) ? [...arr, point] : [point];
   return next.length > max ? next.slice(-max) : next;
+}
+
+/** Derive mem_used_gb from available when fixtures only ship free RAM. */
+function _ensureMemUsedSeries(seriesMap, envelope) {
+  if (!seriesMap || typeof seriesMap !== 'object') return seriesMap;
+  const out = { ...seriesMap };
+  const total = Number(envelope?.latest?.mem_total_gb) || MOCK_MEM_TOTAL_GB;
+  if (!out.mem_used_gb?.length && out.mem_available_gb?.length) {
+    out.mem_used_gb = out.mem_available_gb.map((p) => ({
+      t: p.t,
+      v: Math.round(Math.max(0, total - Number(p.v || 0)) * 100) / 100,
+    }));
+  }
+  if (!out.mem_total_gb?.length && out.mem_used_gb?.length) {
+    out.mem_total_gb = out.mem_used_gb.map((p) => ({ t: p.t, v: total }));
+  }
+  return out;
+}
+
+/** Derive net/disk chart series from envelope histories when fixture samples lack them. */
+function _ensureIoSeries(seriesMap, envelope) {
+  if (!seriesMap || typeof seriesMap !== 'object') return seriesMap;
+  const out = { ...seriesMap };
+  const bw = Array.isArray(envelope?.bandwidth_history) ? envelope.bandwidth_history : [];
+  const dio = Array.isArray(envelope?.disk_io_history) ? envelope.disk_io_history : [];
+
+  if (bw.length) {
+    if (!out.net_rx_mbps?.length) {
+      out.net_rx_mbps = bw.map((p) => ({ t: p.t, v: p.rx }));
+    }
+    if (!out.net_tx_mbps?.length) {
+      out.net_tx_mbps = bw.map((p) => ({ t: p.t, v: p.tx }));
+    }
+  }
+  if (dio.length) {
+    if (!out.disk_read_mb_s?.length) {
+      out.disk_read_mb_s = dio.map((p) => ({ t: p.t, v: p.read }));
+    }
+    if (!out.disk_write_mb_s?.length) {
+      out.disk_write_mb_s = dio.map((p) => ({ t: p.t, v: p.write }));
+    }
+  }
+  return out;
 }
 
 /** Derive thermal history from host_cpu when fixture samples lack it. */

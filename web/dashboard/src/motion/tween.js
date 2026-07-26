@@ -8,6 +8,8 @@ export function tweenNumber(from, to, durationMs, onUpdate, easing = easeOutCubi
   }
   let raf;
   let start;
+  // Paint the start value immediately so the first frame isn't a snap to mid-tween
+  onUpdate(from);
   const step = (ts) => {
     if (!start) start = ts;
     const t = Math.min(1, (ts - start) / durationMs);

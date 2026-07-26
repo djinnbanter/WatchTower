@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,6 +47,9 @@ class BackupScanTest {
         assertTrue(optional.has("backup_inventory"));
         assertTrue(last.get("inventory_count").getAsInt() >= 2);
         assertEquals(2, last.get("searched_dirs").getAsInt());
+        assertTrue(last.has("volume_relation"));
+        assertEquals("same", last.get("volume_relation").getAsString());
+        assertTrue(last.get("same_volume").getAsBoolean());
     }
 
     @Test
@@ -382,5 +386,76 @@ class BackupScanTest {
         CraftyCollector.scanBackups(staging, serverDir.toString(), 0, config);
         JsonObject last = staging.getAsJsonObject("optional").getAsJsonObject("last_backup");
         assertEquals("unconfigured", last.get("status").getAsString());
+    }
+
+    @Test
+    void outsideLookbackButWithinWarnDaysIsSuccessNotStale() throws Exception {
+        Path tmp = Files.createTempDirectory("wt-backup-lookback");
+        Path backupDir = tmp.resolve("backups");
+        Files.createDirectories(backupDir);
+        Path serverDir = tmp.resolve("server");
+        Files.createDirectories(serverDir);
+
+        Path archive = backupDir.resolve("world-2d-old.zip");
+        Files.writeString(archive, "backup");
+        // ~48h old — outside 24h lookback, inside 7d warn
+        long mtimeMs = System.currentTimeMillis() - (48L * 3600L * 1000L);
+        Files.setLastModifiedTime(archive, java.nio.file.attribute.FileTime.fromMillis(mtimeMs));
+
+        JsonObject staging = new JsonObject();
+        staging.add("optional", new JsonObject());
+        ReportConfig config = ReportConfig.builder()
+                .serverDir(serverDir.toString())
+                .backupDir(backupDir.toString())
+                .lookbackHours(24)
+                .backupWarnDays(7)
+                .build();
+
+        double cutoff = Instant.now().getEpochSecond() - 24L * 3600L;
+        CraftyCollector.scanBackups(staging, serverDir.toString(), cutoff, config);
+        JsonObject last = staging.getAsJsonObject("optional").getAsJsonObject("last_backup");
+        assertEquals("success", last.get("status").getAsString());
+        assertFalse(last.get("stale").getAsBoolean());
+        assertFalse(last.get("in_lookback").getAsBoolean());
+        assertTrue(last.has("age_hours"));
+        assertTrue(last.get("age_hours").getAsDouble() > 24.0);
+        assertTrue(last.get("age_days").getAsDouble() < 7.0);
+    }
+
+    @Test
+    void hybridLocalStaleExternalFreshSkipsBackupStaleIssue() {
+        JsonObject staging = new JsonObject();
+        JsonObject meta = new JsonObject();
+        meta.addProperty("backup_tracking_enabled", true);
+        meta.addProperty("backup_local_configured", true);
+        meta.addProperty("backup_external_configured", true);
+        staging.add("meta", meta);
+        staging.add("flags", new JsonObject());
+        JsonObject mc = new JsonObject();
+        mc.addProperty("log_had_activity_in_window", true);
+        staging.add("minecraft", mc);
+        staging.add("system", new JsonObject());
+        staging.add("events", new JsonArray());
+        staging.add("thresholds", new JsonObject());
+        JsonObject optional = new JsonObject();
+        JsonObject last = new JsonObject();
+        last.addProperty("status", "stale");
+        last.addProperty("stale", true);
+        last.addProperty("age_days", 10.0);
+        last.addProperty("warn_days", 7);
+        last.addProperty("path", "old.zip");
+        optional.add("last_backup", last);
+        JsonObject ext = new JsonObject();
+        ext.addProperty("configured", true);
+        ext.addProperty("status", "success");
+        ext.addProperty("stale", false);
+        optional.add("backup_external", ext);
+        staging.add("optional", optional);
+
+        JsonObject facts = dev.mcstatus.watchtower.core.analyze.ReportPipeline.buildFacts(staging);
+        JsonArray issues = facts.getAsJsonArray("issues");
+        for (var el : issues) {
+            assertNotEquals("BACKUP_STALE", el.getAsJsonObject().get("id").getAsString());
+        }
     }
 }

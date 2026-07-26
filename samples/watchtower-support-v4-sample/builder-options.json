@@ -1,0 +1,12 @@
+{
+  "preset": "QUICK",
+  "category": "",
+  "note": "",
+  "log_tail_lines": 500,
+  "include_latest_log_tail": true,
+  "include_spark": true,
+  "include_crashes": false,
+  "logs": [
+    { "file": "latest.log", "mode": "TAIL", "tail_lines": 500 }
+  ]
+}

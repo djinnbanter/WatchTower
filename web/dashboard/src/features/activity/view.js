@@ -1,10 +1,12 @@
 import { html, useState, useMemo, useEffect } from '../../lib/preact.js';
 import { activity } from '../../state/stores.js';
 import { scanActivity, loadActivity, addToast } from '../../state/actions.js';
-import { Page, Section, Timeline, FilterBar, EmptyState, MetricTile, BeaconCard } from '../../ui/patterns/index.js';
+import { Page, Section, Timeline, FilterBar, EmptyState, MetricTile, ListRow } from '../../ui/patterns/index.js';
 import { Button, Badge } from '../../ui/primitives/index.js';
+import { Card } from '../../ui/primitives/card.js';
 import { Icon } from '../../ui/icons.js';
 import { eventTitle, eventType } from '../../domain/labels.js';
+import { navigate } from '../../app/router.js';
 
 const TYPE_CHIPS = [
   { value: 'all', label: 'All' },
@@ -54,6 +56,60 @@ function metricTone(count, warnTone) {
   return warnTone;
 }
 
+function storyEventIcon(type) {
+  if (type === 'crash') return 'bug';
+  if (type === 'lag_spike') return 'zap';
+  if (type === 'mod_change') return 'package';
+  if (type === 'backup_failed') return 'archive';
+  if (type === 'server_down') return 'server';
+  return 'activity';
+}
+
+function storyEventTone(type) {
+  if (type === 'crash') return 'danger';
+  if (type === 'lag_spike' || type === 'backup_failed') return 'warn';
+  if (type === 'mod_change') return 'info';
+  return 'neutral';
+}
+
+function storyEventLabel(type) {
+  switch (type) {
+    case 'lag_spike': return 'Lag spike';
+    case 'backup_failed': return 'Backup failed';
+    case 'mod_change': return 'Mod change';
+    case 'server_down': return 'Server stopped';
+    case 'crash': return 'Crash';
+    default: return String(type || 'Event').replace(/_/g, ' ');
+  }
+}
+
+function formatStoryWhen(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return String(iso);
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatStoryClock(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return String(iso);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function openStoryLink(ev) {
+  const tab = ev?.tab_link || 'activity';
+  if (tab === 'crashes' && ev.file) {
+    navigate('crashes', { file: ev.file });
+    return;
+  }
+  if (tab === 'issues' && ev.incident_id) {
+    navigate('issues', { view: 'active' });
+    return;
+  }
+  navigate(tab);
+}
+
 function ActivityKpis({ events }) {
   const starts = events.filter((e) => e.type === 'server_start').length;
   const stops = events.filter((e) => e.type === 'clean_stop').length;
@@ -62,7 +118,7 @@ function ActivityKpis({ events }) {
   const joins = events.filter((e) => e.type === 'player_join').length;
 
   return html`
-    <div class="feat-kpi-row feat-kpi-row--activity">
+    <div class="feat-kpi-row feat-kpi-row--activity" aria-label="Activity summary">
       <${MetricTile} label="Starts" value=${starts} format=${(v) => String(Math.round(v))} size="sm" padding="12" />
       <${MetricTile} label="Stops" value=${stops} format=${(v) => String(Math.round(v))} size="sm" padding="12" />
       <${MetricTile}
@@ -86,43 +142,80 @@ function ActivityKpis({ events }) {
   `;
 }
 
-function AlertHighlight({ event }) {
+function CompactAlert({ event }) {
   if (!event) return null;
   const tone = eventTone(event);
-  const word = tone === 'danger' ? 'Alert' : 'Watch';
-  const category = eventType(event.type ?? '');
-  const when = normalizeEventTime(event);
-  const whenLabel = when
-    ? new Date(when).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-    : (event.time ?? '');
-
   return html`
-    <${BeaconCard}
-      className="feat-activity-highlight"
-      label="Latest alert"
-      hint=${whenLabel}
-      word=${word}
+    <${ListRow}
+      className="feat-activity-alert"
       tone=${tone}
-    >
-      <div class="feat-activity-highlight__body">
-        <div class="feat-activity-highlight__title">${eventTitle(event)}</div>
-        ${event.detail && event.detail !== eventTitle(event) && html`
-          <div class="feat-activity-highlight__detail">${event.detail}</div>
-        `}
-        <div class="feat-activity-highlight__meta">
-          <${Badge} tone=${tone === 'ok' ? 'ok' : tone}>${category}</${Badge}>
-          <span class="feat-activity-meta">
-            <${Icon} name=${eventIcon(event.type)} size=${12} />
-            <span>${String(event.type ?? 'event').replace(/_/g, ' ')}</span>
-          </span>
+      icon=${html`<${Icon} name=${eventIcon(event.type)} size=${14} />`}
+      title=${eventTitle(event)}
+      meta=${html`
+        <span>${formatStoryWhen(normalizeEventTime(event) || event.time)}</span>
+        ${event.detail && event.detail !== eventTitle(event)
+          ? html`<span> · ${event.detail}</span>`
+          : null}
+      `}
+      badge=${html`<${Badge} tone=${tone === 'ok' ? 'ok' : tone}>${eventType(event.type ?? '')}</${Badge}>`}
+    />
+  `;
+}
+
+function IncidentStoryCard({ story }) {
+  const steps = story.events || [];
+  return html`
+    <${Card} className="feat-activity-story" tone="warn" padding="20">
+      <div class="feat-activity-story__head">
+        <div>
+          <div class="feat-activity-story__eyebrow">Incident story</div>
+          <p class="feat-activity-story__title">${story.narrative || 'Correlated events in this window.'}</p>
         </div>
+        <div class="feat-activity-story__when">${formatStoryWhen(story.started_at)}</div>
       </div>
-    </${BeaconCard}>
+
+      ${steps.length > 0 && html`
+        <div class="feat-activity-story__events">
+          ${steps.map((ev, j) => html`
+            <${ListRow}
+              key=${`${story.id || 's'}-${j}`}
+              tone=${storyEventTone(ev.type)}
+              icon=${html`<${Icon} name=${storyEventIcon(ev.type)} size=${14} />`}
+              title=${`${formatStoryClock(ev.at)} · ${storyEventLabel(ev.type)}`}
+              meta=${ev.detail || null}
+              actions=${ev.tab_link ? html`
+                <${Button} kind="neutral" size="sm" onClick=${() => openStoryLink(ev)}>
+                  Open
+                </${Button}>
+              ` : null}
+            />
+          `)}
+        </div>
+      `}
+    </${Card}>
+  `;
+}
+
+function IncidentStories({ stories }) {
+  if (!stories?.length) return null;
+  return html`
+    <${Section}
+      title="Incident stories"
+      badge=${html`<${Badge} tone="warn">${stories.length}</${Badge}>`}
+      collapsible=${true}
+      defaultOpen=${true}
+    >
+      <div class="feat-activity-stories">
+        ${stories.map((story, i) => html`
+          <${IncidentStoryCard} key=${story.id || i} story=${story} />
+        `)}
+      </div>
+    </${Section}>
   `;
 }
 
 export function PageView() {
-  const { events, loading } = activity.value;
+  const { events, incidentStories, loading } = activity.value;
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -152,11 +245,12 @@ export function PageView() {
   }, [events, typeFilter, search]);
 
   const latestAlert = useMemo(() => {
+    if (incidentStories?.length) return null;
     for (const ev of events) {
       if (isAlertLike(ev)) return ev;
     }
     return null;
-  }, [events]);
+  }, [events, incidentStories]);
 
   const timelineItems = useMemo(() => {
     return filteredEvents.map((ev, i) => {
@@ -191,7 +285,7 @@ export function PageView() {
     <${Page}
       tour="activity"
       title="Activity"
-      subtitle="Event timeline — joins, stops, and lifecycle markers"
+      subtitle="What happened on this server — stories first, then the full event feed"
       actions=${html`
         <${Button}
           kind="neutral"
@@ -203,67 +297,59 @@ export function PageView() {
         </${Button}>
       `}
     >
-      <div class="ui-page__stack">
-        <div class="feat-activity-layout">
-          ${events.length > 0 && html`
-            <aside class="feat-activity-layout__summary">
-              <${Section} title="Summary" defaultOpen=${true}>
-                <${ActivityKpis} events=${events} />
-              </${Section}>
-            </aside>
+      <div class="ui-page__stack feat-activity">
+        ${events.length > 0 && html`<${ActivityKpis} events=${events} />`}
+
+        <${IncidentStories} stories=${incidentStories} />
+
+        <${Section} title="Event feed" defaultOpen=${true}>
+          <div class="feat-toolbar feat-toolbar--wrap feat-toolbar--activity">
+            <${FilterBar}
+              search=${search}
+              onSearch=${setSearch}
+              placeholder="Search events…"
+              resultCount=${filteredEvents.length}
+            />
+            <div class="feat-chip-row">
+              ${TYPE_CHIPS.map((chip) => html`
+                <button
+                  key=${chip.value}
+                  class=${['feat-chip', typeFilter === chip.value ? 'feat-chip--active' : ''].filter(Boolean).join(' ')}
+                  onClick=${() => setTypeFilter(chip.value)}
+                >
+                  ${chip.label}
+                </button>
+              `)}
+            </div>
+          </div>
+
+          ${loading && events.length === 0 && html`<p class="feat-hint ui-text-low">Loading activity…</p>`}
+
+          ${!loading && events.length === 0 && html`
+            <${EmptyState}
+              icon="📋"
+              title="No activity events"
+              body="Activity events are captured from server log scans. Trigger a scan or wait for the next background poll."
+              action=${html`<${Button} kind="accent" onClick=${handleScan} loading=${scanning}>Scan now</${Button}>`}
+            />
           `}
 
-          <div class="feat-activity-layout__events">
-            <${Section} title="Events" defaultOpen=${true}>
-              <div class="feat-toolbar feat-toolbar--wrap feat-toolbar--activity">
-                <${FilterBar}
-                  search=${search}
-                  onSearch=${setSearch}
-                  placeholder="Search events…"
-                  resultCount=${filteredEvents.length}
-                />
-                <div class="feat-chip-row">
-                  ${TYPE_CHIPS.map((chip) => html`
-                    <button
-                      key=${chip.value}
-                      class=${['feat-chip', typeFilter === chip.value ? 'feat-chip--active' : ''].filter(Boolean).join(' ')}
-                      onClick=${() => setTypeFilter(chip.value)}
-                    >
-                      ${chip.label}
-                    </button>
-                  `)}
-                </div>
-              </div>
+          ${!loading && events.length > 0 && timelineItems.length === 0 && html`
+            <${EmptyState} title="No matching events" body="Try adjusting the search or type filter." />
+          `}
 
-              ${loading && events.length === 0 && html`<p class="feat-hint ui-text-low">Loading activity…</p>`}
+          ${latestAlert && html`
+            <div class="feat-activity-alert-wrap">
+              <${CompactAlert} event=${latestAlert} />
+            </div>
+          `}
 
-              ${!loading && events.length === 0 && html`
-                <${EmptyState}
-                  icon="📋"
-                  title="No activity events"
-                  body="Activity events are captured from server log scans. Trigger a scan or wait for the next background poll."
-                  action=${html`<${Button} kind="accent" onClick=${handleScan} loading=${scanning}>Scan now</${Button}>`}
-                />
-              `}
-
-              ${!loading && events.length > 0 && timelineItems.length === 0 && html`
-                <${EmptyState} title="No matching events" body="Try adjusting the search or type filter." />
-              `}
-
-              ${latestAlert && html`
-                <div class="feat-activity-highlight-wrap">
-                  <${AlertHighlight} event=${latestAlert} />
-                </div>
-              `}
-
-              ${timelineItems.length > 0 && html`
-                <div class="feat-activity-feed">
-                  <${Timeline} items=${timelineItems} groupByDay=${true} />
-                </div>
-              `}
-            </${Section}>
-          </div>
-        </div>
+          ${timelineItems.length > 0 && html`
+            <div class="feat-activity-feed">
+              <${Timeline} items=${timelineItems} groupByDay=${true} />
+            </div>
+          `}
+        </${Section}>
       </div>
     </${Page}>
   `;

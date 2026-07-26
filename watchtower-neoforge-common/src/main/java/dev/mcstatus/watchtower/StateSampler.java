@@ -1,17 +1,23 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+import dev.mcstatus.watchtower.runtime.WatchtowerSample;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.server.MinecraftServer;
+import dev.mcstatus.watchtower.core.util.WatchtowerPathLocks;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -27,45 +33,49 @@ public final class StateSampler {
     private StateSampler() {
     }
 
-    public static void recordSample(MinecraftServer server, WatchtowerSampler.Sample sample) {
+    public static void recordSample(ServerContext server, WatchtowerSample.Sample sample) {
         try {
             Path statePath = WatchtowerPaths.statePath(server);
             Files.createDirectories(statePath.getParent());
-            JsonObject state = loadState(statePath);
+            synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+                JsonObject state = loadState(statePath);
 
-            int lookbackHours = 24;
-            try {
-                lookbackHours = WatchtowerConfig.LOOKBACK_HOURS.get();
-            } catch (IllegalStateException ignored) {
-            }
-            long cutoff = Instant.now().getEpochSecond() - (long) lookbackHours * 3600L;
-            String nowIso = Instant.now().toString();
+                int lookbackHours = 24;
+                try {
+                    lookbackHours = ModRuntime.config().lookbackHours();
+                } catch (IllegalStateException ignored) {
+                }
+                long cutoff = Instant.now().getEpochSecond() - (long) lookbackHours * 3600L;
+                String nowIso = Instant.now().toString();
 
-            JsonArray tpsSamples = state.has("tps_samples")
-                    ? state.getAsJsonArray("tps_samples")
-                    : new JsonArray();
-            JsonObject tpsEntry = new JsonObject();
-            tpsEntry.addProperty("time", nowIso);
-            tpsEntry.addProperty("mspt", round1(sample.mspt()));
-            tpsEntry.addProperty("source", "watchtower");
-            tpsSamples.add(tpsEntry);
-            state.add("tps_samples", pruneSamples(tpsSamples, cutoff));
-
-            Double hostPct = HostCpuProbe.readHostCpuPct();
-            if (hostPct != null) {
-                JsonArray cpuSamples = state.has("cpu_samples")
-                        ? state.getAsJsonArray("cpu_samples")
+                JsonArray tpsSamples = state.has("tps_samples")
+                        ? state.getAsJsonArray("tps_samples")
                         : new JsonArray();
-                JsonObject cpuEntry = new JsonObject();
-                cpuEntry.addProperty("time", nowIso);
-                cpuEntry.addProperty("host_pct", round1(hostPct));
-                cpuSamples.add(cpuEntry);
-                state.add("cpu_samples", pruneSamples(cpuSamples, cutoff));
-            }
+                JsonObject tpsEntry = new JsonObject();
+                tpsEntry.addProperty("time", nowIso);
+                tpsEntry.addProperty("mspt", round1(sample.mspt()));
+                tpsEntry.addProperty("source", "watchtower");
+                tpsSamples.add(tpsEntry);
+                state.add("tps_samples", pruneSamples(tpsSamples, cutoff));
 
-            Files.writeString(statePath, GSON.toJson(state) + System.lineSeparator(), StandardCharsets.UTF_8);
+                Double hostPct = HostCpuProbe.readHostCpuPct();
+                if (hostPct != null) {
+                    JsonArray cpuSamples = state.has("cpu_samples")
+                            ? state.getAsJsonArray("cpu_samples")
+                            : new JsonArray();
+                    JsonObject cpuEntry = new JsonObject();
+                    cpuEntry.addProperty("time", nowIso);
+                    cpuEntry.addProperty("host_pct", round1(hostPct));
+                    cpuSamples.add(cpuEntry);
+                    state.add("cpu_samples", pruneSamples(cpuSamples, cutoff));
+                }
+
+                Path tmp = statePath.resolveSibling(statePath.getFileName() + ".tmp");
+                Files.writeString(tmp, GSON.toJson(state) + System.lineSeparator(), StandardCharsets.UTF_8);
+                Files.move(tmp, statePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            }
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.debug("State sample write failed: {}", e.toString());
+            ModRuntime.logger().debug("State sample write failed: {}", e.toString());
         }
     }
 

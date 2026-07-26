@@ -25,14 +25,17 @@ class ModUpdateImpactAnalyzerTest {
 
         Map<String, ModrinthLookupService.SideInfo> byId = new HashMap<>();
         byId.put("create", sideWithDeps("create",
-                List.of(new ModrinthLookupService.VersionDependency("flywheelproj", null, "required"))));
+                List.of(new ModrinthLookupService.VersionDependency(
+                        "flywheelproj", null, "required", "Flywheel", "flywheel"))));
 
         JsonArray enriched = ModUpdateImpactAnalyzer.enrich(mods, updates, byId);
         JsonObject out = enriched.get(0).getAsJsonObject();
         assertEquals("break", out.get("impact_verdict").getAsString());
         assertTrue(out.getAsJsonArray("blockers").size() >= 1);
-        assertEquals("need_install", out.getAsJsonArray("blockers").get(0).getAsJsonObject()
-                .get("kind").getAsString());
+        JsonObject blocker = out.getAsJsonArray("blockers").get(0).getAsJsonObject();
+        assertEquals("need_install", blocker.get("kind").getAsString());
+        assertEquals("Flywheel", blocker.get("display_name").getAsString());
+        assertEquals("flywheelproj", blocker.get("mod_id").getAsString());
     }
 
     @Test

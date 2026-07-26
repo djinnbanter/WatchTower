@@ -8,6 +8,8 @@ public final class WatchtowerFiles {
     public static final String STATE_FILENAME = ".watchtower-state.json";
     public static final String FACTS_PREFIX = "watchtower-facts-";
     public static final String BRIEF_PREFIX = "watchtower-brief-";
+    /** Support-compose artifacts — excluded from BAU {@link dev.mcstatus.watchtower.core.collect.ReportArtifactFinder}. */
+    public static final String SUPPORT_FACTS_INFIX = "-support-";
     public static final String OPS_CACHE_FILENAME = "ops-cache.json";
 
     private WatchtowerFiles() {

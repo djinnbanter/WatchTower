@@ -2,6 +2,7 @@ package dev.mcstatus.watchtower.core.collect;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.report.ReportProgress;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -102,7 +103,11 @@ public final class ModJarMetadataReader {
     }
 
     public static JsonArray listModsFromDir(String serverDir) {
-        List<ModEntry> entries = readFromModsDir(serverDir);
+        return listModsFromDir(serverDir, ReportProgress.NOOP);
+    }
+
+    public static JsonArray listModsFromDir(String serverDir, ReportProgress progress) {
+        List<ModEntry> entries = readFromModsDir(serverDir, progress);
         JsonArray arr = new JsonArray();
         for (ModEntry e : entries) {
             arr.add(toJson(e));
@@ -111,19 +116,40 @@ public final class ModJarMetadataReader {
     }
 
     public static List<ModEntry> readFromModsDir(String serverDir) {
+        return readFromModsDir(serverDir, ReportProgress.NOOP);
+    }
+
+    public static List<ModEntry> readFromModsDir(String serverDir, ReportProgress progress) {
+        ReportProgress p = progress != null ? progress : ReportProgress.NOOP;
         Path modsDir = Path.of(serverDir, "mods");
         if (!Files.isDirectory(modsDir)) {
+            p.found("jars", 0);
             return List.of();
         }
-        Map<String, ModEntry> byId = new LinkedHashMap<>();
+        List<Path> jars = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
             for (Path jar : stream) {
-                for (ModEntry entry : readJar(jar)) {
-                    byId.merge(entry.id(), entry, ModJarMetadataReader::preferEntry);
-                }
+                jars.add(jar);
             }
         } catch (IOException ignored) {
             return List.of();
+        }
+        jars.sort(Comparator.comparing(path -> path.getFileName().toString().toLowerCase(Locale.ROOT)));
+        int total = jars.size();
+        p.found("jars", total);
+        if (total > 0) {
+            p.units(0, total);
+            p.detail("Found " + total + " mod jar" + (total == 1 ? "" : "s") + "…");
+        }
+        Map<String, ModEntry> byId = new LinkedHashMap<>();
+        int index = 0;
+        for (Path jar : jars) {
+            index++;
+            p.units(index, total);
+            p.detail("Reading mod jar " + index + "/" + total + ": " + jar.getFileName());
+            for (ModEntry entry : readJar(jar)) {
+                byId.merge(entry.id(), entry, ModJarMetadataReader::preferEntry);
+            }
         }
         List<ModEntry> sorted = new ArrayList<>(byId.values());
         sorted.sort(Comparator.comparing(ModEntry::id));
@@ -131,11 +157,15 @@ public final class ModJarMetadataReader {
     }
 
     public static void enrichModArray(JsonArray mods, String serverDir) {
+        enrichModArray(mods, serverDir, ReportProgress.NOOP);
+    }
+
+    public static void enrichModArray(JsonArray mods, String serverDir, ReportProgress progress) {
         if (mods == null || mods.isEmpty()) {
             return;
         }
         Map<String, ModEntry> fromJars = new HashMap<>();
-        for (ModEntry e : readFromModsDir(serverDir)) {
+        for (ModEntry e : readFromModsDir(serverDir, progress)) {
             fromJars.put(e.id(), e);
         }
         for (var el : mods) {

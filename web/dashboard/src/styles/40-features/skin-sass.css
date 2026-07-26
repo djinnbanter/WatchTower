@@ -1,0 +1,1351 @@
+/* Sass skin — Classic v1.0.0 CloudGuard chrome (data-skin="sass" only)
+   Deep Orange accent, Inter + JetBrains Mono, glass cards, solid orange rail. */
+
+/* ── Type inheritance ────────────────────────────────────────────────────── */
+
+html[data-skin="sass"],
+html[data-skin="sass"] body,
+html[data-skin="sass"] .ui-shell {
+  font-family: var(--ui-font-sans);
+}
+
+html[data-skin="sass"] .ui-metric__value,
+html[data-skin="sass"] .ui-gauge__value,
+html[data-skin="sass"] .ui-gauge__readout,
+html[data-skin="sass"] .ui-bar-meter__value,
+html[data-skin="sass"] .ui-text-metric,
+html[data-skin="sass"] .ui-mono,
+html[data-skin="sass"] code,
+html[data-skin="sass"] pre,
+html[data-skin="sass"] kbd,
+html[data-skin="sass"] .ui-timeseries .u-legend,
+html[data-skin="sass"] .feat-logs {
+  font-family: var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Kill aero sheen overlays (keep glass blur on cards) ─────────────────── */
+
+html[data-skin="sass"] .ui-rail::before,
+html[data-skin="sass"] .ui-metric-tile::before,
+html[data-skin="sass"] .ui-instrument::before,
+html[data-skin="sass"] .ui-instrument-surface::before,
+html[data-skin="sass"] .ui-card::before,
+html[data-skin="sass"] .feat-card::before,
+html[data-skin="sass"] .ov-instrument::before,
+html[data-skin="sass"] .ui-modal__panel::before,
+html[data-skin="sass"] .ui-topbar::before {
+  content: none !important;
+  background: none !important;
+  display: none !important;
+}
+
+/* ── Canvas ──────────────────────────────────────────────────────────────── */
+
+html[data-skin="sass"] .ui-shell-main {
+  background-color: var(--ui-bg0);
+  background-image: none;
+}
+
+html[data-skin="sass"] .ui-shell {
+  background: var(--ui-bg0);
+}
+
+/* ── Rail — near-black + solid orange active ─────────────────────────────── */
+
+html[data-skin="sass"] .ui-rail {
+  background: var(--ui-bg1) !important;
+  border-right: 1px solid var(--ui-line);
+  box-shadow: none;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-skin="sass"] .ui-rail__group-label,
+html[data-skin="sass"] .ui-rail__bottom-label,
+html[data-skin="sass"] .ui-rail__reports-label {
+  color: var(--ui-text-low);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 10px;
+  opacity: 1;
+}
+
+html[data-skin="sass"] .ui-rail__wordmark {
+  color: var(--ui-text-hi);
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  font-size: var(--ui-text-lg);
+}
+
+html[data-skin="sass"] .ui-rail__tagline {
+  color: var(--ui-text-low);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 11px;
+}
+
+html[data-skin="sass"] .ui-rail__brand-plate {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  box-shadow: none !important;
+  border-radius: var(--ui-rad-l) !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-skin="sass"] .ui-rail__item {
+  border-radius: var(--ui-rad-l);
+  font-weight: 500;
+  transition: background-color var(--ui-dur-2) var(--ui-ease-out),
+    color var(--ui-dur-2) var(--ui-ease-out);
+}
+
+html[data-skin="sass"] .ui-rail__item--active,
+html[data-skin="sass"] .ui-rail__item[aria-current="page"],
+html[data-skin="sass"] .ui-rail--collapsed .ui-rail__item--active,
+html[data-skin="sass"] .ui-rail--collapsed .ui-rail__item[aria-current="page"] {
+  background: var(--ui-accent) !important;
+  color: #fff !important;
+  border-radius: var(--ui-rad-l) !important;
+  box-shadow: none !important;
+  border: none !important;
+  font-weight: 600;
+}
+
+html[data-skin="sass"] .ui-rail__item--active .ui-rail__icon,
+html[data-skin="sass"] .ui-rail__item[aria-current="page"] .ui-rail__icon,
+html[data-skin="sass"] .ui-rail__item--active svg,
+html[data-skin="sass"] .ui-rail__item[aria-current="page"] svg {
+  color: #fff !important;
+  stroke: currentColor;
+}
+
+html[data-skin="sass"] .ui-rail__item:hover:not(.ui-rail__item--active):not([aria-current="page"]) {
+  background: color-mix(in srgb, var(--ui-accent) 12%, transparent) !important;
+  border-radius: var(--ui-rad-l);
+  outline: none;
+  color: var(--ui-text-hi);
+  transform: none;
+}
+
+html[data-skin="sass"] .ui-rail__tool-btn {
+  border: 1px solid transparent;
+  border-radius: var(--ui-rad-l);
+  background: transparent;
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ui-rail__tool-btn:hover {
+  border-color: var(--ui-line);
+  background: var(--ui-bg2);
+  box-shadow: none;
+  color: var(--ui-text-hi);
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ui-rail__reports,
+html[data-skin="sass"] .ui-reports-plate {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-xl) !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Run Report — orange pill CTA (v1 primary exception) */
+html[data-skin="sass"] .ui-report-controls__run,
+html[data-skin="sass"] .ui-report-controls__run.ui-btn,
+html[data-skin="sass"] .ui-report-controls__run.ui-btn--accent,
+html[data-skin="sass"] .ui-report-controls__run.ui-btn--primary {
+  border-radius: var(--ui-rad-full) !important;
+  background: var(--ui-accent) !important;
+  border: 1px solid var(--ui-accent) !important;
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ui-report-controls__run:hover:not(:disabled) {
+  background: var(--ui-accent-hover) !important;
+  border-color: var(--ui-accent-hover) !important;
+  color: #fff !important;
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ui-report-controls__run:active:not(:disabled) {
+  background: var(--ui-accent-press) !important;
+  border-color: var(--ui-accent-press) !important;
+  transform: none !important;
+}
+
+/* ── Topbar ──────────────────────────────────────────────────────────────── */
+
+html[data-skin="sass"] .ui-topbar {
+  background: var(--ui-bg1) !important;
+  border-bottom: 1px solid var(--ui-line);
+  box-shadow: none;
+  background-image: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-skin="sass"] .ui-topbar__chip,
+html[data-skin="sass"] .ui-topbar__search {
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-full) !important;
+  background: var(--ui-bg2) !important;
+  font-weight: 500;
+}
+
+html[data-skin="sass"] .ui-topbar__search:focus-within {
+  border-color: var(--ui-accent) !important;
+  background: var(--ui-bg2) !important;
+  box-shadow: 0 0 0 2px var(--ui-accent-soft);
+}
+
+/* ── Page titles ─────────────────────────────────────────────────────────── */
+
+html[data-skin="sass"] .ui-page__title {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  padding-bottom: 0;
+}
+
+html[data-skin="sass"] .ui-page__title::after {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 3px;
+  margin-top: var(--ui-sp-8);
+  background: var(--ui-accent);
+  border-radius: 2px;
+  opacity: 1;
+}
+
+html[data-skin="sass"] .ui-section__title {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ── Cards / instruments — glass + v1 shadows ────────────────────────────── */
+
+html[data-skin="sass"] .ui-metric-tile,
+html[data-skin="sass"] .ui-instrument,
+html[data-skin="sass"] .ui-instrument-surface,
+html[data-skin="sass"] .ui-card,
+html[data-skin="sass"] .feat-card,
+html[data-skin="sass"] .ov-instrument,
+html[data-skin="sass"] .ui-list,
+html[data-skin="sass"] .feat-queue-chrome,
+html[data-skin="sass"] .feat-mods-banner {
+  background: var(--ui-glass) !important;
+  border: 1px solid var(--ui-glass-border) !important;
+  border-radius: var(--ui-rad-card) !important;
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: blur(var(--ui-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--ui-blur)) !important;
+  background-image: none !important;
+}
+
+html[data-skin="sass"] .ui-metric-tile:hover,
+html[data-skin="sass"] .feat-card:hover {
+  background: color-mix(in srgb, var(--ui-bg3) 70%, var(--ui-glass)) !important;
+  border-color: var(--ui-line-strong) !important;
+  box-shadow: var(--ui-shadow-lift) !important;
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ui-metric__label {
+  letter-spacing: 0.05em;
+  color: var(--ui-text-low);
+  font-weight: 600;
+  font-family: var(--ui-font-sans);
+}
+
+html[data-skin="sass"] .ui-metric__value {
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+/* Health / status heroes — strong tone wash (v1 Global health cards) */
+html[data-skin="sass"] .ui-instrument,
+html[data-skin="sass"] .ui-instrument-surface,
+html[data-skin="sass"] .ui-card,
+html[data-skin="sass"] .feat-card,
+html[data-skin="sass"] .ov-instrument {
+  --ui-instrument-wash: 18%;
+  --ui-instrument-border-mix: 28%;
+}
+
+/* List rows — left severity bars (key Classic cue) */
+html[data-skin="sass"] .ui-list-row {
+  border: 1px solid transparent !important;
+  border-radius: var(--ui-rad-l) !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ui-list-row:hover {
+  background: var(--ui-bg3) !important;
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+html[data-skin="sass"] .ui-list-row--danger {
+  background: color-mix(in srgb, var(--ui-danger) 8%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--ui-danger) !important;
+  border-color: transparent !important;
+}
+
+html[data-skin="sass"] .ui-list-row--warn {
+  background: color-mix(in srgb, var(--ui-warn) 6%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--ui-warn) !important;
+  border-color: transparent !important;
+}
+
+html[data-skin="sass"] .ui-list-row--info {
+  background: color-mix(in srgb, var(--ui-info) 5%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--ui-info) !important;
+  border-color: transparent !important;
+}
+
+html[data-skin="sass"] .ui-list-row--ok,
+html[data-skin="sass"] .ui-list-row--success {
+  background: color-mix(in srgb, var(--ui-ok) 5%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--ui-ok) !important;
+  border-color: transparent !important;
+}
+
+html[data-skin="sass"] .ui-list-row--accent {
+  background: color-mix(in srgb, var(--ui-accent) 6%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--ui-accent) !important;
+  border-color: transparent !important;
+}
+
+html[data-skin="sass"] .ui-list-row--active,
+html[data-skin="sass"] .ui-list-row[aria-selected="true"],
+html[data-skin="sass"] .ui-list-row.is-selected {
+  background: var(--ui-accent-soft) !important;
+  color: var(--ui-text-hi);
+}
+
+html[data-skin="sass"] .ov-queue .ui-list-row--danger,
+html[data-skin="sass"] .feat-queue-chrome .ui-list-row--danger,
+html[data-skin="sass"] .feat-issues .ui-list-row--danger,
+html[data-skin="sass"] .feat-crashes .ui-list-row--danger {
+  box-shadow: inset 3px 0 0 var(--ui-danger) !important;
+}
+
+html[data-skin="sass"] .ov-queue .ui-list-row--warn,
+html[data-skin="sass"] .feat-queue-chrome .ui-list-row--warn,
+html[data-skin="sass"] .feat-issues .ui-list-row--warn,
+html[data-skin="sass"] .feat-crashes .ui-list-row--warn {
+  box-shadow: inset 3px 0 0 var(--ui-warn) !important;
+}
+
+html[data-skin="sass"] .ov-queue .ui-list-row--info,
+html[data-skin="sass"] .feat-queue-chrome .ui-list-row--info,
+html[data-skin="sass"] .feat-issues .ui-list-row--info {
+  box-shadow: inset 3px 0 0 var(--ui-info) !important;
+}
+
+/* Action links — orange / blue like v1 */
+html[data-skin="sass"] .ui-list-row a,
+html[data-skin="sass"] .feat-issues a.ui-btn--ghost,
+html[data-skin="sass"] .feat-crashes a.ui-btn--ghost,
+html[data-skin="sass"] .ui-link {
+  color: var(--ui-info);
+}
+
+html[data-skin="sass"] .ui-list-row a:hover,
+html[data-skin="sass"] .ui-link:hover {
+  color: var(--ui-accent);
+}
+
+/* ── Buttons — pill primary CTAs; tight-rect neutrals; no transform ─────── */
+
+html[data-skin="sass"] .ui-btn,
+html[data-skin="sass"] .ui-icon-btn,
+html[data-skin="sass"] .ui-rail__tool-btn,
+html[data-skin="sass"] .ui-segmented__btn,
+html[data-skin="sass"] .ui-toggle,
+html[data-skin="sass"] .ui-pressable.ui-btn,
+html[data-skin="sass"] .ui-lift.ui-btn {
+  border-radius: var(--ui-rad-l);
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ui-btn--sm,
+html[data-skin="sass"] .ui-icon-btn--sm {
+  border-radius: var(--ui-rad-m);
+}
+
+html[data-skin="sass"] .ui-btn:hover:not(:disabled),
+html[data-skin="sass"] .ui-btn:active:not(:disabled),
+html[data-skin="sass"] .ui-btn:focus-visible,
+html[data-skin="sass"] .ui-btn[aria-pressed="true"],
+html[data-skin="sass"] .ui-icon-btn:hover:not(:disabled),
+html[data-skin="sass"] .ui-icon-btn:active:not(:disabled),
+html[data-skin="sass"] .ui-icon-btn--active,
+html[data-skin="sass"] .ui-icon-btn[aria-pressed="true"],
+html[data-skin="sass"] .ui-segmented__btn:hover,
+html[data-skin="sass"] .ui-segmented__btn[aria-pressed="true"],
+html[data-skin="sass"] .ui-segmented__btn.is-active {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html[data-skin="sass"] .ui-btn.ui-pressable:active,
+html[data-skin="sass"] .ui-btn.ui-lift:hover,
+html[data-skin="sass"] .ui-btn.ui-lift:active,
+html[data-skin="sass"] .ui-icon-btn.ui-pressable:active {
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ui-btn--primary,
+html[data-skin="sass"] .ui-btn--accent {
+  background: var(--ui-accent);
+  border: 1px solid var(--ui-accent);
+  color: #fff;
+  font-weight: 600;
+  border-radius: var(--ui-rad-full);
+  box-shadow: none !important;
+}
+
+html[data-skin="sass"] .ui-btn--primary:hover:not(:disabled),
+html[data-skin="sass"] .ui-btn--accent:hover:not(:disabled) {
+  background: var(--ui-accent-hover);
+  border-color: var(--ui-accent-hover);
+  color: #fff;
+}
+
+html[data-skin="sass"] .ui-btn--primary:active:not(:disabled),
+html[data-skin="sass"] .ui-btn--accent:active:not(:disabled) {
+  background: var(--ui-accent-press);
+  border-color: var(--ui-accent-press);
+}
+
+html[data-skin="sass"] .ui-btn--neutral,
+html[data-skin="sass"] .ui-btn--secondary {
+  background: var(--ui-bg2);
+  border: 1px solid var(--ui-line-strong);
+  color: var(--ui-text-hi);
+  font-weight: 500;
+  border-radius: var(--ui-rad-l);
+}
+
+html[data-skin="sass"] .ui-btn--neutral:hover:not(:disabled),
+html[data-skin="sass"] .ui-btn--secondary:hover:not(:disabled) {
+  background: var(--ui-bg3);
+  border-color: var(--ui-line-strong);
+  color: var(--ui-text-hi);
+}
+
+html[data-skin="sass"] .ui-btn--ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ui-text-mid);
+  border-radius: var(--ui-rad-l);
+}
+
+html[data-skin="sass"] .ui-btn--ghost:hover:not(:disabled) {
+  background: var(--ui-bg3);
+  color: var(--ui-text-hi);
+}
+
+html[data-skin="sass"] .ui-btn[aria-pressed="true"],
+html[data-skin="sass"] .ui-icon-btn--active,
+html[data-skin="sass"] .ui-icon-btn[aria-pressed="true"] {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent);
+  border-color: transparent;
+}
+
+html[data-skin="sass"] .ui-icon-btn {
+  background: transparent;
+  color: var(--ui-text-mid);
+}
+
+html[data-skin="sass"] .ui-icon-btn:hover:not(:disabled) {
+  background: var(--ui-bg3);
+  color: var(--ui-text-hi);
+}
+
+html[data-skin="sass"] .ui-badge,
+html[data-skin="sass"] .ui-status-pill {
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  font-family: var(--ui-font-sans);
+}
+
+html[data-skin="sass"] .ui-chip,
+html[data-skin="sass"] .ui-filter-chip {
+  border-radius: var(--ui-rad-l);
+  transform: none !important;
+}
+
+/* ── Modals / toasts ─────────────────────────────────────────────────────── */
+/* Style the PANEL / shell modal box only — never the outer .ui-modal wrapper.
+   backdrop-filter / transform on .ui-modal creates a containing block that
+   traps position:fixed .ui-modal__scrim, collapsing the dialog off-screen. */
+
+html[data-skin="sass"] .ui-modal__panel,
+html[data-skin="sass"] .ui-modal-box,
+html[data-skin="sass"] .ui-toast {
+  background: var(--ui-bg1) !important;
+  border: 1px solid var(--ui-line-strong) !important;
+  border-radius: var(--ui-rad-xl) !important;
+  box-shadow: var(--ui-shadow-overlay) !important;
+  backdrop-filter: blur(var(--ui-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--ui-blur)) !important;
+}
+
+html[data-skin="sass"] .ui-modal__scrim,
+html[data-skin="sass"] .ui-modal-scrim,
+html[data-skin="sass"] .ui-modal__backdrop,
+html[data-skin="sass"] .ui-modal-backdrop {
+  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+html[data-skin="sass"] :focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 2px;
+}
+
+/* ── Patterns: gauges / bars / charts ────────────────────────────────────── */
+
+html[data-skin="sass"] .ui-gauge__halo,
+html[data-skin="sass"] .ui-gauge__glow-track,
+html[data-skin="sass"] .ui-gauge__needle-glow {
+  display: none !important;
+  filter: none !important;
+  background: none !important;
+  fill: none !important;
+  stroke: none !important;
+  opacity: 0 !important;
+}
+
+html[data-skin="sass"] .ui-gauge__value {
+  filter: none !important;
+  stroke-width: 9;
+}
+
+html[data-skin="sass"] .ui-gauge--hero .ui-gauge__value {
+  stroke-width: 10;
+}
+
+html[data-skin="sass"] .ui-gauge__track {
+  stroke: var(--ui-bg3);
+  stroke-width: 9;
+}
+
+html[data-skin="sass"] .ui-gauge--hero .ui-gauge__track {
+  stroke: var(--ui-bg3);
+  stroke-width: 10;
+}
+
+html[data-skin="sass"] .ui-gauge__value-text,
+html[data-skin="sass"] .ui-gauge__readout {
+  font-family: var(--ui-font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-shadow: none !important;
+}
+
+html[data-skin="sass"] .ui-gauge__label,
+html[data-skin="sass"] .ui-gauge__band {
+  font-family: var(--ui-font-sans);
+}
+
+html[data-skin="sass"] .ui-gauge--hero .ui-gauge__band {
+  border-radius: var(--ui-rad-m);
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ui-radar,
+html[data-skin="sass"] .ui-radar__halo {
+  filter: none !important;
+}
+
+html[data-skin="sass"] .ui-bar-meter__track,
+html[data-skin="sass"] .ui-hour-bars__track {
+  background: var(--ui-bg3);
+  border-radius: var(--ui-rad-s);
+}
+
+html[data-skin="sass"] .ui-bar-meter__fill,
+html[data-skin="sass"] .ui-hour-bars__bar,
+html[data-skin="sass"] .ui-gauge__fill {
+  border-radius: var(--ui-rad-s);
+}
+
+/* Pregen / long progress — subtle stripe when CSS-only */
+html[data-skin="sass"] .ui-progress__fill,
+html[data-skin="sass"] .ui-bar-meter__fill--striped,
+html[data-skin="sass"] .feat-pregen .ui-bar-meter__fill,
+html[data-skin="sass"] [data-progress="striped"] .ui-bar-meter__fill {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 6px,
+    rgba(255, 255, 255, 0.12) 6px,
+    rgba(255, 255, 255, 0.12) 12px
+  );
+}
+
+html[data-skin="sass"] .ui-bar-meter__label {
+  font-family: var(--ui-font-sans);
+  font-weight: 500;
+}
+
+html[data-skin="sass"] .ui-heatmap {
+  gap: var(--ui-sp-6);
+  background: var(--ui-bg2);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest);
+  padding: var(--ui-sp-12);
+  backdrop-filter: none;
+}
+
+html[data-skin="sass"] .ui-heatmap__grid {
+  gap: 3px;
+}
+
+html[data-skin="sass"] .ui-heatmap__cell {
+  border-radius: var(--ui-rad-s);
+  border: 1px solid var(--ui-line);
+  font-family: var(--ui-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ui-text-hi);
+  min-width: 22px;
+  min-height: 22px;
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ui-heatmap__cell:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 1px;
+}
+
+html[data-skin="sass"] .ui-heatmap__row-label,
+html[data-skin="sass"] .ui-heatmap__col-label {
+  font-family: var(--ui-font-sans);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10px;
+  color: var(--ui-text-low);
+}
+
+html[data-skin="sass"] .feat-hour-bars .ui-hour-bars {
+  background: var(--ui-bg2);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest);
+  backdrop-filter: none;
+  padding: var(--ui-sp-12) var(--ui-sp-14);
+}
+
+html[data-skin="sass"] .ui-hour-bars__plot {
+  background: var(--ui-bg3);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-rad-l);
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ui-hour-bars__bar--info {
+  background: var(--ui-accent);
+}
+
+html[data-skin="sass"] .ui-hour-bars__bar--empty {
+  background: color-mix(in srgb, var(--ui-text-low) 18%, var(--ui-bg3));
+}
+
+html[data-skin="sass"] .ui-status-pill,
+html[data-skin="sass"] .ui-freshness {
+  box-shadow: none;
+}
+
+/* Charts — blend plot well with card (no black inset “picture frame”) */
+html[data-skin="sass"] .ui-chart,
+html[data-skin="sass"] .ui-chart-frame,
+html[data-skin="sass"] .ui-timeseries,
+html[data-skin="sass"] .ui-timeseries__frame {
+  background: var(--ui-bg2);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest);
+  backdrop-filter: none;
+}
+
+html[data-skin="sass"] .ui-chart-frame__body {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-l) !important;
+  box-shadow: none !important;
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: none !important;
+  background-image: none !important;
+  gap: 0;
+  overflow: hidden;
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame::before {
+  display: none !important;
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame:hover {
+  border-color: var(--ui-line-strong) !important;
+  box-shadow: var(--ui-shadow-lift) !important;
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame__header {
+  padding: var(--ui-sp-8) var(--ui-sp-10) var(--ui-sp-4);
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame__title {
+  font-family: var(--ui-font-sans);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame__body {
+  background: var(--ui-bg3) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-l) !important;
+  box-shadow: none !important;
+  margin: 0 var(--ui-sp-8) var(--ui-sp-8);
+  padding: var(--ui-sp-8) var(--ui-sp-4) var(--ui-sp-6) var(--ui-sp-6);
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame__caption {
+  margin: 0 var(--ui-sp-10) var(--ui-sp-8);
+}
+
+/* Plot fills the well; current value lives in the card header */
+html[data-skin="sass"] .lv-charts .ui-timeseries {
+  position: relative;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  gap: 0;
+}
+
+html[data-skin="sass"] .lv-charts .ui-timeseries__plot {
+  width: 100%;
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame__legend .ui-timeseries__legend-item {
+  background: var(--ui-bg3);
+  border-color: var(--ui-line);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  font-size: 11px;
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame__legend .ui-timeseries__legend-dot {
+  width: 7px;
+  height: 7px;
+}
+
+html[data-skin="sass"] .lv-charts .ui-chart-frame__legend .ui-timeseries__legend-value {
+  font-weight: 650;
+}
+
+html[data-skin="sass"] .lv-charts .ui-timeseries__plot,
+html[data-skin="sass"] .lv-charts .ui-timeseries__plot .uplot,
+html[data-skin="sass"] .lv-charts .ui-timeseries__plot .u-wrap {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+html[data-skin="sass"] .ui-segmented {
+  background: var(--ui-bg3);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-rad-l);
+  padding: 2px;
+}
+
+html[data-skin="sass"] .ui-segmented__btn {
+  border-radius: var(--ui-rad-m);
+  font-weight: 500;
+}
+
+html[data-skin="sass"] .ui-segmented__btn.is-active,
+html[data-skin="sass"] .ui-segmented__btn[aria-pressed="true"] {
+  background: var(--ui-bg1);
+  color: var(--ui-text-hi);
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ui-toggle__track {
+  background: var(--ui-bg3);
+  border-radius: 999px;
+}
+
+html[data-skin="sass"] .ui-toggle__thumb {
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ui-toggle[aria-checked="true"] .ui-toggle__track,
+html[data-skin="sass"] .ui-toggle.is-on .ui-toggle__track {
+  background: var(--ui-accent);
+}
+
+/* ── Feature pages ───────────────────────────────────────────────────────── */
+
+/* Overview — Classic glass heroes, no aero sky / sheen */
+html[data-skin="sass"] .ov-mission::before,
+html[data-skin="sass"] .ov-beacon__halo {
+  display: none !important;
+}
+
+html[data-skin="sass"] .ov-mission,
+html[data-skin="sass"] .ov-instrument,
+html[data-skin="sass"] .feat-overview .ui-instrument {
+  background: var(--ui-glass) !important;
+  border: 1px solid var(--ui-glass-border) !important;
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: blur(var(--ui-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--ui-blur)) !important;
+  background-image: none !important;
+}
+
+/* Overview Storage — Classic plate, quiet wells, mono sizes */
+html[data-skin="sass"] .ov-instrument--storage {
+  --ov-card-tone: var(--ui-ch-disk, var(--ui-accent));
+}
+
+html[data-skin="sass"] .ov-storage__well {
+  background: var(--ui-bg3) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-l);
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ov-storage__kpis .ui-metric-tile {
+  background: var(--ui-bg3) !important;
+  border-color: var(--ui-line) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-skin="sass"] .ov-dim-row__gb {
+  font-family: var(--ui-font-mono);
+}
+
+html[data-skin="sass"] .ov-dim-row__track {
+  background: var(--ui-bg2);
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ov-dim-row__fill {
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ov-backup-disable {
+  background: color-mix(in srgb, var(--ui-warn) 8%, var(--ui-bg2)) !important;
+  border: 1px solid color-mix(in srgb, var(--ui-warn) 28%, var(--ui-line)) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  background-image: none !important;
+}
+
+html[data-skin="sass"] .ov-storage .ui-gauge--hero .ui-gauge__halo {
+  filter: none;
+  opacity: 0.55;
+}
+
+/* Tone washes must win over the base glass rule above */
+html[data-skin="sass"] .ov-mission.ov-mission--danger,
+html[data-skin="sass"] .ov-mission.ov-mission--critical,
+html[data-skin="sass"] .ui-instrument--danger,
+html[data-skin="sass"] .ui-instrument[data-tone="danger"] {
+  --ui-instrument-tone: var(--ui-danger);
+  --ui-instrument-wash: 22%;
+  background: color-mix(in srgb, var(--ui-danger) 14%, var(--ui-glass)) !important;
+  border-color: color-mix(in srgb, var(--ui-danger) 35%, var(--ui-glass-border)) !important;
+}
+
+html[data-skin="sass"] .ov-mission.ov-mission--warn,
+html[data-skin="sass"] .ov-mission.ov-mission--warning,
+html[data-skin="sass"] .ui-instrument--warn,
+html[data-skin="sass"] .ui-instrument[data-tone="warn"] {
+  --ui-instrument-tone: var(--ui-warn);
+  --ui-instrument-wash: 20%;
+  background: color-mix(in srgb, var(--ui-warn) 12%, var(--ui-glass)) !important;
+  border-color: color-mix(in srgb, var(--ui-warn) 32%, var(--ui-glass-border)) !important;
+}
+
+html[data-skin="sass"] .ov-mission.ov-mission--ok,
+html[data-skin="sass"] .ov-mission.ov-mission--healthy,
+html[data-skin="sass"] .ui-instrument--ok,
+html[data-skin="sass"] .ui-instrument[data-tone="ok"] {
+  --ui-instrument-tone: var(--ui-ok);
+  --ui-instrument-wash: 16%;
+  background: color-mix(in srgb, var(--ui-ok) 10%, var(--ui-glass)) !important;
+  border-color: color-mix(in srgb, var(--ui-ok) 28%, var(--ui-glass-border)) !important;
+}
+
+html[data-skin="sass"] .ov-beacon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-skin="sass"] .ov-grade,
+html[data-skin="sass"] .ui-health-grade {
+  box-shadow: none;
+  filter: none;
+}
+
+/* Mission vitals — solid Classic tiles, no lift on hover */
+html[data-skin="sass"] .ov-vital-live {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-top: 2px solid color-mix(in srgb, var(--ov-vital-ch, var(--ui-accent)) 75%, transparent) !important;
+  border-radius: var(--ui-rad-l);
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ov-vital-live:hover {
+  background: var(--ui-bg3) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html[data-skin="sass"] .ov-kpi {
+  background: var(--ui-bg2);
+  border-color: var(--ui-line);
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ov-trust__chip {
+  background: var(--ui-bg2);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-rad-full);
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ov-setup-chip {
+  background: color-mix(in srgb, var(--ui-accent) 10%, var(--ui-bg2));
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 28%, var(--ui-line));
+  border-radius: var(--ui-rad-card);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+html[data-skin="sass"] .ov-setup-chip__icon {
+  color: var(--ui-accent);
+}
+
+/* Live */
+html[data-skin="sass"] .feat-live__toolbar,
+html[data-skin="sass"] .feat-live .ui-instrument {
+  background: var(--ui-glass) !important;
+  border: 1px solid var(--ui-glass-border) !important;
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: blur(var(--ui-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--ui-blur)) !important;
+}
+
+html[data-skin="sass"] .feat-live .ui-chart-frame {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: none !important;
+  background-image: none !important;
+}
+
+/* Live — thermal gauges: flat Classic cards, no aero sheen / black chart well */
+html[data-skin="sass"] .lv-thermal-card {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: none !important;
+  background-image: none !important;
+  --ui-instrument-tone: var(--ui-warn);
+}
+
+html[data-skin="sass"] .lv-thermal-card::before {
+  display: none !important;
+}
+
+html[data-skin="sass"] .lv-thermal-card__chart {
+  background: transparent !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-l) !important;
+  box-shadow: none !important;
+}
+
+html[data-skin="sass"] .lv-thermal-card__chart .ui-timeseries,
+html[data-skin="sass"] .lv-thermal-card__chart .ui-chart-frame,
+html[data-skin="sass"] .lv-thermal-card__chart .ui-chart-frame__body {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Live — network cards: same stacked chart+readout pattern as thermal */
+html[data-skin="sass"] .lv-net-card {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: none !important;
+  background-image: none !important;
+}
+
+html[data-skin="sass"] .lv-net-card--rx {
+  --ui-instrument-tone: var(--ui-ch-rx);
+}
+
+html[data-skin="sass"] .lv-net-card--tx {
+  --ui-instrument-tone: var(--ui-ch-tx);
+}
+
+html[data-skin="sass"] .lv-net-card::before {
+  display: none !important;
+}
+
+html[data-skin="sass"] .lv-net-card__chart {
+  background: transparent !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-l) !important;
+  box-shadow: none !important;
+}
+
+html[data-skin="sass"] .lv-net-card__chart .ui-timeseries {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html[data-skin="sass"] .lv-net-card__readout {
+  background: var(--ui-bg3) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-l);
+  box-shadow: none !important;
+}
+
+html[data-skin="sass"] .lv-net-card--active .lv-net-card__readout {
+  border-color: color-mix(in srgb, var(--ui-instrument-tone) 40%, var(--ui-line)) !important;
+  box-shadow: none !important;
+}
+
+html[data-skin="sass"] .lv-net-card__value {
+  font-family: var(--ui-font-mono);
+  color: color-mix(in srgb, var(--ui-instrument-tone) 80%, var(--ui-text-hi));
+}
+
+/* Live — GC health strip: quiet Classic card */
+html[data-skin="sass"] .lv-gc-health {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest);
+  backdrop-filter: none !important;
+  background-image: none !important;
+}
+
+html[data-skin="sass"] .lv-gc-health[data-verdict="healthy"] {
+  border-color: color-mix(in srgb, var(--ui-ok) 35%, var(--ui-line)) !important;
+  background: color-mix(in srgb, var(--ui-ok) 8%, var(--ui-bg2)) !important;
+}
+
+html[data-skin="sass"] .lv-gc-health[data-verdict="heap_bound"],
+html[data-skin="sass"] .lv-gc-health[data-verdict="gc_bound"] {
+  border-color: color-mix(in srgb, var(--ui-danger) 35%, var(--ui-line)) !important;
+  background: color-mix(in srgb, var(--ui-danger) 8%, var(--ui-bg2)) !important;
+}
+
+html[data-skin="sass"] .lv-gc-health__kpi-value {
+  font-family: var(--ui-font-mono);
+}
+
+html[data-skin="sass"] .lv-toolbar {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest);
+  backdrop-filter: none !important;
+  background-image: none !important;
+  padding: var(--ui-sp-10) var(--ui-sp-12);
+}
+
+html[data-skin="sass"] .lv-toolbar--danger {
+  background: color-mix(in srgb, var(--ui-danger) 8%, var(--ui-bg2)) !important;
+}
+
+html[data-skin="sass"] .lv-toolbar--neutral {
+  background: color-mix(in srgb, var(--ui-text-low) 6%, var(--ui-bg2)) !important;
+}
+
+html[data-skin="sass"] .lv-vital {
+  background: var(--ui-bg3);
+  border-color: var(--ui-line);
+  border-radius: var(--ui-rad-m);
+}
+
+html[data-skin="sass"] .lv-vital__value {
+  font-family: var(--ui-font-mono);
+}
+
+html[data-skin="sass"] .lv-toolbar__select {
+  background-color: var(--ui-bg3);
+  border-color: var(--ui-line);
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .lv-toolbar__select:hover,
+html[data-skin="sass"] .lv-toolbar__select:focus-visible {
+  border-color: var(--ui-accent);
+  outline-color: var(--ui-accent);
+}
+
+html[data-skin="sass"] .lv-toolbar__divider {
+  background: var(--ui-line);
+  opacity: 1;
+}
+
+html[data-skin="sass"] .lv-toolbar .ui-seg {
+  background: var(--ui-bg3);
+  border-color: var(--ui-line);
+}
+
+html[data-skin="sass"] .lv-toolbar .ui-seg__opt--active {
+  background: color-mix(in srgb, var(--ui-accent) 16%, var(--ui-bg2));
+  color: var(--ui-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-accent) 35%, var(--ui-line));
+}
+
+/* Insights / Session / Startup */
+html[data-skin="sass"] .feat-insights .ui-card,
+html[data-skin="sass"] .feat-session .ui-card,
+html[data-skin="sass"] .feat-startup .ui-card,
+html[data-skin="sass"] .feat-startup__hero,
+html[data-skin="sass"] .feat-session__hero {
+  background: var(--ui-glass) !important;
+  border: 1px solid var(--ui-glass-border) !important;
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: blur(var(--ui-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--ui-blur)) !important;
+  background-image: none !important;
+}
+
+/* Issues / Crashes / Mods queue — glass on chrome/banners only (not flat catalog list) */
+html[data-skin="sass"] .feat-queue-chrome,
+html[data-skin="sass"] .feat-issues,
+html[data-skin="sass"] .feat-crashes,
+html[data-skin="sass"] .feat-mods-banner {
+  background: var(--ui-glass);
+  border-color: var(--ui-glass-border);
+  box-shadow: var(--ui-shadow-rest);
+  backdrop-filter: blur(var(--ui-blur));
+  -webkit-backdrop-filter: blur(var(--ui-blur));
+}
+
+html[data-skin="sass"] .feat-queue-chrome {
+  border-radius: var(--ui-rad-card);
+  border: 1px solid var(--ui-glass-border);
+}
+
+/* Logs / Spark */
+html[data-skin="sass"] .feat-logs,
+html[data-skin="sass"] .feat-logs__pane,
+html[data-skin="sass"] .feat-spark,
+html[data-skin="sass"] .feat-spark__panel {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: none !important;
+}
+
+/* Backups / Activity / Sources */
+html[data-skin="sass"] .feat-backups .ui-card,
+html[data-skin="sass"] .feat-activity .ui-card,
+html[data-skin="sass"] .feat-sources .ui-card,
+html[data-skin="sass"] .feat-activity__kpi {
+  background: var(--ui-glass) !important;
+  border: 1px solid var(--ui-glass-border) !important;
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: blur(var(--ui-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--ui-blur)) !important;
+}
+
+/* Settings / Docs / Help */
+html[data-skin="sass"] .feat-settings,
+html[data-skin="sass"] .feat-settings__nav,
+html[data-skin="sass"] .feat-settings__panel,
+html[data-skin="sass"] .feat-docs,
+html[data-skin="sass"] .feat-docs__card,
+html[data-skin="sass"] .feat-help {
+  background: var(--ui-bg1);
+  border-color: var(--ui-line);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+html[data-skin="sass"] .feat-settings__nav,
+html[data-skin="sass"] .feat-settings__panel,
+html[data-skin="sass"] .feat-docs__card {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-card);
+}
+
+/* Roadmap — flatten neo-aero glass to classic dark cards */
+html[data-skin="sass"] .feat-roadmap,
+html[data-skin="sass"] .feat-roadmap__hero,
+html[data-skin="sass"] .feat-roadmap__card,
+html[data-skin="sass"] .feat-roadmap__panel,
+html[data-skin="sass"] [class*="roadmap"] {
+  background-image: none !important;
+}
+
+html[data-skin="sass"] .feat-roadmap__hero,
+html[data-skin="sass"] .feat-roadmap__card,
+html[data-skin="sass"] .feat-roadmap__panel {
+  background: var(--ui-bg2) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: var(--ui-rad-card);
+  box-shadow: var(--ui-shadow-rest) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Auth / wizard / palette / tour / boot */
+html[data-skin="sass"] .ui-auth,
+html[data-skin="sass"] .ui-auth__card,
+html[data-skin="sass"] .ui-wizard,
+html[data-skin="sass"] .ui-wizard__panel,
+html[data-skin="sass"] .ui-palette,
+html[data-skin="sass"] .ui-boot,
+html[data-skin="sass"] .ui-tour__card {
+  background: var(--ui-bg1) !important;
+  border: 1px solid var(--ui-line-strong) !important;
+  border-radius: var(--ui-rad-xl);
+  box-shadow: var(--ui-shadow-overlay);
+  backdrop-filter: blur(var(--ui-blur)) !important;
+  background-image: none !important;
+}
+
+/* Subnav tabs */
+html[data-skin="sass"] .ui-subnav__item,
+html[data-skin="sass"] .ui-subnav a {
+  border-radius: var(--ui-rad-l);
+  transform: none !important;
+}
+
+html[data-skin="sass"] .ui-subnav__item.is-active,
+html[data-skin="sass"] .ui-subnav__item[aria-current="page"] {
+  background: var(--ui-accent);
+  color: #fff;
+  box-shadow: none;
+}
+
+/* ── Polish pass ─────────────────────────────────────────────────────────── */
+
+/* Lists inside queues — transparent plate, severity on rows only */
+html[data-skin="sass"] .feat-queue-chrome .ui-list,
+html[data-skin="sass"] .ov-queue.ui-list,
+html[data-skin="sass"] .ov-queue {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Trust dots — no aero glow */
+html[data-skin="sass"] .ov-trust__dot {
+  box-shadow: none;
+}
+
+/* Segmented active — soft accent, not floating glass */
+html[data-skin="sass"] .ui-segmented__btn.is-active,
+html[data-skin="sass"] .ui-segmented__btn[aria-pressed="true"] {
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent);
+  font-weight: 600;
+}
+
+/* Healthy headline — solid ok, no sky gradient text */
+html[data-skin="sass"] .ov-mission--ok .ov-mission__headline {
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  color: color-mix(in srgb, var(--ui-ok) 82%, var(--ui-text-hi));
+}
+
+/* Charts — same surface as card; no black well / double frame */
+html[data-skin="sass"] .ui-chart,
+html[data-skin="sass"] .ui-chart-frame,
+html[data-skin="sass"] .ui-timeseries,
+html[data-skin="sass"] .ui-timeseries__frame {
+  background: var(--ui-bg2) !important;
+  border-color: var(--ui-line) !important;
+  backdrop-filter: none !important;
+  background-image: none !important;
+}
+
+html[data-skin="sass"] .ui-chart-frame__body,
+html[data-skin="sass"] .feat-overview .ui-chart-frame__body {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Live keeps a soft inset well + legend padding (see .lv-charts rules above) */
+html[data-skin="sass"] .feat-live .lv-charts .ui-chart-frame__body,
+html[data-skin="sass"] .lv-charts .ui-chart-frame__body {
+  background: var(--ui-bg3) !important;
+  border: 1px solid var(--ui-line) !important;
+  box-shadow: none !important;
+}
+
+/* OLED black — force true-black shell (tokens alone can look gray via inherited glass) */
+html[data-skin="sass"][data-theme="black"],
+html[data-skin="sass"][data-theme="black"] body,
+html[data-skin="sass"][data-theme="black"] .ui-shell,
+html[data-skin="sass"][data-theme="black"] .ui-shell-main {
+  background-color: #000 !important;
+  background-image: none !important;
+}
+
+html[data-skin="sass"][data-theme="black"] .ui-rail,
+html[data-skin="sass"][data-theme="black"] .ui-topbar {
+  background: var(--ui-bg1) !important;
+}
+
+html[data-skin="sass"][data-theme="black"] .ov-vital-live,
+html[data-skin="sass"][data-theme="black"] .ov-kpi,
+html[data-skin="sass"][data-theme="black"] .ov-trust__chip {
+  background: var(--ui-bg2) !important;
+}

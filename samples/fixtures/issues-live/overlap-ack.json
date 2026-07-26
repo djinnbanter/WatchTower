@@ -1,0 +1,21 @@
+{
+  "note": "Same fingerprint while reviewed must not reopen — consumed by IssuesLiveStoreTest + fixture round-trip",
+  "issues_live": [
+    {
+      "id": "MSPT_HIGH",
+      "key": "MSPT_HIGH",
+      "severity": "warning",
+      "status": "reviewed",
+      "first_seen": "2026-07-18T01:00:00Z",
+      "last_seen": "2026-07-21T01:00:00Z",
+      "evidence_fingerprint": "mspt-42",
+      "source": "live",
+      "message": "MSPT elevated",
+      "evidence_refs": ["lag:1"],
+      "fix_steps": []
+    }
+  ],
+  "acks": {
+    "issue:MSPT_HIGH": { "ackedAt": "2026-07-20T15:00:00Z", "fingerprint": "mspt-42" }
+  }
+}

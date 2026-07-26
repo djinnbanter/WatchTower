@@ -77,6 +77,10 @@ public final class DiskNudgeEvaluator {
             return nudge;
         }
         if (externalConfigured && (bool(backupExternal, "stale", false) || "stale".equals(str(backupExternal, "status")))) {
+            boolean localFresh = lastBackup != null && "success".equals(status) && !stale;
+            if (localFresh) {
+                return nudge;
+            }
             Double extAge = jsonDouble(backupExternal, "age_days");
             nudge.addProperty("active", true);
             nudge.addProperty("kind", "backup_stale");
@@ -93,6 +97,9 @@ public final class DiskNudgeEvaluator {
             return nudge;
         }
         if (stale) {
+            if (externalFresh) {
+                return nudge;
+            }
             nudge.addProperty("active", true);
             nudge.addProperty("kind", "backup_stale");
             if (ageDays != null) {

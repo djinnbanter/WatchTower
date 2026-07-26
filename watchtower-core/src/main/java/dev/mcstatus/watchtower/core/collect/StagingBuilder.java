@@ -3,6 +3,9 @@ package dev.mcstatus.watchtower.core.collect;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import dev.mcstatus.watchtower.core.analyze.DiskProjectionAnalyzer;
+import dev.mcstatus.watchtower.core.live.PerformanceRollupWriter;
 import dev.mcstatus.watchtower.core.panel.PanelLabels;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
 import dev.mcstatus.watchtower.core.report.ReportProgress;
@@ -35,7 +38,9 @@ public final class StagingBuilder {
 
         JsonObject staging = newStagingSkeleton(config, cutoff);
 
-        p.detail("Reading host CPU, memory, and disk...");
+        final int collectTotal = 8;
+        int step = 0;
+        p.collectStep(++step, collectTotal, "Reading host CPU, memory, and disk…");
         JsonObject system = HostMetricsCollector.collectSystemBasics(config.serverDir());
         HostMetricsCollector.applyJavaProcessInfo(system, config);
         HostMetricsCollector.collectCpuMetrics(system, config, since);
@@ -44,53 +49,55 @@ public final class StagingBuilder {
         String serverDir = config.serverDir();
         if (config.serverDirValid()) {
             try {
-                p.detail("Scanning server logs...");
-                LogScanner.scanLogs(serverDir, staging, cutoff, config);
+                p.collectStep(++step, collectTotal, "Scanning server logs…");
+                LogScanner.scanLogs(serverDir, staging, cutoff, config, p);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "log scan failed — " + safeMessage(e));
             }
             try {
-                p.detail("Scanning Distant Horizons pregen logs...");
+                p.detail("[" + step + "/" + collectTotal + "] Distant Horizons pregen logs…");
                 DhPregenScanner.scanDhPregenLogs(serverDir, staging, cutoff, config);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "DH pregen log scan failed — " + safeMessage(e));
             }
             try {
-                p.detail("Scanning Chunky pregen logs...");
+                p.detail("[" + step + "/" + collectTotal + "] Chunky pregen logs…");
                 ChunkyPregenScanner.scanChunkyPregenLogs(serverDir, staging, cutoff, config);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "Chunky pregen log scan failed — " + safeMessage(e));
             }
             try {
-                p.detail("Reading crash reports...");
-                CrashReportScanner.scanCrashReports(serverDir, staging, cutoff);
+                p.collectStep(++step, collectTotal, "Reading crash reports…");
+                CrashReportScanner.scanCrashReports(serverDir, staging, cutoff, p);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "crash report scan failed — " + safeMessage(e));
             }
             try {
-                p.detail("Scanning backup folders...");
+                p.collectStep(++step, collectTotal, "Scanning backup folders…");
                 CraftyCollector.scanBackups(staging, serverDir, cutoff, config);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "backup scan failed — " + safeMessage(e));
             }
             try {
-                p.detail("Reading external backup heartbeat...");
+                p.detail("[" + step + "/" + collectTotal + "] External backup heartbeat…");
                 JsonObject optional = staging.getAsJsonObject("optional");
                 optional.add("backup_external",
                         ExternalBackupDetector.readForReport(serverDir, config));
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "external backup heartbeat read failed — " + safeMessage(e));
             }
+        } else {
+            step = 4; // skip ahead when no server dir
         }
 
         try {
-            p.detail("Reading Crafty audit log...");
+            p.collectStep(++step, collectTotal, "Reading panel audit / host events…");
             CraftyCollector.scanCraftyAudit(staging, cutoff, config);
         } catch (Exception e) {
             CollectionWarnings.add(staging, "Crafty audit.log not readable — " + safeMessage(e));
         }
         try {
-            p.detail("Scanning host events...");
+            p.detail("[" + step + "/" + collectTotal + "] Host events…");
             HostEventScanner.scanHostEvents(staging, since, cutoff);
         } catch (Exception e) {
             CollectionWarnings.add(staging, "journalctl unavailable — host events from auth.log only");
@@ -98,7 +105,7 @@ public final class StagingBuilder {
 
         if (config.serverDirValid()) {
             try {
-                p.detail("Collecting mods, players, storage, and Spark...");
+                p.collectStep(++step, collectTotal, "Collecting mods, players, storage, and Spark…");
                 applyV3Collectors(staging, serverDir, cutoff, config, p);
             } catch (Exception e) {
                 CollectionWarnings.add(staging, "extended collectors failed — " + safeMessage(e));
@@ -109,7 +116,45 @@ public final class StagingBuilder {
         String panelId = staging.getAsJsonObject("meta").get("panel").getAsString();
         optional.add("host_environment", HostEnvironmentDetector.detect(panelId));
 
-        p.detail("Collection complete");
+        try {
+            p.collectStep(++step, collectTotal, "Sampling JVM GC and flags…");
+            Double xmxHint = null;
+            if (system.has("java_xmx_gb") && !system.get("java_xmx_gb").isJsonNull()) {
+                xmxHint = system.get("java_xmx_gb").getAsDouble();
+            }
+            String dir = config.serverDirValid() ? config.serverDir() : null;
+            JsonObject jvmSample = JvmHealthCollector.sampleReport(dir, xmxHint);
+            optional.add("jvm_health_sample", jvmSample);
+            if (dir != null) {
+                Path rollups = Path.of(dir, "watchtower", "performance-rollups.json");
+                JsonObject l1 = JvmHealthCollector.averageL1JvmHealth(rollups, 1);
+                if (l1.has("heap_pressure_pct_avg") || l1.has("gc_pause_pct_avg")) {
+                    optional.add("jvm_health_l1", l1);
+                }
+                try {
+                    int lookback = Math.max(config.diskFillLookbackHours(), config.diskFillMinSpanHours());
+                    List<JsonObject> rows = PerformanceRollupWriter.loadRowsFromFile(rollups, lookback + 1);
+                    Double freeGb = system.has("disk_free_gb") && !system.get("disk_free_gb").isJsonNull()
+                            ? system.get("disk_free_gb").getAsDouble() : null;
+                    Double usePct = system.has("disk_use_pct") && !system.get("disk_use_pct").isJsonNull()
+                            ? system.get("disk_use_pct").getAsDouble() : null;
+                    JsonObject storage = optional.has("storage") && optional.get("storage").isJsonObject()
+                            ? optional.getAsJsonObject("storage") : null;
+                    JsonObject projection = DiskProjectionAnalyzer.analyze(
+                            rows, freeGb, usePct,
+                            config.diskFillLookbackHours(),
+                            config.diskFillMinSpanHours(),
+                            config.diskFillOutlierGb(),
+                            storage);
+                    optional.add("disk_projection", projection);
+                } catch (Exception ignoredDisk) {
+                }
+            }
+        } catch (Exception e) {
+            CollectionWarnings.add(staging, "JVM health sample failed — " + safeMessage(e));
+        }
+
+        p.collectStep(collectTotal, collectTotal, "Collection complete");
         return staging;
     }
 
@@ -154,6 +199,7 @@ public final class StagingBuilder {
         meta.addProperty("crash_rule_builtin", config.crashRuleBuiltin());
         meta.addProperty("issue_suppressions", config.issueSuppressions());
         meta.addProperty("issue_suppression_regex", config.issueSuppressionRegex());
+        meta.addProperty("config_audit_enabled", config.configAuditEnabled());
         meta.addProperty("disaster_recovery", config.disasterRecovery());
         meta.addProperty("backup_suppress_local_missing", config.backupSuppressLocalMissing());
         meta.addProperty("backup_tracking_enabled", config.backupTrackingEnabled());
@@ -170,6 +216,11 @@ public final class StagingBuilder {
 
         JsonObject thresholds = new JsonObject();
         thresholds.addProperty("disk_warn_pct", config.diskWarnPct());
+        thresholds.addProperty("disk_fill_warn_days", config.diskFillWarnDays());
+        thresholds.addProperty("disk_fill_lookback_hours", config.diskFillLookbackHours());
+        thresholds.addProperty("disk_fill_min_span_hours", config.diskFillMinSpanHours());
+        thresholds.addProperty("disk_fill_outlier_gb", config.diskFillOutlierGb());
+        thresholds.addProperty("disk_io_latency_warn_ms", config.diskIoLatencyWarnMs());
         thresholds.addProperty("mem_warn_avail_gb", config.memWarnAvailGb());
         thresholds.addProperty("log_stale_minutes", config.logStaleMinutes());
         thresholds.addProperty("cant_keep_up_warn", config.cantKeepUpWarn());
@@ -216,7 +267,12 @@ public final class StagingBuilder {
         JsonObject state = HostMetricsCollector.loadStateFile(config);
 
         progressCb.detail("Loading live TPS snapshot...");
-        JsonObject tps = WatchtowerSnapshotLoader.loadWatchtowerSnapshot(serverDir);
+        JsonObject snapshotTps = WatchtowerSnapshotLoader.loadWatchtowerSnapshot(serverDir);
+        JsonObject nativeFromSnapshot = null;
+        if (snapshotTps != null && snapshotTps.has("_native") && snapshotTps.get("_native").isJsonObject()) {
+            nativeFromSnapshot = snapshotTps.getAsJsonObject("_native").deepCopy();
+        }
+        JsonObject tps = snapshotTps;
         boolean snapshotFresh = isSnapshotFresh(serverDir, tps);
         if (!config.disasterRecovery() && !snapshotFresh && RconMetricsCollector.isConfigured(config)) {
             JsonObject rconTps = RconMetricsCollector.poll(config);
@@ -225,10 +281,15 @@ public final class StagingBuilder {
             }
         }
         JsonObject nativeBlob = null;
-        if (tps != null && tps.has("_native")) {
+        if (tps != null && tps.has("_native") && tps.get("_native").isJsonObject()) {
             nativeBlob = tps.getAsJsonObject("_native").deepCopy();
-            optional.add("watchtower_native", nativeBlob);
             tps.remove("_native");
+        } else if (nativeFromSnapshot != null) {
+            // RCON (or other) TPS replaced a stale snapshot — keep native mods/MC from disk.
+            nativeBlob = nativeFromSnapshot;
+        }
+        if (nativeBlob != null) {
+            optional.add("watchtower_native", nativeBlob);
         }
         JsonObject meta = staging.getAsJsonObject("meta");
         String mcVersion = null;
@@ -238,9 +299,18 @@ public final class StagingBuilder {
         } else if (tps != null && tps.has("minecraft_version")
                 && tps.get("minecraft_version").isJsonPrimitive()) {
             mcVersion = tps.get("minecraft_version").getAsString();
+        } else if (snapshotTps != null && snapshotTps.has("minecraft_version")
+                && snapshotTps.get("minecraft_version").isJsonPrimitive()) {
+            mcVersion = snapshotTps.get("minecraft_version").getAsString();
+        }
+        if (mcVersion == null || mcVersion.isBlank()) {
+            mcVersion = readPlatformMinecraftVersion(serverDir);
         }
         if (mcVersion != null && !mcVersion.isBlank()) {
             meta.addProperty("minecraft_version", mcVersion.trim());
+            if (nativeBlob != null && !nativeBlob.has("minecraft_version")) {
+                nativeBlob.addProperty("minecraft_version", mcVersion.trim());
+            }
         }
         applyPlayers(mc, optional, tps, nativeBlob);
         progressCb.detail("Diffing mod inventory...");
@@ -255,7 +325,7 @@ public final class StagingBuilder {
             optional.add("ignored_client_mods", state.get("ignored_client_mods").deepCopy());
         }
         progressCb.detail("Reading mod list and jar metadata...");
-        applyModsList(optional, nativeBlob, serverDir, config);
+        applyModsList(optional, nativeBlob, serverDir, config, progressCb);
 
         double peakLog = mc.has("worst_tick_lag_ms") ? mc.get("worst_tick_lag_ms").getAsDouble() : 0;
 
@@ -466,6 +536,26 @@ public final class StagingBuilder {
         }
     }
 
+    private static String readPlatformMinecraftVersion(String serverDir) {
+        if (serverDir == null || serverDir.isBlank()) {
+            return null;
+        }
+        Path platform = Path.of(serverDir, "watchtower", "platform.json");
+        if (!Files.isRegularFile(platform)) {
+            return null;
+        }
+        try {
+            JsonObject obj = JsonParser.parseString(Files.readString(platform)).getAsJsonObject();
+            if (obj.has("minecraft_version") && obj.get("minecraft_version").isJsonPrimitive()) {
+                String v = obj.get("minecraft_version").getAsString();
+                return v != null && !v.isBlank() ? v.trim() : null;
+            }
+        } catch (Exception ignored) {
+            // optional stamp
+        }
+        return null;
+    }
+
     private static boolean isSnapshotFresh(String serverDir, JsonObject tps) {
         if (tps == null) {
             return false;
@@ -524,9 +614,11 @@ public final class StagingBuilder {
     }
 
     private static void applyModsList(JsonObject optional, JsonObject nativeBlob, String serverDir,
-                                      ReportConfig config) {
+                                      ReportConfig config, ReportProgress progress) {
+        ReportProgress p = progress != null ? progress : ReportProgress.NOOP;
         JsonArray mods = new JsonArray();
-        if (nativeBlob != null && nativeBlob.has("mods") && nativeBlob.get("mods").isJsonArray()) {
+        boolean fromNative = nativeBlob != null && nativeBlob.has("mods") && nativeBlob.get("mods").isJsonArray();
+        if (fromNative) {
             List<JsonObject> sorted = new ArrayList<>();
             for (var el : nativeBlob.getAsJsonArray("mods")) {
                 if (el.isJsonObject()) {
@@ -535,14 +627,23 @@ public final class StagingBuilder {
             }
             sorted.sort((a, b) -> strId(a).compareTo(strId(b)));
             sorted.forEach(mods::add);
+            p.found("jars", mods.size());
+            p.detail("Using " + mods.size() + " loaded mod" + (mods.size() == 1 ? "" : "s")
+                    + " from live inventory…");
         } else {
-            mods = ModJarMetadataReader.listModsFromDir(serverDir);
+            mods = ModJarMetadataReader.listModsFromDir(serverDir, p);
         }
         if (!mods.isEmpty()) {
-            ModJarMetadataReader.enrichModArray(mods, serverDir);
+            if (fromNative) {
+                p.detail("Enriching mod jar metadata…");
+                ModJarMetadataReader.enrichModArray(mods, serverDir, p);
+            } else {
+                ModJarMetadataReader.enrichModArray(mods, serverDir);
+            }
             ModNesting.foldOptionalMods(mods, serverDir);
             optional.add("mods", mods);
             ClientModDetector.apply(optional, config, serverDir);
+            p.found("jars", mods.size());
         }
     }
 

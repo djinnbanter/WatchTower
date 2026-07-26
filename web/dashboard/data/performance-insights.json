@@ -1,7 +1,7 @@
 {
   "window": "7d",
   "hours": 168,
-  "generated_at": "2026-07-16T17:11:20.821Z",
+  "generated_at": "2026-07-22T11:57:38.651Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -74,13 +74,13 @@
       "tps_avg": 19.4
     },
     {
-      "players_band": "3-5",
+      "players_band": "3-4",
       "minutes": 520,
       "mspt_avg": 22.8,
       "tps_avg": 18.6
     },
     {
-      "players_band": "6+",
+      "players_band": "5-7",
       "minutes": 220,
       "mspt_avg": 31.5,
       "tps_avg": 17.9
@@ -88,7 +88,7 @@
   ],
   "outlier_minutes": [
     {
-      "ts": "2026-07-16T16:26:20.821Z",
+      "ts": "2026-07-22T11:12:38.651Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
@@ -97,8 +97,8 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-07-16T15:41:20.821Z",
-      "ended_at": "2026-07-16T16:26:20.821Z",
+      "started_at": "2026-07-22T10:27:38.651Z",
+      "ended_at": "2026-07-22T11:12:38.651Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
@@ -126,5 +126,7 @@
       "detail": "1 minute(s) in window had elevated MSPT while idle — check farms, chunk loaders, or background jobs.",
       "tab": "issues"
     }
-  ]
+  ],
+  "players_band_scale": 7,
+  "players_band_scale_source": "observed_peak"
 }

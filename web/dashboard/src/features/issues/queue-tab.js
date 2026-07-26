@@ -1,7 +1,10 @@
 /**
  * Issues Active / Reviewed — permanent list + detail split.
+ * Selection lives in module state (getIssuesSelection) — not useState, not a
+ * Preact signal, and not URL-as-authority — so kickRender cannot dual-update
+ * and detach the live DOM (that froze selection / trapped the tab).
  */
-import { html, useState, useEffect, useMemo } from '../../lib/preact.js';
+import { html, useState, useEffect, useMemo, useRef } from '../../lib/preact.js';
 import { setRoute } from '../../state/stores.js';
 import { openModal } from '../../state/actions.js';
 import { navigate } from '../../app/router.js';
@@ -20,6 +23,8 @@ import {
   formatAge,
   runPrimaryAction,
 } from './helpers.js';
+import { useQueueKeyboard } from '../shared/use-queue-keyboard.js';
+import { getIssuesSelection, selectIssue } from '../shared/queue-selection.js';
 
 function PanelHero({ eyebrow, headline }) {
   return html`
@@ -120,43 +125,39 @@ function FixPanel({
             ${item.primaryAction.label}
           </${Button}>
         ` : null}
-        ${item.docUrl ? html`
-          <a class="issues-fix__doc" href=${item.docUrl} target="_blank" rel="noopener noreferrer">
-            Open mod docs
-            <${Icon} name="external-link" size=${12} />
-          </a>
+        ${item.sparkProfilePath ? html`
+          <${Button}
+            kind="neutral"
+            size="sm"
+            onClick=${() => navigate('spark', { profile: item.sparkProfilePath })}
+          >
+            Open in Spark
+          </${Button}>
         ` : null}
+        ${!reviewed ? html`
+          <${Button} kind="accent" size="sm" loading=${marking} onClick=${handleDone}>
+            Mark reviewed
+          </${Button}>
+        ` : html`
+          <${Button} kind="neutral" size="sm" onClick=${() => onUnack(item.key)}>
+            Move to Active
+          </${Button}>
+        `}
+        ${stepsText ? html`<${CopyButton} text=${stepsText} label="Copy steps" size="sm" />` : null}
       </div>
 
-      ${!isCrash && steps.length ? html`
+      ${!reviewed && item.issueId ? html`
         <div class="crashes-cta-row crashes-cta-row--tools">
-          <${CopyButton} text=${stepsText} label="Copy steps" />
+          <${Button} kind="neutral" size="sm" onClick=${() => onSuppress(item.issueId)}>
+            Hide from Active
+          </${Button}>
         </div>
       ` : null}
 
-      <div class="crashes-panel__done">
-        ${reviewed
-          ? html`<${Button} kind="neutral" size="sm" onClick=${() => onUnack(item.key)}>Undo</${Button}>`
-          : html`
-            <div class="issues-panel__done-actions">
-              <${Button} kind="neutral" size="sm" loading=${marking} onClick=${handleDone}>
-                ${isCrash ? 'Mark crashes reviewed' : 'Mark reviewed'}
-              </${Button}>
-              ${item.issueId && onSuppress ? html`
-                <${Button} kind="neutral" size="sm" onClick=${() => onSuppress(item.issueId)}>
-                  Don't show again
-                </${Button}>
-              ` : null}
-            </div>
-          `}
-      </div>
-
-      ${why && !reviewed ? html`
-        <div class="crashes-panel__footer">
-          <div class="crashes-why">
-            <div class="crashes-why__label">Why</div>
-            <p class="crashes-why__text">${why}</p>
-          </div>
+      ${why ? html`
+        <div class="crashes-why">
+          <div class="crashes-why__label">Why</div>
+          <p class="crashes-why__text">${why}</p>
         </div>
       ` : null}
     </div>
@@ -173,6 +174,8 @@ function DetailsPanel({ item }) {
     item.when ? { label: 'When', value: new Date(item.when).toLocaleString() } : null,
     item.ackedAt ? { label: 'Reviewed', value: new Date(item.ackedAt).toLocaleString() } : null,
     item.primarySuspect ? { label: 'Suspect', value: item.primarySuspect } : null,
+    item.sparkProfilePath ? { label: 'Spark profile', value: item.sparkProfilePath } : null,
+    item.sparkAutoCaptureStatus ? { label: 'Auto-capture', value: item.sparkAutoCaptureStatus } : null,
   ].filter(Boolean);
 
   const m = item.metrics;
@@ -188,14 +191,6 @@ function DetailsPanel({ item }) {
         eyebrow="Details"
         headline="Identity and context for this finding"
       />
-      ${item.summary ? html`
-        <${PanelBlock} title="Summary" hint="What happened and why it matters">
-          <p class="issues-panel__prose">${item.summary}</p>
-          ${item.detail && item.detail !== item.summary
-            ? html`<p class="issues-panel__prose issues-panel__prose--muted">${item.detail}</p>`
-            : null}
-        </${PanelBlock}>
-      ` : null}
       <${PanelBlock} title="Identity" hint="Stable keys for acks and deep links">
         <${TechRows} rows=${rows} />
       </${PanelBlock}>
@@ -266,35 +261,30 @@ function IssueRow({ item, active, reviewed, onSelect }) {
   const tone = reviewed ? 'neutral' : severityTone(item.severity);
   const peek = item.summary
     ? (item.summary.length > 90 ? `${item.summary.slice(0, 87)}…` : item.summary)
-    : '';
+    : (item.kind === 'crash'
+      ? (item.raw?.meta?.unreviewed_groups != null
+        ? `${item.raw.meta.unreviewed_groups} group${item.raw.meta.unreviewed_groups === 1 ? '' : 's'} need review`
+        : 'Open Crashes for the fix plan')
+      : (item.primaryAction?.label || ''));
   const age = formatAge(item.when) || formatAge(item.ackedAt);
-  const crashPeek = item.kind === 'crash'
-    ? (item.raw?.meta?.unreviewed_groups != null
-      ? `${item.raw.meta.unreviewed_groups} group${item.raw.meta.unreviewed_groups === 1 ? '' : 's'}`
-      : 'Open Crashes')
-    : null;
 
   return html`
     <button
       type="button"
       class=${`issues-row${active ? ' issues-row--active' : ''}${reviewed ? ' issues-row--reviewed' : ''}`}
       role="option"
-      aria-selected=${active}
+      aria-selected=${active ? 'true' : 'false'}
+      data-issue-key=${item.key}
       onClick=${() => onSelect(item.key)}
     >
       <div class="issues-row__top">
-        <span class="issues-row__title">${item.title}</span>
         <${Badge} tone=${tone}>${reviewed ? 'reviewed' : item.severity}</${Badge}>
+        <span class="issues-row__title">${item.title}</span>
+        ${age ? html`<span class="issues-row__age">${age}</span>` : null}
         <${Badge} tone="neutral">${sourceLabel(item.source)}</${Badge}>
+        ${item.sparkChip ? html`<${Badge} tone="info">${item.sparkChip}</${Badge}>` : null}
       </div>
       ${peek ? html`<p class="issues-row__cause">${peek}</p>` : null}
-      <div class="issues-row__meta">
-        ${age ? html`<span>${age}</span>` : null}
-        ${crashPeek ? html`<span class="issues-row__peek">${crashPeek}</span>` : null}
-        ${item.primaryAction && !crashPeek
-          ? html`<span class="issues-row__peek">${item.primaryAction.label}</span>`
-          : null}
-      </div>
     </button>
   `;
 }
@@ -305,8 +295,7 @@ function IssueRow({ item, active, reviewed, onSelect }) {
 export function QueueTab({
   mode,
   items,
-  selectedKey,
-  onSelect,
+  routeKey,
   onAck,
   onUnack,
   onSuppress,
@@ -319,8 +308,13 @@ export function QueueTab({
   const [panel, setPanel] = useState('fix');
   const [marking, setMarking] = useState(false);
   const [collapsed, setCollapsed] = useState(() => new Set(['older']));
+  const searchRef = useRef(null);
+  const didSeedFromRoute = useRef(false);
+  const didPickDefault = useRef(false);
 
   const reviewed = mode === 'reviewed';
+  const selectedKey = getIssuesSelection();
+
   const filtered = useMemo(
     () => filterItems(items, { search, source }),
     [items, search, source],
@@ -332,6 +326,41 @@ export function QueueTab({
   );
 
   const bandKeysSig = bands.map((b) => b.key).join('|');
+  const filteredKeys = useMemo(() => filtered.map((i) => i.key), [filtered]);
+  const filteredKeysSig = filteredKeys.join('\0');
+
+  // Mode switch: allow a fresh default pick; keep selection if still in the list.
+  useEffect(() => {
+    didPickDefault.current = false;
+    didSeedFromRoute.current = false;
+  }, [mode]);
+
+  // Deep-link seed once per mode (URL → signal). Never the other way as authority.
+  useEffect(() => {
+    if (didSeedFromRoute.current) return;
+    if (!routeKey) {
+      didSeedFromRoute.current = true;
+      return;
+    }
+    if (!filteredKeys.length) return;
+    didSeedFromRoute.current = true;
+    if (filteredKeys.includes(routeKey)) {
+      selectIssue(routeKey, { syncUrl: false, view: mode });
+      didPickDefault.current = true;
+    }
+  }, [routeKey, filteredKeysSig, mode]);
+
+  // Default pick once when the list has rows — signal only, no navigate.
+  useEffect(() => {
+    if (didPickDefault.current) return;
+    if (!filteredKeys.length) return;
+    if (selectedKey && filteredKeys.includes(selectedKey)) {
+      didPickDefault.current = true;
+      return;
+    }
+    didPickDefault.current = true;
+    selectIssue(filteredKeys[0], { syncUrl: true, view: mode });
+  }, [filteredKeysSig, selectedKey, mode]);
 
   useEffect(() => {
     if (reviewed) {
@@ -361,16 +390,24 @@ export function QueueTab({
       next.delete(band.key);
       return next;
     });
-  }, [selectedKey, bands]);
-
-  useEffect(() => {
-    if (!filtered.length) return;
-    if (selectedKey && filtered.some((i) => i.key === selectedKey)) return;
-    if (selectedKey) return;
-    onSelect(filtered[0].key);
-  }, [filtered, selectedKey, onSelect]);
+  }, [selectedKey, bandKeysSig]);
 
   const selected = filtered.find((i) => i.key === selectedKey) || null;
+
+  function selectRow(key) {
+    selectIssue(key, { syncUrl: true, view: mode });
+  }
+
+  function selectNextAfter(key) {
+    const idx = filtered.findIndex((i) => i.key === key);
+    const remaining = filtered.filter((i) => i.key !== key);
+    if (!remaining.length) {
+      selectIssue(null, { syncUrl: true, view: mode });
+      return;
+    }
+    const next = remaining[Math.min(Math.max(idx, 0), remaining.length - 1)];
+    selectIssue(next.key, { syncUrl: true, view: mode });
+  }
 
   function toggleBand(key) {
     setCollapsed((prev) => {
@@ -385,6 +422,7 @@ export function QueueTab({
     setMarking(true);
     try {
       await onAck(key);
+      selectNextAfter(key);
     } finally {
       setMarking(false);
     }
@@ -394,10 +432,25 @@ export function QueueTab({
     setMarking(true);
     try {
       await onAckCrash();
+      if (selectedKey) selectNextAfter(selectedKey);
     } finally {
       setMarking(false);
     }
   }
+
+  useQueueKeyboard({
+    enabled: filtered.length > 0,
+    searchRef,
+    keys: filteredKeys,
+    selectedKey,
+    onSelect: selectRow,
+    onMarkReviewed: reviewed ? undefined : (key) => {
+      const item = filtered.find((i) => i.key === key);
+      if (!item || marking) return;
+      if (item.kind === 'crash') handleAckCrash();
+      else handleAck(key);
+    },
+  });
 
   const chrome = html`
     <div class="feat-queue-chrome issues-queue__chrome">
@@ -405,8 +458,9 @@ export function QueueTab({
         icon="search"
         value=${search}
         onInput=${(e) => setSearch(e.target.value)}
-        placeholder="Search issues…"
+        placeholder="Search issues… (/)"
         aria-label="Search issues"
+        inputRef=${searchRef}
       />
       <${Segmented} options=${SOURCE_FILTERS} value=${source} onChange=${setSource} size="sm" />
       <span class="feat-queue-chrome__count issues-queue__count">${filtered.length} issue${filtered.length === 1 ? '' : 's'}</span>
@@ -416,18 +470,21 @@ export function QueueTab({
   if (!items.length) {
     return html`
       <${EmptyState}
-        title=${reviewed ? 'No reviewed issues yet' : noReport ? 'No report yet' : 'All clear'}
+        title=${reviewed ? 'No reviewed issues yet' : noReport ? 'Waiting for scans…' : 'All clear'}
         body=${reviewed
           ? 'Mark items reviewed on the Active tab. They’ll land here so you can undo later if needed.'
           : noReport
-            ? 'Run a report to populate the fix queue. Live peek alerts will also appear here when the ops scan finds them.'
+            ? 'Continuous Scanning will populate this queue from ops peeks and live issues. No deep audit required for day-to-day triage.'
             : 'No active issues detected. Peek at Live charts or Insights if you want a deeper look.'}
         action=${reviewed ? html`
           <${Button} kind="neutral" size="sm" onClick=${() => navigate('issues', { view: 'active' })}>
             Back to Active
           </${Button}>
         ` : noReport ? html`
-          <${Button} kind="accent" size="sm" onClick=${() => openModal('run-report')}>Run Report</${Button}>
+          <div class="issues-empty-actions">
+            <${Button} kind="accent" size="sm" onClick=${() => navigate('live')}>Open Live</${Button}>
+            <${Button} kind="neutral" size="sm" onClick=${() => navigate('sources')}>Sources</${Button}>
+          </div>
         ` : html`
           <div class="issues-empty-actions">
             <${Button} kind="neutral" size="sm" onClick=${() => navigate('live')}>Open Live</${Button}>
@@ -479,11 +536,11 @@ export function QueueTab({
                   <div class="issues-band__items">
                     ${bandItems.map((item) => html`
                       <${IssueRow}
-                        key=${item.key}
+                        key=${`row:${item.key}`}
                         item=${item}
-                        active=${selected?.key === item.key}
+                        active=${selectedKey === item.key}
                         reviewed=${reviewed}
-                        onSelect=${onSelect}
+                        onSelect=${selectRow}
                       />
                     `)}
                   </div>
@@ -495,6 +552,7 @@ export function QueueTab({
 
         ${selected ? html`
           <${IssueDetail}
+            key=${selected.key}
             item=${selected}
             reviewed=${reviewed}
             panel=${panel}

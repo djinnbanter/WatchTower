@@ -1,0 +1,18 @@
+{
+  "issues_live": [
+    {
+      "id": "DISK_FILL_PROJECTED",
+      "key": "DISK_FILL_PROJECTED",
+      "severity": "warning",
+      "status": "open",
+      "first_seen": "2026-07-19T12:00:00Z",
+      "last_seen": "2026-07-20T12:00:00Z",
+      "evidence_fingerprint": "disk-fill",
+      "source": "ops",
+      "message": "Disk fill projected",
+      "evidence_refs": [],
+      "fix_steps": []
+    }
+  ],
+  "issues_live_updated_at": "2026-07-20T12:00:00Z"
+}

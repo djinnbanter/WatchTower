@@ -15,6 +15,7 @@ export function TextField({
   className = '',
   icon,
   type = 'text',
+  inputRef,
   ...rest
 }) {
   const fieldCls = [
@@ -47,6 +48,7 @@ export function TextField({
           disabled=${disabled || null}
           onInput=${onInput}
           onChange=${onChange}
+          ref=${inputRef}
           ...${rest}
         />
       </div>

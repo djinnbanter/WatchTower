@@ -14,12 +14,12 @@ export function FreshnessBadge({ layer, at, stale = false }) {
 
   useSignalEffect(() => {
     const ts = now.value;
+    let next = '—';
     if (at != null) {
       const ms = ageMs(at, ts);
-      ageStr.value = formatAge(ms);
-    } else {
-      ageStr.value = '—';
+      next = formatAge(ms);
     }
+    if (ageStr.value !== next) ageStr.value = next;
   });
 
   const effectiveLayer = stale ? 'stale' : (layer || 'report');
@@ -41,7 +41,7 @@ export function FreshnessBadge({ layer, at, stale = false }) {
     <span class=${cls}>
       <span class="ui-freshness-badge__dot" aria-hidden="true"></span>
       <span class="ui-freshness-badge__label">${layerLabels[effectiveLayer] || effectiveLayer}</span>
-      ${at != null && html`<span class="ui-freshness-badge__age">${ageStr}</span>`}
+      ${at != null && html`<span class="ui-freshness-badge__age">${ageStr.value}</span>`}
     </span>
   `;
 }

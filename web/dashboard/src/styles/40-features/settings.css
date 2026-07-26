@@ -127,6 +127,10 @@
   line-height: 1.45;
 }
 
+.settings-form__hint--warn {
+  color: var(--ui-warn);
+}
+
 .settings-form__bullets {
   margin: var(--ui-sp-12) 0 0;
   padding-left: 1.2em;
@@ -146,6 +150,14 @@
   flex-wrap: wrap;
   gap: var(--ui-sp-16);
   align-items: flex-end;
+}
+
+.settings-form__field--inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-sp-12);
+  align-items: flex-end;
+  margin-top: var(--ui-sp-12);
 }
 
 .settings-form__actions {

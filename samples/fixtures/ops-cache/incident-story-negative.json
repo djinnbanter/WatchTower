@@ -1,0 +1,61 @@
+{
+  "schema_version": 3,
+  "updated_at": "2026-07-16T22:00:00Z",
+  "ops_cache_seq": 1,
+  "activity": {
+    "scanned_at": "2026-07-16T22:00:00Z",
+    "new_count": 2,
+    "events": [
+      {
+        "time": "2026-07-16T10:00:00Z",
+        "type": "tick_lag",
+        "detail": "Can't keep up! Running 2000ms behind",
+        "source": "scan"
+      },
+      {
+        "time": "2026-07-16T10:05:00Z",
+        "type": "tick_lag",
+        "detail": "Can't keep up! Running 1500ms behind",
+        "source": "scan"
+      },
+      {
+        "time": "2026-07-16T18:00:00Z",
+        "type": "player_join",
+        "detail": "Steve",
+        "source": "scan"
+      }
+    ]
+  },
+  "lag_issues": {
+    "updated_at": "2026-07-16T10:00:00Z",
+    "active_count": 1,
+    "entries": [
+      {
+        "id": "LAG-2026-07-16T10-00-00Z",
+        "incident_id": "2026-07-16T10-00-00Z",
+        "severity": "warning",
+        "time": "2026-07-16T10:00:00Z",
+        "title": "Lag spike — MSPT 80ms · TPS 12.0",
+        "metrics": { "tps": 12.0, "mspt": 80.0, "players_online": 1 },
+        "resolved": true
+      }
+    ]
+  },
+  "crashes": {
+    "scanned_at": "2026-07-16T22:00:00Z",
+    "count": 1,
+    "unreviewed": 0,
+    "entries": [
+      {
+        "file": "crash-2026-07-15_08.00.00-server.txt",
+        "mtime": 1784102400,
+        "size": 8000,
+        "display_label": "Unrelated morning crash",
+        "source": "scan"
+      }
+    ]
+  },
+  "expected": {
+    "story_count": 0
+  }
+}

@@ -155,6 +155,10 @@ public final class CrashFingerprintGrouper {
     }
 
     static String labelFor(String failureKind, String stallOrPrimary, String fingerprint) {
+        return labelFor(failureKind, stallOrPrimary, fingerprint, null);
+    }
+
+    static String labelFor(String failureKind, String stallOrPrimary, String fingerprint, JsonObject seed) {
         if (fingerprint != null && ("other|other|-|-".equals(fingerprint) || fingerprint.endsWith("|other|-|-"))) {
             if ("other|other|-|-".equals(fingerprint)) {
                 return "Other crashes";
@@ -181,7 +185,40 @@ public final class CrashFingerprintGrouper {
         if (CrashClassifier.FK_WORLD_NBT_CORRUPT.equals(failureKind)) {
             return "Corrupt world NBT";
         }
+        if (CrashClassifier.FK_LOADER.equals(failureKind)) {
+            return "Loader / bootstrap failure";
+        }
+        if (failureKind == null || failureKind.isBlank()
+                || CrashClassifier.FK_UNKNOWN.equalsIgnoreCase(failureKind)) {
+            String fallback = seedDisplayFallback(seed);
+            if (fallback != null) {
+                return fallback;
+            }
+        }
         return humanize(failureKind != null ? failureKind : "unknown");
+    }
+
+    private static String seedDisplayFallback(JsonObject seed) {
+        if (seed == null) {
+            return null;
+        }
+        String display = str(seed, "display_label");
+        if (display != null && !display.isBlank() && !"unknown".equalsIgnoreCase(display)) {
+            return display.length() > 100 ? display.substring(0, 99) + "…" : display;
+        }
+        String exception = str(seed, "exception");
+        if (exception != null && !exception.isBlank()) {
+            String shortEx = exceptionClass(exception);
+            if (shortEx != null && !"-".equals(shortEx)) {
+                int dot = shortEx.lastIndexOf('.');
+                return dot >= 0 ? shortEx.substring(dot + 1) : shortEx;
+            }
+        }
+        String plain = str(seed, "plain_english");
+        if (plain != null && !plain.isBlank() && !plain.toLowerCase().startsWith("we could not determine")) {
+            return plain.length() > 100 ? plain.substring(0, 99) + "…" : plain;
+        }
+        return null;
     }
 
     private static String humanize(String failureKind) {
@@ -344,7 +381,7 @@ public final class CrashFingerprintGrouper {
             this.fingerprint = fingerprint;
             this.failureKind = strOr(seed, "failure_kind", "unknown");
             this.stallModId = str(seed, "stall_mod_id");
-            this.label = labelFor(failureKind, stallOrPrimary(seed), fingerprint);
+            this.label = labelFor(failureKind, stallOrPrimary(seed), fingerprint, seed);
         }
 
         static MutableGroup otherBucket(String failureKind) {

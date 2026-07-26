@@ -52,3 +52,14 @@
   padding-right: 0;
   padding-bottom: var(--ui-sp-4);
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ui-heatmap--entering .ui-heatmap__cell {
+    animation: ui-enter-fade var(--ui-dur-3) var(--ui-ease-out) both;
+    animation-delay: calc(var(--ui-stagger-index, 0) * 18ms);
+  }
+
+  .ui-heatmap--settled .ui-heatmap__cell {
+    animation: none;
+  }
+}

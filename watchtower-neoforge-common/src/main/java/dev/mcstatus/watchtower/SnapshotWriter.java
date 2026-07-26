@@ -1,10 +1,13 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+import dev.mcstatus.watchtower.runtime.ServerContext;
+import dev.mcstatus.watchtower.runtime.WatchtowerSample;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.server.MinecraftServer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,11 +21,11 @@ public final class SnapshotWriter {
     private SnapshotWriter() {
     }
 
-    public static Path snapshotPath(MinecraftServer server) {
+    public static Path snapshotPath(ServerContext server) {
         return WatchtowerPaths.snapshotPath(server);
     }
 
-    public static void write(MinecraftServer server, WatchtowerSampler.Sample sample) throws IOException {
+    public static void write(ServerContext server, WatchtowerSample.Sample sample) throws IOException {
         Path path = snapshotPath(server);
         Files.createDirectories(path.getParent());
 
@@ -37,7 +40,7 @@ public final class SnapshotWriter {
 
         if (!sample.dimensions().isEmpty()) {
             JsonArray dims = new JsonArray();
-            for (WatchtowerSampler.DimensionSample d : sample.dimensions()) {
+            for (WatchtowerSample.DimensionSample d : sample.dimensions()) {
                 JsonObject dim = new JsonObject();
                 dim.addProperty("id", d.id());
                 dim.addProperty("tps", round2(d.tps()));
@@ -49,7 +52,7 @@ public final class SnapshotWriter {
             root.add("dimensions", dims);
         }
 
-        TickMetrics.SessionMspt session = sample.sessionMspt();
+        WatchtowerSample.SessionMspt session = sample.sessionMspt();
         if (session != null && session.since() != null) {
             JsonObject sessionMspt = new JsonObject();
             sessionMspt.addProperty("min", round1(session.min()));
@@ -60,7 +63,7 @@ public final class SnapshotWriter {
             root.add("session_mspt", sessionMspt);
         }
 
-        WatchtowerSampler.HeapMb heap = sample.heap();
+        WatchtowerSample.HeapMb heap = sample.heap();
         if (heap != null) {
             JsonObject heapMb = new JsonObject();
             heapMb.addProperty("used", heap.used());
@@ -71,7 +74,7 @@ public final class SnapshotWriter {
 
         if (!sample.players().isEmpty()) {
             JsonArray players = new JsonArray();
-            for (WatchtowerSampler.PlayerSample p : sample.players()) {
+            for (WatchtowerSample.PlayerSample p : sample.players()) {
                 JsonObject pl = new JsonObject();
                 pl.addProperty("name", p.name());
                 if (p.uuid() != null && !p.uuid().isBlank()) {
@@ -92,19 +95,19 @@ public final class SnapshotWriter {
             root.addProperty("chunks", sample.chunks());
         }
         root.addProperty("mod_count", sample.modCount());
+        root.addProperty("loader", "neoforge");
 
-        try {
-            String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
-            if (mcVersion != null && !mcVersion.isBlank()) {
-                root.addProperty("minecraft_version", mcVersion);
-            }
-        } catch (Exception ignored) {
-            // older mappings / unexpected WorldVersion shape — Modrinth scan has other fallbacks
+        String mcVersion = server.minecraftVersion();
+        if (mcVersion != null && !mcVersion.isBlank()) {
+            root.addProperty("minecraft_version", mcVersion.strip());
+        } else {
+            ModRuntime.logger().warn(
+                    "snapshot.json written without minecraft_version — Modrinth updates may guess from jars");
         }
 
         if (!sample.mods().isEmpty()) {
             JsonArray mods = new JsonArray();
-            for (WatchtowerSampler.ModSample m : sample.mods()) {
+            for (WatchtowerSample.ModSample m : sample.mods()) {
                 JsonObject mod = new JsonObject();
                 mod.addProperty("id", m.id());
                 mod.addProperty("version", m.version());
@@ -129,6 +132,24 @@ public final class SnapshotWriter {
         }
 
         Files.writeString(path, GSON.toJson(root) + System.lineSeparator(), StandardCharsets.UTF_8);
+        writePlatformStamp(server, mcVersion);
+    }
+
+    /** Small sidecar so reports/scans can read MC+loader even if snapshot shape drifts. */
+    private static void writePlatformStamp(ServerContext server, String mcVersion) {
+        try {
+            Path platform = WatchtowerPaths.platformPath(server);
+            Files.createDirectories(platform.getParent());
+            JsonObject stamp = new JsonObject();
+            stamp.addProperty("loader", "neoforge");
+            if (mcVersion != null && !mcVersion.isBlank()) {
+                stamp.addProperty("minecraft_version", mcVersion.strip());
+            }
+            stamp.addProperty("polled_at", Instant.now().toString());
+            Files.writeString(platform, GSON.toJson(stamp) + System.lineSeparator(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            ModRuntime.logger().debug("Failed to write platform.json: {}", e.toString());
+        }
     }
 
     private static double round1(double value) {

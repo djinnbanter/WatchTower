@@ -1,6 +1,6 @@
 # DR CLI Reference
 
-**When you need this:** the game server **will not boot** and you have SSH access to the Linux host. This command-line tool builds a zip you open in the [[DR Viewer]] *(early preview — may not work fully yet)*.
+**When you need this:** the game server **will not boot** and you have SSH access. This tool builds a recovery zip. Open it yourself or try [[DR-Viewer]] (**Coming soon** for complete Fix guidance).
 
 ---
 
@@ -8,12 +8,12 @@
 
 ```bash
 cd /path/to/your/server/mods
-java -jar watchtower-cli-1.1.0.jar dr
+java -jar watchtower-cli-<version>.jar dr
 ```
 
 Output: **`watchtower-dr-bundle-<timestamp>.zip`**
 
-Use the same version as your mod when possible. Download from [GitHub Releases](https://github.com/djinnbanter/WatchTower/releases) or [Modrinth](https://modrinth.com/mod/watchtower).
+Use the same version as your mod when possible — [[Downloads-and-Releases]].
 
 ---
 
@@ -28,9 +28,9 @@ Use the same version as your mod when possible. Download from [GitHub Releases](
 ### Examples
 
 ```bash
-java -jar watchtower-cli-1.1.0.jar dr
-java -jar watchtower-cli-1.1.0.jar dr --server /home/container
-java -jar watchtower-cli-1.1.0.jar dr --out /tmp
+java -jar watchtower-cli-<version>.jar dr
+java -jar watchtower-cli-<version>.jar dr --server /home/container
+java -jar watchtower-cli-<version>.jar dr --out /tmp
 ```
 
 ---
@@ -50,23 +50,8 @@ java -jar watchtower-cli-1.1.0.jar dr --out /tmp
 
 ---
 
-## Other CLI commands
+## Related
 
-```bash
-# Validate a crash rule pack before deploying
-java -jar watchtower-cli-1.1.0.jar rules validate config/watchtower/rules/my-pack.yaml
-
-# List builtin + operator packs
-java -jar watchtower-cli-1.1.0.jar rules list --server /path/to/server
-```
-
-See [[Crash Rule Packs]].
-
----
-
-## See also
-
-- [[Disaster Recovery]]
-- [[DR Viewer]]
-- [[Crash Rule Packs]]
-- [[Downloads and Releases]]
+- [[Disaster-Recovery]]
+- [[DR-Viewer]]
+- [[Commands]]

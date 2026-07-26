@@ -459,6 +459,7 @@ public final class CraftyCollector {
             notFound.add("search_dirs", searchedArr);
             notFound.addProperty("searched_dirs", searchDirs.size());
             notFound.addProperty("inventory_count", 0);
+            attachVolumeRelation(notFound, serverDir, searchDirs);
             optional.add("last_backup", notFound);
             return;
         }
@@ -483,10 +484,16 @@ public final class CraftyCollector {
 
         ZonedDateTime when = Instant.ofEpochSecond(mtime).atZone(ZoneId.systemDefault());
         double sizeGb = Math.round(size / (1024.0 * 1024.0 * 1024.0) * 10.0) / 10.0;
-        boolean inWindow = mtime >= cutoff;
+        boolean inLookback = mtime >= cutoff;
+        long ageSec = Instant.now().getEpochSecond() - mtime;
+        int warnDays = config.backupWarnDays();
+        boolean warnStale = ageSec > (long) warnDays * 86400L;
+        double ageDays = Math.round(ageSec / 86400.0 * 10.0) / 10.0;
+        double ageHours = Math.round(ageSec / 3600.0 * 10.0) / 10.0;
 
         JsonObject lastBackup = new JsonObject();
-        lastBackup.addProperty("status", inWindow ? "success" : "stale");
+        // status tracks warn threshold only — LOOKBACK_HOURS must not become "stale"/failure
+        lastBackup.addProperty("status", warnStale ? "stale" : "success");
         lastBackup.addProperty("path", newest.getFileName().toString());
         lastBackup.addProperty("size_gb", sizeGb);
         lastBackup.addProperty("time", CollectSupport.iso(when));
@@ -495,16 +502,85 @@ public final class CraftyCollector {
         lastBackup.addProperty("searched_dirs", searchDirs.size());
         lastBackup.addProperty("newest_on_disk", CollectSupport.iso(when));
         lastBackup.addProperty("newest_size_gb", sizeGb);
-        double ageDays = Math.round((Instant.now().getEpochSecond() - mtime) / 86400.0 * 10.0) / 10.0;
         lastBackup.addProperty("age_days", ageDays);
-        int warnDays = config.backupWarnDays();
+        lastBackup.addProperty("age_hours", ageHours);
         lastBackup.addProperty("warn_days", warnDays);
-        lastBackup.addProperty("stale", Instant.now().getEpochSecond() - mtime > (long) warnDays * 86400L);
+        lastBackup.addProperty("stale", warnStale);
+        // Informational vs caller cutoff (BAU continuous scans pass a 24h cutoff; deep audit may use LOOKBACK_HOURS)
+        lastBackup.addProperty("in_lookback", inLookback);
 
         JsonArray inventory = buildBackupInventory(candidates, serverDir, 15);
         lastBackup.addProperty("inventory_count", inventory.size());
+        attachVolumeRelation(lastBackup, serverDir, searchDirs);
         optional.add("backup_inventory", inventory);
         optional.add("last_backup", lastBackup);
+    }
+
+    /**
+     * Whether configured backup folders share the server's filesystem volume
+     * ({@link java.nio.file.FileStore}). Used by Storage UI copy — backups may
+     * live on the same disk or a separate one / NAS.
+     */
+    static void attachVolumeRelation(JsonObject lastBackup, String serverDir, List<Path> searchDirs) {
+        if (lastBackup == null || searchDirs == null || searchDirs.isEmpty()
+                || serverDir == null || serverDir.isBlank()) {
+            return;
+        }
+        Path server = Path.of(serverDir);
+        int same = 0;
+        int separate = 0;
+        for (Path dir : searchDirs) {
+            Boolean eq = sameFileStore(server, dir);
+            if (eq == null) {
+                continue;
+            }
+            if (eq) {
+                same++;
+            } else {
+                separate++;
+            }
+        }
+        if (same == 0 && separate == 0) {
+            lastBackup.addProperty("volume_relation", "unknown");
+            return;
+        }
+        if (same > 0 && separate == 0) {
+            lastBackup.addProperty("same_volume", true);
+            lastBackup.addProperty("volume_relation", "same");
+        } else if (separate > 0 && same == 0) {
+            lastBackup.addProperty("same_volume", false);
+            lastBackup.addProperty("volume_relation", "separate");
+        } else {
+            lastBackup.addProperty("same_volume", false);
+            lastBackup.addProperty("volume_relation", "mixed");
+        }
+    }
+
+    /**
+     * @return true/false when both paths resolve to an existing FileStore; null if unknown
+     */
+    static Boolean sameFileStore(Path a, Path b) {
+        if (a == null || b == null) {
+            return null;
+        }
+        try {
+            Path aa = existingAncestor(a);
+            Path bb = existingAncestor(b);
+            if (aa == null || bb == null) {
+                return null;
+            }
+            return Files.getFileStore(aa).equals(Files.getFileStore(bb));
+        } catch (IOException | SecurityException e) {
+            return null;
+        }
+    }
+
+    private static Path existingAncestor(Path path) {
+        Path p = path.toAbsolutePath().normalize();
+        while (p != null && !Files.exists(p)) {
+            p = p.getParent();
+        }
+        return p;
     }
 
     private static JsonArray buildBackupInventory(List<Path> candidates, String serverDir, int limit) {

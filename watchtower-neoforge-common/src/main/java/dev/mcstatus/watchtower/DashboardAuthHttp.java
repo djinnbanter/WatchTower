@@ -1,5 +1,9 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -366,7 +370,7 @@ public final class DashboardAuthHttp {
     public static JsonObject buildSessionJson(SessionManager.SessionState session, String hostname) {
         DashboardAuthStore store = DashboardAuthServices.store();
         JsonObject out = new JsonObject();
-        String bindHost = WatchtowerConfig.DASHBOARD_BIND_HOST.get();
+        String bindHost = ModRuntime.config().dashboardBindHost();
         out.addProperty("auth_required", true);
         out.addProperty("dashboard_bind_host", bindHost);
         out.addProperty("bind_exposed", "0.0.0.0".equals(bindHost));

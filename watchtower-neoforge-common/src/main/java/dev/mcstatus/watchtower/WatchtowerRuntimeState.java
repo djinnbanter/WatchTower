@@ -38,6 +38,19 @@ public final class WatchtowerRuntimeState {
     private volatile Integer modrinthEtaSeconds;
     private volatile JsonObject lastModrinthStatus;
 
+    private volatile boolean discoveryRunning;
+    private volatile Instant lastDiscoveryStarted;
+    private volatile Instant lastDiscoveryFinished;
+    private volatile boolean lastDiscoverySuccess;
+    private volatile String lastDiscoveryMessage = "";
+    private volatile String discoveryStage = "";
+    private volatile String discoveryStageLabel = "";
+    private volatile String discoveryStageDetail = "";
+    private volatile int discoveryProgressDone;
+    private volatile int discoveryProgressTotal;
+    private volatile JsonObject lastDiscoveryStatus;
+    private volatile JsonObject discoveryCounts = new JsonObject();
+
     public synchronized boolean tryBeginReport() {
         if (reportRunning) {
             return false;
@@ -268,5 +281,118 @@ public final class WatchtowerRuntimeState {
 
     public JsonObject getLastModrinthStatus() {
         return lastModrinthStatus;
+    }
+
+    public synchronized boolean tryBeginDiscovery() {
+        if (discoveryRunning) {
+            return false;
+        }
+        discoveryRunning = true;
+        discoveryStage = "prepare";
+        discoveryStageLabel = "Preparing discovery";
+        discoveryStageDetail = "";
+        discoveryProgressDone = 0;
+        discoveryProgressTotal = 0;
+        discoveryCounts = new JsonObject();
+        lastDiscoveryStarted = Instant.now();
+        lastDiscoveryMessage = "";
+        lastDiscoverySuccess = false;
+        return true;
+    }
+
+    public synchronized void setDiscoveryStage(String stage, String label) {
+        discoveryStage = stage == null ? "" : stage;
+        discoveryStageLabel = label == null ? "" : label;
+        discoveryStageDetail = "";
+    }
+
+    public synchronized void setDiscoveryDetail(String detail) {
+        discoveryStageDetail = detail == null ? "" : detail;
+    }
+
+    public synchronized void setDiscoveryUnits(int done, int total) {
+        discoveryProgressDone = Math.max(0, done);
+        discoveryProgressTotal = Math.max(0, total);
+    }
+
+    public synchronized void setDiscoveryCounts(JsonObject counts) {
+        discoveryCounts = counts != null ? counts.deepCopy() : new JsonObject();
+    }
+
+    /** Merge a single live count into discovery progress (e.g. logs / crashes / jars). */
+    public synchronized void putDiscoveryCount(String key, int count) {
+        if (key == null || key.isBlank()) {
+            return;
+        }
+        if (discoveryCounts == null) {
+            discoveryCounts = new JsonObject();
+        }
+        discoveryCounts.addProperty(key, Math.max(0, count));
+    }
+
+    public synchronized void finishDiscovery(boolean success, String message, JsonObject status) {
+        discoveryRunning = false;
+        discoveryStage = success ? "done" : discoveryStage;
+        discoveryStageLabel = success ? "Done" : discoveryStageLabel;
+        discoveryStageDetail = "";
+        discoveryProgressDone = 0;
+        discoveryProgressTotal = 0;
+        lastDiscoveryFinished = Instant.now();
+        lastDiscoverySuccess = success;
+        lastDiscoveryMessage = message == null ? "" : message;
+        if (status != null) {
+            lastDiscoveryStatus = status.deepCopy();
+            if (status.has("counts") && status.get("counts").isJsonObject()) {
+                discoveryCounts = status.getAsJsonObject("counts").deepCopy();
+            }
+        }
+    }
+
+    public boolean isDiscoveryRunning() {
+        return discoveryRunning;
+    }
+
+    public String getDiscoveryStage() {
+        return discoveryStage;
+    }
+
+    public String getDiscoveryStageLabel() {
+        return discoveryStageLabel;
+    }
+
+    public String getDiscoveryStageDetail() {
+        return discoveryStageDetail;
+    }
+
+    public int getDiscoveryProgressDone() {
+        return discoveryProgressDone;
+    }
+
+    public int getDiscoveryProgressTotal() {
+        return discoveryProgressTotal;
+    }
+
+    public JsonObject getDiscoveryCounts() {
+        return discoveryCounts != null ? discoveryCounts.deepCopy() : new JsonObject();
+    }
+
+    public Optional<Instant> getLastDiscoveryStarted() {
+        return Optional.ofNullable(lastDiscoveryStarted);
+    }
+
+    public Optional<Instant> getLastDiscoveryFinished() {
+        return Optional.ofNullable(lastDiscoveryFinished);
+    }
+
+    public boolean isLastDiscoverySuccess() {
+        return lastDiscoverySuccess;
+    }
+
+    public String getLastDiscoveryMessage() {
+        return lastDiscoveryMessage;
+    }
+
+    public JsonObject getLastDiscoveryStatus() {
+        return lastDiscoveryStatus;
     }
 }

@@ -1,12 +1,15 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+
 import dev.mcstatus.watchtower.core.auth.AuthKeyStore;
 import dev.mcstatus.watchtower.core.auth.DashboardAuthRecord;
 import dev.mcstatus.watchtower.core.auth.DashboardAuthStore;
 import dev.mcstatus.watchtower.core.auth.GeneratedCredentials;
 import dev.mcstatus.watchtower.core.auth.LoginRateLimiter;
 import dev.mcstatus.watchtower.core.auth.SessionManager;
-import net.minecraft.server.MinecraftServer;
 
 import java.io.IOException;
 
@@ -21,7 +24,7 @@ public final class DashboardAuthServices {
     private DashboardAuthServices() {
     }
 
-    public static void init(MinecraftServer server) throws IOException {
+    public static void init(ServerContext server) throws IOException {
         freshAccountCreated = false;
         keyStore = new AuthKeyStore(WatchtowerPaths.authKeyPath(server));
         authStore = new DashboardAuthStore(WatchtowerPaths.dashboardAuthPath(server), keyStore);
@@ -29,7 +32,7 @@ public final class DashboardAuthServices {
         rateLimiter = new LoginRateLimiter();
 
         if (authStore.alignPendingDefaultPassword()) {
-            WatchtowerMod.LOGGER.info(
+            ModRuntime.logger().info(
                     "[Watchtower] Dashboard pending first-login account aligned to default password (user: {}, password: {})",
                     authStore.username(),
                     DashboardAuthRecord.DEFAULT_INITIAL_PASSWORD
@@ -40,7 +43,7 @@ public final class DashboardAuthServices {
             GeneratedCredentials creds = authStore.ensureDefaultAccount();
             if (creds != null) {
                 freshAccountCreated = true;
-                WatchtowerMod.LOGGER.info(
+                ModRuntime.logger().info(
                         "[Watchtower] Dashboard login — user: {} password: {} (change on first login)",
                         creds.username(),
                         creds.password()
@@ -48,9 +51,9 @@ public final class DashboardAuthServices {
             }
         }
 
-        String legacyToken = WatchtowerConfig.DASHBOARD_AUTH_TOKEN.get();
+        String legacyToken = ModRuntime.config().dashboardAuthToken();
         if (legacyToken != null && !legacyToken.isBlank()) {
-            WatchtowerMod.LOGGER.warn(
+            ModRuntime.logger().warn(
                     "dashboardAuthToken is deprecated since 1.0.0 — use username/password login instead"
             );
         }

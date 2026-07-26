@@ -8,6 +8,104 @@ Full downloads: [GitHub Releases](https://github.com/djinnbanter/WatchTower/rele
 
 ## Unreleased
 
+## [1.1.2] — 2026-07-26
+
+**Artifacts:** `watchtower-neoforge-1.1.2+mc1.21.jar` · `watchtower-cli-1.1.2.jar`
+
+Release: [v1.1.2](https://github.com/djinnbanter/WatchTower/releases/tag/v1.1.2)
+
+
+
+- **Setup 2FA QR code** — setup wizard and Settings Security show the server QR (`qr_data_url`) next to the manual key
+- **Wizard discovery crash/issue counts** — finished discovery shows real crash and issue totals (not blank dashes)
+- **Support Bundle Builder** — rail Support opens a chooser (presets, logs Off/Tail/Full, crashes, Spark, extras); async compose; redacted pack v4 (`environment.json`, recipe, budgets); Settings Quick download + Customize; Copy for Discord; Add to support pack from Logs/Spark
+- **Zero-BAU Pass 4** — reviewing disk-fill / tick-lag Issues no longer reopens on daily days-until-full drift or lag entry-count changes (stable fingerprints)
+- **Zero-BAU Pass 3** — action queue gates on ops backups/crashes; Issues Hidden works without facts; ops-first Backups/crash drivers; empty Mods/Insights/Startup/Overview + wiki retarget Scanning / Support (Initial discovery stays the one-time baseline)
+- **Zero-BAU Pass 2** — Support facts stay out of the BAU report index; Overview no longer forever-stale with schedule Off; Mods tree + `/watchtower issues` use Scanning when no legacy facts; brief/status wording matches Support compose
+- **Zero-BAU Pass 1** — ops-cache/state path locks on remaining writers; Issues ledger contracts (log stale `active`, disk projection fields, skip resolved lag, stable backup fingerprints); backup scans refresh Issues; Acknowledge all syncs `issues_live`
+- **Backup Issues “lookback window”** — BAU Issues use a **24-hour** freshness gate (not report lookback); missing archive vs older-than-24h messages updated
+- **Crash Scan stuck on Unknown** — manual Scan force-reclassifies all crash reports; ops enrich overrides weak facts labels
+- **Crash groups showing Unknown** — NeoForge stacks classify as loader when no mod id; titles prefer exception/display label; continuous enrich no longer sticks on Unknown
+- **Modrinth update blockers** — missing required dependencies show the Modrinth project title (not the raw project id)
+- **First-login account setup** — username/password change gate runs before the wizard/audit (login no longer skipped it)
+- **Wizard Options** — enable Modrinth lookup before Initial discovery
+- **Wizard discovery progress** — live counts for logs / crashes / mods / issues when discovery finishes (dashes only while unknown)
+- **Settings without Deep audit schedule** — General no longer shows schedule / lookback / incremental; optional legacy schedule is conf or `/watchtower schedule` only
+- **Preview mode on live servers** — fixed embedded flag injection so the dashboard no longer shows fixture Preview mode when served from the mod
+- **Fresh install empty dashboard** — Initial discovery runs a full deep audit baseline again (facts + brief); empty live `latest: {}` no longer blocks Overview; wizard hydrates stores when discovery finishes
+- **Wizard Initial discovery** — blocking first-run deep audit baseline with ReportEngine stage progress; Next locked until complete; Watching + Scanning keep deltas after that
+- **Wizard without Support schedule** — no scheduled-bundle step; use rail Support when you need a zip
+- **Zero-BAU audit fixes** — scheduled tick runs Support compose (not full ReportEngine); ops-cache delta writes synchronized; Modrinth scan works without legacy facts; Modrinth/Updates tabs ungated; Sources shows last support compose time; `MODS_DEEP_MAX_JARS_PER_WAKE` enforced
+- **Zero-BAU wiki (Z10)** — in-app Docs: Understanding Data Sources, Health Reports, Commands, dashboard guides, HTTP API, Configuration; Support compose is the operator ask
+- **Zero-BAU hardening (Z11)** — preview fixture includes continuous `issues_live` + `mods_deep`; ops tick regression test (no StagingBuilder on 60s path)
+- **SupportComposer (Z7–Z8)** — Support zip and `/watchtower run` / `/watchtower diagnostics` compose from continuous ops + rollups; `watchtower-facts-support-*` is for the zip only (BAU ignores `-support-` artifacts)
+- **Session tab (Z6)** — live online roster poll + stats mtime cursor; no deep-audit CTAs
+- **Activity gap backfill (Z5)** — large `latest.log` gaps backfill into ops activity asynchronously (`ACTIVITY_GAP_*`)
+- **Post-continuous UX** — no Catch-up on the rail; Support compose for shareable zips; schedule defaults **Off** on new installs
+- **Spark hardening** — auto-capture failure cooldown (~60s) instead of burning the full 15m window; list cache for unchanged profiles; lag↔Spark correlation window 60 minutes; Overview shows Spark summary; Issues Fix panel **Open in Spark**; sub-tab/profile remembered in the browser; import size limit 64 MB; docs/conf.example match reality (`SPARK_*`, no dead `RCON_SPARK_TPS`)
+- **Modrinth cache** — fixed cache wipe after every scan (timestamps + update deps now persist); update labels match Fabric/Quilt/Forge/NeoForge; Overview banner respects lookup off; Ops KPIs fill after a scan
+- **Continuous Issues** — background scans keep an Issues ledger so Active stays useful with schedule Off; provenance chips (Live / Scanning / Event / Deep audit); Issues UI no longer requires a facts file
+- **Startup without report** — boot timeline can appear after the server finishes starting (ops-cache `startup_profile`)
+- **Crash enrich on mtime** — new crash files get a light summary without a deep audit (`CRASH_ENRICH_ON_MTIME`)
+- **Mods light on jar change** — jar add/remove refreshes side scores into ops-cache; Mods Overview prefers them when fresher than the last report
+- **Spark Overview without report** — fresh on-disk / auto-capture profiles show on Overview even before a deep audit
+- **Support zip sooner** — download a support pack (dashboard or `/watchtower diagnostics`) from ops data before the first deep audit
+- **New installs** — scheduled deep audits default Off
+- **Data sources copy** — Watching / Scanning / Deep audit framing; Issues peeks + background scan cover day-to-day without a full audit
+- **Internal docs** — continuous data-flow + post-continuous UX roadmaps — maintainer `docs/dev/roadmap/versions/`
+- **Internal docs** — continuous data-flow study expanded (chunked jobs, cadences, catch-up-only deep audit) — maintainer `docs/dev/roadmap/studies/`
+- **Mods UI consistency** — catalog rows match Issues/Crashes inbox; secondary-tab search in chrome; Forensics EmptyState
+- **Crashes inbox** — list rows match the Issues inbox look
+- **Overview Storage UX** — dropped RAM free; tighter dial + World/RSS layout, dimension share %, Classic Sass polish
+- **Live RAM used** — toolbar + chart show host RAM used instead of free
+- **Live toolbar vitals** — CPU, RAM used, and temps join TPS / MSPT / Players in the top bar
+- **Overview storage dial** — “Disk used” above the dial; center shows only the %
+- **Live temp dials** — title above the dial; center shows only the temperature
+- **Live network / host temps on large screens** — Network and Host temperatures sit side-by-side from 1200px
+- **Live network layout** — Receive / Send stack like host temps: graph left, animated Mbps on the right
+- **Live disk read/write charts** — preview again fills Disk read/write (and net) history from envelope I/O; write-latency chip moved out of the chart grid
+- **Live host temps** — CPU package and Ambient stack one above the other; dial on the right of each graph
+- **Sass rail width** — side nav matches Aero width (no longer wider)
+- **Live chart readout** — current value sits in the card header next to the title (not on the plot); hover still updates it
+- **Live toolbar UX** — status + vitals sit together; Window / Poll / Pin lag stay on the right; freshness age only (no second “Live”); Sass Classic vitals and window chrome
+- **Live 5m window** — range picker now includes **5m** before 15m
+- **Sass Live chart polish** — taller plots; smaller left/bottom axis gutters
+- **Sass Live thermal + network** — temp gauges and network strip match Classic cards (no aero glow / hard cyan)
+- **Sass Insights heatmaps** — Patterns → Schedule maps follow the skin palette (orange accent under Sass, not blue); tighter Classic cell chrome
+- **Sass chart wells** — Live/Overview graphs no longer show a harsh black inset border; plot blends with the card
+- **Sass skin polish** — darker OLED black theme; mission tone washes fixed; Classic vitals/trust chrome cleaned up
+- **Overview mission band** — denser two-row layout: compact grade + verdict on top, full-width live vitals strip below; KPI chips as a tight wrap
+- **Sass skin (Classic v1.0 look)** — rail **Skin** cycles Aero (default glass) ↔ Sass (Deep Orange `#FF5722`, Inter + JetBrains Mono, glass cards, solid orange active rail, pill Run Report, left severity bars); pairs with Theme (dark / light / black)
+- **Config and launch audit** — Startup shows a read-only Launch & config audit for `server.properties` (consider raising/lowering); Insights → Configs lists the same rows next to JVM flag advice; dismiss per key in the browser; `GET /api/config-audit`; padded Card/ListRow layout on Startup and Configs
+- **Incident story timeline** — Activity shows a stitched “what happened” card when lag, crash, mod change, and backup signals line up; Overview teasers the latest story with a jump to Activity (demo fixture includes a sample story); Activity page layout cleaned up for clearer hierarchy
+- **Blank dashboard after motion revival** — fixed Overview crash (`DUR is not defined` in vitals) and bad `AnimatedNumber` import paths
+- **Motion revival** — mount-once page enters (no Overview/Live poll flash), metric count-ups from 0 on tab open and tween on change, animated gauges, one-shot chart reveals, bar grow-in, heatmap stagger, tab transitions, and safer button press feedback; respects `prefers-reduced-motion`
+- **Spark profile subtabs** — Overview / Mods / World / Over time / Technical: plain labels, glossed tick rate/time, numbered next steps, mod spotlight, friendly entity names; section headers and cards get real padding
+- **Spark tab UX polish** — padded Refresh/Import buttons; collapsible capture help; clearer empty + import chrome; profile meta row
+- **Spark tab Refresh + Import from URL** — toolbar Refresh rescans disk; paste a `spark.lucko.me` link to download once into `watchtower/spark-upload/`; unreadable profiles show a skipped notice; `source_path` stays relative for deep links
+- **Modrinth false updates** — no longer flags an older parent-MC build (e.g. Farmer’s Delight `1.21-1.2.4`) as an update over a newer `1.21.1-*` install; pack MC prefers patch-level jar/version votes
+- **Empty Minecraft version on live reports** — server now always stamps MC + loader into snapshot/`platform.json` (with `VERSION_STRING` fallback); Modrinth uses that before guessing from jars
+- **Server won't start with C2ME** — fixed JPMS split-package crash (`watchtower` vs jar-in-jar common both exporting `dev.mcstatus.watchtower`); drop in a fresh jar from `releases/latest`
+- **Disk fill projection** — Overview/Insights Storage show days-until-full; Live write latency; Issue `DISK_FILL_PROJECTED` when runway is short; MSPT↔disk write correlation
+- **Performance baseline** — Insights → Patterns: freeze a known-good window, flag when the last 7 days are ≥10% slower; **Set new baseline**; Overview teaser; Settings → Monitoring toggles
+- **1.1.x quality pass** — Monitoring settings stick after save; baseline healthy gate ~30 min; Configs prefers report JVM health; Restart uses unreviewed crash time
+- **RAM right-sizing** — Insights → **Configs**: conservative “do I need more RAM?” card from 7d+ heap history vs `-Xmx` (blocks “add RAM” when single-thread bound; GC-bound only when pressure is not already high)
+- **Live chart order** — GC pause % wall sits after Players online
+- **Backup false “failure” + Scan now** — lookback alone no longer shows **Backup failure** (warn days drive stale); hybrid fresh local or external is OK; Backups **Scan now** refreshes inventory / Overview / Issues without a full report
+- **Safe to restart** — Overview Restart card: Safe / Caution / Wait from backups, pregen, players, disk, and recent crashes (informational only)
+- **GC / JVM health** — Live shows GC pause % of wall, heap pressure, and flags profile; **Insights → Configs** recommends the best Aikar / flags.sh baseline for this Java/Minecraft/heap, lists missing flags worth adding, and shows a paste box when useful (card spacing fixed so padding is visible); Insights Load adds heap/GC columns; Issues can raise **GC / heap pressure** when the heap is full or GC is eating wall time — without shaming custom/ZGC setups
+- **Issues / Crashes selection** — clicking another row switches the detail pane; leaving the tab is no longer blocked (selection no longer fights URL navigation or freezes a stale Issues tree)
+- **Dashboard thrash while offline** — connection-lost no longer freezes tab switching (was re-rendering the shell on every failed poll)
+- **Dashboard UI polish** — clearer glass cards, shared Issues/Crashes/Mods search chrome, honest Live/report freshness stamps, Fix-first queue details, `/` j/k `r` shortcuts on queues, Modrinth links show they open in a new tab
+- **v2 ALPHA concept preview removed** — interactive mock on `:8081` scrapped; 1.x dashboard unchanged
+- **Auto-Spark lag capture** — opt-in in Settings → Monitoring (off by default): on critical lag, Watchtower can run Spark ~45s, save a profile on disk, and show which mod was chewing the tick in Issues + Spark
+- **Auto-Spark lag peek** — attaching Spark to a lag incident no longer reopens a resolved Issues row
+- **Roadmap page** — rebuilt to match the share poster (legend, situation panels, promises)
+- **Roadmap share image** — neo-Frutiger Aero poster of the public roadmap
+- **Roadmap** — rewritten for clarity (today / coming next by situation / later / not our job); wiki + in-app tab match
+- **Navigation** — rail tabs and page subtabs update immediately again (no F5); same root-render stall as Live charts
+- **Live charts** — fixed blank charts when navigating to Live (no more F5); uPlot survives dashboard re-renders and samples fetch immediately on entry
+- **Overview layout** — healthy/steady Overview keeps a 2-column layout (instruments stacked + triage side), matching incident mode at the same width
 - **Modrinth updates** — fixed false “0 updates” on NeoForge when Minecraft version wasn’t on the mods list; scan now resolves MC from snapshot/Spark/NeoForge mapping
 - **Mods list** — only top-level jars in mods/; nested jar-in-jar mods show on the parent Details pane
 - **Report Retry** — failed Run Report modal now shows Retry (and Run again after success)

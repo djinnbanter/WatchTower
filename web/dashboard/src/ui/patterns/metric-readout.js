@@ -1,5 +1,5 @@
 import { html, useState, useEffect, useRef } from '../../lib/preact.js';
-import { tweenNumber } from '../../motion/tween.js';
+import { useCountUp } from '../../motion/use-count-up.js';
 import { DUR } from '../../motion/tokens.js';
 import { Icon } from '../icons.js';
 import { Tooltip } from '../primitives/tooltip.js';
@@ -25,19 +25,9 @@ export function MetricReadout({
   hint,
   caption,
 }) {
-  const [displayValue, setDisplayValue] = useState(value ?? 0);
+  const displayValue = useCountUp(value ?? 0, { duration: DUR[5] });
   const prevToneRef = useRef(tone);
   const [flash, setFlash] = useState(false);
-  const prevValueRef = useRef(value);
-
-  useEffect(() => {
-    const from = prevValueRef.current ?? 0;
-    const to = value ?? 0;
-    prevValueRef.current = to;
-    if (from === to) return;
-    const cancel = tweenNumber(from, to, DUR[5], (v) => setDisplayValue(v));
-    return cancel;
-  }, [value]);
 
   // Flash on warn/danger threshold cross
   useEffect(() => {
@@ -52,7 +42,8 @@ export function MetricReadout({
     prevToneRef.current = tone;
   }, [tone]);
 
-  const formatted = format ? format(displayValue) : String(Math.round(displayValue));
+  const shown = displayValue ?? 0;
+  const formatted = format ? format(shown) : String(Math.round(shown));
 
   const deltaEl = delta != null
     ? html`

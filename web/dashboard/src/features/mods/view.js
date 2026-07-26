@@ -153,8 +153,8 @@ function sideSummaryForMod(mod, badgeMaps) {
       title: 'Known client-side mod',
       tone: 'info',
       bucket: 'client',
-      reason: 'Heuristic fallback — run a full report for scored client/server results.',
-      advice: 'Confirm with a report before removing from the server.',
+      reason: 'Heuristic fallback — Scanning / Modrinth scores refine client vs server.',
+      advice: 'Confirm with a Modrinth scan or docs before removing from the server.',
       confidence: 'low',
       signals: uniqueSignals,
     };
@@ -167,7 +167,7 @@ function sideSummaryForMod(mod, badgeMaps) {
       tone: 'neutral',
       bucket: null,
       reason: 'No client/server score for this jar yet.',
-      advice: 'Run a report with Modrinth lookup enabled for clearer side scoring.',
+      advice: 'Enable Modrinth lookup in Settings → Monitoring, then run a Modrinth scan for clearer side scoring.',
       confidence: null,
       signals: uniqueSignals,
     };
@@ -276,16 +276,22 @@ const LINK_META = {
 function ModLinkChip({ href, label, quiet = false }) {
   if (!href) return null;
   const icon = LINK_META[label]?.icon;
+  const externalHint = label === 'Modrinth' || label.startsWith('Open')
+    ? 'Opens Modrinth in a new tab'
+    : 'Opens in a new tab';
   return html`
     <a
       class=${`feat-mods-link-chip${quiet ? ' feat-mods-link-chip--quiet' : ''}`}
       href=${href}
       target="_blank"
       rel="noopener noreferrer"
+      title=${externalHint}
+      aria-label=${`${label} (${externalHint})`}
       onClick=${(e) => e.stopPropagation()}
     >
       ${icon ? html`<${Icon} name=${icon} size=${14} />` : null}
       <span>${label}</span>
+      <${Icon} name="external-link" size=${12} className="feat-mods-link-chip__ext" />
     </a>
   `;
 }
@@ -557,7 +563,7 @@ function ModDepsSection({ modId, factsMods, onSelectMod }) {
     return html`
       <div class="feat-mods-drawer__section feat-mods-panel__deps">
         <${Section} title="Dependencies" defaultOpen=${false}>
-          <p class="ui-text-low">Run a report to build dependency trees from the mod manifest.</p>
+          <p class="ui-text-low">Dependency trees appear after Scanning builds the mod manifest (mods_light / deep deltas).</p>
         </${Section}>
       </div>
     `;
@@ -734,6 +740,7 @@ function ModDetailPanel({ mod, showTechNames, badgeMaps, factsMods, onSelectMod 
 function OverviewTab({ runningMods, modsInventory, showTechNames, search, onSearch, badgeMaps, factsMods, initialModId, updateCount, modrinthLookupEnabled }) {
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState('all');
+  const [scanning, setScanning] = useState(false);
   const [sort, setSort] = useState(() => {
     try {
       const saved = localStorage.getItem('wt.modsSort');
@@ -813,7 +820,24 @@ function OverviewTab({ runningMods, modsInventory, showTechNames, search, onSear
   const rangeEnd = Math.min(filtered.length, (safePage + 1) * CATALOG_PAGE_SIZE);
 
   if (!catalog.length) {
-    return html`<${EmptyState} title="No mod list" body="Run a report to populate the mod manifest." />`;
+    async function handleScan() {
+      setScanning(true);
+      try {
+        await scanMods(true);
+        addToast('Mods scan complete', 'success');
+      } catch (e) {
+        addToast(e?.message || 'Mods scan failed', 'danger');
+      } finally {
+        setScanning(false);
+      }
+    }
+    return html`
+      <${EmptyState}
+        title="No mod list yet"
+        body="Continuous Scanning fills mods_light in the background. Tap Scan now if the list is still empty."
+        action=${html`<${Button} kind="accent" onClick=${handleScan} loading=${scanning}>Scan now</${Button}>`}
+      />
+    `;
   }
 
   const securityFlags = badgeMaps.securityFlags ?? [];
@@ -950,7 +974,16 @@ function VersionDelta({ current, latest }) {
   `;
 }
 
-function ModUpdateDetailPanel({ row, mod, showTechNames, factsMods, onSelectMod }) {
+function impactRowTitle(row, catalogById, showTechNames) {
+  if (!row) return 'Unknown';
+  if (showTechNames) return row.mod_id || row.display_name || 'Unknown';
+  if (row.display_name) return row.display_name;
+  const mod = catalogById?.get?.(row.mod_id);
+  if (mod) return modDisplayName(mod, false);
+  return row.mod_id || 'Unknown';
+}
+
+function ModUpdateDetailPanel({ row, mod, showTechNames, factsMods, onSelectMod, catalogById }) {
   if (!row) {
     return html`
       <aside class="crashes-detail crashes-detail--empty" role="complementary" aria-label="Update details">
@@ -1016,8 +1049,11 @@ function ModUpdateDetailPanel({ row, mod, showTechNames, factsMods, onSelectMod 
                   ${blockers.map((b, i) => html`
                     <${ListRow}
                       key=${`${b.mod_id}-${i}`}
-                      title=${b.mod_id || 'Unknown'}
-                      meta=${b.detail || ''}
+                      title=${impactRowTitle(b, catalogById, showTechNames)}
+                      meta=${[
+                        !showTechNames && b.display_name && b.mod_id && b.display_name !== b.mod_id ? b.mod_id : null,
+                        b.detail || '',
+                      ].filter(Boolean).join(' · ')}
                       badge=${html`<${Badge} tone=${b.kind === 'conflict' || b.kind === 'need_install' ? 'danger' : 'warn'}>${(b.kind || 'issue').replace(/_/g, ' ')}</${Badge}>`}
                     />
                   `)}
@@ -1032,14 +1068,14 @@ function ModUpdateDetailPanel({ row, mod, showTechNames, factsMods, onSelectMod 
               </div>
               <div class="crashes-panel__block-body">
                 ${row.related_pair ? html`
-                  <p class="feat-mods-drawer__desc">Paired with <strong>${row.related_pair}</strong> — update both jars together.</p>
+                  <p class="feat-mods-drawer__desc">Paired with <strong>${impactRowTitle({ mod_id: row.related_pair, display_name: catalogById?.get?.(row.related_pair) ? modDisplayName(catalogById.get(row.related_pair), showTechNames) : null }, catalogById, showTechNames)}</strong> — update both jars together.</p>
                 ` : null}
                 ${coUpdates.length ? html`
                   <div class="feat-list">
                     ${coUpdates.map((c, i) => html`
                       <${ListRow}
                         key=${`${c.mod_id}-${i}`}
-                        title=${c.mod_id}
+                        title=${impactRowTitle(c, catalogById, showTechNames)}
                         meta=${[c.current ? `installed ${c.current}` : null, c.detail].filter(Boolean).join(' · ')}
                       />
                     `)}
@@ -1064,7 +1100,7 @@ function ModUpdateDetailPanel({ row, mod, showTechNames, factsMods, onSelectMod 
                         if (onSelectMod) onSelectMod(d.mod_id);
                         else navigate('mods', { view: 'overview', mod: d.mod_id });
                       }}
-                    >${d.mod_id}</${Button}>
+                    >${impactRowTitle(d, catalogById, showTechNames)}</${Button}>
                   `)}
                 </div>
               </div>
@@ -1184,11 +1220,11 @@ function UpdatesTab({
   const rangeStart = filtered.length ? page * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(filtered.length, (page + 1) * PAGE_SIZE);
 
-  if (!hasReport && !badgeMaps.hasFacts) {
+  if (!updates.length && !badgeMaps.hasFacts) {
     return html`<${EmptyState}
-      title="No report yet"
-      body="Run a Modrinth scan from Mods → Modrinth (after a full report exists) to detect outdated jars and pack impact."
-      action=${html`<${Button} kind="primary" size="sm" onClick=${() => navigate('overview')}>Go to Overview</${Button}>`}
+      title="No Modrinth data yet"
+      body="Run a Modrinth scan from Mods → Modrinth to detect outdated jars and pack impact — no legacy report required."
+      action=${html`<${Button} kind="primary" size="sm" onClick=${() => navigate('mods', { view: 'modrinth' })}>Open Modrinth tab</${Button}>`}
     />`;
   }
 
@@ -1284,6 +1320,7 @@ function UpdatesTab({
           mod=${selectedMod}
           showTechNames=${showTechNames}
           factsMods=${factsMods}
+          catalogById=${catalogById}
           onSelectMod=${(id) => setSelectedId(id)}
         />
       </div>
@@ -1291,8 +1328,22 @@ function UpdatesTab({
   `;
 }
 
-function ConflictsTab({ recommendations, factsMods, search }) {
-  const recs = Array.isArray(recommendations) ? recommendations : [];
+function ConflictsTab({ recommendations, modIssues, factsMods, search, onSearch }) {
+  const recs = useMemo(() => {
+    const fromReport = Array.isArray(recommendations) ? recommendations : [];
+    if (fromReport.length) return fromReport;
+    // Continuous path: map ops mod_issues into conflict-ish rows when no report recs
+    const issues = Array.isArray(modIssues) ? modIssues : [];
+    return issues.map((e) => ({
+      mod_id: e.mod_id || e.id,
+      category: e.category || e.kind || 'issue',
+      severity: e.severity || 'warning',
+      why: e.message || e.why || '',
+      fix: e.fix || '',
+      fix_steps: e.fix_steps || null,
+      modrinth_url: e.modrinth_url || null,
+    })).filter((r) => r.mod_id || r.why);
+  }, [recommendations, modIssues]);
   const modById = useMemo(() => {
     const map = new Map();
     for (const m of factsMods ?? []) {
@@ -1316,26 +1367,45 @@ function ConflictsTab({ recommendations, factsMods, search }) {
     });
   }, [recs, search, modById]);
 
+  const chrome = html`
+    <div class="feat-queue-chrome">
+      <${TextField}
+        icon="search"
+        value=${search}
+        onInput=${(e) => onSearch?.(e.target.value)}
+        placeholder="Search conflicts…"
+        aria-label="Search conflicts"
+      />
+    </div>
+  `;
+
   if (!recs.length) {
     return html`
-      <${EmptyState}
-        title="No update conflicts"
-        body="No compatibility or update conflicts in the latest report or mod scan. Jar add/remove/change since the last report lives under Changes."
-      />
+      <div class="feat-mods-conflicts">
+        ${chrome}
+        <${EmptyState}
+          title="No update conflicts"
+          body="No compatibility or update conflicts from continuous mod scans. Jar add/remove/change since the last baseline lives under Changes."
+        />
+      </div>
     `;
   }
 
   if (!filtered.length) {
     return html`
-      <${EmptyState}
-        title="No matching conflicts"
-        body="Nothing matches this search. Clear the filter to see all update conflicts."
-      />
+      <div class="feat-mods-conflicts">
+        ${chrome}
+        <${EmptyState}
+          title="No matching conflicts"
+          body="Nothing matches this search. Clear the filter to see all update conflicts."
+        />
+      </div>
     `;
   }
 
   return html`
     <div class="feat-mods-conflicts">
+      ${chrome}
       <${Section} title=${`Update conflicts (${filtered.length})`} defaultOpen=${true}>
         <div class="feat-list">
           ${filtered.map((r, i) => {
@@ -1381,7 +1451,7 @@ function ConflictsTab({ recommendations, factsMods, search }) {
   `;
 }
 
-function ChangesTab({ modsInventory, search, factsMods }) {
+function ChangesTab({ modsInventory, search, onSearch, factsMods }) {
   const diff = modsInventory?.diff;
 
   const modById = useMemo(() => {
@@ -1409,12 +1479,27 @@ function ChangesTab({ modsInventory, search, factsMods }) {
     ];
   }, [diff, search]);
 
+  const chrome = html`
+    <div class="feat-queue-chrome">
+      <${TextField}
+        icon="search"
+        value=${search}
+        onInput=${(e) => onSearch?.(e.target.value)}
+        placeholder="Search jar changes…"
+        aria-label="Search jar changes"
+      />
+    </div>
+  `;
+
   if (!diff || !diff.has_changes) {
     return html`
-      <${EmptyState}
-        title="No jar changes"
-        body="The mod folder matches the last report — no added, removed, or changed jars."
-      />
+      <div class="feat-mods-changes">
+        ${chrome}
+        <${EmptyState}
+          title="No jar changes"
+          body="The mod folder matches the last report — no added, removed, or changed jars."
+        />
+      </div>
     `;
   }
 
@@ -1422,6 +1507,7 @@ function ChangesTab({ modsInventory, search, factsMods }) {
 
   return html`
     <div class="feat-mods-changes">
+      ${chrome}
       <p class="feat-hint">Jar inventory changes since the last report (not update/compat conflicts).</p>
       <div class="feat-mods-changes__summary">
         <${Badge} tone="ok">+${diff.added_count ?? (diff.added ?? []).length} added</${Badge}>
@@ -1471,6 +1557,7 @@ function LogErrorsTab({
   modIssues,
   hasReport,
   search,
+  onSearch,
 }) {
   const [scanning, setScanning] = useState(false);
   const [expanded, setExpanded] = useState(() => new Set());
@@ -1529,7 +1616,16 @@ function LogErrorsTab({
 
   if (!filtered.length) {
     return html`
-      <div>
+      <div class="feat-mods-errors">
+        <div class="feat-queue-chrome">
+          <${TextField}
+            icon="search"
+            value=${search}
+            onInput=${(e) => onSearch?.(e.target.value)}
+            placeholder="Search log errors…"
+            aria-label="Search log errors"
+          />
+        </div>
         <${EmptyState}
           title=${neverScanned ? 'No mod log scan yet' : 'No matching log errors'}
           body=${neverScanned
@@ -1545,13 +1641,22 @@ function LogErrorsTab({
 
   return html`
     <div class="feat-mods-errors">
+      <div class="feat-queue-chrome">
+        <${TextField}
+          icon="search"
+          value=${search}
+          onInput=${(e) => onSearch?.(e.target.value)}
+          placeholder="Search log errors…"
+          aria-label="Search log errors"
+        />
+        <${Button} kind="primary" size="sm" loading=${scanning} onClick=${handleScan}>Rescan logs</${Button}>
+      </div>
       <div class="feat-toolbar feat-toolbar--wrap">
         <span class="feat-hint ui-text-low">
           ${filtered.length} mod(s)
           ${hasReport ? ' · report + scan merged' : ' · scan only'}
           ${scannedAt ? ` · last scan ${new Date(scannedAt).toLocaleString()}` : ' · not scanned yet'}
         </span>
-        <${Button} kind="primary" size="sm" loading=${scanning} onClick=${handleScan}>Rescan logs</${Button}>
       </div>
       <div class="feat-list feat-mods-errors__list">
         ${filtered.map((row) => {
@@ -1629,7 +1734,7 @@ function LogErrorsTab({
                     <p class="feat-hint ui-text-low">
                       ${hasReport
                         ? 'No specific fix mapped for this category yet — samples above are from your latest report/scan.'
-                        : 'Run Report to generate conflict analysis and fix steps for this mod.'}
+                        : 'Scan logs for samples. Continuous Modrinth/conflict advice appears when those jobs finish — no deep audit required.'}
                     </p>
                   `}
                 </div>
@@ -1768,8 +1873,16 @@ function ForensicsTab({ factsOptional, search, onSearch, hasReport }) {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const mf = factsOptional?.mod_forensics ?? {};
-  const health = factsOptional?.config_health ?? [];
-  const corrupt = mf.corrupt_jars ?? [];
+  const deep = status?.mods_deep ?? null;
+  const health = (Array.isArray(deep?.config_health) && deep.config_health.length)
+    ? deep.config_health
+    : (factsOptional?.config_health ?? []);
+  const corrupt = (Array.isArray(deep?.corrupt_jars) && deep.corrupt_jars.length)
+    ? deep.corrupt_jars
+    : (mf.corrupt_jars ?? []);
+  const hasDeepLedger = !!(deep && deep.status === 'ok')
+    || corrupt.length > 0
+    || health.length > 0;
 
   async function refresh() {
     setLoading(true);
@@ -1849,20 +1962,22 @@ function ForensicsTab({ factsOptional, search, onSearch, hasReport }) {
         <div class="feat-mods-forensics__kpi">
           <span class="feat-mods-forensics__kpi-label">Corrupt jars</span>
           <span class="feat-mods-forensics__kpi-value">${corrupt.length}</span>
-          <span class="feat-mods-forensics__kpi-hint">${q ? `${corruptFiltered.length} match search` : 'In latest report'}</span>
+          <span class="feat-mods-forensics__kpi-hint">${q ? `${corruptFiltered.length} match search` : (hasDeepLedger ? 'From continuous ledger' : 'Awaiting continuous scan')}</span>
         </div>
         <div class="feat-mods-forensics__kpi">
           <span class="feat-mods-forensics__kpi-label">Config issues</span>
           <span class="feat-mods-forensics__kpi-value">${health.length}</span>
-          <span class="feat-mods-forensics__kpi-hint">${q ? `${healthFiltered.length} match search` : 'In latest report'}</span>
+          <span class="feat-mods-forensics__kpi-hint">${q ? `${healthFiltered.length} match search` : (hasDeepLedger ? 'From continuous ledger' : 'Awaiting continuous scan')}</span>
         </div>
       </div>
 
       <div class="feat-mods-forensics__hint">
         ${indexState === 'idle'
-          ? html`<p>No class index yet — it builds on first <strong>Crashes → Find owning jar</strong>, or set <code>FORENSICS_INDEX_ON_REPORT=true</code>.</p>`
+          ? html`<p>No class index yet — it builds on jar change / boot seed, or first <strong>Crashes → Find owning jar</strong>.</p>`
           : html`<p>Use <strong>Crashes → Find owning jar</strong> to resolve stack frames, or the CLI <code>watchtower forensics find-class</code>.</p>`}
-        ${!hasReport ? html`<p class="feat-mods-forensics__hint-warn">No full report yet — corrupt / config lists fill in after Run Report.</p>` : null}
+        ${!hasDeepLedger && !hasReport
+          ? html`<p class="feat-mods-forensics__hint-warn">Continuous Mods deep is warming — corrupt / config lists appear after jar inventory or boot seed (no deep audit required).</p>`
+          : null}
       </div>
 
       <div class="feat-mods-forensics__panels">
@@ -1884,7 +1999,10 @@ function ForensicsTab({ factsOptional, search, onSearch, hasReport }) {
               `)}
             </ul>
           ` : html`
-            <p class="feat-mods-forensics__empty">${q ? 'No corrupt jars match this search.' : 'No corrupt jars in the latest report.'}</p>
+            <${EmptyState}
+              title=${q ? 'No matches' : 'No corrupt jars'}
+              body=${q ? 'No corrupt jars match this search.' : 'No corrupt jars in the latest report.'}
+            />
           `}
         </section>
 
@@ -1906,7 +2024,10 @@ function ForensicsTab({ factsOptional, search, onSearch, hasReport }) {
               `)}
             </ul>
           ` : html`
-            <p class="feat-mods-forensics__empty">${q ? 'No config issues match this search.' : 'No config issues in the latest report.'}</p>
+            <${EmptyState}
+              title=${q ? 'No matches' : 'No config issues'}
+              body=${q ? 'No config issues match this search.' : 'No config issues in the latest report.'}
+            />
           `}
         </section>
       </div>
@@ -1929,7 +2050,9 @@ export function PageView() {
   const modIssues = opsCacheData?.mod_issues?.entries ?? [];
   const recommendations = reports.value?.facts?.optional?.mod_recommendations ?? [];
   const factsOptional = reports.value?.facts?.optional ?? {};
-  const modrinthUpdates = factsOptional.modrinth_updates ?? [];
+  const modrinthUpdates = factsOptional.modrinth_updates
+    ?? opsCacheData?.modrinth_scan?.updates
+    ?? [];
   const modrinthLookupEnabled = settings.value?.data?.modrinth_lookup;
   const hasReport = !!reports.value?.facts;
 
@@ -1940,14 +2063,35 @@ export function PageView() {
     const metaById = new Map();
     const connectorById = new Map();
     const securityById = new Map();
-    const mods = factsOptional.mods ?? [];
+    // Prefer fresher continuous mods_light when present; facts still enrich Modrinth/meta
+    const lightMods = Array.isArray(opsCacheData?.mods_light?.mods)
+      ? opsCacheData.mods_light.mods
+      : [];
+    const mods = (lightMods.length ? lightMods : null) ?? factsOptional.mods ?? [];
     for (const m of mods) {
       const id = m.id ?? m.mod_id;
       if (!id) continue;
       if (m.side_score) sideById.set(id, m.side_score);
       metaById.set(id, { is_mcreator: !!m.is_mcreator, loader_hint: m.loader_hint });
     }
-    for (const m of factsOptional.client_only_mods ?? []) {
+    // Overlay report Modrinth/meta fields when light path was used
+    if (lightMods.length) {
+      for (const m of factsOptional.mods ?? []) {
+        const id = m.id ?? m.mod_id;
+        if (!id) continue;
+        const prev = metaById.get(id) || {};
+        metaById.set(id, {
+          ...prev,
+          is_mcreator: !!m.is_mcreator || !!prev.is_mcreator,
+          loader_hint: m.loader_hint ?? prev.loader_hint,
+        });
+        if (m.side_score && !sideById.has(id)) sideById.set(id, m.side_score);
+      }
+    }
+    const clientOnlySrc = opsCacheData?.mods_light?.client_only_mods_summary?.mods
+      ?? factsOptional.client_only_mods
+      ?? [];
+    for (const m of clientOnlySrc) {
       if (m.mod_id) {
         clientBucketById.set(m.mod_id, m.bucket);
         clientOnlyById.set(m.mod_id, m);
@@ -1967,7 +2111,7 @@ export function PageView() {
       connectorWarnings: factsOptional.connector_warnings ?? [],
       securityFlags: factsOptional.security_flags ?? [],
     };
-  }, [factsOptional]);
+  }, [factsOptional, opsCacheData?.mods_light]);
 
   const [search, setSearch] = useState('');
   const [showTechNames, setShowTechNames] = useState(() => {
@@ -2009,17 +2153,6 @@ export function PageView() {
           value=${activeView}
           onChange=${handleViewChange}
         />
-        ${activeView !== 'overview' && activeView !== 'updates' && activeView !== 'modrinth' && activeView !== 'forensics' && html`
-          <div class="feat-queue-chrome feat-subnav-search">
-            <${TextField}
-              icon="search"
-              value=${search}
-              onInput=${(e) => setSearch(e.target.value)}
-              placeholder="Search mods…"
-              aria-label="Search mods"
-            />
-          </div>
-        `}
       </div>
 
       ${activeView === 'overview' && html`
@@ -2033,6 +2166,7 @@ export function PageView() {
           factsMods=${factsOptional.mods ?? []}
           initialModId=${initialModId}
           updateCount=${Array.isArray(modrinthUpdates) ? modrinthUpdates.length : 0}
+          modrinthLookupEnabled=${modrinthLookupEnabled}
         />
       `}
       ${activeView === 'updates' && html`
@@ -2055,14 +2189,17 @@ export function PageView() {
       ${activeView === 'conflicts' && html`
         <${ConflictsTab}
           recommendations=${recommendations}
-          factsMods=${factsOptional.mods ?? []}
+          modIssues=${modIssues}
+          factsMods=${factsOptional.mods ?? opsCacheData?.mods_light?.mods ?? []}
           search=${search}
+          onSearch=${setSearch}
         />
       `}
       ${activeView === 'changes' && html`
         <${ChangesTab}
           modsInventory=${modsInventory}
           search=${search}
+          onSearch=${setSearch}
           factsMods=${factsOptional.mods ?? []}
         />
       `}
@@ -2075,6 +2212,7 @@ export function PageView() {
           modIssues=${modIssues}
           hasReport=${!!reports.value?.facts}
           search=${search}
+          onSearch=${setSearch}
         />
       `}
       ${activeView === 'forensics' && html`

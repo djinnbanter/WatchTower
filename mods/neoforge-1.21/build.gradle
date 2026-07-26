@@ -55,8 +55,10 @@ configurations {
 
 dependencies {
     implementation project(':watchtower-core')
+    implementation project(':watchtower-neoforge-common')
 
     jarJar project(':watchtower-core')
+    jarJar project(':watchtower-neoforge-common')
 
     jarJar('dev.samstevens.totp:totp:1.7.1') {
         version {
@@ -87,6 +89,7 @@ dependencies {
     // or boot fails: ResolutionException: reads more than one module named com.google.gson
 
     additionalRuntimeClasspath project(':watchtower-core')
+    additionalRuntimeClasspath project(':watchtower-neoforge-common')
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -128,19 +131,25 @@ tasks.named('jar', Jar).configure {
     dependsOn tasks.named('syncDashboard')
 }
 
-def dashboardPocDir = rootProject.file('web/dashboard')
+def dashboardAlphaDir = rootProject.file('web/dashboard-alpha')
+def dashboardAlphaDist = new File(dashboardAlphaDir, 'dist')
 def dashboardWebOut = layout.buildDirectory.dir('generated/resources/assets/watchtower/web')
 
 tasks.register('buildDashboardAssets', Exec) {
-    workingDir dashboardPocDir
-    commandLine 'node', 'scripts/build.mjs'
-    inputs.dir(new File(dashboardPocDir, 'src'))
+    workingDir dashboardAlphaDir
+    // Windows-friendly npm invocation
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'cmd', '/c', 'npm', 'run', 'build'
+    } else {
+        commandLine 'npm', 'run', 'build'
+    }
+    inputs.dir(new File(dashboardAlphaDir, 'src'))
+    inputs.dir(new File(dashboardAlphaDir, 'assets'))
     inputs.dir(rootProject.file('docs/wiki'))
-    inputs.file(new File(dashboardPocDir, 'scripts/build.mjs'))
-    inputs.file(new File(dashboardPocDir, 'scripts/build-wiki.mjs'))
-    inputs.file(new File(dashboardPocDir, 'index.html'))
-    outputs.file(new File(dashboardPocDir, 'styles.css'))
-    outputs.file(new File(dashboardPocDir, 'src/wiki/content.js'))
+    inputs.file(new File(dashboardAlphaDir, 'package.json'))
+    inputs.file(new File(dashboardAlphaDir, 'vite.config.ts'))
+    inputs.file(new File(dashboardAlphaDir, 'index.html'))
+    outputs.dir(dashboardAlphaDist)
 }
 
 tasks.register('syncDashboard', Copy) {
@@ -151,15 +160,11 @@ tasks.register('syncDashboard', Copy) {
         if (outDir.exists()) {
             outDir.deleteDir()
         }
+        if (!dashboardAlphaDist.isDirectory()) {
+            throw new GradleException("dashboard-alpha dist missing after build: ${dashboardAlphaDist}")
+        }
     }
-    from(dashboardPocDir) {
-        include 'index.html'
-        include 'styles.css'
-        include 'favicon.ico'
-        include 'assets/**'
-        include 'vendor/**'
-        include 'src/**'
-    }
+    from(dashboardAlphaDist)
     into dashboardWebOut
     outputs.dir(dashboardWebOut)
 }
@@ -225,6 +230,14 @@ tasks.register('verifyModJar') {
                         'Nested watchtower-core must not ship unrelocated com.google.protobuf (JPMS conflict)')
             }
 
+            def commonEntry = embeddedEntries.find { e -> e.name.contains('watchtower-neoforge-common') }
+            if (commonEntry == null) {
+                throw new GradleException("No nested watchtower-neoforge-common JAR in META-INF/jarjar/ of ${jarFile.name}")
+            }
+            if (!nestedJarContains(zip, commonEntry, 'dev/mcstatus/watchtower/DashboardHttpServer.class')) {
+                throw new GradleException("Nested watchtower-neoforge-common JAR missing DashboardHttpServer.class")
+            }
+
             def totpEntry = embeddedEntries.find { e -> e.name.toLowerCase().contains('totp') }
             if (totpEntry == null) {
                 throw new GradleException("No nested TOTP JAR in META-INF/jarjar/ of ${jarFile.name}")
@@ -246,27 +259,36 @@ tasks.register('verifyModJar') {
                         "Gson must not be embedded (module conflict on boot): ${gsonEmbedded}"
                 )
             }
+
+            // React (Vite) dashboard assets
             def requiredWebAssets = [
                     'assets/watchtower/web/index.html',
-                    'assets/watchtower/web/styles.css',
-                    'assets/watchtower/web/src/main.js',
-                    'assets/watchtower/web/src/wiki/content.js',
-                    'assets/watchtower/web/vendor/preact.module.js',
-                    'assets/watchtower/web/vendor/uplot.esm.js',
-                    'assets/watchtower/web/assets/fonts/IBMPlexSans-Regular.woff2',
+                    'assets/watchtower/web/assets/watchtower-icon-simple.png',
             ]
             requiredWebAssets.each { assetPath ->
                 if (zip.getEntry(assetPath) == null) {
                     throw new GradleException("Missing embedded dashboard asset ${assetPath} in ${jarFile.name}")
                 }
             }
-            def stylesEntry = zip.getEntry('assets/watchtower/web/styles.css')
-            def stylesText = new String(zip.getInputStream(stylesEntry).readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
-            if (!stylesText.contains('--ui-accent') && !stylesText.contains('--ui-bg0')) {
-                throw new GradleException("Embedded styles.css missing Lantern --ui-* tokens in ${jarFile.name}")
+            def indexEntry = zip.getEntry('assets/watchtower/web/index.html')
+            def indexText = new String(zip.getInputStream(indexEntry).readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
+            if (!indexText.contains('root') || !(indexText.contains('assets/') || indexText.contains('./assets/'))) {
+                throw new GradleException("Embedded index.html does not look like a Vite React build in ${jarFile.name}")
+            }
+            // Reject legacy Preact dashboard tree
+            if (zip.getEntry('assets/watchtower/web/src/main.js') != null) {
+                throw new GradleException("Legacy Preact src/main.js must not be embedded in ${jarFile.name}")
+            }
+            if (zip.getEntry('assets/watchtower/web/vendor/preact.module.js') != null) {
+                throw new GradleException("Legacy Preact vendor must not be embedded in ${jarFile.name}")
             }
             if (zip.getEntry('assets/watchtower/web/tower/data.js') != null) {
                 throw new GradleException("Legacy tower/ UI must not be embedded in ${jarFile.name}")
+            }
+            // Ensure at least one hashed JS chunk is present
+            def hasJsChunk = zip.entries().any { it.name.startsWith('assets/watchtower/web/assets/') && it.name.endsWith('.js') }
+            if (!hasJsChunk) {
+                throw new GradleException("No Vite JS chunks under assets/watchtower/web/assets/ in ${jarFile.name}")
             }
             logger.lifecycle("verifyModJar OK: ${jarFile.name} (${jarFile.length()} bytes)")
             logger.lifecycle("  embedded: ${embedded.join(', ')}")

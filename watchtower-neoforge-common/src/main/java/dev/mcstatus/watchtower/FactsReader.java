@@ -1,5 +1,8 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.core.ops.IssuesLiveSchema;
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public final class FactsReader {
     public record IssueSummary(String id, String severity, String message, String detailLine) {
@@ -37,7 +41,7 @@ public final class FactsReader {
             JsonObject root = JsonParser.parseString(text).getAsJsonObject();
             return parseIssues(root);
         } catch (IOException | RuntimeException e) {
-            WatchtowerMod.LOGGER.debug("Failed to read facts issues: {}", e.toString());
+            ModRuntime.logger().debug("Failed to read facts issues: {}", e.toString());
             return IssueCounts.empty();
         }
     }
@@ -51,6 +55,50 @@ public final class FactsReader {
         } catch (RuntimeException e) {
             return IssueCounts.empty();
         }
+    }
+
+    /**
+     * Active continuous Issues from ops-cache {@code issues_live[]} (open + reviewed; skips resolved/suppressed).
+     */
+    public static List<IssueSummary> readActiveIssuesLive(JsonObject opsCache) {
+        if (opsCache == null
+                || !opsCache.has(IssuesLiveSchema.ISSUES_LIVE)
+                || !opsCache.get(IssuesLiveSchema.ISSUES_LIVE).isJsonArray()) {
+            return List.of();
+        }
+        List<IssueSummary> out = new ArrayList<>();
+        for (JsonElement el : opsCache.getAsJsonArray(IssuesLiveSchema.ISSUES_LIVE)) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            String status = stringField(row, IssuesLiveSchema.STATUS);
+            if (status == null || status.isBlank()) {
+                status = IssuesLiveSchema.STATUS_OPEN;
+            }
+            String statusLower = status.toLowerCase(Locale.ROOT);
+            if (IssuesLiveSchema.STATUS_RESOLVED.equals(statusLower)
+                    || IssuesLiveSchema.STATUS_SUPPRESSED.equals(statusLower)) {
+                continue;
+            }
+            String id = stringField(row, IssuesLiveSchema.ID);
+            if (id == null || id.isBlank()) {
+                id = stringField(row, IssuesLiveSchema.KEY);
+            }
+            if (id == null || id.isBlank()) {
+                continue;
+            }
+            String severity = stringField(row, IssuesLiveSchema.SEVERITY);
+            if (severity == null || severity.isBlank()) {
+                severity = "warning";
+            }
+            String message = stringField(row, IssuesLiveSchema.MESSAGE);
+            if (message == null) {
+                message = "";
+            }
+            out.add(new IssueSummary(id, severity, message, null));
+        }
+        return List.copyOf(out);
     }
 
     public static String crashDetailLine(JsonObject facts) {

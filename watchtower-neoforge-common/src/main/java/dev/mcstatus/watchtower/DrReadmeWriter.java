@@ -1,7 +1,9 @@
 package dev.mcstatus.watchtower;
 
-import net.minecraft.server.MinecraftServer;
-import net.neoforged.fml.ModList;
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+import dev.mcstatus.watchtower.runtime.WatchtowerSample;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,18 +22,18 @@ public final class DrReadmeWriter {
     private DrReadmeWriter() {
     }
 
-    public static Path drReadmePath(MinecraftServer server) {
+    public static Path drReadmePath(ServerContext server) {
         return WatchtowerPaths.reportDir(server).resolve(FILENAME);
     }
 
-    public static void writeAfterSuccessfulReport(MinecraftServer server) throws IOException {
+    public static void writeAfterSuccessfulReport(ServerContext server) throws IOException {
         Path path = drReadmePath(server);
         Files.createDirectories(path.getParent());
         Files.writeString(path, buildContent(server), StandardCharsets.UTF_8);
     }
 
-    static String buildContent(MinecraftServer server) throws IOException {
-        Path serverDir = server.getServerDirectory().toAbsolutePath().normalize();
+    static String buildContent(ServerContext server) throws IOException {
+        Path serverDir = server.serverDirectory().toAbsolutePath().normalize();
         String version = watchtowerVersion();
         String viewerUrl = readViewerUrl(server);
 
@@ -64,12 +66,11 @@ public final class DrReadmeWriter {
     }
 
     private static String watchtowerVersion() {
-        return ModList.get().getModContainerById(WatchtowerMod.MOD_ID)
-                .map(c -> c.getModInfo().getVersion().toString())
-                .orElse("unknown");
+        ServerContext ctx = ModRuntime.context();
+        return ctx != null ? ctx.modVersion() : "unknown";
     }
 
-    private static String readViewerUrl(MinecraftServer server) throws IOException {
+    private static String readViewerUrl(ServerContext server) throws IOException {
         Map<String, String> map = WatchtowerConfWriter.readMap(WatchtowerPaths.confPath(server));
         return map.get("DR_VIEWER_URL");
     }

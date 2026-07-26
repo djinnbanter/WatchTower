@@ -6,10 +6,12 @@ Watchtower ships **two files** per version: the mod (for your server) and a reco
 
 ## Which file goes where
 
-| File | Where to put it |
-|------|-----------------|
-| `watchtower-neoforge-1.1.0+mc1.21.jar` | Server **`mods/`** folder — **required** |
-| `watchtower-cli-1.1.0.jar` | Same **`mods/`** folder — **recommended** (not loaded as a mod; used with `java -jar` over SSH) |
+| File pattern | Where to put it |
+|--------------|-----------------|
+| `watchtower-neoforge-*+mc1.21.jar` | Server **`mods/`** — **required** |
+| `watchtower-cli-*.jar` | Same **`mods/`** — **recommended** (not loaded as a mod; `java -jar` over SSH) |
+
+Always take the **current release** from the links below — filenames include the version number.
 
 ---
 
@@ -24,37 +26,18 @@ JARs are not stored in the git repo — download from releases or build from sou
 
 ---
 
-## Current version (1.1.0)
+## After download
 
-| File | Purpose |
-|------|---------|
-| `watchtower-neoforge-1.1.0+mc1.21.jar` | Dashboard, reports, live metrics — Minecraft **1.21.x** |
-| `watchtower-cli-1.1.0.jar` | Recovery zip when server won't boot |
-
-**Local build:** `releases/1.1.0/` and `releases/latest/` after `./gradlew copyReleaseJars`.
+1. Install per [[Installation]]
+2. First login per [[Quick-Start-Checklist]]
+3. Keep the CLI jar for [[Disaster-Recovery]]
 
 Match CLI version to mod version when possible.
 
 ---
 
-## After download
-
-1. Copy mod JAR to `mods/`
-2. Start server — see [[Installation]]
-3. Open dashboard — see [[Quick Start Checklist]]
-
----
-
-## Technical details
-
-- NeoForge loader range: `[1.21.1,1.22)` — one JAR for **1.21.1** through latest **1.21.x** patch
-- **License:** GPL-3.0-or-later (see repository `LICENSE`)
-- Build from source: [CONTRIBUTING.md](https://github.com/djinnbanter/WatchTower/blob/main/CONTRIBUTING.md)
-
----
-
-## See also
+## Related
 
 - [[Installation]]
-- [[Disaster Recovery]]
 - [[Changelog]]
+- [[Roadmap]]

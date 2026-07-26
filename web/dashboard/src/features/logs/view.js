@@ -4,6 +4,7 @@ import { fetchLogsList, fetchLogContent, fetchCrashReport, addToast } from '../.
 import { Page, EmptyState, FreshnessBadge } from '../../ui/patterns/index.js';
 import { Button, Segmented, TextField, CopyButton, Badge, ScrollRegion } from '../../ui/primitives/index.js';
 import { Icon } from '../../ui/icons.js';
+import { openSupportBuilder } from '../support/bundle-builder-modal.js';
 
 const TAIL_OPTIONS = [
   { value: '500', label: '500' },
@@ -317,6 +318,26 @@ export function PageView() {
                         icon="search"
                       />
                       <${CopyButton} text=${content ?? ''} label="Copy log" />
+                      <${Button}
+                        kind="neutral"
+                        size="sm"
+                        disabled=${!selected}
+                        onClick=${() => {
+                          if (!selected) return;
+                          if (selected.kind === 'crash') {
+                            openSupportBuilder({
+                              preset: 'CUSTOM',
+                              include_crashes: true,
+                              crash_files: [selected.name],
+                            });
+                          } else {
+                            openSupportBuilder({
+                              preset: 'CUSTOM',
+                              logs: [{ file: selected.name, mode: 'TAIL', tail_lines: Number(tail) || 2000 }],
+                            });
+                          }
+                        }}
+                      >Add to support pack</${Button}>
                       <${Button}
                         kind="neutral"
                         size="sm"

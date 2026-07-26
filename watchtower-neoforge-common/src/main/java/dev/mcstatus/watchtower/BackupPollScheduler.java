@@ -1,7 +1,10 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+
 import dev.mcstatus.watchtower.core.report.ReportConfig;
-import net.minecraft.server.MinecraftServer;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,7 +24,7 @@ public final class BackupPollScheduler {
         return t;
     });
     private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
-    private volatile MinecraftServer server;
+    private volatile ServerContext server;
     private volatile int pollMin = 0;
 
     private BackupPollScheduler() {
@@ -31,7 +34,7 @@ public final class BackupPollScheduler {
         return INSTANCE;
     }
 
-    public void bind(MinecraftServer server) {
+    public void bind(ServerContext server) {
         this.server = server;
         try {
             pollMin = ModReportConfig.forServer(server).backupPollMin();
@@ -47,7 +50,7 @@ public final class BackupPollScheduler {
     }
 
     public void refreshSchedule() {
-        MinecraftServer s = server;
+        ServerContext s = server;
         if (s == null) {
             stop();
             return;
@@ -82,7 +85,7 @@ public final class BackupPollScheduler {
         long periodSec = (long) pollMin * 60L;
         ScheduledFuture<?> f = executor.scheduleAtFixedRate(
                 () -> {
-                    MinecraftServer current = server;
+                    ServerContext current = server;
                     if (current == null) {
                         stop();
                         return;
@@ -90,7 +93,7 @@ public final class BackupPollScheduler {
                     try {
                         OpsScanService.scanBackupsLive(current);
                     } catch (Exception e) {
-                        WatchtowerMod.LOGGER.debug("Backup folder poll failed: {}", e.toString());
+                        ModRuntime.logger().debug("Backup folder poll failed: {}", e.toString());
                     }
                 },
                 periodSec,

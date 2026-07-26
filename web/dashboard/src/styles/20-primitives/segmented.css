@@ -28,8 +28,10 @@
   border: none;
   font-family: var(--ui-font-sans);
   white-space: nowrap;
-  transition: background var(--ui-dur-1) var(--ui-ease-out),
-              color var(--ui-dur-1) var(--ui-ease-out);
+  transition: background var(--ui-dur-2) var(--ui-ease-out),
+              color var(--ui-dur-2) var(--ui-ease-out),
+              box-shadow var(--ui-dur-2) var(--ui-ease-out),
+              border-color var(--ui-dur-2) var(--ui-ease-out);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -44,6 +46,10 @@
   color: var(--ui-text-hi);
   box-shadow: var(--ui-shadow-rest);
   border: 1px solid var(--ui-line);
+}
+
+.ui-seg__opt:active:not(:disabled) {
+  transform: translateY(0.5px);
 }
 
 .ui-seg__opt:focus-visible {

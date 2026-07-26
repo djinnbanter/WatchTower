@@ -1,7 +1,9 @@
 import { html, useState, useRef, useEffect, useLayoutEffect, render } from '../../lib/preact.js';
+import { Motion } from '../../motion/reduced.js';
 
 /**
  * BarMeter — horizontal fill bar with optional label/value.
+ * Grows from 0 on first paint, then CSS-transitions on updates.
  * BarMeter({ value, max=100, label, valueLabel, tone, compact })
  */
 export function BarMeter({
@@ -13,7 +15,31 @@ export function BarMeter({
   compact = false,
   className = '',
 }) {
-  const pct = max > 0 ? Math.min(100, Math.max(0, (Number(value) / max) * 100)) : 0;
+  const target = max > 0 ? Math.min(100, Math.max(0, (Number(value) / max) * 100)) : 0;
+  const [pct, setPct] = useState(() => (Motion.enabled ? 0 : target));
+  const grewRef = useRef(false);
+
+  useEffect(() => {
+    if (!Motion.enabled) {
+      setPct(target);
+      return undefined;
+    }
+    if (!grewRef.current) {
+      grewRef.current = true;
+      setPct(0);
+      let raf2 = 0;
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => setPct(target));
+      });
+      return () => {
+        cancelAnimationFrame(raf1);
+        cancelAnimationFrame(raf2);
+      };
+    }
+    setPct(target);
+    return undefined;
+  }, [target]);
+
   const cls = [
     'ui-bar-meter',
     compact ? 'ui-bar-meter--compact' : '',
@@ -60,6 +86,7 @@ function clampAboveCursor(clientX, clientY, tipW, tipH) {
 /**
  * HourBars — 24 vertical bars (UTC hour → metric) with hover tip + live readout.
  * Tip is portaled to a body float layer and placed above the cursor.
+ * Bars grow from 0 on first paint.
  */
 export function HourBars({
   hours = [],
@@ -73,6 +100,7 @@ export function HourBars({
   className = '',
 }) {
   const [hover, setHover] = useState(null);
+  const [grown, setGrown] = useState(!Motion.enabled);
   const cursorRef = useRef(null);
   const hostRef = useRef(null);
   const tipRef = useRef(null);
@@ -84,6 +112,18 @@ export function HourBars({
     return v == null || Number.isNaN(Number(v)) ? null : Number(v);
   });
   const dataMax = max ?? Math.max(...vals.filter((v) => v != null), 0.001);
+
+  useEffect(() => {
+    if (!Motion.enabled || grown) return undefined;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setGrown(true));
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [grown]);
 
   const active = hover;
   const activeVal = active != null ? vals[active] : null;
@@ -214,7 +254,7 @@ export function HourBars({
         onMouseLeave=${clearHover}
       >
         ${vals.map((v, i) => {
-          const h = v == null ? 0 : Math.max(4, (v / dataMax) * 100);
+          const h = !grown || v == null ? 0 : Math.max(4, (v / dataMax) * 100);
           const selected = active === i;
           return html`
             <button

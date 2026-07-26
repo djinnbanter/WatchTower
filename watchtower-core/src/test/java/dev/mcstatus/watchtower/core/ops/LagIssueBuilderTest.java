@@ -94,4 +94,136 @@ class LagIssueBuilderTest {
         assertTrue(LagIssueBuilder.buildPeekEntry(incident, spark).get("primary_suspect").getAsString()
                 .contains("sable"));
     }
+
+    @Test
+    void buildPeekEntry_prefersAttachedTopModsOverCorrelatedSpark() {
+        JsonObject incident = new JsonObject();
+        incident.addProperty("id", "2026-07-19T18-15-12Z");
+        incident.addProperty("pinned_at", java.time.ZonedDateTime.now().format(
+                java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        incident.addProperty("severity", "critical");
+        incident.addProperty("mspt", 95);
+        incident.addProperty("tps", 12);
+        incident.addProperty("spark_profile_path",
+                "watchtower/spark-upload/auto-2026-07-19T18-15-12Z.sparkprofile");
+        JsonArray topMods = new JsonArray();
+        JsonObject create = new JsonObject();
+        create.addProperty("mod_id", "create");
+        create.addProperty("pct", 34.2);
+        create.addProperty("display_name", "Create");
+        topMods.add(create);
+        incident.add("top_mods", topMods);
+        JsonObject auto = new JsonObject();
+        auto.addProperty("status", "ok");
+        incident.add("spark_auto_capture", auto);
+
+        JsonObject spark = new JsonObject();
+        spark.addProperty("fresh", true);
+        spark.addProperty("captured_at", java.time.ZonedDateTime.now().format(
+                java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        JsonArray hints = new JsonArray();
+        JsonObject vanilla = new JsonObject();
+        vanilla.addProperty("mod_id", "minecraft");
+        vanilla.addProperty("pct", 80.0);
+        vanilla.addProperty("summary", "tick");
+        hints.add(vanilla);
+        JsonObject other = new JsonObject();
+        other.addProperty("mod_id", "sable");
+        other.addProperty("pct", 21.0);
+        other.addProperty("summary", "tick");
+        hints.add(other);
+        spark.add("mod_hints", hints);
+
+        JsonObject entry = LagIssueBuilder.buildPeekEntry(incident, spark);
+        assertEquals("create", entry.getAsJsonArray("top_mods").get(0).getAsJsonObject()
+                .get("mod_id").getAsString());
+        assertEquals("watchtower/spark-upload/auto-2026-07-19T18-15-12Z.sparkprofile",
+                entry.get("spark_profile_path").getAsString());
+        assertEquals("ok", entry.get("spark_auto_capture_status").getAsString());
+        assertTrue(entry.get("primary_suspect").getAsString().contains("Create"));
+        assertTrue(entry.get("primary_suspect").getAsString().contains("auto-profiled"));
+        assertFalse(entry.get("primary_suspect").getAsString().toLowerCase().contains("minecraft"));
+    }
+
+    @Test
+    void primarySuspect_skipsVanillaInCorrelatedSpark() {
+        JsonObject incident = new JsonObject();
+        incident.addProperty("pinned_at", java.time.ZonedDateTime.now().format(
+                java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        incident.addProperty("players_online", 0);
+
+        JsonObject spark = new JsonObject();
+        spark.addProperty("fresh", true);
+        spark.addProperty("captured_at", java.time.ZonedDateTime.now().format(
+                java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        JsonArray hints = new JsonArray();
+        JsonObject vanilla = new JsonObject();
+        vanilla.addProperty("mod_id", "neoforge");
+        vanilla.addProperty("pct", 40.0);
+        vanilla.addProperty("summary", "eventbus");
+        hints.add(vanilla);
+        JsonObject mod = new JsonObject();
+        mod.addProperty("mod_id", "create");
+        mod.addProperty("pct", 22.0);
+        mod.addProperty("summary", "tick");
+        hints.add(mod);
+        spark.add("mod_hints", hints);
+
+        String suspect = LagIssueBuilder.primarySuspect(incident, spark);
+        assertNotNull(suspect);
+        assertTrue(suspect.contains("create"));
+        assertFalse(suspect.toLowerCase().contains("neoforge"));
+    }
+
+    @Test
+    void sparkCorrelates_withinSixtyMinutes() {
+        java.time.ZonedDateTime pin = java.time.ZonedDateTime.now().minusMinutes(30);
+        JsonObject incident = new JsonObject();
+        incident.addProperty("pinned_at", pin.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        JsonObject spark = new JsonObject();
+        spark.addProperty("fresh", true);
+        spark.addProperty("captured_at", pin.plusMinutes(20)
+                .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        assertTrue(LagIssueBuilder.sparkCorrelates(incident, spark));
+    }
+
+    @Test
+    void sparkCorrelates_outsideSixtyMinutes() {
+        java.time.ZonedDateTime pin = java.time.ZonedDateTime.now().minusMinutes(120);
+        JsonObject incident = new JsonObject();
+        incident.addProperty("pinned_at", pin.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        JsonObject spark = new JsonObject();
+        spark.addProperty("fresh", true);
+        spark.addProperty("captured_at", pin.plusMinutes(90)
+                .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        assertFalse(LagIssueBuilder.sparkCorrelates(incident, spark));
+    }
+
+    @Test
+    void sparkCorrelates_rejectsStaleAndNullTimes() {
+        JsonObject incident = new JsonObject();
+        incident.addProperty("pinned_at", java.time.ZonedDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        JsonObject stale = new JsonObject();
+        stale.addProperty("fresh", false);
+        stale.addProperty("captured_at", java.time.ZonedDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        assertFalse(LagIssueBuilder.sparkCorrelates(incident, stale));
+
+        JsonObject missingCapture = new JsonObject();
+        missingCapture.addProperty("fresh", true);
+        assertFalse(LagIssueBuilder.sparkCorrelates(incident, missingCapture));
+
+        JsonObject noPin = new JsonObject();
+        JsonObject spark = new JsonObject();
+        spark.addProperty("fresh", true);
+        spark.addProperty("captured_at", java.time.ZonedDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        assertFalse(LagIssueBuilder.sparkCorrelates(noPin, spark));
+    }
 }

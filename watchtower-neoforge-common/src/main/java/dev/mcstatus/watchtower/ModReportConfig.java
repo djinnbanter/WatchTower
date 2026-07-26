@@ -1,10 +1,13 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+
 import dev.mcstatus.watchtower.core.panel.PanelInfo;
 import dev.mcstatus.watchtower.core.panel.PanelLabels;
 import dev.mcstatus.watchtower.core.panel.PanelResolver;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
-import net.minecraft.server.MinecraftServer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,11 +28,11 @@ public final class ModReportConfig {
     private ModReportConfig() {
     }
 
-    public static ReportConfig forServer(MinecraftServer server) throws IOException {
+    public static ReportConfig forServer(ServerContext server) throws IOException {
         return forServer(server, ReportRunOptions.empty());
     }
 
-    public static ReportConfig forServer(MinecraftServer server, ReportRunOptions opts) throws IOException {
+    public static ReportConfig forServer(ServerContext server, ReportRunOptions opts) throws IOException {
         Path conf = WatchtowerPaths.confPath(server);
         Map<String, String> map = new HashMap<>();
         if (Files.isRegularFile(conf)) {
@@ -45,12 +48,12 @@ public final class ModReportConfig {
             }
         }
 
-        map.put("SERVER_DIR", server.getServerDirectory().toAbsolutePath().toString());
+        map.put("SERVER_DIR", server.serverDirectory().toAbsolutePath().toString());
         map.put("STATE_FILE", WatchtowerPaths.statePath(server).toAbsolutePath().toString());
         map.put("JAVA_RUNNING", "true");
         map.put("LOADER", "neoforge");
 
-        PanelInfo panel = PanelResolver.resolve(map, server.getServerDirectory());
+        PanelInfo panel = PanelResolver.resolve(map, server.serverDirectory());
         map.put("PANEL_DETECTED", panel.panelId());
         if (panel.panelRoot() != null) {
             map.put("PANEL_ROOT", panel.panelRoot());
@@ -63,12 +66,12 @@ public final class ModReportConfig {
         map.put("PANEL_DISPLAY_NAME", PanelLabels.displayName(panel.panelId()));
 
         try {
-            int lookback = WatchtowerConfig.LOOKBACK_HOURS.get();
+            int lookback = ModRuntime.config().lookbackHours();
             if (opts != null && opts.lookbackHours() != null) {
                 lookback = Math.max(1, Math.min(720, opts.lookbackHours()));
             }
             map.put("LOOKBACK_HOURS", String.valueOf(lookback));
-            boolean incremental = WatchtowerConfig.INCREMENTAL.get();
+            boolean incremental = ModRuntime.config().incremental();
             if (opts != null && opts.incremental() != null) {
                 incremental = opts.incremental();
             }

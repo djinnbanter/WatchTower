@@ -1,11 +1,13 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.collect.PlayerDirectoryCollector;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +36,7 @@ public final class PlayerRosterService {
         return INSTANCE;
     }
 
-    public JsonObject getRoster(MinecraftServer server) {
+    public JsonObject getRoster(ServerContext server) {
         if (server == null) {
             JsonObject empty = cached.get();
             return empty != null ? empty.deepCopy() : new JsonObject();
@@ -50,7 +52,7 @@ public final class PlayerRosterService {
         return overlayOnline(base.deepCopy(), sampleOnline(server));
     }
 
-    private void maybeRefreshCache(MinecraftServer server) {
+    private void maybeRefreshCache(ServerContext server) {
         long now = System.currentTimeMillis() / 1000L;
         if (now - lastScanEpoch < SCAN_INTERVAL_SEC || scanRunning) {
             return;
@@ -62,16 +64,24 @@ public final class PlayerRosterService {
                 cached.set(roster);
                 lastScanEpoch = System.currentTimeMillis() / 1000L;
             } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Player roster scan failed: {}", e.toString());
+                ModRuntime.logger().debug("Player roster scan failed: {}", e.toString());
             } finally {
                 scanRunning = false;
             }
         });
     }
 
-    private static JsonObject scan(MinecraftServer server) {
-        String serverDir = server.getServerDirectory().toAbsolutePath().toString();
-        return PlayerDirectoryCollector.collect(serverDir, sampleOnline(server));
+    private static JsonObject scan(ServerContext server) {
+        String serverDir = server.serverDirectory().toAbsolutePath().toString();
+        return PlayerDirectoryCollector.collect(
+                serverDir,
+                sampleOnline(server),
+                WatchtowerPaths.statePath(server));
+    }
+
+    /** Shared roster scan for ops-cache poll and dashboard API. */
+    public static JsonObject scanRoster(ServerContext server) {
+        return scan(server);
     }
 
     static JsonObject overlayOnline(JsonObject roster, List<PlayerDirectoryCollector.OnlinePlayer> onlinePlayers) {
@@ -131,14 +141,14 @@ public final class PlayerRosterService {
         return roster;
     }
 
-    private static List<PlayerDirectoryCollector.OnlinePlayer> sampleOnline(MinecraftServer server) {
+    private static List<PlayerDirectoryCollector.OnlinePlayer> sampleOnline(ServerContext server) {
         List<PlayerDirectoryCollector.OnlinePlayer> out = new ArrayList<>();
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+        for (var player : server.onlinePlayers()) {
             out.add(new PlayerDirectoryCollector.OnlinePlayer(
-                    player.getGameProfile().getName(),
-                    player.getUUID().toString(),
-                    player.connection.latency(),
-                    player.level().dimension().location().toString()));
+                    player.name(),
+                    player.uuid(),
+                    player.ping(),
+                    player.dimension()));
         }
         return out;
     }

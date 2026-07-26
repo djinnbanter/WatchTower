@@ -158,6 +158,8 @@ public final class PerformanceRollupWriter {
         mergeSeries(buckets, series, "heap_mb", SeriesKind.HEAP_MB);
         mergeSeries(buckets, series, "host_cpu", SeriesKind.CPU);
         mergeSeries(buckets, series, "mem_used_gb", SeriesKind.MEM);
+        mergeSeries(buckets, series, "disk_use_pct", SeriesKind.DISK_USE);
+        mergeSeries(buckets, series, "disk_write_mb_s", SeriesKind.DISK_WRITE);
 
         Set<String> existingTs = new HashSet<>();
         lock.readLock().lock();
@@ -191,7 +193,7 @@ public final class PerformanceRollupWriter {
     }
 
     private enum SeriesKind {
-        TPS, MSPT, PLAYERS, HEAP_MB, CPU, MEM
+        TPS, MSPT, PLAYERS, HEAP_MB, CPU, MEM, DISK_USE, DISK_WRITE
     }
 
     private static void mergeSeries(Map<Long, MinuteBucket> buckets, JsonObject series, String key, SeriesKind kind) {
@@ -220,6 +222,8 @@ public final class PerformanceRollupWriter {
                 case HEAP_MB -> bucket.heapUsedGb.add(v / 1024.0);
                 case CPU -> bucket.cpu.add(v);
                 case MEM -> bucket.memUsedGb.add(v);
+                case DISK_USE -> bucket.diskUsePct.add(v);
+                case DISK_WRITE -> bucket.diskWriteMbS.add(v);
                 default -> { }
             }
         }
@@ -232,10 +236,13 @@ public final class PerformanceRollupWriter {
         final List<Double> heapUsedGb = new ArrayList<>();
         final List<Double> memUsedGb = new ArrayList<>();
         final List<Double> cpu = new ArrayList<>();
+        final List<Double> diskUsePct = new ArrayList<>();
+        final List<Double> diskWriteMbS = new ArrayList<>();
 
         PerformanceRollupAccumulator toAccumulator(double tpsWarn) {
             PerformanceRollupAccumulator acc = new PerformanceRollupAccumulator();
             int n = Math.max(mspt.size(), Math.max(tps.size(), players.size()));
+            n = Math.max(n, diskUsePct.size());
             for (int i = 0; i < n; i++) {
                 Double t = i < tps.size() ? tps.get(i) : null;
                 Double m = i < mspt.size() ? mspt.get(i) : null;
@@ -243,7 +250,9 @@ public final class PerformanceRollupWriter {
                 Double h = i < heapUsedGb.size() ? heapUsedGb.get(i) : null;
                 Double mem = i < memUsedGb.size() ? memUsedGb.get(i) : null;
                 Double c = i < cpu.size() ? cpu.get(i) : null;
-                acc.addSample(t, m, p, h, mem, c, tpsWarn);
+                Double disk = i < diskUsePct.size() ? diskUsePct.get(i) : null;
+                Double write = i < diskWriteMbS.size() ? diskWriteMbS.get(i) : null;
+                acc.addSample(t, m, p, h, mem, c, tpsWarn, null, null, disk, null, write, null);
             }
             return acc;
         }
@@ -308,6 +317,8 @@ public final class PerformanceRollupWriter {
         List<Double> msptAvg = new ArrayList<>();
         List<Double> msptP95 = new ArrayList<>();
         List<Integer> playersMax = new ArrayList<>();
+        List<Double> heapPressure = new ArrayList<>();
+        List<Double> gcPause = new ArrayList<>();
         int lowTpsMinutes = 0;
 
         for (JsonObject row : window) {
@@ -325,6 +336,12 @@ public final class PerformanceRollupWriter {
             }
             if (row.has("players_max")) {
                 playersMax.add(row.get("players_max").getAsInt());
+            }
+            if (row.has("heap_pressure_pct_avg") && !row.get("heap_pressure_pct_avg").isJsonNull()) {
+                heapPressure.add(row.get("heap_pressure_pct_avg").getAsDouble());
+            }
+            if (row.has("gc_pause_pct_avg") && !row.get("gc_pause_pct_avg").isJsonNull()) {
+                gcPause.add(row.get("gc_pause_pct_avg").getAsDouble());
             }
             if (row.has("low_tps_flag") && row.get("low_tps_flag").getAsBoolean()) {
                 lowTpsMinutes++;
@@ -345,6 +362,14 @@ public final class PerformanceRollupWriter {
         }
         if (!playersMax.isEmpty()) {
             s.addProperty("players_max", java.util.Collections.max(playersMax));
+        }
+        if (!heapPressure.isEmpty()) {
+            s.addProperty("heap_pressure_pct_avg",
+                    PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.avg(heapPressure)));
+        }
+        if (!gcPause.isEmpty()) {
+            s.addProperty("gc_pause_pct_avg",
+                    PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.avg(gcPause)));
         }
         s.addProperty("low_tps_minutes", lowTpsMinutes);
         return s;

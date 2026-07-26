@@ -1,5 +1,9 @@
 package dev.mcstatus.watchtower;
 
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
+
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
@@ -8,8 +12,6 @@ import dev.mcstatus.watchtower.core.report.ReportProgress;
 import dev.mcstatus.watchtower.core.report.ReportRetentionPolicy;
 import dev.mcstatus.watchtower.core.report.ReportSchedule;
 import dev.mcstatus.watchtower.core.report.StateManager;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -23,7 +25,7 @@ public final class ReportRunner {
     }
 
     public static CompletableFuture<Void> runAsync(
-            MinecraftServer server,
+            ServerContext server,
             WatchtowerRuntimeState state,
             Consumer<String> feedback
     ) {
@@ -31,7 +33,7 @@ public final class ReportRunner {
     }
 
     public static CompletableFuture<Void> runAsync(
-            MinecraftServer server,
+            ServerContext server,
             WatchtowerRuntimeState state,
             Consumer<String> feedback,
             ReportRunOptions options
@@ -49,7 +51,7 @@ public final class ReportRunner {
      * (e.g. HTTP handler marks running before returning 202 so status polls never race the server tick).
      */
     public static CompletableFuture<Void> continueAfterBegin(
-            MinecraftServer server,
+            ServerContext server,
             WatchtowerRuntimeState state,
             Consumer<String> feedback,
             ReportRunOptions options
@@ -70,16 +72,20 @@ public final class ReportRunner {
         feedback.accept("Starting health report...");
 
         int timeoutMinutes = reportTimeoutMinutes();
+        boolean skipTimeout = options != null && options.disableTimeout();
         try {
-            return CompletableFuture
-                    .supplyAsync(() -> runReport(server, state, options))
-                    .orTimeout(timeoutMinutes, TimeUnit.MINUTES)
+            CompletableFuture<ReportEngine.ReportResult> future = CompletableFuture
+                    .supplyAsync(() -> runReport(server, state, options));
+            if (!skipTimeout) {
+                future = future.orTimeout(timeoutMinutes, TimeUnit.MINUTES);
+            }
+            return future
                     .handle((result, err) -> {
                         if (err != null) {
                             String msg = err instanceof java.util.concurrent.TimeoutException
                                     ? "Report timed out after " + timeoutMinutes + " minutes"
                                     : "Report error: " + err.getMessage();
-                            WatchtowerMod.LOGGER.warn("[Watchtower] {}", msg);
+                            ModRuntime.logger().warn("[Watchtower] {}", msg);
                             return ReportEngine.ReportResult.failure(msg);
                         }
                         return result;
@@ -87,7 +93,7 @@ public final class ReportRunner {
                     .thenAccept(result -> finishOnServerThread(server, state, feedback, result, options));
         } catch (LinkageError e) {
             String msg = EngineProbe.getFailureReason();
-            WatchtowerMod.LOGGER.error("[Watchtower] Report engine linkage error", e);
+            ModRuntime.logger().error("[Watchtower] Report engine linkage error", e);
             state.finishReport(false, msg, null, null, null, null);
             feedback.accept(msg);
             return CompletableFuture.completedFuture(null);
@@ -95,14 +101,20 @@ public final class ReportRunner {
     }
 
     private static ReportEngine.ReportResult runReport(
-            MinecraftServer server,
+            ServerContext server,
             WatchtowerRuntimeState state,
             ReportRunOptions options
     ) {
         try {
+            // Refresh live snapshot so meta.minecraft_version is stamped from SharedConstants.
+            try {
+                SnapshotWriter.write(server, server.collectSample());
+            } catch (Exception e) {
+                ModRuntime.logger().warn("[Watchtower] Pre-report snapshot refresh failed: {}", e.toString());
+            }
             ReportConfig config = ModReportConfig.forServer(server, options != null ? options : ReportRunOptions.empty());
             Path reportDir = WatchtowerPaths.reportDir(server);
-            WatchtowerMod.LOGGER.info("[Watchtower] Running pure-Java report");
+            ModRuntime.logger().info("[Watchtower] Running pure-Java report");
             ReportProgress progress = new ReportProgress() {
                 @Override
                 public void stage(String id, String label) {
@@ -116,13 +128,13 @@ public final class ReportRunner {
             };
             return ReportEngine.run(config, reportDir, progress);
         } catch (Exception e) {
-            WatchtowerMod.LOGGER.warn("[Watchtower] Report failed", e);
+            ModRuntime.logger().warn("[Watchtower] Report failed", e);
             return ReportEngine.ReportResult.failure(e.getMessage() != null ? e.getMessage() : "Report failed");
         }
     }
 
     private static void finishOnServerThread(
-            MinecraftServer server,
+            ServerContext server,
             WatchtowerRuntimeState state,
             Consumer<String> feedback,
             ReportEngine.ReportResult result,
@@ -140,7 +152,7 @@ public final class ReportRunner {
                 try {
                     DrReadmeWriter.writeAfterSuccessfulReport(server);
                 } catch (IOException e) {
-                    WatchtowerMod.LOGGER.warn("[Watchtower] Failed to write DR-README.txt", e);
+                    ModRuntime.logger().warn("[Watchtower] Failed to write DR-README.txt", e);
                 }
                 Path opsCachePath = WatchtowerPaths.opsCachePath(server);
                 Path rollupsPath = WatchtowerPaths.performanceRollupsPath(server);
@@ -154,20 +166,22 @@ public final class ReportRunner {
                                 result.facts(),
                                 ModReportConfig.forServer(server).lookbackHours());
                     } catch (IOException e) {
-                        WatchtowerMod.LOGGER.warn("[Watchtower] Ops cache reconcile failed", e);
+                        ModRuntime.logger().warn("[Watchtower] Ops cache reconcile failed", e);
                     }
                 }
                 if (options != null && options.scheduled()) {
-                    WatchtowerScheduler scheduler = WatchtowerBootstrap.getScheduler();
-                    scheduler.onReportCompleted(true);
-                    try {
-                        StateManager.updateScheduleState(
-                                statePath,
-                                scheduler.lastWallClockSlotFired(),
-                                ReportSchedule.toIso(java.time.LocalDateTime.now(ReportSchedule.serverZone()))
-                        );
-                    } catch (IOException e) {
-                        WatchtowerMod.LOGGER.warn("[Watchtower] Failed to persist schedule state", e);
+                    WatchtowerScheduler scheduler = ModRuntime.scheduler();
+                    if (scheduler != null) {
+                        scheduler.onReportCompleted(true);
+                        try {
+                            StateManager.updateScheduleState(
+                                    statePath,
+                                    scheduler.lastWallClockSlotFired(),
+                                    ReportSchedule.toIso(java.time.LocalDateTime.now(ReportSchedule.serverZone()))
+                            );
+                        } catch (IOException e) {
+                            ModRuntime.logger().warn("[Watchtower] Failed to persist schedule state", e);
+                        }
                     }
                 }
                 try {
@@ -177,10 +191,10 @@ public final class ReportRunner {
                             retentionConfig.reportRetentionCount(),
                             retentionConfig.reportRetentionDays());
                     if (pruned > 0) {
-                        WatchtowerMod.LOGGER.info("[Watchtower] Pruned {} old report artifact(s)", pruned);
+                        ModRuntime.logger().info("[Watchtower] Pruned {} old report artifact(s)", pruned);
                     }
                 } catch (IOException e) {
-                    WatchtowerMod.LOGGER.warn("[Watchtower] Report retention prune failed", e);
+                    ModRuntime.logger().warn("[Watchtower] Report retention prune failed", e);
                 }
                 StringBuilder sb = new StringBuilder(result.message());
                 sb.append(String.format(" — %d active, %d historical",
@@ -197,16 +211,9 @@ public final class ReportRunner {
 
     private static int reportTimeoutMinutes() {
         try {
-            return WatchtowerConfig.REPORT_TIMEOUT_MINUTES.get();
+            return ModRuntime.config().reportTimeoutMinutes();
         } catch (IllegalStateException e) {
             return 15;
-        }
-    }
-
-    public static void sendFeedback(MinecraftServer server, ServerPlayer player, String message) {
-        WatchtowerMod.LOGGER.info("[Watchtower] {}", message);
-        if (player != null) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("[Watchtower] " + message));
         }
     }
 }

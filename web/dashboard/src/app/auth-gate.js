@@ -10,6 +10,26 @@ import { Toggle } from '../ui/primitives/toggle.js';
 import { Card } from '../ui/primitives/card.js';
 import { Stack } from '../ui/primitives/stack.js';
 
+/** Derive next auth frame from login/TOTP JSON (backend does not always send `gate`). */
+function gateFromAuthResult(result) {
+  if (!result) return 'login';
+  if (result.gate && result.gate !== 'none') return result.gate;
+  if (result.must_change_password || result.mustChangePassword) return 'password-change';
+  if (result.totp_required || result.requires_totp || result.totpRequired) return 'totp';
+  return 'none';
+}
+
+async function continueAfterGate(result) {
+  const nextGate = gateFromAuthResult(result);
+  if (nextGate !== 'none') {
+    auth.value = { ...auth.value, gate: nextGate, session: result };
+    return;
+  }
+  auth.value = { ...auth.value, gate: 'none', session: result };
+  setUi({ bootPhase: 'loading' });
+  await resumeAfterAuth();
+}
+
 // ── Login frame ────────────────────────────────────────────────────────────────
 
 function LoginFrame() {
@@ -25,15 +45,14 @@ function LoginFrame() {
     setLoading(true);
     try {
       const result = await login(username, password, remember);
-      if (result?.gate) {
-        auth.value = { ...auth.value, gate: result.gate, session: result };
-      } else {
-        auth.value = { ...auth.value, gate: 'none', session: result };
-        setUi({ bootPhase: 'loading' });
-        await resumeAfterAuth();
-      }
+      await continueAfterGate(result);
     } catch (err) {
-      setError(err?.message || 'Login failed. Check your credentials.');
+      const msg = err?.message || '';
+      if (/429|rate|lock|too many|try again later/i.test(msg)) {
+        setError('Too many sign-in attempts. Wait about 15 minutes, then try again.');
+      } else {
+        setError(msg || 'Sign-in failed. Check your username and password.');
+      }
     } finally {
       setLoading(false);
     }
@@ -96,13 +115,7 @@ function TotpFrame() {
     setLoading(true);
     try {
       const result = await totp(code.trim(), recovery);
-      if (result?.gate) {
-        auth.value = { ...auth.value, gate: result.gate, session: result };
-      } else {
-        auth.value = { ...auth.value, gate: 'none', session: result };
-        setUi({ bootPhase: 'loading' });
-        await resumeAfterAuth();
-      }
+      await continueAfterGate(result);
     } catch (err) {
       setError(err?.message || 'Invalid code. Please try again.');
     } finally {
@@ -123,11 +136,15 @@ function TotpFrame() {
         <${TextField}
           label=${recovery ? 'Recovery code' : 'Authenticator code'}
           value=${code}
-          onInput=${(e) => setCode(e.target.value)}
+          onInput=${(e) => {
+            const raw = e.target.value || '';
+            setCode(recovery ? raw.trim() : raw.replace(/\s+/g, ''));
+          }}
           autocomplete="one-time-code"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          maxlength=${recovery ? 32 : 6}
+          inputmode=${recovery ? 'text' : 'numeric'}
+          pattern=${recovery ? null : '[0-9]*'}
+          maxlength=${recovery ? 32 : 8}
+          placeholder=${recovery ? 'Paste a recovery code' : 'Paste or type 6 digits'}
           required
         />
         ${error ? html`<p class="ui-auth-frame__error" role="alert">${error}</p>` : null}

@@ -65,8 +65,8 @@ export function ToolsTab({
       >
         ${!hiddenList.length ? html`
           <p class="issues-tools__hint">
-            No suppressed issue ids. On Active, use <strong>Don't show again</strong> on a report finding
-            to silence a noisy id (see Rules / crash rule packs).
+            No suppressed issue ids. On Active, use <strong>Don't show again</strong> on a finding
+            to silence a noisy id.
           </p>
         ` : html`
           <div class="issues-list">
@@ -91,8 +91,8 @@ export function ToolsTab({
       <${Section} title="Tips">
         <ul class="issues-tools__tips">
           <li>Issues is the cross-cutting fix inbox — deep crash forensics live on <strong>Crashes</strong>, mod inventory on <strong>Mods</strong>.</li>
-          <li><strong>Mark reviewed</strong> clears the queue; <strong>Don't show again</strong> hides a report issue id until you restore it here.</li>
-          <li>Live lag / mod / log-stale rows come from the ops peek (no full report required).</li>
+          <li><strong>Mark reviewed</strong> clears the queue; <strong>Don't show again</strong> hides an issue id until you restore it here.</li>
+          <li>Live lag / mod / log-stale rows come from Scanning (no deep audit required).</li>
           <li>Crash rows on Active only point at Crashes — open that tab for Fix · Evidence · Details.</li>
         </ul>
       </${Section}>

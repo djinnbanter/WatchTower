@@ -111,6 +111,14 @@ export async function performanceDashboard(window = '7d') {
   return apiFetch(`/api/performance/dashboard?window=${encodeURIComponent(window)}`);
 }
 
+/** Freeze a new performance baseline from recent healthy L1 history. */
+export async function performanceBaselineSetNow() {
+  return apiFetch('/api/performance/baseline', {
+    method: 'POST',
+    body: { action: 'set_now' },
+  });
+}
+
 /** Returns a Blob (CSV). Caller responsible for triggering download. */
 export async function performanceExport(window = '7d') {
   const r = await fetch(`/api/performance/export?window=${encodeURIComponent(window)}&format=csv`, {
@@ -365,23 +373,88 @@ export async function logsContent(file, tail = 2000) {
 
 export async function onboardingAudit() {
   if (isFixturePreview()) {
-    await new Promise((r) => setTimeout(r, 400));
-    return {
-      phase: 'discovery',
-      items: {
-        activity_new: 3,
-        activity_events: 42,
-        crashes_new: 0,
-        crashes_unreviewed: 1,
-        mods_running: 87,
-        backups_scanned: true,
-        backup_configured: false,
-        has_facts_report: true,
-        schedule_summary: 'twice daily at 00:00 and 12:00 (server time)',
-      },
-    };
+    return discoveryStart();
   }
   return apiFetch('/api/onboarding/audit', { method: 'POST' });
+}
+
+export async function discoveryStart() {
+  if (isFixturePreview()) {
+    return { status: 'started', running: true, message: 'Initial discovery started (preview)' };
+  }
+  return apiFetch('/api/onboarding/discovery/start', { method: 'POST' });
+}
+
+export async function discoveryStatus() {
+  if (isFixturePreview()) {
+    return null; // FixtureSource owns simulated progress
+  }
+  return apiFetch('/api/onboarding/discovery/status');
+}
+
+/** Read-only server.properties + JVM summary audit (1.1.8). */
+export async function configAuditGet() {
+  if (isFixturePreview()) {
+    try {
+      const facts = await loadFixtureJson('data/facts.json');
+      const audit = facts?.optional?.config_launch_audit;
+      if (audit) return audit;
+    } catch {
+      /* fall through */
+    }
+    return {
+      updated_at: new Date().toISOString(),
+      source: 'server.properties',
+      path: 'server.properties',
+      status: 'ok',
+      read_only: true,
+      properties: [
+        {
+          key: 'view-distance',
+          value: '12',
+          value_num: 12,
+          verdict: 'consider_lowering',
+          title: 'View distance',
+          detail: '12 is above the usual 6–10 range for modded dedicated servers. Higher view-distance loads more chunks per player — often the first place modded servers cut lag.',
+          tab_link: 'startup',
+        },
+        {
+          key: 'simulation-distance',
+          value: '8',
+          value_num: 8,
+          verdict: 'fine',
+          title: 'Simulation distance',
+          detail: 'Simulation distance 8 is in the usual range for modded dedicated servers.',
+          tab_link: 'startup',
+        },
+        {
+          key: 'max-tick-time',
+          value: '60000',
+          value_num: 60000,
+          verdict: 'fine',
+          title: 'Max tick time',
+          detail: 'max-tick-time 60000ms gives the server room before a watchdog kill.',
+          tab_link: 'startup',
+        },
+        {
+          key: 'sync-chunk-writes',
+          value: 'true',
+          verdict: 'consider_lowering',
+          title: 'Sync chunk writes',
+          detail: 'sync-chunk-writes is true. Consider setting false on dedicated servers to reduce stutter from synchronous disk flushes.',
+          tab_link: 'startup',
+        },
+      ],
+      jvm: {
+        flags_profile: 'g1_basic',
+        advice: 'Worth adding missing flags from the Aikar / flags.sh baseline.',
+        tab_link: 'insights',
+        tab_params: { view: 'configs' },
+      },
+      summary: { fine: 2, consider: 2, missing: 0 },
+    };
+  }
+  return apiFetch('/api/config-audit');
 }
 
 // ── Incidents ─────────────────────────────────────────────────────────────────
@@ -436,6 +509,10 @@ export async function sparkProfile(path) {
   return apiFetch(`/api/spark/profile?path=${encodeURIComponent(path)}`);
 }
 
+export async function sparkImport(url) {
+  return apiFetch('/api/spark/import', { method: 'POST', body: { url } });
+}
+
 // ── Client mods ───────────────────────────────────────────────────────────────
 
 export async function clientModsIgnores() {
@@ -456,7 +533,28 @@ export async function updateCheck() {
 
 /** Returns a Blob (.zip). Caller responsible for triggering download. */
 export async function supportBundle() {
-  const r = await fetch('/api/support/bundle', { credentials: 'include' });
-  if (!r.ok) throw new Error('support bundle unavailable');
+  return supportBundleDownload();
+}
+
+export async function supportCatalog() {
+  return apiFetch('/api/support/catalog');
+}
+
+export async function supportCompose(options) {
+  return apiFetch('/api/support/compose', { method: 'POST', body: options || {} });
+}
+
+/** Download ready zip after compose (optional ?path= basename). */
+export async function supportBundleDownload(path) {
+  const q = path ? `?path=${encodeURIComponent(path)}` : '';
+  const r = await fetch(`/api/support/bundle${q}`, { credentials: 'include' });
+  if (!r.ok) {
+    let msg = 'support bundle unavailable';
+    try {
+      const j = await r.json();
+      if (j?.message) msg = j.message;
+    } catch { /* ignore */ }
+    throw new Error(msg);
+  }
   return r.blob();
 }

@@ -197,6 +197,17 @@
   color: var(--ui-accent);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .ui-uptime__block--sec.is-tick .ui-uptime__num {
+    animation: ui-uptime-tick var(--ui-dur-2) var(--ui-ease-out);
+  }
+
+  @keyframes ui-uptime-tick {
+    from { opacity: 0.45; }
+    to { opacity: 1; }
+  }
+}
+
 /* Dual metric */
 
 .ui-dual-metric__row {

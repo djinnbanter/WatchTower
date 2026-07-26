@@ -1,6 +1,8 @@
 package dev.mcstatus.watchtower;
 
-import net.minecraft.server.MinecraftServer;
+import dev.mcstatus.watchtower.runtime.ModRuntime;
+
+import dev.mcstatus.watchtower.runtime.ServerContext;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -42,39 +44,39 @@ public final class WatchtowerSetup {
         return message;
     }
 
-    public static void ensureReady(MinecraftServer server) throws IOException {
+    public static void ensureReady(ServerContext server) throws IOException {
         Path watchtowerRoot = WatchtowerPaths.watchtowerRoot(server);
         Files.createDirectories(watchtowerRoot);
-        Path rulesDir = server.getServerDirectory().resolve("config").resolve("watchtower").resolve("rules");
+        Path rulesDir = server.serverDirectory().resolve("config").resolve("watchtower").resolve("rules");
         Files.createDirectories(rulesDir);
         ensureUserConfig(server);
         EngineProbe.verify();
         if (EngineProbe.isAvailable()) {
             ready = true;
             message = "OK";
-            WatchtowerMod.LOGGER.info("Watchtower ready (pure-Java engine). Reports: {}", watchtowerRoot);
+            ModRuntime.logger().info("Watchtower ready (pure-Java engine). Reports: {}", watchtowerRoot);
         } else {
             ready = false;
             message = EngineProbe.getFailureReason();
-            WatchtowerMod.LOGGER.error("Watchtower reports disabled: {}", message);
+            ModRuntime.logger().error("Watchtower reports disabled: {}", message);
         }
     }
 
-    private static void ensureUserConfig(MinecraftServer server) throws IOException {
+    private static void ensureUserConfig(ServerContext server) throws IOException {
         Path conf = WatchtowerPaths.confPath(server);
         if (Files.isRegularFile(conf)) {
             syncTomlIntoConf(conf);
             return;
         }
         Files.writeString(conf, buildDefaultConf(), StandardCharsets.UTF_8);
-        WatchtowerMod.LOGGER.info("Created default config: {}", conf);
+        ModRuntime.logger().info("Created default config: {}", conf);
     }
 
     private static void syncTomlIntoConf(Path conf) throws IOException {
         String text = Files.readString(conf, StandardCharsets.UTF_8);
-        String updated = WatchtowerConfWriter.upsertLine(text, "LOOKBACK_HOURS", String.valueOf(WatchtowerConfig.LOOKBACK_HOURS.get()));
-        updated = WatchtowerConfWriter.upsertLine(updated, "INCREMENTAL", WatchtowerConfig.INCREMENTAL.get() ? "true" : "false");
-        updated = WatchtowerConfWriter.upsertLine(updated, "LIVE_RETENTION_HOURS", String.valueOf(WatchtowerConfig.LIVE_RETENTION_HOURS.get()));
+        String updated = WatchtowerConfWriter.upsertLine(text, "LOOKBACK_HOURS", String.valueOf(ModRuntime.config().lookbackHours()));
+        updated = WatchtowerConfWriter.upsertLine(updated, "INCREMENTAL", ModRuntime.config().incremental() ? "true" : "false");
+        updated = WatchtowerConfWriter.upsertLine(updated, "LIVE_RETENTION_HOURS", String.valueOf(ModRuntime.config().liveRetentionHours()));
         updated = ensureBackupSection(updated);
         if (!updated.equals(text)) {
             Files.writeString(conf, updated, StandardCharsets.UTF_8);
@@ -93,9 +95,9 @@ public final class WatchtowerSetup {
         int liveRetention = 2160;
         boolean incremental = true;
         try {
-            lookback = WatchtowerConfig.LOOKBACK_HOURS.get();
-            liveRetention = WatchtowerConfig.LIVE_RETENTION_HOURS.get();
-            incremental = WatchtowerConfig.INCREMENTAL.get();
+            lookback = ModRuntime.config().lookbackHours();
+            liveRetention = ModRuntime.config().liveRetentionHours();
+            incremental = ModRuntime.config().incremental();
         } catch (IllegalStateException ignored) {
         }
         return """
@@ -103,9 +105,20 @@ public final class WatchtowerSetup {
                 LOOKBACK_HOURS=%d
                 LIVE_RETENTION_HOURS=%d
                 INCREMENTAL=%s
-                REPORT_SCHEDULE_MODE=wall_clock
+                REPORT_SCHEDULE_MODE=off
                 REPORT_WALL_CLOCK_HOURS=0,12
                 REPORT_INTERVAL_MINUTES=720
+                ISSUES_LIVE_ENABLED=true
+                STARTUP_PROFILE_ON_BOOT=true
+                CRASH_ENRICH_ON_MTIME=true
+                MODS_LIGHT_ON_JAR_CHANGE=true
+                MODS_DEEP_ON_JAR_CHANGE=true
+                MODS_DEEP_SEED_ON_BOOT=true
+                MODS_DEEP_MAX_JARS_PER_WAKE=32
+                ACTIVITY_GAP_BACKFILL_ENABLED=true
+                ACTIVITY_GAP_THRESHOLD_MB=5
+                ACTIVITY_GAP_CHUNK_MB=2
+                PLAYER_DIRECTORY_POLL_SEC=900
                 OVERLAP_MINUTES=5
                 PANEL=auto
                 # Panel override keys (if auto fails): CRAFTY_APP, PTERO_ROOT, PELICAN_ROOT,
@@ -137,9 +150,10 @@ public final class WatchtowerSetup {
                 BACKUP_POLL_MIN=0
                 # Opt-in Modrinth side lookup (SHA-512 hashes only; off by default)
                 # MODRINTH_LOOKUP=false
+                # Legacy meta-only flag (reports never call Modrinth; dedicated scan owns network)
                 # MODRINTH_LOOKUP_ON_REPORT=true
                 # MODRINTH_AUTO_SCAN_ON_MOD_CHANGES=false
-                # MODRINTH_RATE_LIMIT=4
+                # MODRINTH_RATE_LIMIT=5
                 # Mod forensics toolbox (1.0.17) — master on; zip walk / index-on-report off by default
                 # MOD_FORENSICS_SCAN=true
                 # FORENSICS_CORRUPT_JAR_WALK=false
