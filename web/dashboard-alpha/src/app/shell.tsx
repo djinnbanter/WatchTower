@@ -181,15 +181,21 @@ export function AppShell({ route, page, children }: Props) {
           </div>
         </header>
 
-        <main id="content" className="mx-auto flex w-full max-w-[1400px] min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-4 py-6 md:px-8">
-          {!hideShellTitle ? (
-            <div className="mb-6 shrink-0">
-              <h1 className="text-3xl font-semibold tracking-tight">{page?.title ?? route.tab}</h1>
-              {page?.subtitle ? <p className="mt-1 text-sm text-wt-text-mid">{page.subtitle}</p> : null}
-            </div>
-          ) : null}
-          {children}
-        </main>
+        {/* Full-width scrollport so the scrollbar sits on the viewport edge, not the 1400px column. */}
+        <div className="wt-page-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+          <main
+            id="content"
+            className="mx-auto flex w-full max-w-[1400px] min-w-0 flex-col px-4 py-6 md:px-8"
+          >
+            {!hideShellTitle ? (
+              <div className="mb-6 shrink-0">
+                <h1 className="text-3xl font-semibold tracking-tight">{page?.title ?? route.tab}</h1>
+                {page?.subtitle ? <p className="mt-1 text-sm text-wt-text-mid">{page.subtitle}</p> : null}
+              </div>
+            ) : null}
+            {children}
+          </main>
+        </div>
       </div>
       <SupportBuilderModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </div>
