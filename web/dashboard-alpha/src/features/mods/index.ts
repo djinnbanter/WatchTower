@@ -8,5 +8,6 @@ registerPage({
   order: 10,
   icon: 'boxes',
   subtitle: 'Inventory, updates, conflicts, and forensic diagnostics.',
+  hideShellTitle: true,
   render: PageView,
 });

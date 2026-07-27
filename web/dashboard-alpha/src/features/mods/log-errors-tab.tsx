@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { str } from '@/lib/utils';
+import { acksMapFromResponse, isIssueAcked } from '@/features/issues/helpers';
 import { ChevronRight } from '@/ui/icons';
 import { Button, EmptyState, StatusPill } from '@/ui/patterns';
 import { ModsSearch } from './components';
@@ -26,13 +27,30 @@ export function LogErrorsTab({
   onSearch: (v: string) => void;
 }) {
   const qc = useQueryClient();
+  const acksQ = useQuery({ queryKey: ['issues-acks'], queryFn: api.issuesAcks });
   const [openId, setOpenId] = useState<string | null>(null);
   const scanM = useMutation({
     mutationFn: () => api.modsScan(true),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['ops-cache'] });
+      void qc.invalidateQueries({ queryKey: ['issues-acks'] });
     },
   });
+
+  const ackedModIds = useMemo(() => {
+    const acks = acksMapFromResponse(acksQ.data);
+    const ids: string[] = [];
+    for (const key of Object.keys(acks)) {
+      if (key.startsWith('mod:') && isIssueAcked(acks, key)) {
+        ids.push(key.slice(4));
+      }
+    }
+    // Also respect resolved flags on peek/ops mod_issues
+    for (const iss of modIssues) {
+      if (iss.resolved && str(iss.mod_id)) ids.push(str(iss.mod_id));
+    }
+    return ids;
+  }, [acksQ.data, modIssues]);
 
   const rows = useMemo(
     () =>
@@ -42,8 +60,9 @@ export function LogErrorsTab({
         recommendations,
         modIssues,
         hasReport,
+        ackedModIds,
       }),
-    [modLogErrors, factsErrors, recommendations, modIssues, hasReport],
+    [modLogErrors, factsErrors, recommendations, modIssues, hasReport, ackedModIds],
   );
 
   const filtered = useMemo(() => {

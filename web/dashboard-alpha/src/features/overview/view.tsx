@@ -48,7 +48,10 @@ import {
 } from '@/components/charts/legend';
 import { asArray, asRecord, get, num, str, timeAgo } from '@/lib/utils';
 import { formatDuration, formatGb, formatPct } from '@/domain/formats';
+import { acksMapFromResponse, isIssueAcked } from '@/features/issues/helpers';
+import { filterLiveTakeaways } from '@/features/live/takeaways';
 import { buildIdentityChips } from './identity';
+import { resolveMissionStatus } from './mission-status';
 import './overview.css';
 
 const ATTENTION_CAP = LIST_CAP;
@@ -116,20 +119,6 @@ const severityTone: Record<string, 'ok' | 'warn' | 'danger' | 'info' | 'neutral'
   safe: 'ok',
 };
 
-function gradeLetter(grade: string) {
-  const g = grade.toLowerCase();
-  if (g === 'critical' || g === 'f' || g === 'danger') return 'F';
-  if (g === 'warning' || g === 'warn' || g === 'd' || g === 'c') return 'C';
-  if (g === 'ok' || g === 'good' || g === 'a' || g === 'b') return 'A';
-  return grade.slice(0, 1).toUpperCase() || '?';
-}
-
-function missionTone(grade: string, attentionCount: number): 'ok' | 'warn' | 'danger' {
-  const g = grade.toLowerCase();
-  if (g === 'critical' || g === 'f' || g === 'danger' || attentionCount >= 4) return 'danger';
-  if (g === 'warning' || g === 'warn' || attentionCount > 0) return 'warn';
-  return 'ok';
-}
 
 function BootHeroValue({ value, format }: { value: number; format: (n: number) => string }) {
   const n = useCountUp(value);
@@ -400,6 +389,7 @@ function PregenCard({
 export function PageView({ route: _route }: { route: RouteState }) {
   const metaQ = useQuery({ queryKey: ['overview-meta'], queryFn: api.overviewMeta });
   const opsQ = useQuery({ queryKey: ['ops-cache'], queryFn: api.opsCache });
+  const acksQ = useQuery({ queryKey: ['issues-acks'], queryFn: api.issuesAcks });
   const liveQ = useQuery({ queryKey: ['live'], queryFn: api.live, refetchInterval: 15_000 });
   const factsQ = useQuery({ queryKey: ['facts'], queryFn: api.facts });
   const settingsQ = useQuery({ queryKey: ['settings'], queryFn: api.settings });
@@ -454,14 +444,26 @@ export function PageView({ route: _route }: { route: RouteState }) {
   const latest = asRecord(get(live, 'latest'));
   const scorecard = asRecord(meta.scorecard);
   const grade = str(scorecard.grade, str(meta.health_grade, 'ok'));
-  const gradeWord = str(scorecard.grade_word, 'Nominal');
+  const scorecardWord = str(scorecard.grade_word, '');
   const perf = asRecord(scorecard.performance);
   const crashes = asRecord(scorecard.crashes);
   const health = asRecord(facts.health);
   const system = asRecord(facts.system);
 
-  const signals = asArray<Record<string, unknown>>(get(meta, 'right_now', 'signals'));
-  const liveIssues = asArray<Record<string, unknown>>(ops.issues_live);
+  const acks = acksMapFromResponse(acksQ.data);
+  const signals = filterLiveTakeaways(
+    asArray<Record<string, unknown>>(get(meta, 'right_now', 'signals')),
+    acks,
+    ops,
+  );
+  const liveIssues = asArray<Record<string, unknown>>(ops.issues_live).filter((row) => {
+    const status = str(row.status, 'open').toLowerCase();
+    if (status !== 'open') return false;
+    const id = str(row.id, str(row.key));
+    const key = id.startsWith('issue:') ? id : `issue:${id}`;
+    if (isIssueAcked(acks, key) || isIssueAcked(acks, id)) return false;
+    return true;
+  });
   const lagBundle = asRecord(optional.lag_incidents);
   const lagIncidents = asArray<Record<string, unknown>>(
     lagBundle.entries ?? optional.lag_incidents ?? ops.lag_issues,
@@ -575,15 +577,21 @@ export function PageView({ route: _route }: { route: RouteState }) {
     (layoutMode === 'steady' && (hasRightNow || hasStory));
   const showStandaloneSignals = hasRightNow && !nestSignalsUnderAttention;
 
-  const tone = missionTone(grade, attentionDeduped.length);
-  const letter = gradeLetter(grade);
+  const { tone, letter, word: gradeWord } = resolveMissionStatus(grade, attentionDeduped.length);
+  // Prefer backend grade_word when it matches the resolved tone; never keep "Degraded" on green.
+  const displayWord =
+    tone === 'ok'
+      ? 'Healthy'
+      : scorecardWord && scorecardWord.toLowerCase() !== 'healthy'
+        ? scorecardWord
+        : gradeWord;
   const reportStale = !!meta.stale || num(meta.age_hours) > 24;
   const headline =
     layoutMode === 'incident'
       ? attentionDeduped.length
         ? 'Needs attention'
-        : gradeWord
-      : gradeWord;
+        : displayWord
+      : displayWord;
   const sub = str(perf.subtitle, str(health.label, 'No performance issues detected in the lookback window.'));
 
   const tps = num(latest.tps, 20);
@@ -728,17 +736,17 @@ export function PageView({ route: _route }: { route: RouteState }) {
             <div className="ov-mission__status">
               <div
                 className={`ov-grade ov-grade--${tone}`}
-                aria-label={`Health grade ${letter}, ${gradeWord}`}
+                aria-label={`Health grade ${letter}, ${displayWord}`}
               >
                 <span className="ov-grade__letter" aria-hidden>
                   {letter}
                 </span>
                 {tone === 'ok' ? (
                   <ShimmerText as="span" className="ov-grade__word">
-                    {gradeWord}
+                    {displayWord}
                   </ShimmerText>
                 ) : (
-                  <span className="ov-grade__word">{gradeWord}</span>
+                  <span className="ov-grade__word">{displayWord}</span>
                 )}
               </div>
 

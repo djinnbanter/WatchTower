@@ -56,6 +56,8 @@ export function WtAreaChart({
   const { animationDuration: motionDuration, enterTransition } = useChartMotion();
   // Keep enter reveal on the motion preset; window zoom morph uses yDomainTweenDuration.
   const animationDuration = animationDurationProp ?? motionDuration;
+  const morphMs = yDomainTweenDuration ?? animationDuration;
+  const liveSlide = xDomain != null && morphMs <= 0;
   const status: ChartStatus =
     statusProp ?? (data.length > 0 ? 'ready' : 'loading');
   const isLoading = status === 'loading';
@@ -72,15 +74,15 @@ export function WtAreaChart({
         xDomain={isLoading ? undefined : xDomain}
         xDomainSlotCount={isLoading ? undefined : xDomainSlotCount}
         tweenYDomainOnXDomainChange={tweenYDomainOnXDomainChange}
-        yDomainTweenDuration={yDomainTweenDuration}
-        yDomainTween
+        yDomainTweenDuration={morphMs}
+        yDomainTween={!liveSlide}
         className="h-full w-full"
       >
         <Grid
           horizontal
           loadingStroke="color-mix(in oklch, var(--chart-grid) 50%, transparent)"
-          shimmer
-          shimmerSync
+          shimmer={!liveSlide}
+          shimmerSync={!liveSlide}
           stroke="var(--chart-grid)"
         />
         <XAxis />
@@ -90,6 +92,7 @@ export function WtAreaChart({
           s.type === 'line' ? (
             <Line
               key={s.dataKey}
+              animate={!liveSlide}
               dataKey={s.dataKey}
               loadingStyle={loadingStyle}
               loadingStroke="var(--foreground)"
@@ -99,6 +102,7 @@ export function WtAreaChart({
           ) : (
             <Area
               key={s.dataKey}
+              animate={!liveSlide}
               dataKey={s.dataKey}
               fadeEdges
               fill={s.color}

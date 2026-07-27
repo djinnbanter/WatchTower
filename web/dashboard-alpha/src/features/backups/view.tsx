@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Archive, Check, Circle, FolderOpen, Search, Settings } from '@/ui/icons';
 import { api } from '@/api/client';
 import { navigate, type RouteState } from '@/app/router';
@@ -140,9 +140,19 @@ function Panel({
 }
 
 export function PageView({ route: _route }: { route: RouteState }) {
+  const queryClient = useQueryClient();
   const opsQ = useQuery({ queryKey: ['ops-cache'], queryFn: api.opsCache, refetchInterval: 15_000 });
   const settingsQ = useQuery({ queryKey: ['settings'], queryFn: api.settings });
   const factsQ = useQuery({ queryKey: ['facts'], queryFn: api.facts });
+
+  const scanMutation = useMutation({
+    mutationFn: () => api.backupsScan(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['ops-cache'] });
+      void queryClient.invalidateQueries({ queryKey: ['overview-meta'] });
+      void queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+  });
 
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -356,6 +366,13 @@ export function PageView({ route: _route }: { route: RouteState }) {
                   : 'Ops cache will fill this once backup tracking scans your configured directories.'}
               </p>
               <div className="bu-hero__actions">
+                <Button
+                  kind="ghost"
+                  disabled={scanMutation.isPending}
+                  onClick={() => scanMutation.mutate()}
+                >
+                  {scanMutation.isPending ? 'Scanning…' : 'Scan now'}
+                </Button>
                 <Button kind="primary" onClick={openSettings}>
                   <Settings size={14} />
                   Open backup settings

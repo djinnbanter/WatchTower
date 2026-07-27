@@ -11,9 +11,12 @@ const ROOT = join(fileURLToPath(import.meta.url), '..', '..');
 
 const SKIP_DIRS = new Set([
   'node_modules', 'build', '.gradle', '.git', 'fixtures', 'legacy',
-  'releases', '.idea', '.vscode', '.cursor', 'docs/dev',
+  'releases', '.idea', '.vscode', '.cursor',
   '.tmp-support-bundle',
 ]);
+
+/** Path prefixes (posix, relative to repo root) that must not be scanned. */
+const SKIP_PREFIXES = ['docs/dev/'];
 
 const SKIP_FILES = new Set(['audit-public-tree.mjs', 'watchtower.conf', 'mc-status.conf']);
 
@@ -31,6 +34,8 @@ function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
     if (SKIP_DIRS.has(name)) continue;
     const full = join(dir, name);
+    const rel = relative(ROOT, full).replace(/\\/g, '/');
+    if (SKIP_PREFIXES.some((p) => rel === p.slice(0, -1) || rel.startsWith(p))) continue;
     const st = statSync(full);
     if (st.isDirectory()) {
       walk(full, out);

@@ -1,8 +1,0 @@
-{
-  "bundle_version": 2,
-  "report_mode": "support",
-  "generated_at": "2026-07-20T17:07:12.481215228+01:00[Europe/London]",
-  "facts": "watchtower-facts-2026-07-20_14-35-23.json",
-  "brief": "watchtower-brief-2026-07-20_14-35-23.txt",
-  "ops_cache": "ops-cache.json"
-}

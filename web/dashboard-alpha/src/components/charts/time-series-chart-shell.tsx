@@ -13,6 +13,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -27,7 +28,7 @@ import {
 } from "./chart-child-passthrough";
 import { ChartProvider, type LineConfig, type Margin } from "./chart-context";
 import { isGradientDefComponent, isPatternDefComponent } from "./chart-defs";
-import { hmsTimeFmt, shortDateFmt } from "./chart-formatters";
+import { formatChartAxisTick, hmTimeFmt } from "./chart-formatters";
 import {
   type ChartPhase,
   type ChartStatus,
@@ -38,6 +39,7 @@ import {
 import { ChartRevealClip } from "./chart-reveal-clip";
 import {
   decimateTimeSeries,
+  downsampleTimeBuckets,
   maxRenderPointsForWidth,
 } from "./decimate-time-series";
 import { filterDataByXDomain } from "./filter-data-by-x-domain";
@@ -69,7 +71,11 @@ import {
   getPrimaryYScale,
   groupLinesByYAxisId,
 } from "./y-axis-scales";
-import { computeYDomainsByAxis } from "./y-domain-utils";
+import {
+  computeYDomainsByAxis,
+  expandOnlyYDomains,
+  type YDomain,
+} from "./y-domain-utils";
 
 function collectNumericExtents(
   data: Record<string, unknown>[],
@@ -307,13 +313,29 @@ const TimeSeriesChartCore = memo(function TimeSeriesChartCore({
   const seriesSourceData = xDomain ? plotData : visiblePlotData;
 
   const renderData = useMemo(() => {
+    const maxPoints = maxRenderPointsForWidth(innerWidth);
+    // Sliding / brushed xDomain: Live (and similar) already decimate onto a stable
+    // absolute time grid (~420 pts). Re-bucketing onto a narrower width budget
+    // (often ~200–350) reshuffles the path every poll — especially ugly on 7d/30d.
+    if (xDomain) {
+      const keepBudget = Math.max(maxPoints, 512);
+      if (seriesSourceData.length <= keepBudget) {
+        return seriesSourceData;
+      }
+      const tagged = seriesSourceData.map((row) => ({
+        ...row,
+        date: xAccessor(row),
+      }));
+      return downsampleTimeBuckets(
+        tagged,
+        maxPoints,
+        xDomain[0].getTime(),
+        xDomain[1].getTime()
+      ) as Record<string, unknown>[];
+    }
     const valueKeys = lines.map((line) => line.dataKey);
-    return decimateTimeSeries(
-      seriesSourceData,
-      maxRenderPointsForWidth(innerWidth),
-      valueKeys
-    );
-  }, [seriesSourceData, innerWidth, lines]);
+    return decimateTimeSeries(seriesSourceData, maxPoints, valueKeys);
+  }, [seriesSourceData, innerWidth, lines, xDomain, xAccessor]);
 
   const columnWidth = useMemo(() => {
     const slotCount =
@@ -335,36 +357,64 @@ const TimeSeriesChartCore = memo(function TimeSeriesChartCore({
     [lines, resolveYDomain, skeletonData]
   );
 
+  // Live slide: xDomain moves on a wall-clock tick with morph/tween off. Re-fitting
+  // max*1.1 + nice() every tick vertically "breathes" the series — lock expand-only
+  // until the window span changes (preset / custom range length).
+  const liveYDomainLock =
+    xDomain != null && !yDomainTween && !tweenYDomainOnXDomainChange;
+  const liveYDomainLockKey = xDomain
+    ? String(Math.round(xDomain[1].getTime() - xDomain[0].getTime()))
+    : "";
+  const liveYDomainLockRef = useRef<{
+    key: string;
+    domains: Record<string, YDomain>;
+  } | null>(null);
+
   const yDomainTargetByAxis = useMemo(() => {
     const base = computeYDomainsByAxis({
       lines,
       resolveDomain: (dataKeys) =>
         resolveYDomain(xDomain ? visiblePlotData : data, dataKeys),
     });
-    if (projectionConfigs.length === 0) {
-      return base;
-    }
-    const merged: Record<string, [number, number]> = { ...base };
-    for (const axisId of Object.keys(base)) {
-      merged[axisId] = mergeProjectionYDomain(
-        base[axisId] ?? [0, 100],
-        projectionConfigs,
-        axisId
-      );
-    }
-    for (const config of projectionConfigs) {
-      if (!merged[config.yAxisId]) {
-        merged[config.yAxisId] = mergeProjectionYDomain(
-          [0, 100],
+    let merged: Record<string, YDomain> = base;
+    if (projectionConfigs.length > 0) {
+      merged = { ...base };
+      for (const axisId of Object.keys(base)) {
+        merged[axisId] = mergeProjectionYDomain(
+          base[axisId] ?? [0, 100],
           projectionConfigs,
-          config.yAxisId
+          axisId
         );
       }
+      for (const config of projectionConfigs) {
+        if (!merged[config.yAxisId]) {
+          merged[config.yAxisId] = mergeProjectionYDomain(
+            [0, 100],
+            projectionConfigs,
+            config.yAxisId
+          );
+        }
+      }
     }
-    return merged;
+
+    if (!liveYDomainLock) {
+      liveYDomainLockRef.current = null;
+      return merged;
+    }
+
+    const prev = liveYDomainLockRef.current;
+    if (!prev || prev.key !== liveYDomainLockKey) {
+      liveYDomainLockRef.current = { key: liveYDomainLockKey, domains: merged };
+      return merged;
+    }
+    const locked = expandOnlyYDomains(prev.domains, merged);
+    liveYDomainLockRef.current = { key: liveYDomainLockKey, domains: locked };
+    return locked;
   }, [
     data,
     lines,
+    liveYDomainLock,
+    liveYDomainLockKey,
     projectionConfigs,
     resolveYDomain,
     visiblePlotData,
@@ -404,16 +454,14 @@ const TimeSeriesChartCore = memo(function TimeSeriesChartCore({
       return [];
     }
     if (visiblePlotData.length === 1) {
-      return [hmsTimeFmt.format(xAccessor(visiblePlotData[0]!))];
+      return [hmTimeFmt.format(xAccessor(visiblePlotData[0]!))];
     }
     const first = xAccessor(visiblePlotData[0]!).getTime();
     const last = xAccessor(visiblePlotData[visiblePlotData.length - 1]!).getTime();
-    // Intra-day / short windows: axis + date pill show time only (tooltip title keeps date).
-    const includeTime = last - first < 36 * 60 * 60 * 1000;
-    return visiblePlotData.map((d) => {
-      const date = xAccessor(d);
-      return includeTime ? hmsTimeFmt.format(date) : shortDateFmt.format(date);
-    });
+    const spanMs = last - first;
+    return visiblePlotData.map((d) =>
+      formatChartAxisTick(xAccessor(d), spanMs)
+    );
   }, [visiblePlotData, xAccessor]);
 
   const canInteract = isLoaded && isChartInteractionPhase(chartPhase);

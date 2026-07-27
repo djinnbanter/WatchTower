@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { startTransition, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
   AlertTriangle,
@@ -11,7 +11,7 @@ import {
 import { api } from '@/api/client';
 import { navigate, type RouteState } from '@/app/router';
 import BorderGlow from '@/components/border-glow/BorderGlow';
-import { decimateTimeSeries } from '@/components/charts/decimate-time-series';
+import { downsampleTimeBuckets } from '@/components/charts/decimate-time-series';
 import {
   FadeIn,
   PageEnter,
@@ -41,9 +41,22 @@ import {
   WtTpsGauge,
   WtCpuGauge,
 } from '@/ui/charts';
+import { mergeStableTimeSeriesRows } from '@/ui/charts/adapters';
 import type { SeriesSpec } from '@/ui/charts/wt-series';
 import { asArray, asRecord, bool, get, num, str } from '@/lib/utils';
+import { acksMapFromResponse } from '@/features/issues/helpers';
+import { filterLiveTakeaways, openLiveIssueTakeaways } from './takeaways';
 import './live.css';
+
+/** Wall-clock tick for sliding chart viewport (keeps series drifting smoothly between polls). */
+const LIVE_VIEWPORT_TICK_MS = 250;
+/**
+ * Live wall-clock slide only for short presets. 24h/7d/30d stay anchored to the
+ * latest sample — continuous 250ms domain ticks make long-range downsampling thrash.
+ */
+const LIVE_SLIDE_MAX_MS = 6 * 60 * 60 * 1000;
+/** Long presets only move the locked domain when the tip advances by this much. */
+const LIVE_LONG_WINDOW_QUANTIZE_MS = 60_000;
 
 /** How often the Live page refetches `/api/live` + samples (mod still samples ~1s). */
 const LIVE_REFETCH_MS = 5_000;
@@ -113,25 +126,12 @@ const HERO_DIAL = 148;
 
 /** Full history kept in-chart; presets + custom range zoom client-side. */
 const HISTORY_WINDOW = '30d' as const;
+const HISTORY_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const HISTORY_MAX_POINTS = 50_000;
 const DEFAULT_WINDOW_MS = 60 * 60 * 1000; // 1h
 const MIN_WINDOW_MS = 60_000;
-/** Shared cap so every Live chart reuses one lean series (no per-chart LTTB on 7k pts). */
+/** Shared cap so every Live chart reuses one lean series (stable time buckets). */
 const LIVE_CHART_MAX_POINTS = 420;
-const LIVE_DECIMATE_KEYS = [
-  'tps',
-  'mspt',
-  'host_cpu',
-  'heap_mb',
-  'mem_used_gb',
-  'disk_use_pct',
-  'players',
-  'thermal_package',
-  'thermal_ambient',
-  'net_rx_mbps',
-  'net_tx_mbps',
-  'disk_read_mb_s',
-  'disk_write_mb_s',
-];
 
 const WINDOW_PRESETS = [
   { value: '5m', label: '5m', ms: 5 * 60_000 },
@@ -167,15 +167,6 @@ function formatWindowSpan(selection: WindowRange | null | undefined): string {
   return Number.isInteger(days) ? `${days}d` : `${days.toFixed(1)}d`;
 }
 
-function selectionFromEnd(rows: { date: Date }[], windowMs: number): WindowRange | undefined {
-  if (rows.length < 2) return undefined;
-  const end = rows[rows.length - 1]!.date;
-  const dataStart = rows[0]!.date.getTime();
-  const start = new Date(Math.max(dataStart, end.getTime() - windowMs));
-  return { start, end };
-}
-
-/** Rows are time-sorted — bisect instead of scanning the full 30d series. */
 function lowerBoundByTime(rows: { date: Date }[], timeMs: number): number {
   let lo = 0;
   let hi = rows.length;
@@ -206,14 +197,6 @@ function sliceRowsByWindow(
   const from = lowerBoundByTime(rows, selection.start.getTime());
   const to = upperBoundByTime(rows, selection.end.getTime());
   return rows.slice(from, to);
-}
-
-function setLiveWindow(
-  next: WindowRange | undefined | null,
-  setChartWindow: (value: WindowRange) => void,
-) {
-  if (!next) return;
-  startTransition(() => setChartWindow(next));
 }
 
 function clampWindowRange(
@@ -252,11 +235,12 @@ function activePresetValue(selection: WindowRange | null | undefined): string | 
   return best && bestDelta <= best.ms * 0.08 ? best.value : null;
 }
 
-/** ChartFrame + WtAreaChart — window zooms snap (no per-chart load/morph tax). */
+/** ChartFrame + WtAreaChart — stable xDomain so polls slide the viewport (no remount). */
 function SeriesChart({
   title,
   rows,
   series,
+  xDomain,
   loading,
   loadingStyle = 'pulse',
   loadingLabel,
@@ -267,6 +251,8 @@ function SeriesChart({
   title: string;
   rows: ReturnType<typeof toBklitRows>;
   series: SeriesSpec[];
+  /** Sliding live viewport — keeps the x-scale locked while samples append. */
+  xDomain?: [Date, Date];
   loading?: boolean;
   loadingStyle?: 'pulse' | 'sweep';
   loadingLabel?: string;
@@ -276,6 +262,7 @@ function SeriesChart({
 }) {
   const status = loading ? 'loading' : 'ready';
   const showEmpty = !loading && !!empty;
+  const liveDomain = status === 'ready' ? xDomain : undefined;
 
   return (
     <ChartFrame
@@ -293,6 +280,8 @@ function SeriesChart({
         status={status}
         loadingLabel={loadingLabel ?? (status === 'loading' ? `Loading ${title}…` : undefined)}
         loadingStyle={loadingStyle}
+        xDomain={liveDomain}
+        xDomainSlotCount={liveDomain ? LIVE_CHART_MAX_POINTS : undefined}
         yDomainTweenDuration={0}
       />
     </ChartFrame>
@@ -371,6 +360,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
     placeholderData: keepPreviousData,
   });
   const opsQ = useQuery({ queryKey: ['ops-cache'], queryFn: api.opsCache });
+  const acksQ = useQuery({ queryKey: ['issues-acks'], queryFn: api.issuesAcks });
   const settingsQ = useQuery({ queryKey: ['settings'], queryFn: api.settings });
 
   const [rows, setRows] = useState<ReturnType<typeof toBklitRows>>([]);
@@ -382,31 +372,105 @@ export function PageView({ route: _route }: { route: RouteState }) {
       return;
     }
     const samples = asRecord(samplesQ.data);
-    // Keep history parse off the urgent path so dial intro springs stay smooth on cold load.
+    // `/api/samples` index-strides when over max_points — a full replace reshuffles
+    // timestamps and teleports the path. Parse off the urgent path, then append-only merge.
+    const parsed = toBklitRows(samples, undefined, { take: 20_000 });
     startTransition(() => {
-      setRows(toBklitRows(samples, undefined, { take: 20_000 }));
+      setRows((prev) =>
+        mergeStableTimeSeriesRows(prev, parsed, {
+          maxAgeMs: HISTORY_MAX_AGE_MS,
+          maxPoints: HISTORY_MAX_POINTS,
+        }),
+      );
     });
   }, [samplesQ.data]);
 
-  const [chartWindow, setChartWindow] = useState<WindowRange | null>(null);
+  /** Custom From/To freezes; short presets wall-clock slide; long presets follow last sample. */
+  const [followLive, setFollowLive] = useState(true);
+  const [windowMs, setWindowMs] = useState(DEFAULT_WINDOW_MS);
+  const [pinnedWindow, setPinnedWindow] = useState<WindowRange | null>(null);
+  const [clockMs, setClockMs] = useState(() => Date.now());
+  const chartWindowRef = useRef<WindowRange | null>(null);
+  const windowRowsRef = useRef<ReturnType<typeof toBklitRows>>([]);
+  const slideLive = followLive && windowMs <= LIVE_SLIDE_MAX_MS;
 
   useEffect(() => {
-    if (chartWindow || rows.length < 2) return;
-    const initial = selectionFromEnd(rows, DEFAULT_WINDOW_MS);
-    if (initial) setChartWindow(initial);
-  }, [chartWindow, rows]);
+    if (!slideLive) return;
+    const id = window.setInterval(() => setClockMs(Date.now()), LIVE_VIEWPORT_TICK_MS);
+    return () => window.clearInterval(id);
+  }, [slideLive]);
+
+  const chartWindow = useMemo((): WindowRange | null => {
+    if (!followLive) return pinnedWindow;
+    if (rows.length < 2) return null;
+    const dataStart = rows[0]!.date.getTime();
+    const dataEnd = rows[rows.length - 1]!.date.getTime();
+    // Short windows: wall-clock end so the path drifts between polls.
+    // Long windows: pin to last sample and quantize so tip polls don't nudge the domain.
+    let endMs = slideLive ? Math.max(clockMs, dataEnd) : dataEnd;
+    if (!slideLive) {
+      endMs = Math.floor(endMs / LIVE_LONG_WINDOW_QUANTIZE_MS) * LIVE_LONG_WINDOW_QUANTIZE_MS;
+      // Keep the true tip inside the domain (don't clip the newest minute).
+      if (endMs < dataEnd) endMs += LIVE_LONG_WINDOW_QUANTIZE_MS;
+    }
+    const startMs = Math.max(dataStart, endMs - windowMs);
+    const prev = chartWindowRef.current;
+    if (
+      prev &&
+      prev.start.getTime() === startMs &&
+      prev.end.getTime() === endMs
+    ) {
+      return prev;
+    }
+    const next = { start: new Date(startMs), end: new Date(endMs) };
+    chartWindowRef.current = next;
+    return next;
+  }, [clockMs, followLive, pinnedWindow, rows, slideLive, windowMs]);
 
   const windowRows = useMemo(() => {
     const sliced = sliceRowsByWindow(rows, chartWindow);
-    if (sliced.length <= LIVE_CHART_MAX_POINTS) return sliced;
-    return decimateTimeSeries(
-      sliced as Record<string, unknown>[],
-      LIVE_CHART_MAX_POINTS,
-      LIVE_DECIMATE_KEYS,
-    ) as ReturnType<typeof toBklitRows>;
+    let next: ReturnType<typeof toBklitRows>;
+    if (!chartWindow || sliced.length <= LIVE_CHART_MAX_POINTS) {
+      next = sliced;
+    } else {
+      next = downsampleTimeBuckets(
+        sliced,
+        LIVE_CHART_MAX_POINTS,
+        chartWindow.start.getTime(),
+        chartWindow.end.getTime(),
+      ) as ReturnType<typeof toBklitRows>;
+    }
+    // Reuse the previous array when the decimated series is unchanged — stops the
+    // chart shell rebuilding paths on every samples poll for 7d/30d.
+    const prev = windowRowsRef.current;
+    if (prev.length === next.length && prev.length > 0) {
+      let same = true;
+      for (let i = 0; i < next.length; i++) {
+        const a = prev[i]!;
+        const b = next[i]!;
+        if (a.date.getTime() !== b.date.getTime()) {
+          same = false;
+          break;
+        }
+        if (a.tps !== b.tps || a.mspt !== b.mspt || a.heap_mb !== b.heap_mb || a.players !== b.players) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return prev;
+    }
+    windowRowsRef.current = next;
+    return next;
   }, [chartWindow, rows]);
 
-  const preset = activePresetValue(chartWindow);
+  const chartXDomain = useMemo((): [Date, Date] | undefined => {
+    if (!chartWindow) return undefined;
+    return [chartWindow.start, chartWindow.end];
+  }, [chartWindow]);
+
+  const preset = followLive
+    ? (WINDOW_PRESETS.find((p) => p.ms === windowMs)?.value ?? null)
+    : activePresetValue(chartWindow);
   const dataMin = rows[0]?.date;
   const dataMax = rows[rows.length - 1]?.date;
 
@@ -414,7 +478,9 @@ export function PageView({ route: _route }: { route: RouteState }) {
     const start = new Date(startValue);
     const end = new Date(endValue);
     const next = clampWindowRange(start, end, rows);
-    setLiveWindow(next, setChartWindow);
+    if (!next) return;
+    setFollowLive(false);
+    setPinnedWindow(next);
   };
 
   const chartLoading = samplesQ.isLoading && !samplesQ.data;
@@ -459,7 +525,17 @@ export function PageView({ route: _route }: { route: RouteState }) {
   const jvmGc = asRecord(latest?.jvm_gc);
   const settings = asRecord(settingsQ.data);
   const ops = asRecord(opsQ.data);
-  const signals = asArray<Record<string, unknown>>(get(ops, 'right_now', 'signals'));
+  const acks = acksMapFromResponse(acksQ.data);
+  const rawSignals = asArray<Record<string, unknown>>(get(ops, 'right_now', 'signals'));
+  const filteredSignals = filterLiveTakeaways(rawSignals, acks, ops);
+  const issueTakeaways = openLiveIssueTakeaways(ops, acks).map((row) => ({
+    type: 'issue',
+    label: str(row.message, str(row.key, str(row.id, 'Issue'))),
+    detail: `${str(row.source, 'ops')} · last ${str(row.last_seen, 'recent')}`,
+    severity: str(row.severity, 'info'),
+    tab: 'issues',
+  }));
+  const signals = [...filteredSignals, ...issueTakeaways];
   const signalsShown = signals.slice(0, LIST_CAP);
   const signalsMore = Math.max(0, signals.length - LIST_CAP);
 
@@ -588,7 +664,10 @@ export function PageView({ route: _route }: { route: RouteState }) {
                   type="button"
                   className={`lv-window-bar__preset${preset === p.value ? ' is-active' : ''}`}
                   onClick={() => {
-                    setLiveWindow(selectionFromEnd(rows, p.ms), setChartWindow);
+                    setFollowLive(true);
+                    setWindowMs(p.ms);
+                    setClockMs(Date.now());
+                    setPinnedWindow(null);
                   }}
                 >
                   {p.label}
@@ -675,6 +754,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                 <SeriesChart
                   title="TPS"
                   rows={windowRows}
+                  xDomain={chartXDomain}
                   loading={chartLoading}
                   error={chartError}
                   empty={chartEmpty}
@@ -688,6 +768,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                 <SeriesChart
                   title="MSPT"
                   rows={windowRows}
+                  xDomain={chartXDomain}
                   loading={chartLoading}
                   error={chartError}
                   empty={chartEmpty}
@@ -696,6 +777,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                 <SeriesChart
                   title="Heap (MB)"
                   rows={windowRows}
+                  xDomain={chartXDomain}
                   loading={chartLoading}
                   error={chartError}
                   empty={chartEmpty}
@@ -704,6 +786,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                 <SeriesChart
                   title="Players"
                   rows={windowRows}
+                  xDomain={chartXDomain}
                   loading={chartLoading}
                   error={chartError}
                   empty={chartEmpty}
@@ -736,6 +819,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                   <SeriesChart
                     title="Host CPU %"
                     rows={windowRows}
+                    xDomain={chartXDomain}
                     loading={chartLoading}
                     error={chartError}
                     empty={chartEmpty}
@@ -744,6 +828,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                   <SeriesChart
                     title="RAM used (GB)"
                     rows={windowRows}
+                    xDomain={chartXDomain}
                     loading={chartLoading}
                     error={chartError}
                     empty={chartEmpty}
@@ -752,6 +837,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                   <SeriesChart
                     title="Disk use %"
                     rows={windowRows}
+                    xDomain={chartXDomain}
                     loading={chartLoading}
                     error={chartError}
                     empty={chartEmpty}
@@ -760,6 +846,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                   <SeriesChart
                     title="Disk R/W MB/s"
                     rows={windowRows}
+                    xDomain={chartXDomain}
                     loading={chartLoading}
                     error={chartError}
                     empty={chartEmpty}
@@ -799,6 +886,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                 <SeriesChart
                   title="Net RX Mbps"
                   rows={windowRows}
+                  xDomain={chartXDomain}
                   loading={chartLoading}
                   error={chartError}
                   empty={chartEmpty}
@@ -812,6 +900,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                 <SeriesChart
                   title="Net TX Mbps"
                   rows={windowRows}
+                  xDomain={chartXDomain}
                   loading={chartLoading}
                   error={chartError}
                   empty={chartEmpty}
@@ -833,6 +922,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                   <SeriesChart
                     title="Thermal °C"
                     rows={windowRows}
+                    xDomain={chartXDomain}
                     loading={chartLoading}
                     error={chartError}
                     empty={chartEmpty}
@@ -867,9 +957,9 @@ export function PageView({ route: _route }: { route: RouteState }) {
 
           <FadeIn>
             <Section
-              title="Active alerts"
+              title="Takeaways"
               icon={AlertTriangle}
-              hint="From ops right-now signals — same source as Overview."
+              hint="Open issues and right-now signals — clears when you mark them reviewed."
             >
               {signals.length ? (
                 <Stagger className="lv-alerts">
@@ -883,7 +973,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                         <div className="lv-alert__body">
                           <div className="flex flex-wrap items-center gap-2">
                             <StatusPill tone={severityTone[sev] ?? 'info'}>{sev}</StatusPill>
-                            <span className="lv-alert__label">{str(s.label, str(s.message, 'Alert'))}</span>
+                            <span className="lv-alert__label">{str((s as Record<string, unknown>).label, str((s as Record<string, unknown>).message, 'Alert'))}</span>
                           </div>
                           {str(s.detail) ? <div className="lv-alert__detail">{str(s.detail)}</div> : null}
                         </div>
@@ -897,7 +987,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                   })}
                 </Stagger>
               ) : (
-                <EmptyState title="No active alerts">Ops right-now is quiet.</EmptyState>
+                <EmptyState title="No takeaways">Ops is quiet — nothing open to review.</EmptyState>
               )}
               {signalsMore > 0 ? (
                 <Button className="mt-2" kind="ghost" onClick={() => navigate({ tab: 'issues', view: 'active' })}>

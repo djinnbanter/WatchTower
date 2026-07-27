@@ -9,6 +9,7 @@ import { Button, ErrorState, HeroTabNav, MetricReadout, StatusPill } from '@/ui/
 import { AlertTriangle } from '@/ui/icons';
 import { asArray, asRecord, str } from '@/lib/utils';
 import {
+  acksMapFromResponse,
   buildActiveItems,
   buildReviewedItems,
   canonicalIssueParam,
@@ -104,6 +105,7 @@ export function PageView({ route }: { route: RouteState }) {
     void queryClient.invalidateQueries({ queryKey: ['issues-peek'] });
     void queryClient.invalidateQueries({ queryKey: ['issues-suppressions'] });
     void queryClient.invalidateQueries({ queryKey: ['ops-cache'] });
+    void queryClient.invalidateQueries({ queryKey: ['overview-meta'] });
   };
 
   const ackMutation = useMutation({
@@ -126,7 +128,7 @@ export function PageView({ route }: { route: RouteState }) {
   const peek = asRecord(peekQ.data);
   const ops = asRecord(opsQ.data);
   const facts = asRecord(factsQ.data);
-  const acks = asRecord(acksQ.data);
+  const acks = acksMapFromResponse(acksQ.data);
 
   const suppressions: SuppressionRow[] = useMemo(() => {
     const data = asRecord(suppressQ.data);
@@ -207,7 +209,7 @@ export function PageView({ route }: { route: RouteState }) {
     if (item.issueId) dismissInbox(item.issueId);
     const nextItem = activeFiltered.find((i) => i.key === nextActiveKey(activeFiltered, item.key));
     ackMutation.mutate(
-      { id: item.issueId ?? item.key, key: item.key, ack: true },
+      { id: item.key, key: item.key, reviewed: true, ack: true },
       {
         onSuccess: () => {
           navigate({
@@ -225,7 +227,7 @@ export function PageView({ route }: { route: RouteState }) {
     undismissInbox(item.key);
     if (item.issueId) undismissInbox(item.issueId);
     ackMutation.mutate(
-      { id: item.issueId ?? item.key, key: item.key, ack: false },
+      { id: item.key, key: item.key, reviewed: false, ack: false },
       {
         onSuccess: () => {
           navigate({ tab: 'issues', view: 'active', issue: item.key, panel: null });
@@ -254,7 +256,7 @@ export function PageView({ route }: { route: RouteState }) {
   const markAll = (keys: string[]) => {
     const filtered = keys.filter((k) => k !== 'crash:unreviewed');
     for (const k of filtered) dismissInbox(k);
-    ackAllMutation.mutate({ keys: filtered });
+    ackAllMutation.mutate({ ids: filtered });
   };
 
   const restore = (id: string) => {

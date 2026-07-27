@@ -29,6 +29,24 @@ describe('mergeLogErrorRows', () => {
     assert.ok(rows[0].sample_lines.includes('report line'));
   });
 
+  it('omits rows for reviewed mod issues', () => {
+    const rows = mergeLogErrorRows({
+      opsBlock: {
+        entries: [
+          { mod_id: 'create', total: 4 },
+          { mod_id: 'kubejs', total: 2 },
+        ],
+      },
+      factsErrors: [],
+      recommendations: [],
+      modIssues: [],
+      hasReport: false,
+      ackedModIds: ['create'],
+    });
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].mod_id, 'kubejs');
+  });
+
   it('sampleLinesFrom prefers array', () => {
     assert.deepEqual(sampleLinesFrom({ sample_lines: ['a', 'b'] }), ['a', 'b']);
     assert.deepEqual(sampleLinesFrom({ sample_line: 'x' }), ['x']);

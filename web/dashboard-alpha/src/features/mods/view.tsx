@@ -211,7 +211,7 @@ export function PageView({ route }: { route: RouteState }) {
 
   return (
     <PageEnter className="md-page">
-      <FadeIn>
+      <FadeIn className="md-hero-wrap">
         <BorderGlow
           className={`md-hero md-hero--${heroTone}`}
           borderRadius={14}

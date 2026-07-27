@@ -101,6 +101,99 @@ function syncOpsCrashesFromAcks(session: Record<string, unknown>) {
   return cloned;
 }
 
+function syncIssuesLiveFromAcks(session: Record<string, unknown>) {
+  const acks = (session.acks as Record<string, unknown>) ?? {};
+  const ops = asRecord(session.opsCache ?? readJson('ops-cache.json'));
+  const cloned = structuredClone(ops);
+  const rows = asArray<Record<string, unknown>>(cloned.issues_live).map((row) => {
+    const id = String(row.id || row.key || '');
+    const keys = [id, id.startsWith('issue:') ? id : `issue:${id}`, String(row.key || '')].filter(Boolean);
+    const reviewed = keys.some((k) => acks[k] != null);
+    if (!reviewed) return row;
+    return { ...row, status: 'reviewed' };
+  });
+  cloned.issues_live = rows;
+
+  // Mark matching mod_issues resolved so peeks / Live signals clear
+  const modBlock = asRecord(cloned.mod_issues);
+  const modEntries = asArray<Record<string, unknown>>(modBlock.entries).map((e) => {
+    const modId = String(e.mod_id || e.id || '');
+    if (modId && acks[`mod:${modId}`] != null) return { ...e, resolved: true };
+    return e;
+  });
+  if (modBlock.entries || modEntries.length) {
+    const active = modEntries.filter((e) => !e.resolved).length;
+    cloned.mod_issues = { ...modBlock, entries: modEntries, active_count: active };
+  }
+
+  const lagBlock = asRecord(cloned.lag_issues);
+  const lagEntries = asArray<Record<string, unknown>>(lagBlock.entries).map((e) => {
+    const id = String(e.incident_id || e.id || '');
+    if (id && acks[`lag:${id}`] != null) return { ...e, resolved: true };
+    return e;
+  });
+  if (lagBlock.entries || lagEntries.length) {
+    const active = lagEntries.filter((e) => !e.resolved).length;
+    cloned.lag_issues = { ...lagBlock, entries: lagEntries, active_count: active };
+  }
+
+  if (acks.log_stale != null) {
+    const ls = asRecord(cloned.log_stale);
+    cloned.log_stale = { ...ls, active: false };
+  }
+
+  // Rebuild right_now signals without reviewed-backed alerts
+  const rn = asRecord(cloned.right_now);
+  const signals = asArray<Record<string, unknown>>(rn.signals).filter((s) => {
+    const type = String(s.type || '').toLowerCase();
+    if (type === 'lag') return asArray<Record<string, unknown>>(asRecord(cloned.lag_issues).entries).some((e) => !e.resolved);
+    if (type === 'mod_errors' || type === 'mod_issues') {
+      return asArray<Record<string, unknown>>(asRecord(cloned.mod_issues).entries).some((e) => !e.resolved);
+    }
+    if (type === 'log_stale') return !!asRecord(cloned.log_stale).active;
+    return true;
+  });
+  cloned.right_now = { ...rn, signals };
+
+  session.opsCache = cloned;
+  return cloned;
+}
+
+function syncOverviewMetaFromSession(session: Record<string, unknown>) {
+  const meta = structuredClone(asRecord(readJson('overview-meta.json') ?? {}));
+  syncIssuesLiveFromAcks(session);
+  const ops = syncOpsCrashesFromAcks(session);
+  const crashes = asRecord(asRecord(ops.crashes));
+  const unreviewed = Number(crashes.unreviewed ?? 0);
+  const scorecard = asRecord(meta.scorecard);
+  const scCrashes = asRecord(scorecard.crashes);
+  scCrashes.unreviewed = unreviewed;
+  scorecard.crashes = scCrashes;
+  if (unreviewed > 0) {
+    scorecard.grade = 'critical';
+    scorecard.grade_word = 'Critical';
+  } else if (String(scorecard.grade).toLowerCase() === 'critical') {
+    // Drop critical once crashes are cleared; keep degraded/healthy from fixture otherwise
+    const lowTps = Number(asRecord(scorecard.performance).low_tps_minutes_24h ?? 0);
+    if (lowTps > 0) {
+      scorecard.grade = 'degraded';
+      scorecard.grade_word = 'Degraded';
+    } else {
+      scorecard.grade = 'healthy';
+      scorecard.grade_word = 'Healthy';
+    }
+  }
+  meta.scorecard = scorecard;
+  meta.health_grade = scorecard.grade === 'critical' ? 'F' : scorecard.grade === 'degraded' ? 'C' : 'A';
+  if (meta.crash_tldr && typeof meta.crash_tldr === 'object') {
+    (meta.crash_tldr as Record<string, unknown>).unreviewed = unreviewed;
+  }
+  // Mirror filtered right_now from ops
+  if (ops.right_now) meta.right_now = structuredClone(ops.right_now);
+  session.overviewMeta = meta;
+  return meta;
+}
+
 function sendJson(res: import('http').ServerResponse, status: number, body: unknown) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -254,7 +347,6 @@ export function fixtureApiPlugin(): Plugin {
           // Static fixture maps
           const map: Record<string, string> = {
             '/api/live': 'live-envelope.json',
-            '/api/overview/meta': 'overview-meta.json',
             '/api/issues/peek': 'issues-peek.json',
             '/api/reports/index': 'reports-index.json',
             '/api/facts': 'facts.json',
@@ -270,6 +362,10 @@ export function fixtureApiPlugin(): Plugin {
             '/api/data-sources': 'data-sources.json',
             '/api/config': 'preview-settings.json',
           };
+
+          if (method === 'GET' && pathOnly === '/api/overview/meta') {
+            return sendJson(res, 200, syncOverviewMetaFromSession(session));
+          }
 
           if (method === 'GET' && pathOnly === '/api/spark/profile') {
             const requested = new URL(url, 'http://127.0.0.1').searchParams.get('path') || '';
@@ -382,6 +478,7 @@ export function fixtureApiPlugin(): Plugin {
 
           if (method === 'GET' && pathOnly === '/api/ops-cache') {
             seedCrashAcks(session);
+            syncIssuesLiveFromAcks(session);
             return sendJson(res, 200, syncOpsCrashesFromAcks(session));
           }
 
@@ -402,6 +499,7 @@ export function fixtureApiPlugin(): Plugin {
             setCrashAck(acks, file, reviewed);
             session.crashAcks = acks;
             syncOpsCrashesFromAcks(session);
+            syncOverviewMetaFromSession(session);
             return sendJson(res, 200, {
               ok: true,
               acknowledged_crashes: acks,
@@ -423,6 +521,7 @@ export function fixtureApiPlugin(): Plugin {
             }
             session.crashAcks = acks;
             syncOpsCrashesFromAcks(session);
+            syncOverviewMetaFromSession(session);
             return sendJson(res, 200, {
               ok: true,
               acknowledged,
@@ -765,36 +864,50 @@ export function fixtureApiPlugin(): Plugin {
           }
 
           if (method === 'GET' && pathOnly === '/api/issues/acks') {
-            return sendJson(res, 200, session.acks ?? {});
+            return sendJson(res, 200, { acknowledged_issues: session.acks ?? {} });
           }
 
           if (method === 'POST' && pathOnly === '/api/issues/ack') {
             const raw = await readBody(req);
             const body = raw ? JSON.parse(raw) : {};
-            const key = String(body.key || body.id || '');
+            const key = String(body.id || body.key || '');
             const acks = (session.acks as Record<string, unknown>) ?? {};
             if (key) {
-              if (body.ack === false || body.acked === false) {
+              const reviewed =
+                typeof body.reviewed === 'boolean'
+                  ? body.reviewed
+                  : !(body.ack === false || body.acked === false);
+              if (!reviewed) {
                 delete acks[key];
               } else {
-                acks[key] = { at: new Date().toISOString(), ackedAt: new Date().toISOString(), ...body };
+                acks[key] = { at: new Date().toISOString(), ackedAt: new Date().toISOString(), by: 'dashboard' };
               }
               session.acks = acks;
             }
-            return sendJson(res, 200, { ok: true });
+            syncIssuesLiveFromAcks(session);
+            return sendJson(res, 200, { ok: true, acknowledged_issues: session.acks ?? {} });
           }
 
           if (method === 'POST' && pathOnly === '/api/issues/acknowledge-all') {
             const raw = await readBody(req);
             const body = raw ? JSON.parse(raw) : {};
-            const keys = Array.isArray(body.keys) ? body.keys.map(String) : [];
+            const ids = Array.isArray(body.ids)
+              ? body.ids.map(String)
+              : Array.isArray(body.keys)
+                ? body.keys.map(String)
+                : [];
             const acks = (session.acks as Record<string, unknown>) ?? {};
             const at = new Date().toISOString();
-            for (const key of keys) {
-              if (key) acks[key] = { at, ackedAt: at, bulk: true };
+            for (const id of ids) {
+              if (id) acks[id] = { at, ackedAt: at, by: 'dashboard', bulk: true };
             }
             session.acks = acks;
-            return sendJson(res, 200, { ok: true, count: keys.length });
+            syncIssuesLiveFromAcks(session);
+            return sendJson(res, 200, {
+              ok: true,
+              acknowledged: ids.length,
+              acknowledged_issues: session.acks ?? {},
+            });
           }
 
           if (method === 'GET' && pathOnly === '/api/issues/suppressions') {

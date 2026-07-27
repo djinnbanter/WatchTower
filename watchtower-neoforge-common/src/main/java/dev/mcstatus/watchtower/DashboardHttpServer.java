@@ -3627,6 +3627,12 @@ public final class DashboardHttpServer {
         } else {
             StateManager.unacknowledgeCrash(statePath, file);
         }
+        try {
+            OpsCacheWriter.applyCrashAcks(
+                    WatchtowerPaths.opsCachePath(serverContext), statePath);
+        } catch (Exception e) {
+            ModRuntime.logger().debug("crash ack ops-cache sync failed: {}", e.toString());
+        }
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
         out.add("acknowledged_crashes", StateManager.getAcknowledgedCrashes(statePath));
@@ -3709,6 +3715,12 @@ public final class DashboardHttpServer {
         int acknowledged = StateManager.acknowledgeAllCrashes(statePath, toAck, now, "dashboard");
         for (Map.Entry<String, Integer> e : groupMemberCounts.entrySet()) {
             StateManager.recordAcknowledgedGroup(statePath, e.getKey(), now, "dashboard", e.getValue());
+        }
+        try {
+            OpsCacheWriter.applyCrashAcks(
+                    WatchtowerPaths.opsCachePath(serverContext), statePath);
+        } catch (Exception e) {
+            ModRuntime.logger().debug("crash ack-all ops-cache sync failed: {}", e.toString());
         }
 
         JsonObject out = buildGroupedCrashesResponse();

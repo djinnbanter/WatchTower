@@ -4,7 +4,7 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { useChart, useChartStable } from "./chart-context";
-import { shortDateFmt } from "./chart-formatters";
+import { formatChartAxisTick, shortDateFmt } from "./chart-formatters";
 import { DEFAULT_Y_DOMAIN_TWEEN_MS } from "./chart-phase";
 import { LINE_LOADING_PULSE_EASE } from "./line-loading-timing";
 
@@ -16,8 +16,10 @@ export interface XAxisProps {
   /** Width of the date ticker box for fade calculation. Default: 50 */
   tickerHalfWidth?: number;
   /**
-   * `"data"` — tick labels snap to data rows so crosshair and tooltip stay aligned (default).
-   * `"domain"` — evenly spaced ticks across the time domain (may not align with hover).
+   * `"data"` — tick labels snap to data rows so crosshair and tooltip stay aligned (default
+   * when no `xDomain`).
+   * `"domain"` — evenly spaced ticks across the time domain (forced automatically when
+   * `xDomain` is set, e.g. Live slide / brush).
    */
   tickMode?: "domain" | "data";
 }
@@ -460,7 +462,7 @@ function buildDomainTicks({
   for (let i = 0; i < tickCount; i++) {
     const t = i / (tickCount - 1);
     const date = new Date(startTime + t * timeRange);
-    const label = shortDateFmt.format(date);
+    const label = formatChartAxisTick(date, timeRange);
     if (seenLabels.has(label)) {
       continue;
     }
@@ -491,71 +493,6 @@ function domainExtendsPastData(
   return domainEnd.getTime() > xAccessor(lastPoint).getTime();
 }
 
-/** Domain ticks for the projection tail when brush keeps data-aligned labels. */
-function appendProjectionTailTicks(
-  ticks: AxisTick[],
-  data: Record<string, unknown>[],
-  xAccessor: (d: Record<string, unknown>) => Date,
-  xScale: {
-    domain: () => Date[];
-    (date: Date): number | undefined;
-  },
-  marginLeft: number,
-  maxExtraTicks: number
-): AxisTick[] {
-  if (data.length === 0 || maxExtraTicks <= 0) {
-    return ticks;
-  }
-
-  const lastPoint = data.at(-1);
-  const domainEnd = xScale.domain()[1];
-  if (!(lastPoint && domainEnd)) {
-    return ticks;
-  }
-
-  const lastDate = xAccessor(lastPoint);
-  const startTime = lastDate.getTime();
-  const endTime = domainEnd.getTime();
-  if (endTime <= startTime) {
-    return ticks;
-  }
-
-  const seenLabels = new Set(ticks.map((tick) => tick.label));
-  const extras: AxisTick[] = [];
-  const extraCount = Math.min(maxExtraTicks, 3);
-
-  for (let i = 1; i <= extraCount; i++) {
-    const date = new Date(
-      startTime + (i / (extraCount + 1)) * (endTime - startTime)
-    );
-    const label = shortDateFmt.format(date);
-    if (seenLabels.has(label)) {
-      continue;
-    }
-    seenLabels.add(label);
-    extras.push({
-      date,
-      label,
-      x: (xScale(date) ?? 0) + marginLeft,
-    });
-  }
-
-  const endLabel = shortDateFmt.format(domainEnd);
-  if (!seenLabels.has(endLabel)) {
-    extras.push({
-      date: domainEnd,
-      label: endLabel,
-      x: (xScale(domainEnd) ?? 0) + marginLeft,
-    });
-  }
-
-  if (extras.length === 0) {
-    return ticks;
-  }
-
-  return [...ticks, ...extras].sort((a, b) => a.x - b.x);
-}
-
 export function XAxis(props: XAxisProps) {
   const { containerRef } = useChartStable();
   const [mounted, setMounted] = useState(false);
@@ -582,10 +519,10 @@ const XAxisInner = memo(function XAxisInner({
     useChart();
 
   const labelsToShow = useMemo(() => {
-    const projectionExtendsScale =
-      tickMode === "data" && domainExtendsPastData(data, xAccessor, xScale);
-
-    if (tickMode === "domain") {
+    // Locked viewport (Live slide / brush / custom From–To): space ticks evenly
+    // across xDomain. Data-aligned ticks bunch on samples and thrash as the
+    // wall-clock window slides (~250ms), especially with an empty right edge.
+    if (tickMode === "domain" || xDomain != null) {
       return buildDomainTicks({
         marginLeft: margin.left,
         numTicks,
@@ -593,8 +530,8 @@ const XAxisInner = memo(function XAxisInner({
       });
     }
 
-    // No brush: evenly spaced ticks across the full domain (data + projection).
-    if (projectionExtendsScale && xDomain == null) {
+    // Projection tail past the last sample: also domain-spaced (no xDomain).
+    if (domainExtendsPastData(data, xAccessor, xScale)) {
       return buildDomainTicks({
         marginLeft: margin.left,
         numTicks,
@@ -602,7 +539,7 @@ const XAxisInner = memo(function XAxisInner({
       });
     }
 
-    const dataTicks = buildDataAlignedTicks({
+    return buildDataAlignedTicks({
       data,
       dateLabels,
       marginLeft: margin.left,
@@ -610,20 +547,6 @@ const XAxisInner = memo(function XAxisInner({
       xAccessor,
       xScale,
     });
-
-    // Brush: keep data-aligned ticks, add labels only in the projection tail.
-    if (projectionExtendsScale && xDomain != null) {
-      return appendProjectionTailTicks(
-        dataTicks,
-        data,
-        xAccessor,
-        xScale,
-        margin.left,
-        Math.max(1, numTicks - dataTicks.length + 1)
-      );
-    }
-
-    return dataTicks;
   }, [
     tickMode,
     xDomain,
@@ -643,15 +566,23 @@ const XAxisInner = memo(function XAxisInner({
         shortDateFmt.format(xAccessor(tooltipData.point)))
       : null;
 
+  // Domain ticks sit at fixed fractions of the chart width while xDomain slides;
+  // index keys keep nodes mounted so only the label text updates (no remount flicker).
+  const useStableDomainKeys = tickMode === "domain" || xDomain != null;
+
   return createPortal(
     <div className="pointer-events-none absolute inset-0">
-      {labelsToShow.map((item) => (
+      {labelsToShow.map((item, index) => (
         <XAxisLabel
           animatePosition={xDomain == null}
           crosshairX={crosshairX}
           hoveredLabel={hoveredLabel}
           isHovering={isHovering}
-          key={`${item.date.getTime()}-${item.x}`}
+          key={
+            useStableDomainKeys
+              ? `domain-tick-${index}`
+              : `${item.date.getTime()}-${item.x}`
+          }
           label={item.label}
           tickerHalfWidth={tickerHalfWidth}
           x={item.x}

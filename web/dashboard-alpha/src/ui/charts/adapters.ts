@@ -42,6 +42,65 @@ function finiteNumber(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Keep settled Live history stable across polls.
+ *
+ * `/api/samples` index-strides when over max_points, so a full replace reshuffles
+ * which timestamps appear even when the sliding xDomain is locked. Only append
+ * (and refresh the tip); never rewrite older points from a later response.
+ */
+export function mergeStableTimeSeriesRows<T extends { date: Date }>(
+  prev: T[],
+  next: T[],
+  opts?: {
+    /** Drop points older than (tip − maxAgeMs). */
+    maxAgeMs?: number;
+    /** Hard cap on retained rows (keeps the newest). */
+    maxPoints?: number;
+  },
+): T[] {
+  if (prev.length === 0) return trimStableTimeSeriesRows(next, opts);
+  if (next.length === 0) return prev;
+
+  const lastPrevMs = prev[prev.length - 1]!.date.getTime();
+  const lastNextMs = next[next.length - 1]!.date.getTime();
+  // Stale / out-of-order payload — keep what we already rendered.
+  if (lastNextMs < lastPrevMs) return prev;
+
+  const out = prev.slice();
+  for (const row of next) {
+    const t = row.date.getTime();
+    if (t < lastPrevMs) continue;
+    if (t === lastPrevMs) {
+      out[out.length - 1] = row;
+      continue;
+    }
+    out.push(row);
+  }
+  return trimStableTimeSeriesRows(out, opts);
+}
+
+function trimStableTimeSeriesRows<T extends { date: Date }>(
+  rows: T[],
+  opts?: { maxAgeMs?: number; maxPoints?: number },
+): T[] {
+  if (rows.length === 0) return rows;
+  let out = rows;
+  const maxAgeMs = opts?.maxAgeMs;
+  if (maxAgeMs != null && maxAgeMs > 0) {
+    const tip = out[out.length - 1]!.date.getTime();
+    const cutoff = tip - maxAgeMs;
+    let lo = 0;
+    while (lo < out.length && out[lo]!.date.getTime() < cutoff) lo += 1;
+    if (lo > 0) out = out.slice(lo);
+  }
+  const maxPoints = opts?.maxPoints;
+  if (maxPoints != null && maxPoints > 0 && out.length > maxPoints) {
+    out = out.slice(out.length - maxPoints);
+  }
+  return out;
+}
+
 /** Join multiple sample arrays on timestamp into Bklit `{ date, ... }` rows. */
 export function toBklitRows(
   samples: SampleSeriesMap,

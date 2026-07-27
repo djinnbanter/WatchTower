@@ -16,12 +16,14 @@ const LEGEND = [
 const WORKS_TODAY = [
   { icon: 'server', title: 'Live dashboard', blurb: 'TPS, MSPT, CPU, memory, players — while you watch' },
   { icon: 'bug', title: 'Crash intelligence', blurb: 'Likely mod + fix in plain English' },
-  { icon: 'package', title: 'Smart mod list', blurb: 'Modrinth, deps, client-vs-server hints' },
-  { icon: 'clipboard', title: 'Health reports', blurb: 'Scheduled or on demand · prioritized fixes' },
-  { icon: 'activity', title: 'Performance Insights', blurb: 'Busy/quiet hours, sticky lag, heatmaps, CSV' },
-  { icon: 'zap', title: 'Spark integration', blurb: 'Turn a profile into “what ate the tick”' },
+  { icon: 'package', title: 'Smart mod list', blurb: 'Modrinth, pack-impact updates, client-vs-server' },
+  { icon: 'clipboard', title: 'Watching + Scanning', blurb: 'Issues stay current without homework every visit' },
+  { icon: 'activity', title: 'Performance Insights', blurb: 'Busy/quiet hours, baseline, storage runway' },
+  { icon: 'zap', title: 'Spark + auto-capture', blurb: '“What ate the tick” · opt-in on critical lag' },
+  { icon: 'cpu', title: 'GC / JVM + RAM', blurb: 'Flags advice · conservative “need more RAM?”' },
+  { icon: 'check', title: 'Safe restart + stories', blurb: 'Checklist before /stop · lag → crash → backup' },
   { icon: 'shield', title: 'Disaster recovery', blurb: 'CLI + browser viewer when it won’t boot' },
-  { icon: 'folder', title: 'Ops extras', blurb: 'Backups, sessions, activity, logs, docs' },
+  { icon: 'folder', title: 'Ops + Support packs', blurb: 'Backups · Settings · redacted zip · Copy for Discord' },
   { icon: 'lock', title: 'Secure by default', blurb: 'Login, optional 2FA, honest panel metrics' },
 ];
 
@@ -31,11 +33,9 @@ const SITUATIONS = [
     tone: 'sky',
     icon: 'zap',
     title: 'When the server lags',
-    pitch: 'Catch it · name it · separate farms from mods',
+    pitch: 'Separate farms from mods',
     items: [
-      { title: 'Catch lag for you', blurb: 'auto-profile on TPS dips; name the culprit even if you weren’t watching' },
       { title: 'Spot farms & chunk loaders', blurb: 'world pressure (entities, chunks) separate from “a bad mod”' },
-      { title: 'Notice when normal gets worse', blurb: 'baseline + sustained regression (“slower since Tuesday”)' },
     ],
   },
   {
@@ -43,11 +43,8 @@ const SITUATIONS = [
     tone: 'accent',
     icon: 'cpu',
     title: 'When you’re unsure about RAM or settings',
-    pitch: 'Clear answers before you spend money',
+    pitch: 'Apply vetted settings safely',
     items: [
-      { title: 'Do I need more RAM?', blurb: 'plain-English GC, heap, flags, Java version' },
-      { title: 'Right-size memory', blurb: 'what you actually use vs idle headroom' },
-      { title: 'Config coach', blurb: 'keep / tweak / why for properties & startup flags' },
       { title: 'Safe guided fixes', blurb: 'vetted settings with preview & undo' },
     ],
   },
@@ -56,12 +53,11 @@ const SITUATIONS = [
     tone: 'ok',
     icon: 'check',
     title: 'When you need to trust a restart',
-    pitch: 'Know it’s safe · understand what went wrong',
+    pitch: 'Understand outages · smarter advice',
     items: [
-      { title: 'Safe to restart?', blurb: 'backups, pregen, who’s online before /stop' },
-      { title: 'One incident timeline', blurb: 'lag → crash → missed backup' },
       { title: 'Why it really died', blurb: 'mod crash vs OOM vs panel/watchdog' },
-      { title: 'Weekly digest · disk runway · smarter restart advice', blurb: 'panel still owns the stop' },
+      { title: 'Weekly digest', blurb: 'grade, crashes, disk trend, one useful next action' },
+      { title: 'Smarter restart advice', blurb: 'suggest a maintenance window (panel still owns /stop)' },
     ],
   },
   {
@@ -109,8 +105,8 @@ const SITUATIONS = [
     pitch: 'Safe actions · clean support handoffs',
     items: [
       { title: 'Live command bridge', blurb: 'preview safe triage (e.g. pause Chunky); confirm first' },
-      { title: 'Support pack export', blurb: 'one redacted zip for mod authors' },
       { title: 'Player-safe explain + ops context', blurb: 'short vs admin detail; lag vs timeout (not analytics)' },
+      { title: 'Optional anonymous diagnostics', blurb: 'opt-in, previewable, cooldown’d (off by default)' },
     ],
   },
   {
@@ -122,7 +118,7 @@ const SITUATIONS = [
     items: [
       { title: 'Named admin accounts', blurb: 'per-person logins + who changed what' },
       { title: 'Public status page', blurb: '“are we up?” without exposing the dashboard' },
-      { title: 'Copy for Discord · maintenance windows · mobile glance', blurb: '' },
+      { title: 'Richer Copy for Discord · maintenance windows · mobile glance', blurb: '' },
     ],
   },
 ];

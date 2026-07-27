@@ -63,32 +63,42 @@ const WORKS_TODAY: Feature[] = [
   {
     Icon: Package,
     title: 'Smart mod list',
-    body: 'Inventory, updates, conflicts, Modrinth lookups, client-vs-server hints.',
+    body: 'Inventory, Modrinth lookups, pack-impact updates, conflicts, client-vs-server hints.',
   },
   {
     Icon: Gauge,
     title: 'Performance Insights',
-    body: 'Busy vs quiet hours, storage trends, and config health over a window.',
+    body: 'Busy vs quiet hours, storage trends, config health, and baseline “slower than normal.”',
   },
   {
     Icon: Zap,
     title: 'Spark integration',
-    body: 'Turn a profiler capture into “what ate the tick.”',
+    body: 'Turn a profile into “what ate the tick,” plus opt-in auto-capture on critical lag.',
+  },
+  {
+    Icon: HardDrive,
+    title: 'GC / JVM + RAM advice',
+    body: 'Live GC pause % of wall, flags profile, and a conservative “do I need more RAM?” card.',
+  },
+  {
+    Icon: Shield,
+    title: 'Safe restart + incident stories',
+    body: 'Overview checklist before /stop; Activity stitches lag → crash → missed backup.',
   },
   {
     Icon: Compass,
-    title: 'Sources',
-    body: 'Poller freshness and next pulls — is Watchtower working?',
+    title: 'Sources + disk runway',
+    body: 'Poller freshness, and days-until-full — not just percent full.',
   },
   {
     Icon: Archive,
     title: 'Ops extras',
-    body: 'Backups, Session, Activity, Logs, Startup, and Help Center.',
+    body: 'Backups (local + Alpha panel/cloud), Session, Activity, Logs, Startup, Settings, Help Center.',
   },
   {
     Icon: LifeBuoy,
     title: 'Support packs',
-    body: 'A redacted zip when you need to share with a host or mod author.',
+    body: 'Redacted zip builder with presets, Spark, and Copy for Discord.',
   },
   {
     Icon: Shield,
@@ -107,18 +117,13 @@ const COMING_NEXT: ThemeGroup[] = [
     theme: 'When the server lags',
     Icon: Zap,
     items: [
-      'Catch lag for you — auto-profile when TPS dips and name the culprit mod',
       'Spot farms and chunk loaders — separate world pressure from “a bad mod”',
-      'Notice when “normal” gets worse — flag a sustained regression against your baseline',
     ],
   },
   {
     theme: 'When you’re unsure about RAM or settings',
     Icon: HardDrive,
     items: [
-      'GC / JVM health advisor — heap-bound vs GC-bound vs tick/mod advice',
-      'Do I need more RAM? — right-size card comparing heap peak vs -Xmx',
-      'Config coach — review server.properties and startup flags',
       'Safe guided fixes — apply vetted settings with preview and undo',
     ],
   },
@@ -126,10 +131,9 @@ const COMING_NEXT: ThemeGroup[] = [
     theme: 'When you need to trust a restart',
     Icon: Shield,
     items: [
-      'Safe to restart? — check backups, pregen, and who’s online first',
-      'One incident timeline — lag → crash → missed backup in a single story',
+      'Why it really died — mod crash vs OOM vs panel/watchdog',
       'Weekly digest — grade, crashes, disk trend, and one useful next action',
-      'Disk runway — days left, not just percent full',
+      'Smarter restart advice — suggest a maintenance window (panel still owns /stop)',
     ],
   },
   {

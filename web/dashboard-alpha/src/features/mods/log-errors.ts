@@ -14,13 +14,19 @@ export function mergeLogErrorRows({
   recommendations,
   modIssues,
   hasReport,
+  ackedModIds,
 }: {
   opsBlock: Record<string, unknown> | null | undefined;
   factsErrors: unknown;
   recommendations: Record<string, unknown>[];
   modIssues: Record<string, unknown>[];
   hasReport: boolean;
+  /** Mod ids whose Issues `mod:{id}` row was reviewed — omit from the active list. */
+  ackedModIds?: Iterable<string> | null;
 }): LogErrorRow[] {
+  const acked = new Set(
+    [...(ackedModIds ?? [])].map((id) => String(id).trim().toLowerCase()).filter(Boolean),
+  );
   const byId = new Map<string, LogErrorRow>();
 
   function upsert(raw: Record<string, unknown> | null | undefined, source: string) {
@@ -113,6 +119,7 @@ export function mergeLogErrorRows({
 
   const out: LogErrorRow[] = [];
   for (const row of byId.values()) {
+    if (acked.has(String(row.mod_id).toLowerCase())) continue;
     const rec = recById.get(row.mod_id);
     const iss = issueById.get(row.mod_id);
     if (rec) {

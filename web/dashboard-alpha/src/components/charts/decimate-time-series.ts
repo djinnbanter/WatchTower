@@ -1,3 +1,47 @@
+/**
+ * Time-aligned bucket downsample for sliding live windows.
+ * Bucket ids are absolute (`floor(t / bucketMs)`), so as the viewport slides,
+ * existing samples keep identity instead of LTTB reshuffling every poll.
+ */
+export function downsampleTimeBuckets<T extends { date: Date }>(
+  data: T[],
+  maxPoints: number,
+  rangeStartMs: number,
+  rangeEndMs: number
+): T[] {
+  const len = data.length;
+  if (len <= maxPoints || maxPoints < 2) {
+    return data;
+  }
+  const span = rangeEndMs - rangeStartMs;
+  if (!(span > 0)) {
+    return data;
+  }
+
+  const bucketMs = span / (maxPoints - 1);
+  const buckets = new Map<number, T>();
+  // Keep the *first* sample in each absolute bucket. Last-write-wins thrash on
+  // long windows (7d/30d) as merge/stride fills the same multi-hour bucket.
+  for (const row of data) {
+    const t = row.date.getTime();
+    if (t < rangeStartMs || t > rangeEndMs) {
+      continue;
+    }
+    const id = Math.floor(t / bucketMs);
+    if (!buckets.has(id)) {
+      buckets.set(id, row);
+    }
+  }
+
+  if (buckets.size === 0) {
+    return data.slice(0, maxPoints);
+  }
+
+  return [...buckets.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([, row]) => row);
+}
+
 export function decimateTimeSeries<T extends Record<string, unknown>>(
   data: T[],
   maxPoints: number,

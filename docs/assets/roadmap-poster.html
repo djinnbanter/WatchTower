@@ -509,12 +509,14 @@
       <div class="today">
         <div class="today-item"><div class="today-icon">◉</div><div><h4>Live dashboard</h4><p>TPS, MSPT, CPU, memory, players — while you watch</p></div></div>
         <div class="today-item"><div class="today-icon">⚡</div><div><h4>Crash intelligence</h4><p>Likely mod + fix in plain English</p></div></div>
-        <div class="today-item"><div class="today-icon">▦</div><div><h4>Smart mod list</h4><p>Modrinth, deps, client-vs-server hints</p></div></div>
-        <div class="today-item"><div class="today-icon">▣</div><div><h4>Health reports</h4><p>Scheduled or on demand · prioritized fixes</p></div></div>
-        <div class="today-item"><div class="today-icon">◈</div><div><h4>Performance Insights</h4><p>Busy/quiet hours, sticky lag, heatmaps, CSV</p></div></div>
-        <div class="today-item"><div class="today-icon">✦</div><div><h4>Spark integration</h4><p>Turn a profile into “what ate the tick”</p></div></div>
+        <div class="today-item"><div class="today-icon">▦</div><div><h4>Smart mod list</h4><p>Modrinth, pack-impact updates, client-vs-server</p></div></div>
+        <div class="today-item"><div class="today-icon">▣</div><div><h4>Watching + Scanning</h4><p>Issues stay current without homework every visit</p></div></div>
+        <div class="today-item"><div class="today-icon">◈</div><div><h4>Performance Insights</h4><p>Busy/quiet hours, baseline, storage runway</p></div></div>
+        <div class="today-item"><div class="today-icon">✦</div><div><h4>Spark + auto-capture</h4><p>“What ate the tick” · opt-in on critical lag</p></div></div>
+        <div class="today-item"><div class="today-icon">◆</div><div><h4>GC / JVM + RAM</h4><p>Flags advice · conservative “need more RAM?”</p></div></div>
+        <div class="today-item"><div class="today-icon">✓</div><div><h4>Safe restart + stories</h4><p>Checklist before /stop · lag → crash → backup</p></div></div>
         <div class="today-item"><div class="today-icon">◎</div><div><h4>Disaster recovery</h4><p>CLI + browser viewer when it won’t boot</p></div></div>
-        <div class="today-item"><div class="today-icon">☰</div><div><h4>Ops extras</h4><p>Backups, sessions, activity, logs, docs</p></div></div>
+        <div class="today-item"><div class="today-icon">☰</div><div><h4>Ops + Support packs</h4><p>Backups · Settings · redacted zip · Copy for Discord</p></div></div>
         <div class="today-item"><div class="today-icon">🔒</div><div><h4>Secure by default</h4><p>Login, optional 2FA, honest panel metrics</p></div></div>
       </div>
 
@@ -525,13 +527,11 @@
             <div class="panel-icon">⚡</div>
             <div>
               <h3>When the server lags</h3>
-              <div class="sub">Catch it · name it · separate farms from mods</div>
+              <div class="sub">Separate farms from mods</div>
             </div>
           </div>
           <ul>
-            <li><span><strong>Catch lag for you</strong> — auto-profile on TPS dips; name the culprit even if you weren’t watching</span></li>
             <li><span><strong>Spot farms &amp; chunk loaders</strong> — world pressure (entities, chunks) separate from “a bad mod”</span></li>
-            <li><span><strong>Notice when normal gets worse</strong> — baseline + sustained regression (“slower since Tuesday”)</span></li>
           </ul>
         </section>
 
@@ -540,14 +540,11 @@
             <div class="panel-icon">▣</div>
             <div>
               <h3>When you’re unsure about RAM or settings</h3>
-              <div class="sub">Clear answers before you spend money</div>
+              <div class="sub">Apply vetted settings safely</div>
             </div>
           </div>
           <ul>
-            <li><span><strong>Do I need more RAM?</strong> — plain-English GC, heap, flags, Java version</span></li>
-            <li><span><strong>Right-size memory</strong> — what you actually use vs idle headroom</span></li>
-            <li><span><strong>Config coach</strong> — keep / tweak / why for properties &amp; startup flags</span></li>
-            <li><span><strong>Safe guided fixes</strong> — vetted settings with preview &amp; undo</span></li>
+            <li><span><strong>Safe guided fixes</strong> — apply vetted settings with preview &amp; undo</span></li>
           </ul>
         </section>
 
@@ -556,14 +553,13 @@
             <div class="panel-icon">✓</div>
             <div>
               <h3>When you need to trust a restart</h3>
-              <div class="sub">Know it’s safe · understand what went wrong</div>
+              <div class="sub">Understand outages · smarter advice</div>
             </div>
           </div>
           <ul>
-            <li><span><strong>Safe to restart?</strong> — backups, pregen, who’s online before /stop</span></li>
-            <li><span><strong>One incident timeline</strong> — lag → crash → missed backup</span></li>
             <li><span><strong>Why it really died</strong> — mod crash vs OOM vs panel/watchdog</span></li>
-            <li><span><strong>Weekly digest · disk runway · smarter restart advice</strong> — panel still owns the stop</span></li>
+            <li><span><strong>Weekly digest</strong> — grade, crashes, disk trend, one useful next action</span></li>
+            <li><span><strong>Smarter restart advice</strong> — suggest a maintenance window (panel still owns /stop)</span></li>
           </ul>
         </section>
 
@@ -623,8 +619,8 @@
           </div>
           <ul>
             <li><span><strong>Live command bridge</strong> — preview safe triage (e.g. pause Chunky); confirm first</span></li>
-            <li><span><strong>Support pack export</strong> — one redacted zip for mod authors</span></li>
             <li><span><strong>Player-safe explain + ops context</strong> — short vs admin detail; lag vs timeout (not analytics)</span></li>
+            <li><span><strong>Optional anonymous diagnostics</strong> — opt-in, previewable, cooldown’d (off by default)</span></li>
           </ul>
         </section>
 
@@ -639,7 +635,7 @@
           <ul>
             <li><span><strong>Named admin accounts</strong> — per-person logins + who changed what</span></li>
             <li><span><strong>Public status page</strong> — “are we up?” without exposing the dashboard</span></li>
-            <li><span><strong>Copy for Discord · maintenance windows · mobile glance</strong></span></li>
+            <li><span><strong>Richer Copy for Discord · maintenance windows · mobile glance</strong></span></li>
           </ul>
         </section>
       </div>

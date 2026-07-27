@@ -13,6 +13,34 @@ export function niceYDomain(domain: YDomain): YDomain {
 }
 
 /**
+ * Expand-only merge for live sliding viewports.
+ * Prevents max*1.1 + nice() from vertically "breathing" as the window slides
+ * or tip samples tick — spikes keep headroom until the lock key resets (preset).
+ */
+export function expandOnlyYDomains(
+  prev: Record<string, YDomain>,
+  next: Record<string, YDomain>,
+): Record<string, YDomain> {
+  const out: Record<string, YDomain> = {};
+  const keys = new Set([...Object.keys(prev), ...Object.keys(next)]);
+  for (const axisId of keys) {
+    const a = prev[axisId];
+    const b = next[axisId];
+    if (!a && b) {
+      out[axisId] = b;
+      continue;
+    }
+    if (a && !b) {
+      out[axisId] = a;
+      continue;
+    }
+    if (!(a && b)) continue;
+    out[axisId] = [Math.min(a[0], b[0]), Math.max(a[1], b[1])];
+  }
+  return out;
+}
+
+/**
  * Skip Y tween when both endpoints move less than the threshold relative to span.
  * When in doubt callers should tween — beauty wins over micro-optimization.
  */

@@ -4,7 +4,7 @@ import { motion, useSpring } from "motion/react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useChart, useChartStable } from "./chart-context";
-import { hmsTimeFmt } from "./chart-formatters";
+import { hmTimeFmt } from "./chart-formatters";
 
 const TICKER_HALF_WIDTH = 50;
 const FADE_BUFFER = 20;
@@ -32,11 +32,11 @@ function labelFadeOpacity(
 export interface LiveXAxisProps {
   /** Number of time labels. Default: 5 */
   numTicks?: number;
-  /** Time formatter. Default: HH:MM:SS */
+  /** Time formatter. Default: HH:MM */
   formatTime?: (t: number) => string;
 }
 
-const defaultFormatTime = (t: number) => hmsTimeFmt.format(new Date(t));
+const defaultFormatTime = (t: number) => hmTimeFmt.format(new Date(t));
 
 export function LiveXAxis(props: LiveXAxisProps) {
   const { containerRef } = useChartStable();

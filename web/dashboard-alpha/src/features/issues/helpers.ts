@@ -78,6 +78,16 @@ export function confidenceTone(label: string | null): 'ok' | 'warn' | 'neutral' 
   return 'neutral';
 }
 
+/** Unwrap GET/POST `/api/issues/acks` payloads into the id→record map helpers expect. */
+export function acksMapFromResponse(data: unknown): Record<string, unknown> {
+  const root = asRecord(data);
+  if ('acknowledged_issues' in root) {
+    return asRecord(root.acknowledged_issues);
+  }
+  // Fixture / legacy: already a flat map of ack keys
+  return root;
+}
+
 export function isIssueAcked(acks: Record<string, unknown>, key: string): boolean {
   if (!key) return false;
   return acks[key] != null;

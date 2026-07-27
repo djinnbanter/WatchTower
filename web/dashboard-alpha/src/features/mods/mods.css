@@ -1,9 +1,52 @@
+/*
+ * Fill the shell viewport and keep the catalog/detail panes scrolling inside
+ * the split — not the outer .wt-page-scroll.
+ */
+.wt-page-scroll:has(.md-page) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.wt-page-scroll:has(.md-page) > #content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
 .md-page {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
   min-height: 0;
   flex: 1 1 auto;
+  height: 100%;
+  overflow: hidden;
+}
+
+.md-hero-wrap {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  /* Stacked layout: allow the page to scroll again */
+  .wt-page-scroll:has(.md-page) {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .wt-page-scroll:has(.md-page) > #content {
+    flex: none;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .md-page {
+    height: auto;
+    overflow: visible;
+  }
 }
 
 .md-skeleton {
@@ -636,6 +679,7 @@ button.md-status__chip:hover {
   gap: 0.75rem;
   min-height: 0;
   flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .md-changes {
@@ -709,14 +753,27 @@ button.md-status__chip:hover {
   align-items: stretch;
   flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 @media (max-width: 1100px) {
+  .md-overview,
+  .md-updates,
+  .md-conflicts,
+  .md-log-errors,
+  .md-changes,
+  .md-modrinth,
+  .md-forensics {
+    overflow: visible;
+  }
+
   .md-split {
     grid-template-columns: 1fr;
     height: auto;
     flex: 0 1 auto;
     min-height: 0;
+    overflow: visible;
   }
 
   .md-list {

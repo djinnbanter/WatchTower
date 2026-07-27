@@ -473,6 +473,60 @@ public final class OpsCacheWriter {
         }
     }
 
+    /**
+     * Re-stamp crash {@code acknowledged} flags and {@code unreviewed} from StateManager.
+     * Called after dashboard ack/unack so Overview scorecard stays fresh without a rescan.
+     */
+    public static JsonObject applyCrashAcks(Path opsCachePath, Path statePath) throws IOException {
+        if (opsCachePath == null || statePath == null) {
+            return null;
+        }
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            if (!cache.has(OpsCacheSchema.CRASHES) || !cache.get(OpsCacheSchema.CRASHES).isJsonObject()) {
+                return cache;
+            }
+            JsonObject crashes = cache.getAsJsonObject(OpsCacheSchema.CRASHES).deepCopy();
+            if (!crashes.has(OpsCacheSchema.CRASHES_ENTRIES)
+                    || !crashes.get(OpsCacheSchema.CRASHES_ENTRIES).isJsonArray()) {
+                return cache;
+            }
+            JsonObject acks = StateManager.getAcknowledgedCrashes(statePath);
+            JsonArray entries = crashes.getAsJsonArray(OpsCacheSchema.CRASHES_ENTRIES);
+            int unreviewed = 0;
+            JsonObject latestUnreviewed = null;
+            for (JsonElement el : entries) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject row = el.getAsJsonObject();
+                String file = row.has(OpsCacheSchema.ENTRY_FILE)
+                        ? row.get(OpsCacheSchema.ENTRY_FILE).getAsString() : "";
+                boolean acked = !file.isBlank() && StateManager.isCrashAcked(acks, file);
+                row.addProperty("acknowledged", acked);
+                if (!acked && !file.isBlank()) {
+                    unreviewed++;
+                    if (latestUnreviewed == null) {
+                        latestUnreviewed = row;
+                    }
+                }
+            }
+            crashes.addProperty(OpsCacheSchema.CRASHES_UNREVIEWED, unreviewed);
+            if (latestUnreviewed != null) {
+                crashes.add("latest_unreviewed", latestUnreviewed.deepCopy());
+            } else {
+                crashes.remove("latest_unreviewed");
+            }
+            cache.add(OpsCacheSchema.CRASHES, crashes);
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
     public static JsonObject applyBackupExternal(
             Path opsCachePath,
             Path statePath,

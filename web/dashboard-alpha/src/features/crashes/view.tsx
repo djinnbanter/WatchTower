@@ -123,6 +123,7 @@ export function PageView({ route }: { route: RouteState }) {
     void queryClient.invalidateQueries({ queryKey: ['crashes-grouped'] });
     void queryClient.invalidateQueries({ queryKey: ['crashes-acks'] });
     void queryClient.invalidateQueries({ queryKey: ['ops-cache'] });
+    void queryClient.invalidateQueries({ queryKey: ['overview-meta'] });
   };
 
   const ackMutation = useMutation({

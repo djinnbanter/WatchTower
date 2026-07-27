@@ -6,7 +6,7 @@
 
 Watchtower is ops software for modded Minecraft servers. It runs **on your machine** — a jar in `mods/`, dashboard on your server. No cloud account. Nothing leaves your host unless you choose to share it.
 
-**Today:** NeoForge **1.21.x** · **Coming later:** Fabric and NeoForge **1.20.x**  
+**Today:** NeoForge **1.21.x** (**1.1.2**) · **Coming later:** Fabric and NeoForge **1.20.x**  
 [Modrinth](https://modrinth.com/mod/watchtower) · [Changelog](../CHANGELOG.md) · [Install guide](https://github.com/djinnbanter/WatchTower/wiki/Installation)
 
 Releases ship when they’re ready — no fake dates. When something lands, it shows up in the [Changelog](../CHANGELOG.md).
@@ -34,12 +34,16 @@ If you install Watchtower now, you already get:
 - **Watching + Scanning** — charts and Issues stay current without homework every visit
 - **Fix inbox** — prioritized problems from continuous Scanning
 - **Crash intelligence** — names the likely mod and the fix in plain English
-- **Smart mod list** — Modrinth lookups, updates, conflicts, client-vs-server hints
-- **Performance Insights** — busy vs quiet hours, storage trends, config health
-- **Spark integration** — turn a profile into “what ate the tick”
+- **Smart mod list** — Modrinth lookups, pack-impact updates, conflicts, client-vs-server hints
+- **Performance Insights** — busy vs quiet hours, storage trends, config health, and baseline “slower than normal”
+- **Spark integration** — turn a profile into “what ate the tick,” plus opt-in auto-capture on critical lag
+- **GC / JVM + RAM advice** — Live GC pause % of wall, flags profile, and a conservative “do I need more RAM?” card
+- **Config audit** — read-only keep / tweak / why for `server.properties` and startup flags
+- **Safe to restart? + incident stories** — Overview checklist before `/stop`; Activity stitches lag → crash → missed backup
+- **Disk runway** — roughly how many days left, not just “82% full”
 - **Sources** — poller freshness and next data pulls
-- **Ops extras** — backups, sessions, activity, logs, startup, and Help Center
-- **Support packs** — redacted zip when you need to share with a host or mod author
+- **Ops extras** — backups (local + Alpha panel/cloud), sessions, activity, logs, startup, Settings, and Help Center
+- **Support packs** — redacted zip builder (presets, logs/crashes/Spark, Copy for Discord) when you need to share
 - **Secure by default** — login, optional 2FA, honest metrics on hosted panels
 - **Disaster recovery** — CLI + browser viewer when the server won’t boot
 
@@ -51,24 +55,16 @@ Grouped by situations every modded-server admin hits. Each line is one planned c
 
 ### When the server lags
 
-- **Catch lag for you** — auto-profile when TPS dips and name the culprit mod, even if you weren’t watching
 - **Spot farms and chunk loaders** — show world pressure (entities, loaded chunks) separately from “a bad mod”
-- **Notice when “normal” gets worse** — learn your baseline and flag a sustained regression (“slower since Tuesday”)
 
 ### When you’re unsure about RAM or settings
 
-- **GC / JVM health advisor** — Live GC pause % of wall, heap pressure, flags profile, and plain-English heap-bound vs GC-bound vs tick/mod advice (with Copy flags for Paper/Aikar when useful)
-- **Do I need more RAM?** — Insights → **Configs** right-size card: conservative heap peak/p95 vs `-Xmx`, never suggests more RAM when the window looks tick/GC-bound
-- **Config coach** — review `server.properties` and startup flags with keep / tweak / why
 - **Safe guided fixes** — apply vetted settings from the dashboard with preview and undo
 
 ### When you need to trust a restart or understand an outage
 
-- **Safe to restart?** — check backups, pregen, and who’s online before `/stop`
-- **One incident timeline** — lag → crash → missed backup in a single story
 - **Why it really died** — tell a mod crash apart from OOM or a panel/watchdog kill
 - **Weekly digest** — grade, crashes, disk trend, and one useful next action
-- **Disk runway** — not just “82% full,” but roughly how many days left and what’s growing
 - **Smarter restart advice** — suggest a maintenance window from uptime and GC trends (your panel still does the restart)
 
 ### When mods need care
@@ -95,7 +91,6 @@ Grouped by situations every modded-server admin hits. Each line is one planned c
 ### When you need to act or ask for help
 
 - **Live command bridge** — preview and run safe triage commands (e.g. pause Chunky) from the dashboard; confirm first
-- **Support pack export** — one redacted zip for mod authors (facts, crash TLDR, mod list)
 - **Player-safe explain** — short blurb for players vs full detail for admins
 - **Player-safe ops context** — lag vs timeout hints and richer restart roster (not player analytics)
 - **Optional anonymous diagnostics** — after a report (with a daily cooldown), opt-in operators can send a redacted package of that report plus the full crash/log files it used — so Watchtower can learn real failures. Off by default; previewable; no continuous log streaming
@@ -104,7 +99,7 @@ Grouped by situations every modded-server admin hits. Each line is one planned c
 
 - **Named admin accounts** — per-person logins and a log of who changed what
 - **Public status page** — “are we up?” for Discord, without exposing the dashboard
-- **Copy for Discord** — auto-redacted summary for support channels
+- **Richer Copy for Discord** — auto-redacted channel summaries beyond the Support pack blurb
 - **Maintenance windows** — scheduled restarts stop looking like mystery outages
 - **Mobile glance** — a fast phone-friendly health check you can pin to your home screen
 
