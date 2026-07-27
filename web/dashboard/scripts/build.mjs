@@ -17,6 +17,7 @@ const ROOT = path.join(__dirname, '..');
 export const STYLE_ORDER = [
   'src/styles/00-tokens.css',
   'src/styles/01-themes.css',
+  'src/styles/01-skin-sass.css',
   'src/styles/02-reset.css',
   'src/styles/03-type.css',
   'src/styles/10-motion.css',
@@ -51,15 +52,21 @@ export const STYLE_ORDER = [
   'src/styles/30-patterns/gauge.css',
   'src/styles/30-patterns/bars.css',
   'src/styles/30-patterns/status.css',
+  'src/styles/30-patterns/instrument.css',
   'src/styles/30-patterns/_index.css',
   // Phase 3 shell / app
   'src/styles/40-features/shell.css',
   // Phase 6 feature pages
+  'src/styles/40-features/queue-chrome.css',
   'src/styles/40-features/features.css',
   'src/styles/40-features/overview.css',
   'src/styles/40-features/live.css',
   'src/styles/40-features/issues.css',
   'src/styles/40-features/logs.css',
+  'src/styles/40-features/support.css',
+  'src/styles/40-features/roadmap.css',
+  'src/styles/40-features/spark.css',
+  'src/styles/40-features/skin-sass.css',
   'src/styles/40-features/_index.css',
   // Phase 9 pages
   'src/styles/40-features/settings.css',

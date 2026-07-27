@@ -11,7 +11,17 @@ import java.util.List;
  */
 public final class RunningModsCollector {
 
-    public record ModRow(String id, String version, String displayName) {
+    public record ModRow(
+            String id,
+            String version,
+            String displayName,
+            String jarFile,
+            boolean nested,
+            String parentJar,
+            String nestedPath) {
+        public ModRow(String id, String version, String displayName) {
+            this(id, version, displayName, null, false, null, null);
+        }
     }
 
     private RunningModsCollector() {
@@ -32,6 +42,41 @@ public final class RunningModsCollector {
         if (mod.displayName() != null && !mod.displayName().isBlank()) {
             row.addProperty("display_name", mod.displayName());
         }
+        if (mod.jarFile() != null && !mod.jarFile().isBlank()) {
+            row.addProperty("jar_file", mod.jarFile());
+        }
+        if (mod.nested()) {
+            row.addProperty("nested", true);
+            if (mod.parentJar() != null && !mod.parentJar().isBlank()) {
+                row.addProperty("parent_jar", mod.parentJar());
+            }
+            if (mod.nestedPath() != null && !mod.nestedPath().isBlank()) {
+                row.addProperty("nested_path", mod.nestedPath());
+            }
+        }
         return row;
+    }
+
+    /** Count of top-level (non-nested) running mods for ops cache KPIs. */
+    public static int topLevelCount(JsonArray mods) {
+        if (mods == null || mods.isEmpty()) {
+            return 0;
+        }
+        int n = 0;
+        for (var el : mods) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject m = el.getAsJsonObject();
+            if (m.has("nested") && m.get("nested").getAsBoolean()) {
+                continue;
+            }
+            if (m.has("parent_jar") && !m.get("parent_jar").isJsonNull()
+                    && !m.get("parent_jar").getAsString().isBlank()) {
+                continue;
+            }
+            n++;
+        }
+        return n;
     }
 }

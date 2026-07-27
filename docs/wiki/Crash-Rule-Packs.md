@@ -1,6 +1,8 @@
-# Crash rule packs
+# Crash Rule Packs
 
-Declarative YAML matchers for pack-specific crash patterns. Java classifiers always run first; YAML packs run after and record hits on `optional.crash_rule_hits[]`.
+Optional YAML matchers for pack-specific crash patterns. Built-in Java classifiers always run first; YAML packs run after and record hits. Most owners never need a custom pack — start on [[Crashes]].
+
+Operators who maintain a modpack can drop packs under `config/watchtower/rules/` so Fix hints match your pack’s known failure modes.
 
 ## Where packs live
 
@@ -70,7 +72,7 @@ java -jar watchtower-cli.jar rules validate config/watchtower/rules/my-pack.yaml
 java -jar watchtower-cli.jar rules list --server /path/to/server
 ```
 
-Dashboard: **Settings → Rules** lists loaded packs and can validate pasted YAML.
+Dashboard: crash rule packs are still configured via `watchtower.conf` and files under `config/watchtower/rules/` (Settings → Alerts is disk/retention only in the current dashboard).
 
 ## Issue suppressions
 

@@ -1,102 +1,144 @@
 # Watchtower roadmap
 
-**What's happening on your server — and what to do next.**  
-Live dashboard, health reports, disaster recovery — **all on your machine**. No cloud account, no analytics database.
+**Shareable poster:** [docs/assets/watchtower-roadmap.png](assets/watchtower-roadmap.png) · editable source [roadmap-poster.html](assets/roadmap-poster.html)
 
-Releases ship when they're ready (no fixed dates). **Latest:** **1.1.0** · [Modrinth](https://modrinth.com/mod/watchtower) · [Changelog](../CHANGELOG.md)
+**What this page is:** a plain-English look at what Watchtower does **today**, what we’re **building next**, and what we’re **not** trying to be.
 
-**Platform:** NeoForge **1.21.x** now · Fabric **1.21** + NeoForge **1.20.x** later.
+Watchtower is ops software for modded Minecraft servers. It runs **on your machine** — a jar in `mods/`, dashboard on your server. No cloud account. Nothing leaves your host unless you choose to share it.
 
----
+**Today:** NeoForge **1.21.x** (**1.1.2**) · **Coming later:** Fabric and NeoForge **1.20.x**  
+[Modrinth](https://modrinth.com/mod/watchtower) · [Changelog](../CHANGELOG.md) · [Install guide](https://github.com/djinnbanter/WatchTower/wiki/Installation)
 
-## 1.1.0 — Shipped
-
-Ops intelligence and dashboard polish since **1.0.0** / **1.0.0a** — former planned **1.0.1–1.0.8** themes landed here:
-
-- Smarter mod list (Create protection, Modrinth lookup, dependency tree)
-- Crash & DR intelligence, Startup boot profile, crash inbox groups
-- Mod forensics + declarative crash rule packs
-- Glass UI, Run Report stage progress, Backups setup + **Not tracking**
-- Overview welcome, Insights Patterns sub-panels, Session roster polish
-- Issues acknowledge / Reviewed, Logs viewer, Live chart windows
-- Setup wizard discovery audit + guided tour (one card per rail page)
-
-Artifacts: `watchtower-neoforge-1.1.0+mc1.21.jar` · `watchtower-cli-1.1.0.jar`
+Releases ship when they’re ready — no fake dates. When something lands, it shows up in the [Changelog](../CHANGELOG.md).
 
 ---
 
-## 1.0.0 — Shipped
+## How to read this
 
-First public release — everything below ships in **1.0.0**:
+| Section | Meaning |
+| ------- | ------- |
+| **Works today** | Already in the jar you can download |
+| **Coming next** | Planned work, grouped by the problem it solves for you |
+| **Later** | Bigger bets (fleet, alerts, more loaders) |
+| **Not our job** | Things other tools do better — we stay out of the way |
 
-- Live dashboard (`:8787`) with Overview, Live, Insights, Issues, Crashes, Mods, Backups, Activity, Session, Spark, and Sources tabs
-- **Docs** tab — bundled operator wiki with search
-- **Setup wizard** — first-run audit, backup discovery, schedule, optional 2FA
-- Scheduled health reports (default twice daily) with report retention
-- Always-on background ops scan (~60s) — logs, crashes, mod errors, activity, lag spikes
-- Performance history and **Insights** (busy/quiet hours, heatmaps, CSV export)
-- Spark profiler integration — Spark tab with on-demand profile parsing
-- External backup heartbeat for panel/cloud backups (Settings → Backups wizard)
-- Login + optional 2FA, version chip, update banner
-- Hosted-panel metrics honesty (cgroup labels, trust badges)
-- DR CLI + browser DR viewer
-- NeoForge **1.21.x** line — `watchtower-neoforge-1.0.0+mc1.21.jar` · **GPL-3.0-or-later**
-
-[Installation](https://github.com/djinnbanter/WatchTower/wiki/Installation) · [Dashboard](https://github.com/djinnbanter/WatchTower/wiki/Dashboard-Overview) · [Disaster Recovery](https://github.com/djinnbanter/WatchTower/wiki/Disaster-Recovery)
+Nothing here is a contract. Loud community requests move up the list.
 
 ---
 
-## Live vs full report
+## Works today
 
-Watchtower uses **three update kinds** — you do not need a full health report every time you open the dashboard.
+If you install Watchtower now, you already get:
 
-| Kind | What it does | When |
-| ---- | ------------ | ---- |
-| **Watching** (live) | TPS, MSPT, CPU, charts | ~every second |
-| **Scanning** (light scan) | Crashes folder, always-on log tail (mod errors, activity, lag) | Background ~60s (`OPS_LOG_SCAN_SEC`) + Refresh buttons |
-| **Auditing** (full report) | Complete Issues queue, mod analysis, audit snapshots | Manual, **Run full report**, or [scheduled reports](wiki/Scheduled-Reports.md) |
-
-**Full guide:** [Understanding Data Sources](wiki/Understanding-Data-Sources.md)
-
-**Still needs a scheduled or manual report:** full **Issues** action queue, deep **Mods** analysis, **Session** playtime/window stats, report history, DR audit quality.
-
-**Works without a fresh report:** Live tab, crash folder scan, Activity ledger, lag investigations, mod log scan, backup rescan (after folder chosen).
-
----
-
-## Planned releases
-
-One theme per release, in order. Details may shift slightly before ship.
-
-### 1.2.0 — Fleet hub
-
-One view across **many servers** — compare TPS, issues, and backups without opening every `:8787` port.
-
-### 1.3.0 — Fabric & alerts
-
-- **Fabric 1.21** mod JAR — same dashboard and reports
-- Optional **Discord / webhook alerts** for crashes, lag, stale backups, pregen stalls
-
-### 1.4.0 — NeoForge 1.20.x
-
-Second mod JAR for **1.20.x packs** — pick **`+mc1.20`** or **`+mc1.21`** at download. Same CLI and DR workflow.
+- **Live dashboard** — TPS, tick lag, CPU, memory, and players updating while you watch
+- **Watching + Scanning** — charts and Issues stay current without homework every visit
+- **Fix inbox** — prioritized problems from continuous Scanning
+- **Crash intelligence** — names the likely mod and the fix in plain English
+- **Smart mod list** — Modrinth lookups, pack-impact updates, conflicts, client-vs-server hints
+- **Performance Insights** — busy vs quiet hours, storage trends, config health, and baseline “slower than normal”
+- **Spark integration** — turn a profile into “what ate the tick,” plus opt-in auto-capture on critical lag
+- **GC / JVM + RAM advice** — Live GC pause % of wall, flags profile, and a conservative “do I need more RAM?” card
+- **Config audit** — read-only keep / tweak / why for `server.properties` and startup flags
+- **Safe to restart? + incident stories** — Overview checklist before `/stop`; Activity stitches lag → crash → missed backup
+- **Disk runway** — roughly how many days left, not just “82% full”
+- **Sources** — poller freshness and next data pulls
+- **Ops extras** — backups (local + Alpha panel/cloud), sessions, activity, logs, startup, Settings, and Help Center
+- **Support packs** — redacted zip builder (presets, logs/crashes/Spark, Copy for Discord) when you need to share
+- **Secure by default** — login, optional 2FA, honest metrics on hosted panels
+- **Disaster recovery** — CLI + browser viewer when the server won’t boot
 
 ---
 
-## Out of scope
+## Coming next
 
-**Full player analytics** — retention cohorts, GeoIP, global playtime leaderboards, and whitelist/OP/kick/ban from the dashboard (use your panel or in-game commands).
+Grouped by situations every modded-server admin hits. Each line is one planned capability.
 
-**GPU / graphics driver crashes** — client-side `hs_err` patterns (NVIDIA, AMD, Intel graphics, OpenGL, audio drivers) don't apply to headless dedicated servers.
+### When the server lags
 
-Watchtower **does** surface roster, report-window activity, and peak concurrent players for **ops triage** — who was online during lag or crashes — without replacing [Plan](https://www.playeranalytics.net/) or Pterodactyl. Server-wide busy/quiet hours ship on the **Insights** tab in **1.0.0**, not as a Session leaderboard product.
+- **Spot farms and chunk loaders** — show world pressure (entities, loaded chunks) separately from “a bad mod”
+
+### When you’re unsure about RAM or settings
+
+- **Safe guided fixes** — apply vetted settings from the dashboard with preview and undo
+
+### When you need to trust a restart or understand an outage
+
+- **Why it really died** — tell a mod crash apart from OOM or a panel/watchdog kill
+- **Weekly digest** — grade, crashes, disk trend, and one useful next action
+- **Smarter restart advice** — suggest a maintenance window from uptime and GC trends (your panel still does the restart)
+
+### When mods need care
+
+- **Jar quarantine** — move a bad or client-only jar aside (not delete), with Undo and a restart reminder
+- **Assisted Safe updates** — for pack-impact **Safe** updates: download, verify, back up the old jar, swap. Risky updates stay manual
+- **Did that update help?** — before/after performance after a mod change
+- **Tamper & secrets warnings** — jar changed without a version bump, or a config that looks like it contains a webhook/token
+- **CurseForge lookups** — richer coverage alongside Modrinth
+- **Shareable crash rules** — export fixes you’ve proven and share them with other admins on the same pack
+
+### When players can’t join or the pack drifts
+
+- **Join clinic** — failed join → exact mismatched jars → a short, redacted “copy for Discord” fix
+- **Pin a known-good pack** — freeze a good modlist; get a banner and named diff when jars drift
+- **First-hour sanity check** — after install, green/amber/red on Java, loader, client-only jars on the server, and missing deps
+
+### When the world itself is the problem
+
+- **Farm / item-storm storytelling** — “thousands of item entities near forced chunks” instead of “buy more RAM”
+- **Corrupt chunk playbook** — crash points at a likely region; guided stop → backup → repair path (no silent world wipes)
+- **Silent script failures** — KubeJS / datapack errors that never crash but break recipes, raised as Issues
+
+### When you need to act or ask for help
+
+- **Live command bridge** — preview and run safe triage commands (e.g. pause Chunky) from the dashboard; confirm first
+- **Player-safe explain** — short blurb for players vs full detail for admins
+- **Player-safe ops context** — lag vs timeout hints and richer restart roster (not player analytics)
+- **Optional anonymous diagnostics** — after a report (with a daily cooldown), opt-in operators can send a redacted package of that report plus the full crash/log files it used — so Watchtower can learn real failures. Off by default; previewable; no continuous log streaming
+
+### For teams and checking in on the go
+
+- **Named admin accounts** — per-person logins and a log of who changed what
+- **Public status page** — “are we up?” for Discord, without exposing the dashboard
+- **Richer Copy for Discord** — auto-redacted channel summaries beyond the Support pack blurb
+- **Maintenance windows** — scheduled restarts stop looking like mystery outages
+- **Mobile glance** — a fast phone-friendly health check you can pin to your home screen
 
 ---
 
-## Suggest a change
+## Later (bigger bets)
 
-- [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)
-- [Troubleshooting](https://github.com/djinnbanter/WatchTower/wiki/Troubleshooting)
-- [Disaster Recovery](https://github.com/djinnbanter/WatchTower/wiki/Disaster-Recovery)
+- **Insights schedule intelligence** — 7d vs 30d habit trends on Patterns → Schedule (`3 (−2)` style), local-time calendars, restart/event window tips, and drift teasers when the week stops matching the month (local data only)
+- **Fleet view** — TPS, crashes, and backups across many servers (proxy-aware for Velocity/Bungee); local hub first, optional **Watchtower Cloud** later for remote fleet + history when nodes go dark
+- **Watchtower Cloud (paid, optional)** — same mod + pairing code; remote ops desk, multi-server account, retention, and alerts — Local dashboard stays free forever
+- **Alerts that reach you** — Discord / webhook pings for crashes, lag, stale backups, and pregen stalls (host-side and/or Cloud)
+- **More platforms** — Fabric and NeoForge **1.20.x**, same dashboard and workflow
 
-When a release ships, we update this page, the [wiki Roadmap](wiki/Roadmap.md), the [public Changelog](../CHANGELOG.md), and [wiki Changelog](wiki/Changelog.md).
+---
+
+## Not our job
+
+We stay focused so the product stays clear:
+
+| We don’t replace… | Use instead / leave alone |
+| ----------------- | ------------------------- |
+| Host panels (start/stop, files, console) | Pterodactyl, Crafty, AMP, bare metal, etc. |
+| Player analytics (retention, GeoIP, leaderboards) | [Plan](https://www.playeranalytics.net/) and similar |
+| Client GPU / graphics crash tooling | Doesn’t apply to headless dedicated servers |
+
+Watchtower **does** show who’s online during lag or crashes — that’s ops triage, not surveillance.
+
+---
+
+## Promises that don’t change
+
+- **Your data stays yours** — local-first; no telemetry; no log uploads by default (optional anonymous diagnostics contribution is explicit opt-in only; optional **Watchtower Cloud** sync is a separate paid opt-in)
+- **You’re in control** — opt-in network features; preview and undo for risky actions; no quiet edits to mods or the world
+- **Ops, not surveillance** — help run the server; don’t track players like an analytics product
+- **Drop-in beside your host** — a jar in `mods/`, not a second control panel
+
+---
+
+## Help shape it
+
+- **Vote and request:** [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)
+- **Get running:** [Installation](https://github.com/djinnbanter/WatchTower/wiki/Installation) · [Troubleshooting](https://github.com/djinnbanter/WatchTower/wiki/Troubleshooting)

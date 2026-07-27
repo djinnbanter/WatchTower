@@ -1,25 +1,25 @@
 /**
  * WatchTower Lantern UI — application entry point.
- * Boot sequence: migrate → theme → source → auth → wizard → shell.
+ * Boot sequence: migrate → theme → skin → source → auth → wizard → shell.
  */
 
 // Signals Preact integration (side effect: patches Preact reconciler)
 import './lib/signals.js';
 
-import { render } from './lib/preact.js';
 import { html } from './lib/preact.js';
 
 import { migrateLegacy } from './state/persist.js';
-import { initTheme } from './theme/theme.js';
+import { initTheme, initSkin, getTheme, getSkin } from './theme/theme.js';
 import { createSource, isEmbedded } from './api/index.js';
 import { initActions } from './state/actions.js';
 import { startClock } from './state/clock.js';
-import { auth, ui, setUi } from './state/stores.js';
+import { auth, ui, setUi, samples, live } from './state/stores.js';
 import { AppShell } from './app/shell.js';
 import { AuthGate } from './app/auth-gate.js';
 import { WizardView } from './features/wizard/view.js';
 import { BootScreen } from './app/boot.js';
 import { setBootSource, resumeAfterAuth, ensureRouter } from './app/session-boot.js';
+import { setRenderRoot, kickRender } from './app/kick-render.js';
 
 // Register all feature pages (side effects)
 import './app/pages.js';
@@ -51,6 +51,8 @@ function App() {
 async function boot() {
   migrateLegacy();
   initTheme();
+  initSkin();
+  setUi({ theme: getTheme(), skin: getSkin() });
 
   const source = createSource();
   initActions(source);
@@ -59,7 +61,35 @@ async function boot() {
   const embedded = isEmbedded();
 
   const appEl = document.getElementById('app');
-  render(html`<${App} />`, appEl);
+  setRenderRoot(appEl, () => html`<${App} />`);
+  kickRender();
+
+  // Keep the root in sync when auth / boot / route signals change even if
+  // component auto-subscriptions stall.
+  const { effect, untracked } = await import('./lib/signals.js');
+  effect(() => {
+    // Track the whole route blob so subtab param changes always invalidate
+    void ui.value.bootPhase;
+    void JSON.stringify(ui.value.route);
+    void ui.value.railExpanded;
+    void ui.value.mobileNavOpen;
+    void ui.value.modal;
+    void ui.value.paletteOpen;
+    void ui.value.theme;
+    void ui.value.skin;
+    void ui.value.toasts?.length;
+    void auth.value.gate;
+    void samples.value.at;
+    kickRender();
+  });
+  // Live polls: full-tree kick on Live/Session (subscription stalls workaround).
+  // Overview owns a dedicated vitals strip — do not remount the whole page at 1Hz.
+  effect(() => {
+    void live.value.at;
+    const tab = untracked(() => ui.value.route?.tab);
+    if (tab === 'overview') return;
+    kickRender();
+  });
 
   if (embedded) {
     setUi({ bootPhase: 'auth' });

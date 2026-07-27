@@ -25,12 +25,27 @@ class PerformanceRollupAccumulatorTest {
         assertTrue(row.get("mspt_p95").getAsDouble() >= row.get("mspt_avg").getAsDouble());
         assertTrue(row.get("mspt_jitter_max").getAsDouble() > 0);
         assertEquals(2, row.get("players_max").getAsInt());
+        assertFalse(row.has("heap_pressure_pct_avg"));
+    }
+
+    @Test
+    void finalizeRow_includesHeapPressureAndGcPause() {
+        PerformanceRollupAccumulator acc = new PerformanceRollupAccumulator();
+        acc.addSample(20.0, 40.0, 1, 6.0, 14.0, 50.0, 19.5, 75.0, 4.5);
+        acc.addSample(20.0, 41.0, 1, 7.5, 14.0, 50.0, 19.5, 85.0, 5.5);
+        JsonObject row = acc.finalizeRow(1_700_000_060L);
+        assertEquals(80.0, row.get("heap_pressure_pct_avg").getAsDouble(), 0.01);
+        assertEquals(85.0, row.get("heap_pressure_pct_max").getAsDouble(), 0.01);
+        assertEquals(6.75, row.get("heap_used_gb_avg").getAsDouble(), 0.01);
+        assertEquals(7.5, row.get("heap_used_gb_max").getAsDouble(), 0.01);
+        assertEquals(5.0, row.get("gc_pause_pct_avg").getAsDouble(), 0.01);
     }
 
     @Test
     void p95_and_jitter_helpers() {
         List<Double> mspt = List.of(10.0, 20.0, 30.0, 40.0, 100.0);
         assertEquals(100.0, PerformanceRollupAccumulator.p95(new ArrayList<>(mspt)), 0.01);
+        assertEquals(30.0, PerformanceRollupAccumulator.p50(new ArrayList<>(mspt)), 0.01);
         assertEquals(60.0, PerformanceRollupAccumulator.maxJitter(new ArrayList<>(mspt)), 0.01);
     }
 }

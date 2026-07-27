@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import dev.mcstatus.watchtower.core.report.StateManager;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,6 +36,10 @@ public final class PlayerDirectoryCollector {
     }
 
     public static JsonObject collect(String serverDir, List<OnlinePlayer> onlinePlayers) {
+        return collect(serverDir, onlinePlayers, null);
+    }
+
+    public static JsonObject collect(String serverDir, List<OnlinePlayer> onlinePlayers, Path statePath) {
         JsonObject out = new JsonObject();
         out.addProperty("scanned_at", ISO.format(Instant.now()));
 
@@ -47,7 +52,7 @@ public final class PlayerDirectoryCollector {
         Map<String, String> nameToUuid = new HashMap<>();
 
         readUserCache(root, byUuid, nameToUuid);
-        readStats(statsDir, byUuid, nameToUuid);
+        readStats(statsDir, byUuid, nameToUuid, statePath);
 
         Set<String> onlineUuids = new HashSet<>();
         if (onlinePlayers != null) {
@@ -94,23 +99,7 @@ public final class PlayerDirectoryCollector {
     }
 
     static String resolveWorldName(Path serverRoot) {
-        Path props = serverRoot.resolve("server.properties");
-        if (Files.isRegularFile(props)) {
-            try {
-                for (String line : Files.readAllLines(props, StandardCharsets.UTF_8)) {
-                    String trimmed = line.trim();
-                    if (trimmed.startsWith("level-name=")) {
-                        String value = trimmed.substring("level-name=".length()).trim();
-                        if (!value.isEmpty()) {
-                            return value;
-                        }
-                    }
-                }
-            } catch (IOException ignored) {
-                // fall through
-            }
-        }
-        return "world";
+        return ServerPropertiesReader.read(serverRoot).levelName();
     }
 
     private static void readUserCache(Path serverRoot, Map<String, PlayerRow> byUuid, Map<String, String> nameToUuid) {
@@ -148,8 +137,26 @@ public final class PlayerDirectoryCollector {
     }
 
     private static void readStats(Path statsDir, Map<String, PlayerRow> byUuid, Map<String, String> nameToUuid) {
+        readStats(statsDir, byUuid, nameToUuid, null);
+    }
+
+    private static void readStats(
+            Path statsDir,
+            Map<String, PlayerRow> byUuid,
+            Map<String, String> nameToUuid,
+            Path statePath
+    ) {
         if (!Files.isDirectory(statsDir)) {
             return;
+        }
+        Map<String, StateManager.PlayerStatsCursor> priorIndex = Map.of();
+        Map<String, StateManager.PlayerStatsCursor> updatedIndex = new HashMap<>();
+        try {
+            if (statePath != null) {
+                priorIndex = StateManager.getPlayerStatsIndex(statePath);
+            }
+        } catch (IOException ignored) {
+            priorIndex = Map.of();
         }
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(statsDir, "*.json")) {
             for (Path file : stream) {
@@ -161,7 +168,20 @@ public final class PlayerDirectoryCollector {
                 if (uuid == null) {
                     continue;
                 }
-                long ticks = readPlaytimeTicks(file);
+                long mtime;
+                try {
+                    mtime = Files.getLastModifiedTime(file).toMillis();
+                } catch (IOException e) {
+                    continue;
+                }
+                StateManager.PlayerStatsCursor prior = priorIndex.get(uuid);
+                long ticks;
+                if (prior != null && prior.mtime() == mtime && prior.ticks() > 0) {
+                    ticks = prior.ticks();
+                } else {
+                    ticks = readPlaytimeTicks(file);
+                }
+                updatedIndex.put(uuid, new StateManager.PlayerStatsCursor(mtime, ticks));
                 if (ticks <= 0) {
                     continue;
                 }
@@ -170,6 +190,13 @@ public final class PlayerDirectoryCollector {
             }
         } catch (IOException ignored) {
             // skip
+        }
+        if (statePath != null && !updatedIndex.isEmpty()) {
+            try {
+                StateManager.updatePlayerStatsIndex(statePath, updatedIndex);
+            } catch (IOException ignored) {
+                // skip
+            }
         }
     }
 

@@ -1,0 +1,69 @@
+{
+  "schema_version": 3,
+  "updated_at": "2026-07-16T20:25:00Z",
+  "ops_cache_seq": 1,
+  "activity": {
+    "scanned_at": "2026-07-16T20:25:00Z",
+    "new_count": 1,
+    "events": [
+      {
+        "time": "2026-07-16T20:14:00Z",
+        "type": "lag_incident",
+        "detail": "Lag spike captured",
+        "source": "scan",
+        "incident_id": "2026-07-16T20-14-00Z"
+      },
+      {
+        "time": "2026-07-16T20:15:30Z",
+        "type": "clean_stop",
+        "detail": "Server stopped",
+        "source": "report"
+      }
+    ]
+  },
+  "lag_issues": {
+    "updated_at": "2026-07-16T20:14:00Z",
+    "active_count": 1,
+    "entries": [
+      {
+        "id": "LAG-2026-07-16T20-14-00Z",
+        "incident_id": "2026-07-16T20-14-00Z",
+        "severity": "critical",
+        "time": "2026-07-16T20:14:00Z",
+        "title": "Lag spike — MSPT 340ms · TPS 2.9",
+        "narrative": "MSPT hit 340ms with TPS 2.9.",
+        "metrics": { "tps": 2.9, "mspt": 340.0, "players_online": 2 },
+        "resolved": false
+      }
+    ]
+  },
+  "crashes": {
+    "scanned_at": "2026-07-16T20:25:00Z",
+    "count": 1,
+    "unreviewed": 1,
+    "entries": [
+      {
+        "file": "crash-2026-07-16_20.16.00-server.txt",
+        "mtime": 1784232960,
+        "size": 12000,
+        "display_label": "Create NPE",
+        "source": "scan"
+      }
+    ]
+  },
+  "backup_external": {
+    "status": "failed",
+    "updated_at": "2026-07-16T20:20:00Z",
+    "detail": "Job aborted — server unreachable"
+  },
+  "expected": {
+    "story_count": 1,
+    "min_events": 3,
+    "rule_matches": ["backup_after_downtime"],
+    "narrative_contains": [
+      "Lag spike",
+      "Create NPE",
+      "failed because the server was down"
+    ]
+  }
+}

@@ -40,5 +40,9 @@ samples/validation/
 Thumbs.db
 .DS_Store
 
+# Local scratch / support bundle extracts (may contain real server data)
+.tmp-support-bundle/
+.tmp*/
+
 # Maintainer-only dev docs (not published — keep local copies)
 docs/dev/

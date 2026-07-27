@@ -1,0 +1,46 @@
+{
+  "extract_id": "extract_bb13287b7fab8861ed7a81517efb7674",
+  "session_id": "session_bb13287b7fab8861ed7a81517efb7674",
+  "status": "ok",
+  "results": [
+    {
+      "url": "https://raw.githubusercontent.com/MrLightful/shadcn-tree-view/main/package.json",
+      "title": "",
+      "publish_date": null,
+      "excerpts": [
+        "\"author\": \"Roman Sirokov roman@mrlightful.com\",\n\"license\": \"MIT\",\n\"dependencies\": {\n\"@radix-ui/react-accordion\": \"^1.2.4\",\n\"class-variance-authority\": \"^0.7.1\",\n\"clsx\": \"^2.1.1\",\n\"lucide-react\": \"^0.487.0\",\n\"tailwind-merge\": \"^3.2.0\"\n},\n\"devDependencies\": {\n\"@types/react\": \"^19.1.0\",\n\"typescript\": \"^5.8.3\"\n}\n}"
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/MrLightful/shadcn-tree-view/main/src/tree-view.tsx",
+      "title": "",
+      "publish_date": null,
+      "excerpts": [
+        "'use client'\nimport React from 'react'\nimport * as AccordionPrimitive from '@radix-ui/react-accordion'\nimport { ChevronRight } from 'lucide-react'\nimport { cva } from 'class-variance-authority'\nimport { cn } from '@/lib/utils'\n\n...\n\nconst AccordionContent = React.forwardRef<\nReact.ElementRef<typeof AccordionPrimitive.Content>,\nReact.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>\n> (({ className, children, ...props }, ref) => (\n> <AccordionPrimitive.Content\n> ref={ref}\n> className={cn(\n> 'overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down',\n> className\n> )}\n> {...props}\n```\n    <div className=\"pb-1 pt-0\">{children}</div>\n</AccordionPrimitive.Content>\n```"
+      ]
+    },
+    {
+      "url": "https://github.com/MrLightful/shadcn-tree-view/issues",
+      "title": "Issues \u00b7 MrLightful/shadcn-tree-view \u00b7 GitHub",
+      "publish_date": "2025-12-09",
+      "excerpts": [
+        "# Navigation Menu\nToggle navigation\nAppearance settings\nSearch or jump to...\n\n...\n\n# All issues\n## Search results\n\u00b7 [MrLightful](https://github.com/MrLightful/shadcn-tree-view/issues?q=is%3Aissue%20state%3Aopen%20author%3AMrLightful) opened on Oct 1, 2025\n* [Does this support virtual scrolling?](https://github.com/MrLightful/shadcn-tree-view/issues/15)\nStatus: Open.\n#15 In MrLightful/shadcn-tree-view;"
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "url": "https://mrlightful.com/registry/tree-view",
+      "error_type": "fetch_error",
+      "http_status_code": 200,
+      "content": null
+    }
+  ],
+  "usage": [
+    {
+      "name": "sku_extract_excerpts",
+      "count": 3
+    }
+  ],
+  "warnings": []
+}

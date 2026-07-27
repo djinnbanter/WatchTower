@@ -1,0 +1,5 @@
+---- Minecraft Crash Report ----
+Time: 2026-06-18 08:13:50
+Description: Watching Server
+
+java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds (should be max 0.05)

@@ -3,7 +3,7 @@ package dev.mcstatus.watchtower.core.analyze;
 import com.google.gson.JsonObject;
 
 /**
- * Detects significant disk usage jumps vs the last full report baseline.
+ * Detects significant disk usage jumps vs the stored disk baseline.
  */
 public final class DiskJumpEvaluator {
 
@@ -52,7 +52,7 @@ public final class DiskJumpEvaluator {
             out.addProperty("delta_free_gb", Math.round(freeDelta * 10.0) / 10.0);
         }
         StringBuilder msg = new StringBuilder("Disk use rose ");
-        msg.append(String.format("%.1f", pctDelta)).append("% since last report");
+        msg.append(String.format("%.1f", pctDelta)).append("% since last check");
         if (freeDelta > 0) {
             msg.append(" (").append(String.format("%.1f", freeDelta)).append(" GB less free)");
         }

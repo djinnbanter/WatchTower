@@ -31,6 +31,12 @@
   }
 }
 
+/* Opacity-only enter — safe for sticky panes / master-detail splits */
+@keyframes ui-enter-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes ui-exit {
   from {
     opacity: 1;
@@ -50,6 +56,11 @@
   }
 }
 
+@keyframes ui-outlet-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .ui-enter {
   animation: ui-enter var(--ui-dur-3) var(--ui-ease-exp) both;
 }
@@ -62,20 +73,78 @@
   animation: ui-live-pulse 2s var(--ui-ease-inout) infinite;
 }
 
+/* Pulse only when marked healthy (.is-live) */
+.ui-live-pulse:not(.is-live) {
+  animation: none;
+  opacity: 0.55;
+}
+
 .ui-stagger > * {
   animation: ui-enter var(--ui-dur-3) var(--ui-ease-exp) both;
   animation-delay: calc(var(--ui-stagger-index, 0) * 40ms);
 }
 
-.ui-page__stack > * {
-  animation: ui-enter var(--ui-dur-4) var(--ui-ease-out) both;
+/* Mount-once page / stack enter — only while data-motion="entering" */
+.ui-page[data-motion="entering"] .ui-page__stack > *,
+[data-motion="entering"].ui-page__stack > * {
+  animation: ui-enter-fade var(--ui-dur-4) var(--ui-ease-out) both;
 }
 
-.ui-page__stack > *:nth-child(1) { animation-delay: 0ms; }
-.ui-page__stack > *:nth-child(2) { animation-delay: 50ms; }
-.ui-page__stack > *:nth-child(3) { animation-delay: 100ms; }
-.ui-page__stack > *:nth-child(4) { animation-delay: 140ms; }
-.ui-page__stack > *:nth-child(5) { animation-delay: 180ms; }
+.ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(1),
+[data-motion="entering"].ui-page__stack > *:nth-child(1) { animation-delay: 0ms; }
+.ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(2),
+[data-motion="entering"].ui-page__stack > *:nth-child(2) { animation-delay: 50ms; }
+.ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(3),
+[data-motion="entering"].ui-page__stack > *:nth-child(3) { animation-delay: 100ms; }
+.ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(4),
+[data-motion="entering"].ui-page__stack > *:nth-child(4) { animation-delay: 140ms; }
+.ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(5),
+[data-motion="entering"].ui-page__stack > *:nth-child(5) { animation-delay: 180ms; }
+.ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(6),
+[data-motion="entering"].ui-page__stack > *:nth-child(6) { animation-delay: 220ms; }
+.ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(7),
+[data-motion="entering"].ui-page__stack > *:nth-child(7) { animation-delay: 260ms; }
+.ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(8),
+[data-motion="entering"].ui-page__stack > *:nth-child(8) { animation-delay: 300ms; }
+
+/* Settled: never re-run enter on poll re-renders */
+.ui-page[data-motion="settled"] .ui-page__stack > *,
+[data-motion="settled"].ui-page__stack > *,
+.ui-page[data-motion="settled"] .ui-page__body > * {
+  animation: none;
+}
+
+/* Tab outlet enter (shell) */
+.ui-page-outlet[data-motion="entering"] {
+  animation: ui-outlet-enter var(--ui-dur-3) var(--ui-ease-out) both;
+}
+
+.ui-page-outlet[data-motion="settled"] {
+  animation: none;
+}
+
+/* View Transitions API — keep sticky panes safe (opacity only) */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--ui-dur-3);
+    animation-timing-function: var(--ui-ease-out);
+  }
+}
+
+/* List row stagger — first paint / filter only */
+.ui-list--entering > .ui-list-row,
+.ui-list--entering > .ui-list__item,
+.ui-list--entering > * {
+  animation: ui-enter-fade var(--ui-dur-3) var(--ui-ease-out) both;
+  animation-delay: calc(var(--ui-stagger-index, 0) * 28ms);
+}
+
+.ui-list--settled > .ui-list-row,
+.ui-list--settled > .ui-list__item,
+.ui-list--settled > * {
+  animation: none;
+}
 
 :focus {
   outline: none;
@@ -85,6 +154,114 @@
   outline: 2px solid var(--ui-accent);
   outline-offset: 2px;
   transition: outline-offset var(--ui-dur-2) var(--ui-ease-out);
+}
+
+/* ── Sass skin motion (clean bold — crisp, no spring/skew) ───────────────── */
+
+@keyframes ui-sass-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-sass-live-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+html[data-skin="sass"] .ui-pressable:active {
+  transform: scale(0.97);
+}
+
+html[data-skin="sass"] .ui-btn.ui-pressable:active,
+html[data-skin="sass"] .ui-icon-btn.ui-pressable:active,
+html[data-skin="sass"] .ui-btn:active,
+html[data-skin="sass"] .ui-icon-btn:active {
+  transform: none;
+}
+
+html[data-skin="sass"] .ui-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ui-shadow-lift);
+}
+
+html[data-skin="sass"] .ui-btn.ui-lift:hover,
+html[data-skin="sass"] .ui-btn.ui-lift:active,
+html[data-skin="sass"] .ui-icon-btn.ui-lift:hover,
+html[data-skin="sass"] .ui-icon-btn.ui-lift:active {
+  transform: none;
+  box-shadow: none;
+}
+
+html[data-skin="sass"] .ui-lift:active {
+  transform: translateY(0) scale(0.99);
+}
+
+html[data-skin="sass"] .ui-enter,
+html[data-skin="sass"] .ui-stagger > * {
+  animation-name: ui-sass-enter;
+  animation-timing-function: var(--ui-ease-out);
+}
+
+html[data-skin="sass"] .ui-stagger > * {
+  animation-delay: calc(var(--ui-stagger-index, 0) * 32ms);
+}
+
+html[data-skin="sass"] .ui-page[data-motion="entering"] .ui-page__stack > *,
+html[data-skin="sass"] [data-motion="entering"].ui-page__stack > * {
+  animation-name: ui-sass-enter;
+  animation-timing-function: var(--ui-ease-out);
+}
+
+html[data-skin="sass"] .ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(1),
+html[data-skin="sass"] [data-motion="entering"].ui-page__stack > *:nth-child(1) { animation-delay: 0ms; }
+html[data-skin="sass"] .ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(2),
+html[data-skin="sass"] [data-motion="entering"].ui-page__stack > *:nth-child(2) { animation-delay: 40ms; }
+html[data-skin="sass"] .ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(3),
+html[data-skin="sass"] [data-motion="entering"].ui-page__stack > *:nth-child(3) { animation-delay: 80ms; }
+html[data-skin="sass"] .ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(4),
+html[data-skin="sass"] [data-motion="entering"].ui-page__stack > *:nth-child(4) { animation-delay: 120ms; }
+html[data-skin="sass"] .ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(5),
+html[data-skin="sass"] [data-motion="entering"].ui-page__stack > *:nth-child(5) { animation-delay: 160ms; }
+html[data-skin="sass"] .ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(6),
+html[data-skin="sass"] [data-motion="entering"].ui-page__stack > *:nth-child(6) { animation-delay: 200ms; }
+html[data-skin="sass"] .ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(7),
+html[data-skin="sass"] [data-motion="entering"].ui-page__stack > *:nth-child(7) { animation-delay: 240ms; }
+html[data-skin="sass"] .ui-page[data-motion="entering"] .ui-page__stack > *:nth-child(8),
+html[data-skin="sass"] [data-motion="entering"].ui-page__stack > *:nth-child(8) { animation-delay: 280ms; }
+
+html[data-skin="sass"] .ui-page-outlet[data-motion="entering"] {
+  animation-name: ui-sass-enter;
+  animation-timing-function: var(--ui-ease-out);
+}
+
+html[data-skin="sass"] .ui-live-pulse.is-live {
+  animation-name: ui-sass-live-pulse;
+  animation-duration: 1.8s;
+}
+
+html[data-skin="sass"] .ui-rail__item--active {
+  transition: background-color var(--ui-dur-2) var(--ui-ease-out),
+    color var(--ui-dur-2) var(--ui-ease-out),
+    border-color var(--ui-dur-2) var(--ui-ease-out);
+}
+
+html[data-skin="sass"] .ui-list--entering > .ui-list-row,
+html[data-skin="sass"] .ui-list--entering > .ui-list__item,
+html[data-skin="sass"] .ui-list--entering > * {
+  animation-name: ui-sass-enter;
+  animation-timing-function: var(--ui-ease-out);
+  animation-delay: calc(var(--ui-stagger-index, 0) * 28ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -106,11 +283,20 @@
     transform: none;
   }
 
+  html[data-skin="sass"] .ui-lift:hover,
+  html[data-skin="sass"] .ui-lift:active,
+  html[data-skin="sass"] .ui-pressable:active,
+  html[data-skin="sass"] .ui-list-row:hover {
+    transform: none;
+  }
+
   .ui-enter,
   .ui-exit,
   .ui-stagger > *,
   .ui-page__stack > *,
-  .ui-page__body > * {
+  .ui-page__body > *,
+  .ui-page-outlet,
+  .ui-list--entering > * {
     animation: none !important;
   }
 }

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Watchtower Roadmap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg0: #0a1220;
+      --bg1: rgba(18, 32, 52, 0.92);
+      --glass: rgba(22, 40, 64, 0.72);
+      --line: rgba(160, 210, 255, 0.18);
+      --text-hi: #eef6fc;
+      --text-mid: #9bb4c9;
+      --text-low: #6a849c;
+      --sky: #5eb8ef;
+      --ok: #3ecf8a;
+      --warn: #e0b03a;
+      --accent: #f0733a;
+      --purple: #9b8cff;
+      --mesh-a: rgba(64, 160, 220, 0.28);
+      --mesh-b: rgba(40, 120, 180, 0.14);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: var(--bg0);
+      color: var(--text-hi);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .poster {
+      width: 1440px;
+      margin: 0 auto;
+      padding: 48px 52px 44px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse 70% 45% at 88% -5%, var(--mesh-a), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 8% 20%, var(--mesh-b), transparent 50%),
+        radial-gradient(ellipse 40% 30% at 50% 100%, rgba(62, 207, 138, 0.08), transparent 45%),
+        linear-gradient(165deg, #0c1628 0%, #0a1220 45%, #0d1828 100%);
+    }
+
+    .poster::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(160, 210, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(160, 210, 255, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black, transparent);
+      pointer-events: none;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    /* Header */
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 32px;
+      margin-bottom: 28px;
+      padding: 28px 32px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(28, 46, 72, 0.85), rgba(18, 32, 52, 0.7));
+      border: 1px solid var(--line);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 16px 48px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -60px;
+      top: -100px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(94, 184, 239, 0.35), rgba(62, 207, 138, 0.12) 45%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-left { position: relative; z-index: 1; max-width: 720px; }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(94, 184, 239, 0.35), rgba(22, 40, 64, 0.9));
+      border: 1px solid rgba(94, 184, 239, 0.45);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 24px rgba(94, 184, 239, 0.25);
+    }
+
+    .mark svg { width: 26px; height: 26px; }
+
+    .brand-text { display: flex; flex-direction: column; gap: 2px; }
+    .brand-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--sky);
+    }
+    .brand-tag {
+      font-size: 12px;
+      color: var(--text-low);
+      font-weight: 500;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--sky);
+      background: rgba(94, 184, 239, 0.14);
+      border: 1px solid rgba(94, 184, 239, 0.3);
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .tagline {
+      font-size: 16px;
+      line-height: 1.45;
+      color: var(--text-mid);
+      max-width: 62ch;
+    }
+
+    .tagline strong { color: var(--text-hi); font-weight: 600; }
+
+    .hero-right {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 280px;
+      padding-top: 8px;
+    }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(10, 18, 32, 0.45);
+      border: 1px solid rgba(160, 210, 255, 0.12);
+      font-size: 13px;
+      color: var(--text-mid);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-ok { background: var(--ok); box-shadow: 0 0 8px rgba(62, 207, 138, 0.6); }
+    .dot-sky { background: var(--sky); box-shadow: 0 0 8px rgba(94, 184, 239, 0.5); }
+    .dot-warn { background: var(--warn); box-shadow: 0 0 8px rgba(224, 176, 58, 0.45); }
+
+    .chip strong { color: var(--text-hi); font-weight: 600; }
+
+    /* Legend */
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .legend-card {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: var(--glass);
+      border: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .legend-kicker {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .legend-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .legend-card p {
+      font-size: 12px;
+      color: var(--text-mid);
+      line-height: 1.35;
+    }
+    .lk-ok { color: var(--ok); }
+    .lk-sky { color: var(--sky); }
+    .lk-warn { color: var(--warn); }
+    .lk-mid { color: var(--text-low); }
+
+    /* Sections */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0 14px;
+    }
+    .section-label span {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-low);
+    }
+    .section-label::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--line), transparent);
+    }
+
+    /* Today grid */
+    .today {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .today-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(22, 40, 64, 0.65);
+      border: 1px solid rgba(62, 207, 138, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .today-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(62, 207, 138, 0.14);
+      color: var(--ok);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .today-item h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    .today-item p {
+      font-size: 12px;
+      color: var(--text-mid);
+      line-height: 1.35;
+    }
+
+    /* Coming next */
+    .coming {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .panel {
+      border-radius: 16px;
+      padding: 18px 18px 16px;
+      background: rgba(22, 40, 64, 0.7);
+      border: 1px solid var(--line);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 8px 28px rgba(0, 0, 0, 0.22);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--tone), transparent);
+      opacity: 0.85;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .panel-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: color-mix(in srgb, var(--tone) 16%, transparent);
+      border: 1px solid color-mix(in srgb, var(--tone) 32%, transparent);
+      color: var(--tone);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .panel-head h3 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+    }
+    .panel-head .sub {
+      font-size: 11px;
+      color: var(--text-low);
+      margin-top: 2px;
+    }
+
+    .panel ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .panel li {
+      display: grid;
+      grid-template-columns: 6px 1fr;
+      gap: 10px;
+      align-items: start;
+      font-size: 12.5px;
+      line-height: 1.4;
+      color: var(--text-mid);
+    }
+
+    .panel li::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      margin-top: 6px;
+      border-radius: 50%;
+      background: var(--tone);
+      opacity: 0.85;
+      box-shadow: 0 0 6px color-mix(in srgb, var(--tone) 50%, transparent);
+    }
+
+    .panel li strong {
+      color: var(--text-hi);
+      font-weight: 650;
+    }
+
+    .tone-sky { --tone: var(--sky); }
+    .tone-ok { --tone: var(--ok); }
+    .tone-accent { --tone: var(--accent); }
+    .tone-warn { --tone: var(--warn); }
+    .tone-purple { --tone: var(--purple); }
+
+    /* Bottom row */
+    .bottom {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .bottom .panel { min-height: 100%; }
+
+    .promise-list, .not-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .promise-list li, .not-list li {
+      font-size: 12.5px;
+      line-height: 1.4;
+      color: var(--text-mid);
+      padding-left: 0;
+      display: block;
+    }
+
+    .promise-list li strong, .not-list li strong {
+      color: var(--text-hi);
+      display: block;
+      font-size: 13px;
+      margin-bottom: 1px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-radius: 14px;
+      background: rgba(10, 18, 32, 0.55);
+      border: 1px solid rgba(160, 210, 255, 0.1);
+      font-size: 12px;
+      color: var(--text-low);
+    }
+
+    .footer strong { color: var(--text-mid); font-weight: 600; }
+    .footer .mono {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: var(--sky);
+    }
+  </style>
+</head>
+<body>
+  <div class="poster" id="poster">
+    <div class="content">
+      <header class="hero">
+        <div class="hero-left">
+          <div class="brand">
+            <div class="mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#5eb8ef" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3c4 2.5 7 3.5 7 8.5 0 4-2.8 6.2-7 7.5-4.2-1.3-7-3.5-7-7.5C5 6.5 8 5.5 12 3z"/>
+                <path d="M12 8v5l2.5 1.5"/>
+              </svg>
+            </div>
+            <div class="brand-text">
+              <div class="brand-name">Watchtower</div>
+              <div class="brand-tag">Server ops · local-first</div>
+            </div>
+          </div>
+          <div class="badge">Roadmap · plain English</div>
+          <h1>What works today.<br/>What’s coming next.</h1>
+          <p class="tagline">
+            Ops for modded Minecraft — a jar in <strong>mods/</strong>, dashboard on
+            <strong>your</strong> server. No cloud account. Grouped by the problems
+            every admin actually hits.
+          </p>
+        </div>
+        <div class="hero-right">
+          <div class="chip"><span class="dot dot-ok"></span><span><strong>Today:</strong> NeoForge 1.21.x</span></div>
+          <div class="chip"><span class="dot dot-sky"></span><span><strong>Later:</strong> Fabric · NeoForge 1.20.x</span></div>
+          <div class="chip"><span class="dot dot-warn"></span><span>Ships when ready — no fake dates</span></div>
+        </div>
+      </header>
+
+      <div class="legend">
+        <div class="legend-card">
+          <div class="legend-kicker lk-ok">Works today</div>
+          <h3>In the jar now</h3>
+          <p>Already shipping — install and use</p>
+        </div>
+        <div class="legend-card">
+          <div class="legend-kicker lk-sky">Coming next</div>
+          <h3>On the workbench</h3>
+          <p>Planned by real admin situations</p>
+        </div>
+        <div class="legend-card">
+          <div class="legend-kicker lk-warn">Later</div>
+          <h3>Bigger bets</h3>
+          <p>Fleet, alerts, more platforms</p>
+        </div>
+        <div class="legend-card">
+          <div class="legend-kicker lk-mid">Not our job</div>
+          <h3>We stay focused</h3>
+          <p>Panels &amp; player analytics elsewhere</p>
+        </div>
+      </div>
+
+      <div class="section-label"><span>Works today</span></div>
+      <div class="today">
+        <div class="today-item"><div class="today-icon">◉</div><div><h4>Live dashboard</h4><p>TPS, MSPT, CPU, memory, players — while you watch</p></div></div>
+        <div class="today-item"><div class="today-icon">⚡</div><div><h4>Crash intelligence</h4><p>Likely mod + fix in plain English</p></div></div>
+        <div class="today-item"><div class="today-icon">▦</div><div><h4>Smart mod list</h4><p>Modrinth, pack-impact updates, client-vs-server</p></div></div>
+        <div class="today-item"><div class="today-icon">▣</div><div><h4>Watching + Scanning</h4><p>Issues stay current without homework every visit</p></div></div>
+        <div class="today-item"><div class="today-icon">◈</div><div><h4>Performance Insights</h4><p>Busy/quiet hours, baseline, storage runway</p></div></div>
+        <div class="today-item"><div class="today-icon">✦</div><div><h4>Spark + auto-capture</h4><p>“What ate the tick” · opt-in on critical lag</p></div></div>
+        <div class="today-item"><div class="today-icon">◆</div><div><h4>GC / JVM + RAM</h4><p>Flags advice · conservative “need more RAM?”</p></div></div>
+        <div class="today-item"><div class="today-icon">✓</div><div><h4>Safe restart + stories</h4><p>Checklist before /stop · lag → crash → backup</p></div></div>
+        <div class="today-item"><div class="today-icon">◎</div><div><h4>Disaster recovery</h4><p>CLI + browser viewer when it won’t boot</p></div></div>
+        <div class="today-item"><div class="today-icon">☰</div><div><h4>Ops + Support packs</h4><p>Backups · Settings · redacted zip · Copy for Discord</p></div></div>
+        <div class="today-item"><div class="today-icon">🔒</div><div><h4>Secure by default</h4><p>Login, optional 2FA, honest panel metrics</p></div></div>
+      </div>
+
+      <div class="section-label"><span>Coming next — by situation</span></div>
+      <div class="coming">
+        <section class="panel tone-sky">
+          <div class="panel-head">
+            <div class="panel-icon">⚡</div>
+            <div>
+              <h3>When the server lags</h3>
+              <div class="sub">Separate farms from mods</div>
+            </div>
+          </div>
+          <ul>
+            <li><span><strong>Spot farms &amp; chunk loaders</strong> — world pressure (entities, chunks) separate from “a bad mod”</span></li>
+          </ul>
+        </section>
+
+        <section class="panel tone-accent">
+          <div class="panel-head">
+            <div class="panel-icon">▣</div>
+            <div>
+              <h3>When you’re unsure about RAM or settings</h3>
+              <div class="sub">Apply vetted settings safely</div>
+            </div>
+          </div>
+          <ul>
+            <li><span><strong>Safe guided fixes</strong> — apply vetted settings with preview &amp; undo</span></li>
+          </ul>
+        </section>
+
+        <section class="panel tone-ok">
+          <div class="panel-head">
+            <div class="panel-icon">✓</div>
+            <div>
+              <h3>When you need to trust a restart</h3>
+              <div class="sub">Understand outages · smarter advice</div>
+            </div>
+          </div>
+          <ul>
+            <li><span><strong>Why it really died</strong> — mod crash vs OOM vs panel/watchdog</span></li>
+            <li><span><strong>Weekly digest</strong> — grade, crashes, disk trend, one useful next action</span></li>
+            <li><span><strong>Smarter restart advice</strong> — suggest a maintenance window (panel still owns /stop)</span></li>
+          </ul>
+        </section>
+
+        <section class="panel tone-purple">
+          <div class="panel-head">
+            <div class="panel-icon">▦</div>
+            <div>
+              <h3>When mods need care</h3>
+              <div class="sub">Quarantine · Safe updates · proof it helped</div>
+            </div>
+          </div>
+          <ul>
+            <li><span><strong>Jar quarantine</strong> — move aside (don’t delete) + Undo + restart reminder</span></li>
+            <li><span><strong>Assisted Safe updates</strong> — verify, back up, swap; risky stays manual</span></li>
+            <li><span><strong>Did that update help?</strong> — before/after performance</span></li>
+            <li><span><strong>Tamper &amp; secrets · CurseForge · shareable crash rules</strong></span></li>
+          </ul>
+        </section>
+
+        <section class="panel tone-sky">
+          <div class="panel-head">
+            <div class="panel-icon">◎</div>
+            <div>
+              <h3>When players can’t join</h3>
+              <div class="sub">Pack sync · first-hour confidence</div>
+            </div>
+          </div>
+          <ul>
+            <li><span><strong>Join clinic</strong> — failed join → exact mismatched jars → copy for Discord</span></li>
+            <li><span><strong>Pin a known-good pack</strong> — freeze good list; banner + named diff on drift</span></li>
+            <li><span><strong>First-hour sanity</strong> — Java, loader, client-only-on-server, deps — green/amber/red</span></li>
+          </ul>
+        </section>
+
+        <section class="panel tone-warn">
+          <div class="panel-head">
+            <div class="panel-icon">◈</div>
+            <div>
+              <h3>When the world itself is the problem</h3>
+              <div class="sub">Farms · corruption · silent scripts</div>
+            </div>
+          </div>
+          <ul>
+            <li><span><strong>Farm / item-storm storytelling</strong> — not “buy more RAM”</span></li>
+            <li><span><strong>Corrupt chunk playbook</strong> — region hint → stop → backup → repair (no silent wipes)</span></li>
+            <li><span><strong>Silent script failures</strong> — KubeJS / datapack errors raised as Issues</span></li>
+          </ul>
+        </section>
+
+        <section class="panel tone-accent">
+          <div class="panel-head">
+            <div class="panel-icon">⌘</div>
+            <div>
+              <h3>When you need to act or ask for help</h3>
+              <div class="sub">Safe actions · clean support handoffs</div>
+            </div>
+          </div>
+          <ul>
+            <li><span><strong>Live command bridge</strong> — preview safe triage (e.g. pause Chunky); confirm first</span></li>
+            <li><span><strong>Player-safe explain + ops context</strong> — short vs admin detail; lag vs timeout (not analytics)</span></li>
+            <li><span><strong>Optional anonymous diagnostics</strong> — opt-in, previewable, cooldown’d (off by default)</span></li>
+          </ul>
+        </section>
+
+        <section class="panel tone-ok">
+          <div class="panel-head">
+            <div class="panel-icon">☰</div>
+            <div>
+              <h3>For teams &amp; checking in on the go</h3>
+              <div class="sub">Co-admins · status · phone glance</div>
+            </div>
+          </div>
+          <ul>
+            <li><span><strong>Named admin accounts</strong> — per-person logins + who changed what</span></li>
+            <li><span><strong>Public status page</strong> — “are we up?” without exposing the dashboard</span></li>
+            <li><span><strong>Richer Copy for Discord · maintenance windows · mobile glance</strong></span></li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="bottom">
+        <section class="panel tone-warn">
+          <div class="panel-head">
+            <div class="panel-icon">↗</div>
+            <div>
+              <h3>Later — bigger bets</h3>
+              <div class="sub">After the day-to-day ops line</div>
+            </div>
+          </div>
+          <ul class="promise-list">
+            <li><strong>Fleet view</strong>TPS, crashes, backups across many servers — proxy-aware</li>
+            <li><strong>Alerts that reach you</strong>Discord / webhook for crashes, lag, stale backups, pregen stalls</li>
+            <li><strong>More platforms</strong>Fabric + NeoForge 1.20.x — same dashboard &amp; workflow</li>
+          </ul>
+        </section>
+
+        <section class="panel" style="--tone: var(--text-low)">
+          <div class="panel-head">
+            <div class="panel-icon">✕</div>
+            <div>
+              <h3>Not our job</h3>
+              <div class="sub">We stay out of the way</div>
+            </div>
+          </div>
+          <ul class="not-list">
+            <li><strong>Host panels</strong>Start/stop, files, console → Pterodactyl / Crafty / AMP</li>
+            <li><strong>Player analytics</strong>Retention, GeoIP, leaderboards → Plan &amp; similar</li>
+            <li><strong>Client GPU crashes</strong>Doesn’t apply to headless dedicated servers</li>
+          </ul>
+        </section>
+
+        <section class="panel tone-sky">
+          <div class="panel-head">
+            <div class="panel-icon">◆</div>
+            <div>
+              <h3>Promises that don’t change</h3>
+              <div class="sub">True no matter what ships</div>
+            </div>
+          </div>
+          <ul class="promise-list">
+            <li><strong>Your data stays yours</strong>Local-first · no telemetry · no log uploads by default</li>
+            <li><strong>You’re in control</strong>Opt-in network · preview &amp; undo · no quiet world/mod edits</li>
+            <li><strong>Ops, not surveillance</strong>Run the server — don’t track players like analytics</li>
+            <li><strong>Drop-in beside your host</strong>A jar in mods/ — not a second control panel</li>
+          </ul>
+        </section>
+      </div>
+
+      <footer class="footer">
+        <div>Vote &amp; shape it on <strong>GitHub Issues</strong> · modrinth.com/mod/watchtower</div>
+        <div class="mono">docs/ROADMAP.md · local-first · GPL-3.0</div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>

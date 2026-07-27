@@ -1,0 +1,55 @@
+{
+  "default": "normal",
+  "profiles": {
+    "normal": {
+      "label": "Normal demo",
+      "description": "Full generated fixtures with reports, ops cache, and performance history.",
+      "env": {
+        "PREVIEW_PROFILE": "normal"
+      }
+    },
+    "fresh": {
+      "label": "Fresh install",
+      "description": "Empty reports index — wizard / first-run flow with minimal ops scan data.",
+      "env": {
+        "PREVIEW_PROFILE": "fresh"
+      }
+    },
+    "loading": {
+      "label": "Loading session",
+      "description": "Slow initial hydration with report and Modrinth jobs already in progress.",
+      "env": {
+        "PREVIEW_PROFILE": "loading"
+      }
+    },
+    "empty": {
+      "label": "Empty collections",
+      "description": "Established session with no live sample, activity, issues, Spark profiles, or performance history.",
+      "env": {
+        "PREVIEW_PROFILE": "empty"
+      }
+    },
+    "high-load": {
+      "label": "High load",
+      "description": "Elevated MSPT, active tick-lag issue, and baseline regression warning.",
+      "env": {
+        "PREVIEW_PROFILE": "high-load"
+      }
+    },
+    "error": {
+      "label": "Error / degraded",
+      "description": "Update check failure, stale report meta, and degraded health signals.",
+      "env": {
+        "PREVIEW_PROFILE": "error"
+      }
+    },
+    "degraded": {
+      "label": "Error / degraded (alias)",
+      "description": "Alias of the error profile for degraded-state testing.",
+      "env": {
+        "PREVIEW_PROFILE": "degraded"
+      },
+      "alias_for": "error"
+    }
+  }
+}

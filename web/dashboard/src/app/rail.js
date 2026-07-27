@@ -1,12 +1,12 @@
 import { html } from '../lib/preact.js';
-import { ui, setUi, auth } from '../state/stores.js';
+import { ui, setUi } from '../state/stores.js';
 import { set as persistSet } from '../state/persist.js';
 import { GROUPS, getPagesByGroup } from './registry.js';
 import { navigate } from './router.js';
 import { Icon } from '../ui/icons.js';
 import { isEmbedded } from '../api/index.js';
 import { logout } from '../api/endpoints.js';
-import { cycleTheme } from '../theme/theme.js';
+import { cycleTheme, cycleSkin } from '../theme/theme.js';
 import { ReportControls } from './report-controls.js';
 
 // Nav groups shown in main area (not system bottom)
@@ -15,14 +15,13 @@ const MAIN_GROUPS = ['monitor', 'triage', 'ops'];
 const LOGO_SRC = 'assets/watchtower-icon-simple.png';
 
 /** WatchTower brand mark (assets/watchtower-icon-simple.png) */
-function WatchTowerMark({ size = 24 }) {
+function WatchTowerMark({ size = 30 }) {
   return html`
     <img
-      class="ui-rail__logo-icon"
+      class="ui-rail__brand-icon"
       src=${LOGO_SRC}
       width=${size}
       height=${size}
-      style=${`width:${size}px;height:${size}px`}
       alt=""
       decoding="async"
       aria-hidden="true"
@@ -30,15 +29,20 @@ function WatchTowerMark({ size = 24 }) {
   `;
 }
 
+function badgeToneClass(count) {
+  if (!(count > 0)) return '';
+  return count <= 2 ? ' ui-rail__badge--warn' : ' ui-rail__badge--danger';
+}
+
 function RailItem({ page, active, expanded }) {
   function handleClick(e) {
     e.preventDefault();
     navigate(page.id);
-    // Close mobile nav if open
     if (ui.value.mobileNavOpen) setUi({ mobileNavOpen: false });
   }
 
   const badgeCount = typeof page.badge === 'function' ? page.badge() : 0;
+  const tone = badgeToneClass(badgeCount);
 
   return html`
     <a
@@ -51,14 +55,14 @@ function RailItem({ page, active, expanded }) {
       <span class="ui-rail__item-icon">
         <${Icon} name=${page.icon || 'layout-dashboard'} size=${18} />
         ${!expanded && badgeCount > 0
-          ? html`<span class="ui-rail__badge" aria-label=${`${badgeCount} items`}>${badgeCount > 9 ? '9+' : badgeCount}</span>`
+          ? html`<span class=${`ui-rail__badge${tone}`} aria-label=${`${badgeCount} items`}>${badgeCount > 9 ? '9+' : badgeCount}</span>`
           : null}
       </span>
       ${expanded
         ? html`<span class="ui-rail__item-label">${page.title}</span>`
         : null}
       ${expanded && badgeCount > 0
-        ? html`<span class="ui-rail__badge ui-rail__badge--inline" aria-label=${`${badgeCount} items`}>${badgeCount > 9 ? '9+' : badgeCount}</span>`
+        ? html`<span class=${`ui-rail__badge ui-rail__badge--inline${tone}`} aria-label=${`${badgeCount} items`}>${badgeCount > 9 ? '9+' : badgeCount}</span>`
         : null}
     </a>
   `;
@@ -94,13 +98,16 @@ async function handleLogout() {
 
 /**
  * Navigation rail — sidebar with grouped page links, theme toggle, collapse.
+ * @param {{ forceExpanded?: boolean }} [props] — mobile drawer always expanded
  */
-export function Rail() {
+export function Rail({ forceExpanded = false } = {}) {
   const { railExpanded, route } = ui.value;
+  const expanded = forceExpanded || railExpanded;
   const activeTab = route?.tab || 'overview';
   const embedded = isEmbedded();
 
   function toggleRail() {
+    if (forceExpanded) return;
     const next = !railExpanded;
     setUi({ railExpanded: next });
     persistSet('railExpanded', next);
@@ -111,27 +118,35 @@ export function Rail() {
     setUi({ theme: next });
   }
 
+  function handleSkin() {
+    const next = cycleSkin();
+    setUi({ skin: next });
+  }
+
   return html`
     <nav
-      class=${'ui-rail' + (railExpanded ? '' : ' ui-rail--collapsed')}
+      class=${'ui-rail' + (expanded ? '' : ' ui-rail--collapsed')}
       aria-label="Main navigation"
       data-tour="rail"
     >
-      <!-- Logo / wordmark -->
       <div
-        class="ui-rail__logo"
-        title=${railExpanded ? null : 'WatchTower'}
+        class="ui-rail__brand"
+        title=${expanded ? null : 'WatchTower'}
       >
-        <span class="ui-rail__logo-plate" aria-hidden="true"></span>
-        <span class="ui-rail__logo-mark">
-          <${WatchTowerMark} size=${railExpanded ? 24 : 28} />
+        <span class="ui-rail__brand-plate" aria-hidden="true"></span>
+        <span class="ui-rail__brand-mark">
+          <${WatchTowerMark} size=${expanded ? 30 : 32} />
         </span>
-        ${railExpanded
-          ? html`<span class="ui-rail__wordmark">WatchTower</span>`
+        ${expanded
+          ? html`
+            <span class="ui-rail__brand-text">
+              <span class="ui-rail__wordmark">WatchTower</span>
+              <span class="ui-rail__tagline">Server ops</span>
+            </span>
+          `
           : null}
       </div>
 
-      <!-- Main nav groups -->
       <div class="ui-rail__nav">
         ${MAIN_GROUPS.map((gid) => {
           const group = GROUPS.find((g) => g.id === gid);
@@ -140,73 +155,87 @@ export function Rail() {
                 key=${gid}
                 group=${group}
                 activeTab=${activeTab}
-                expanded=${railExpanded}
+                expanded=${expanded}
               />`
             : null;
         })}
       </div>
 
-      <!-- Report selector / Run Report / support bundle -->
       <div class="ui-rail__reports" data-tour="report-controls">
-        ${railExpanded
-          ? html`<span class="ui-rail__reports-label">Reports</span>`
+        ${expanded
+          ? html`<span class="ui-rail__reports-label">Help</span>`
           : null}
-        <${ReportControls} compact=${!railExpanded} />
+        <${ReportControls} compact=${!expanded} />
       </div>
 
-      <!-- Bottom system cluster -->
       <div class="ui-rail__bottom">
+        ${expanded
+          ? html`<span class="ui-rail__group-label ui-rail__bottom-label">System</span>`
+          : null}
+
         ${getPagesByGroup('system').filter((p) => p.rail !== false).map((page) => html`
           <${RailItem}
             key=${page.id}
             page=${page}
             active=${activeTab === page.id}
-            expanded=${railExpanded}
+            expanded=${expanded}
           />
         `)}
 
-        <!-- Theme cycle -->
-        <button
-          class="ui-rail__item ui-rail__theme-btn"
-          onClick=${handleTheme}
-          title="Cycle theme"
-          aria-label="Cycle colour theme"
-        >
-          <span class="ui-rail__item-icon">
+        <div class="ui-rail__tools">
+          <button
+            type="button"
+            class="ui-rail__tool-btn"
+            onClick=${handleTheme}
+            title="Cycle theme"
+            aria-label="Cycle colour theme"
+          >
             <${Icon} name="sun" size=${18} />
-          </span>
-          ${railExpanded ? html`<span class="ui-rail__item-label">Theme</span>` : null}
-        </button>
+            ${expanded ? html`<span class="ui-rail__tool-label">Theme</span>` : null}
+          </button>
 
-        <!-- Logout (embedded only) -->
-        ${embedded
-          ? html`
-            <button
-              class="ui-rail__item ui-rail__logout-btn"
-              onClick=${handleLogout}
-              title="Sign out"
-              aria-label="Sign out"
-            >
-              <span class="ui-rail__item-icon">
+          <button
+            type="button"
+            class="ui-rail__tool-btn"
+            onClick=${handleSkin}
+            title="Cycle look: Aero ? Classic (Sass)"
+            aria-label="Cycle look skin"
+          >
+            <${Icon} name="sparkles" size=${18} />
+            ${expanded ? html`<span class="ui-rail__tool-label">Skin</span>` : null}
+          </button>
+
+          ${embedded
+            ? html`
+              <button
+                type="button"
+                class="ui-rail__tool-btn"
+                onClick=${handleLogout}
+                title="Sign out"
+                aria-label="Sign out"
+              >
                 <${Icon} name="log-out" size=${18} />
-              </span>
-              ${railExpanded ? html`<span class="ui-rail__item-label">Sign out</span>` : null}
-            </button>
-          `
-          : null}
+                ${expanded ? html`<span class="ui-rail__tool-label">Sign out</span>` : null}
+              </button>
+            `
+            : null}
 
-        <!-- Collapse toggle -->
-        <button
-          class="ui-rail__toggle"
-          onClick=${toggleRail}
-          aria-label=${railExpanded ? 'Collapse navigation' : 'Expand navigation'}
-          title=${railExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
-        >
-          <span class="ui-rail__toggle-icon">
-            <${Icon} name=${railExpanded ? 'chevron-left' : 'chevron-right'} size=${16} />
-          </span>
-          ${railExpanded ? html`<span class="ui-rail__toggle-label">Collapse</span>` : null}
-        </button>
+          ${!forceExpanded
+            ? html`
+              <button
+                type="button"
+                class="ui-rail__tool-btn ui-rail__tool-btn--collapse"
+                onClick=${toggleRail}
+                aria-label=${expanded ? 'Collapse navigation' : 'Expand navigation'}
+                title=${expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+                data-tour="rail-collapse"
+              >
+                <${Icon} name=${expanded ? 'chevron-left' : 'chevron-right'} size=${16} />
+                ${expanded ? html`<span class="ui-rail__tool-label">Collapse</span>` : null}
+              </button>
+            `
+            : null}
+        </div>
       </div>
     </nav>
   `;

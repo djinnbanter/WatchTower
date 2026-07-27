@@ -1,14 +1,15 @@
 import { html } from '../../lib/preact.js';
 
 /**
- * ListRow({ icon, tone, title, meta, badge, actions, onClick, children })
+ * ListRow({ icon, tone, title, meta, badge, actions, onClick, children, staggerIndex })
  */
-export function ListRow({ icon, tone, title, meta, badge, actions, onClick, children }) {
+export function ListRow({ icon, tone, title, meta, badge, actions, onClick, children, staggerIndex, style, className }) {
   const clickable = !!onClick;
   const cls = [
     'ui-list-row',
     tone ? `ui-list-row--${tone}` : '',
     clickable ? 'ui-list-row--clickable' : '',
+    className || '',
   ].filter(Boolean).join(' ');
 
   const handleKeyDown = (e) => {
@@ -18,9 +19,14 @@ export function ListRow({ icon, tone, title, meta, badge, actions, onClick, chil
     }
   };
 
+  const mergedStyle = staggerIndex != null
+    ? { ...(style || {}), '--ui-stagger-index': String(staggerIndex) }
+    : style;
+
   return html`
     <div
       class=${cls}
+      style=${mergedStyle}
       onClick=${onClick}
       onKeyDown=${handleKeyDown}
       tabIndex=${clickable ? 0 : undefined}

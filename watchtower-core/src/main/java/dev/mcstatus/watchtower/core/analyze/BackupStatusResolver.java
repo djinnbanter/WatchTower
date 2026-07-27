@@ -86,8 +86,9 @@ public final class BackupStatusResolver {
             }
             case HYBRID -> {
                 overallOk = extOk || extRunning || localOk;
-                overallStale = extStale || localStale
-                        || ("stale".equals(str(backupExternal, "status")));
+                // Stale only when no fresh source exists
+                overallStale = !overallOk && (extStale || localStale
+                        || ("stale".equals(str(backupExternal, "status"))));
                 overallMissing = !suppress && localNotFound && !extOk && !extRunning;
                 if (extMissing && !localOk) {
                     overallMissing = true;
@@ -101,8 +102,11 @@ public final class BackupStatusResolver {
         }
 
         if (extFailed) {
-            overallOk = false;
-            overallStale = true;
+            // External failure is a hard miss only when local is not OK
+            if (!localOk) {
+                overallOk = false;
+                overallStale = true;
+            }
         }
 
         String overallStatus;

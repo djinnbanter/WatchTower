@@ -25,6 +25,16 @@ public final class OpsCacheSchema {
     public static final String BACKUP_EXTERNAL = "backup_external";
     public static final String MODS_INVENTORY = "mods_inventory";
     public static final String DISK_JUMP = "disk_jump";
+    public static final String DISK_PROJECTION = "disk_projection";
+    public static final String INCIDENT_STORIES = "incident_stories";
+    /** Continuous Mods deep / forensics ledger (fingerprint delta job). */
+    public static final String MODS_DEEP = "mods_deep";
+    /** Continuous Modrinth scan results when no legacy facts file exists. */
+    public static final String MODRINTH_SCAN = "modrinth_scan";
+    /** ISO timestamp of last Support compose (zip). */
+    public static final String LAST_SUPPORT_COMPOSE_AT = "last_support_compose_at";
+    public static final String ISSUES_LIVE = IssuesLiveSchema.ISSUES_LIVE;
+    public static final String ISSUES_LIVE_UPDATED_AT = IssuesLiveSchema.ISSUES_LIVE_UPDATED_AT;
 
     public static final String MOD_LOG_SCANNED_AT = "scanned_at";
     public static final String MOD_LOG_NEW_COUNT = "new_count";

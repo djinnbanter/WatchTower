@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "baseUrl": "http://127.0.0.1:8081/",
+  "routing": "query-string",
+  "pages": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "route": "/?tab=overview"
+    },
+    {
+      "id": "live",
+      "title": "Live",
+      "route": "/?tab=live"
+    },
+    {
+      "id": "insights",
+      "title": "Insights",
+      "route": "/?tab=insights",
+      "subtabs": [
+        {
+          "id": "patterns",
+          "route": "/?tab=insights&view=patterns&panel=overview",
+          "panels": [
+            {
+              "id": "overview",
+              "route": "/?tab=insights&view=patterns&panel=overview"
+            },
+            {
+              "id": "schedule",
+              "route": "/?tab=insights&view=patterns&panel=schedule"
+            },
+            {
+              "id": "load",
+              "route": "/?tab=insights&view=patterns&panel=load"
+            },
+            {
+              "id": "incidents",
+              "route": "/?tab=insights&view=patterns&panel=incidents"
+            }
+          ]
+        },
+        {
+          "id": "configs",
+          "route": "/?tab=insights&view=configs"
+        },
+        {
+          "id": "mod-changes",
+          "route": "/?tab=insights&view=mod-changes"
+        },
+        {
+          "id": "storage",
+          "route": "/?tab=insights&view=storage"
+        }
+      ]
+    },
+    {
+      "id": "session",
+      "title": "Session",
+      "route": "/?tab=session"
+    },
+    {
+      "id": "startup",
+      "title": "Startup",
+      "route": "/?tab=startup"
+    },
+    {
+      "id": "issues",
+      "title": "Issues",
+      "route": "/?tab=issues",
+      "subtabs": [
+        {
+          "id": "active",
+          "route": "/?tab=issues&view=active"
+        },
+        {
+          "id": "reviewed",
+          "route": "/?tab=issues&view=reviewed"
+        },
+        {
+          "id": "tools",
+          "route": "/?tab=issues&view=tools"
+        }
+      ]
+    },
+    {
+      "id": "crashes",
+      "title": "Crashes",
+      "route": "/?tab=crashes",
+      "subtabs": [
+        {
+          "id": "review",
+          "route": "/?tab=crashes&view=review"
+        },
+        {
+          "id": "reviewed",
+          "route": "/?tab=crashes&view=reviewed"
+        },
+        {
+          "id": "tools",
+          "route": "/?tab=crashes&view=tools"
+        }
+      ]
+    },
+    {
+      "id": "spark",
+      "title": "Spark",
+      "route": "/?tab=spark",
+      "interactiveSubtabs": [
+        "summary",
+        "mods",
+        "world",
+        "window",
+        "advanced"
+      ]
+    },
+    {
+      "id": "logs",
+      "title": "Logs",
+      "route": "/?tab=logs"
+    },
+    {
+      "id": "mods",
+      "title": "Mods",
+      "route": "/?tab=mods",
+      "subtabs": [
+        {
+          "id": "overview",
+          "route": "/?tab=mods&view=overview"
+        },
+        {
+          "id": "updates",
+          "route": "/?tab=mods&view=updates"
+        },
+        {
+          "id": "conflicts",
+          "route": "/?tab=mods&view=conflicts"
+        },
+        {
+          "id": "log-errors",
+          "route": "/?tab=mods&view=log-errors"
+        },
+        {
+          "id": "changes",
+          "route": "/?tab=mods&view=changes"
+        },
+        {
+          "id": "modrinth",
+          "route": "/?tab=mods&view=modrinth"
+        },
+        {
+          "id": "forensics",
+          "route": "/?tab=mods&view=forensics"
+        }
+      ]
+    },
+    {
+      "id": "backups",
+      "title": "Backups",
+      "route": "/?tab=backups"
+    },
+    {
+      "id": "activity",
+      "title": "Activity",
+      "route": "/?tab=activity"
+    },
+    {
+      "id": "sources",
+      "title": "Sources",
+      "route": "/?tab=sources"
+    },
+    {
+      "id": "docs",
+      "title": "Docs",
+      "route": "/?tab=docs"
+    },
+    {
+      "id": "roadmap",
+      "title": "Roadmap",
+      "route": "/?tab=roadmap"
+    },
+    {
+      "id": "settings",
+      "title": "Settings",
+      "route": "/?tab=settings",
+      "panels": [
+        {
+          "id": "general",
+          "route": "/?tab=settings&panel=general"
+        },
+        {
+          "id": "monitoring",
+          "route": "/?tab=settings&panel=monitoring"
+        },
+        {
+          "id": "backups",
+          "route": "/?tab=settings&panel=backups"
+        },
+        {
+          "id": "rules",
+          "route": "/?tab=settings&panel=rules"
+        },
+        {
+          "id": "security",
+          "route": "/?tab=settings&panel=security"
+        },
+        {
+          "id": "advanced",
+          "route": "/?tab=settings&panel=advanced"
+        },
+        {
+          "id": "about",
+          "route": "/?tab=settings&panel=about"
+        }
+      ]
+    },
+    {
+      "id": "help",
+      "title": "Help",
+      "route": "/?tab=help",
+      "aliasFor": "docs"
+    },
+    {
+      "id": "wizard",
+      "title": "Setup Wizard",
+      "route": "/?tab=wizard",
+      "rail": false
+    }
+  ],
+  "deepLinks": [
+    {
+      "id": "docs-article",
+      "template": "/?tab=docs&wiki={wikiSlug}",
+      "parameter": "wiki",
+      "values": [
+        "Home",
+        "Installation",
+        "Quick-Start-Checklist",
+        "Dashboard-Overview",
+        "Dashboard-Tabs",
+        "Understanding-Data-Sources",
+        "Using-Spark-with-Watchtower",
+        "Live-Charts",
+        "Commands",
+        "Configuration",
+        "Crash-Rule-Packs",
+        "Security-and-Access",
+        "Hosting-Panels",
+        "Reading-Metrics-on-Hosted-Servers",
+        "Health-Reports",
+        "Backups",
+        "Scheduled-Reports",
+        "Disaster-Recovery",
+        "DR-CLI-Reference",
+        "DR-Viewer",
+        "HTTP-API",
+        "On-disk-Files",
+        "Troubleshooting",
+        "Downloads-and-Releases",
+        "Roadmap",
+        "Changelog"
+      ]
+    },
+    {
+      "id": "issue",
+      "template": "/?tab=issues&view={view}&issue={issueKey}",
+      "parameters": [
+        "view",
+        "issue"
+      ],
+      "example": "/?tab=issues&view=active&issue=TICK_LAG"
+    },
+    {
+      "id": "crash-group",
+      "template": "/?tab=crashes&view={view}&group={fingerprint}",
+      "parameters": [
+        "view",
+        "group"
+      ]
+    },
+    {
+      "id": "mod",
+      "template": "/?tab=mods&view={view}&mod={modId}",
+      "parameters": [
+        "view",
+        "mod"
+      ],
+      "example": "/?tab=mods&view=overview&mod=create"
+    },
+    {
+      "id": "spark-profile",
+      "template": "/?tab=spark&profile={sourcePath}",
+      "parameter": "profile",
+      "example": "/?tab=spark&profile=watchtower%2Fspark-upload%2FVBK9P8wiBc.sparkprofile"
+    }
+  ],
+  "legacyAliases": [
+    {
+      "route": "/?tab=performance",
+      "resolvesTo": "insights"
+    },
+    {
+      "route": "/?settings=security",
+      "resolvesTo": "settings/security"
+    },
+    {
+      "route": "/?help=1",
+      "resolvesTo": "docs"
+    },
+    {
+      "route": "/?tab=help",
+      "resolvesTo": "docs"
+    },
+    {
+      "route": "/?tab=wizard",
+      "resolvesTo": "overview"
+    },
+    {
+      "route": "/?tab=lab",
+      "resolvesTo": "overview"
+    },
+    {
+      "route": "/?setup=1",
+      "resolvesTo": "overview?setup=1"
+    }
+  ]
+}

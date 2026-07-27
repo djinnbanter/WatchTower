@@ -49,13 +49,16 @@ public final class PerformanceInsightEngine {
 
         List<JsonObject> sorted = sortRowsByTime(rows);
         JsonObject busyQuiet = buildBusyQuiet(sorted);
-        JsonArray playerBins = buildPlayerBins(sorted);
+        PlayerBinsBuild playerBinsBuild = buildPlayerBins(sorted);
+        JsonArray playerBins = playerBinsBuild.bins;
         JsonArray outliers = buildOutlierMinutes(sorted, msptWarn);
         JsonArray stickyLag = buildStickyLagEpisodes(sorted, msptWarn);
         JsonArray insights = buildInsights(busyQuiet, playerBins, outliers, stickyLag, win);
 
         out.add("busy_quiet", busyQuiet);
         out.add("player_bins", playerBins);
+        out.addProperty("players_band_scale", playerBinsBuild.scale);
+        out.addProperty("players_band_scale_source", "observed_peak");
         out.add("outlier_minutes", outliers);
         out.add("sticky_lag", stickyLag);
         out.add("insights", insights);
@@ -65,7 +68,7 @@ public final class PerformanceInsightEngine {
     public static String rowsToCsv(List<JsonObject> rows) {
         StringBuilder sb = new StringBuilder();
         sb.append("ts,tps_avg,tps_min,mspt_avg,mspt_p95,mspt_jitter_max,players_max,");
-        sb.append("heap_used_gb_avg,mem_used_gb_avg,cpu_pct_avg,low_tps_flag\n");
+        sb.append("heap_used_gb_avg,mem_used_gb_avg,cpu_pct_avg,heap_pressure_pct_avg,gc_pause_pct_avg,low_tps_flag\n");
         for (JsonObject row : sortRowsByTime(rows)) {
             sb.append(csvCell(row, "ts"));
             sb.append(',').append(csvCell(row, "tps_avg"));
@@ -77,6 +80,8 @@ public final class PerformanceInsightEngine {
             sb.append(',').append(csvCell(row, "heap_used_gb_avg"));
             sb.append(',').append(csvCell(row, "mem_used_gb_avg"));
             sb.append(',').append(csvCell(row, "cpu_pct_avg"));
+            sb.append(',').append(csvCell(row, "heap_pressure_pct_avg"));
+            sb.append(',').append(csvCell(row, "gc_pause_pct_avg"));
             sb.append(',').append(csvCell(row, "low_tps_flag"));
             sb.append('\n');
         }
@@ -167,26 +172,105 @@ public final class PerformanceInsightEngine {
         return out;
     }
 
-    private static JsonArray buildPlayerBins(List<JsonObject> rows) {
-        String[] labels = {"0", "1-2", "3-5", "6+"};
-        BinAccumulator[] bins = {
-                new BinAccumulator(labels[0]),
-                new BinAccumulator(labels[1]),
-                new BinAccumulator(labels[2]),
-                new BinAccumulator(labels[3])
-        };
-        for (JsonObject row : rows) {
-            int players = row.has("players_max") ? row.get("players_max").getAsInt() : 0;
-            int idx = players == 0 ? 0 : players <= 2 ? 1 : players <= 5 ? 2 : 3;
-            bins[idx].add(row);
+    /**
+     * Player-load bins scaled to observed peak concurrent players in the window.
+     * Empty ({@code 0}) plus up to three occupied terciles of {@code [1..scale]}.
+     */
+    static PlayerBinsBuild buildPlayerBins(List<JsonObject> rows) {
+        int scale = observedPlayerPeak(rows);
+        int[][] occupied = occupiedPlayerRanges(scale);
+        BinAccumulator[] bins = new BinAccumulator[1 + occupied.length];
+        bins[0] = new BinAccumulator("0");
+        for (int i = 0; i < occupied.length; i++) {
+            bins[i + 1] = new BinAccumulator(rangeLabel(occupied[i][0], occupied[i][1]));
         }
+
+        if (rows != null) {
+            for (JsonObject row : rows) {
+                int players = row.has("players_max") ? Math.max(0, row.get("players_max").getAsInt()) : 0;
+                int idx = bandIndexForPlayers(players, scale, occupied);
+                bins[idx].add(row);
+            }
+        }
+
         JsonArray arr = new JsonArray();
         for (BinAccumulator bin : bins) {
             if (bin.minutes > 0) {
                 arr.add(bin.toJson());
             }
         }
-        return arr;
+        return new PlayerBinsBuild(arr, scale);
+    }
+
+    static int observedPlayerPeak(List<JsonObject> rows) {
+        int scale = 0;
+        if (rows == null) {
+            return 0;
+        }
+        for (JsonObject row : rows) {
+            if (row.has("players_max")) {
+                scale = Math.max(scale, row.get("players_max").getAsInt());
+            }
+        }
+        return Math.max(0, scale);
+    }
+
+    /**
+     * Occupied ranges for {@code [1..scale]}. Peak 1 → one band; peak 2 → two;
+     * peak 3+ → three terciles.
+     */
+    static int[][] occupiedPlayerRanges(int scale) {
+        if (scale <= 0) {
+            return new int[0][];
+        }
+        if (scale == 1) {
+            return new int[][]{{1, 1}};
+        }
+        if (scale == 2) {
+            return new int[][]{{1, 1}, {2, 2}};
+        }
+        int t1 = Math.max(1, scale / 3);
+        int t2 = Math.max(t1 + 1, (2 * scale) / 3);
+        if (t2 >= scale) {
+            t2 = scale - 1;
+        }
+        if (t1 >= t2) {
+            t1 = 1;
+            t2 = Math.max(2, scale - 1);
+        }
+        return new int[][]{{1, t1}, {t1 + 1, t2}, {t2 + 1, scale}};
+    }
+
+    static String rangeLabel(int lo, int hi) {
+        if (lo == hi) {
+            return String.valueOf(lo);
+        }
+        return lo + "-" + hi;
+    }
+
+    private static int bandIndexForPlayers(int players, int scale, int[][] occupied) {
+        if (players <= 0 || occupied.length == 0) {
+            return 0;
+        }
+        if (players > scale) {
+            return occupied.length; // last occupied slot
+        }
+        for (int i = 0; i < occupied.length; i++) {
+            if (players >= occupied[i][0] && players <= occupied[i][1]) {
+                return i + 1;
+            }
+        }
+        return occupied.length;
+    }
+
+    static final class PlayerBinsBuild {
+        final JsonArray bins;
+        final int scale;
+
+        PlayerBinsBuild(JsonArray bins, int scale) {
+            this.bins = bins;
+            this.scale = scale;
+        }
     }
 
     private static JsonArray buildOutlierMinutes(List<JsonObject> rows, double msptWarn) {
@@ -414,11 +498,16 @@ public final class PerformanceInsightEngine {
             double busyMspt = -1;
             for (int i = 0; i < playerBins.size(); i++) {
                 JsonObject b = playerBins.get(i).getAsJsonObject();
+                if (!b.has("mspt_avg") || !b.has("players_band")) {
+                    continue;
+                }
                 String band = b.get("players_band").getAsString();
+                double mspt = b.get("mspt_avg").getAsDouble();
                 if ("0".equals(band)) {
-                    idleMspt = b.get("mspt_avg").getAsDouble();
-                } else if ("6+".equals(band) || "3-5".equals(band)) {
-                    busyMspt = Math.max(busyMspt, b.get("mspt_avg").getAsDouble());
+                    idleMspt = mspt;
+                } else {
+                    // Bins are ordered empty → light → mid → busy; last occupied wins.
+                    busyMspt = mspt;
                 }
             }
             if (idleMspt >= 0 && busyMspt >= 0 && busyMspt > idleMspt * 1.2) {
@@ -545,10 +634,14 @@ public final class PerformanceInsightEngine {
         List<Double> msptP95 = new ArrayList<>();
         List<Double> jitter = new ArrayList<>();
         List<Double> heap = new ArrayList<>();
+        List<Double> heapPeakCandidates = new ArrayList<>();
         List<Double> mem = new ArrayList<>();
         List<Double> cpu = new ArrayList<>();
         List<Double> tps = new ArrayList<>();
         List<Integer> players = new ArrayList<>();
+        List<Double> heapPressure = new ArrayList<>();
+        List<Double> heapPressurePeakCandidates = new ArrayList<>();
+        List<Double> gcPause = new ArrayList<>();
         int lowTps = 0;
         for (JsonObject row : rows) {
             if (row.has("mspt_avg")) {
@@ -563,11 +656,27 @@ public final class PerformanceInsightEngine {
             if (row.has("heap_used_gb_avg")) {
                 heap.add(row.get("heap_used_gb_avg").getAsDouble());
             }
+            if (row.has("heap_used_gb_max")) {
+                heapPeakCandidates.add(row.get("heap_used_gb_max").getAsDouble());
+            } else if (row.has("heap_used_gb_avg")) {
+                heapPeakCandidates.add(row.get("heap_used_gb_avg").getAsDouble());
+            }
             if (row.has("mem_used_gb_avg")) {
                 mem.add(row.get("mem_used_gb_avg").getAsDouble());
             }
             if (row.has("cpu_pct_avg")) {
                 cpu.add(row.get("cpu_pct_avg").getAsDouble());
+            }
+            if (row.has("heap_pressure_pct_avg")) {
+                heapPressure.add(row.get("heap_pressure_pct_avg").getAsDouble());
+            }
+            if (row.has("heap_pressure_pct_max")) {
+                heapPressurePeakCandidates.add(row.get("heap_pressure_pct_max").getAsDouble());
+            } else if (row.has("heap_pressure_pct_avg")) {
+                heapPressurePeakCandidates.add(row.get("heap_pressure_pct_avg").getAsDouble());
+            }
+            if (row.has("gc_pause_pct_avg")) {
+                gcPause.add(row.get("gc_pause_pct_avg").getAsDouble());
             }
             if (row.has("tps_avg")) {
                 tps.add(row.get("tps_avg").getAsDouble());
@@ -593,12 +702,31 @@ public final class PerformanceInsightEngine {
         }
         if (!heap.isEmpty()) {
             s.addProperty("heap_used_gb_avg", PerformanceRollupAccumulator.round2(PerformanceRollupAccumulator.avg(heap)));
+            s.addProperty("heap_used_gb_p95", PerformanceRollupAccumulator.round2(PerformanceRollupAccumulator.p95(heap)));
+        }
+        if (!heapPeakCandidates.isEmpty()) {
+            s.addProperty("heap_used_gb_peak",
+                    PerformanceRollupAccumulator.round2(java.util.Collections.max(heapPeakCandidates)));
         }
         if (!mem.isEmpty()) {
             s.addProperty("mem_used_gb_avg", PerformanceRollupAccumulator.round2(PerformanceRollupAccumulator.avg(mem)));
         }
         if (!cpu.isEmpty()) {
             s.addProperty("cpu_pct_avg", PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.avg(cpu)));
+        }
+        if (!heapPressure.isEmpty()) {
+            s.addProperty("heap_pressure_pct_avg",
+                    PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.avg(heapPressure)));
+            s.addProperty("heap_pressure_pct_p95",
+                    PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.p95(heapPressure)));
+        }
+        if (!heapPressurePeakCandidates.isEmpty()) {
+            s.addProperty("heap_pressure_pct_peak",
+                    PerformanceRollupAccumulator.round1(java.util.Collections.max(heapPressurePeakCandidates)));
+        }
+        if (!gcPause.isEmpty()) {
+            s.addProperty("gc_pause_pct_avg",
+                    PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.avg(gcPause)));
         }
         if (!players.isEmpty()) {
             s.addProperty("players_peak", java.util.Collections.max(players));
@@ -607,6 +735,119 @@ public final class PerformanceInsightEngine {
         s.addProperty("sticky_episode_count", stickyLag.size());
         s.addProperty("outlier_count", outliers.size());
         return s;
+    }
+
+    /**
+     * Heap peak/p95 + span coverage for {@link RamSizingAdvisor}, plus window GC input fields.
+     */
+    public static JsonObject buildRamSizingStats(List<JsonObject> rows) {
+        JsonObject s = new JsonObject();
+        List<JsonObject> sorted = sortRowsByTime(rows);
+        s.addProperty("sample_minutes", sorted.size());
+        if (sorted.isEmpty()) {
+            s.addProperty("sufficient_data", false);
+            s.addProperty("span_days", 0);
+            return s;
+        }
+        long first = rowEpoch(sorted.getFirst());
+        long last = rowEpoch(sorted.getLast());
+        double spanDays = Math.max(0, (last - first) / 86400.0);
+        s.addProperty("span_days", PerformanceRollupAccumulator.round2(spanDays));
+        // Minute buckets at the window edge often land just under 7.0 calendar days.
+        s.addProperty("sufficient_data", spanDays + (1.0 / 24.0) >= RamSizingAdvisor.MIN_SPAN_DAYS);
+
+        JsonObject summary = buildSummaryExtended(sorted, new JsonArray(), new JsonArray());
+        for (String key : List.of(
+                "heap_used_gb_avg", "heap_used_gb_p95", "heap_used_gb_peak",
+                "heap_pressure_pct_avg", "heap_pressure_pct_p95", "heap_pressure_pct_peak",
+                "gc_pause_pct_avg", "mspt_avg", "mspt_p95")) {
+            if (summary.has(key)) {
+                s.add(key, summary.get(key));
+            }
+        }
+        return s;
+    }
+
+    /**
+     * Build {@link GcAdvisor} input from window L1 stats (not last-report verdict).
+     */
+    public static JsonObject buildWindowGcAdvisorInput(JsonObject ramStats, double msptWarn) {
+        JsonObject in = new JsonObject();
+        if (ramStats == null) {
+            return in;
+        }
+        if (ramStats.has("heap_pressure_pct_p95")) {
+            in.addProperty("heap_pressure_pct", ramStats.get("heap_pressure_pct_p95").getAsDouble());
+            in.addProperty("sustained_heap_pressure", true);
+        } else if (ramStats.has("heap_pressure_pct_avg")) {
+            in.addProperty("heap_pressure_pct", ramStats.get("heap_pressure_pct_avg").getAsDouble());
+            in.addProperty("sustained_heap_pressure", true);
+        }
+        if (ramStats.has("gc_pause_pct_avg")) {
+            in.addProperty("gc_pause_pct_of_wall", ramStats.get("gc_pause_pct_avg").getAsDouble());
+            in.addProperty("sustained_gc_pause", true);
+        }
+        double mspt = Double.NaN;
+        if (ramStats.has("mspt_p95")) {
+            mspt = ramStats.get("mspt_p95").getAsDouble();
+        } else if (ramStats.has("mspt_avg")) {
+            mspt = ramStats.get("mspt_avg").getAsDouble();
+        }
+        if (!Double.isNaN(mspt)) {
+            in.addProperty("mspt", mspt);
+            if (mspt >= msptWarn) {
+                in.addProperty("tick_lag", true);
+            }
+        }
+        return in;
+    }
+
+    /**
+     * Window p50/p95 of minute averages for performance baseline compare (1.1.5).
+     */
+    public static JsonObject buildBaselineMetrics(List<JsonObject> rows) {
+        JsonObject out = new JsonObject();
+        List<JsonObject> sorted = sortRowsByTime(rows);
+        out.addProperty("sample_minutes", sorted.size());
+        if (sorted.isEmpty()) {
+            return out;
+        }
+        List<Double> tps = new ArrayList<>();
+        List<Double> mspt = new ArrayList<>();
+        List<Double> heap = new ArrayList<>();
+        List<Integer> players = new ArrayList<>();
+        for (JsonObject row : sorted) {
+            if (row.has("tps_avg") && !row.get("tps_avg").isJsonNull()) {
+                tps.add(row.get("tps_avg").getAsDouble());
+            }
+            if (row.has("mspt_avg") && !row.get("mspt_avg").isJsonNull()) {
+                mspt.add(row.get("mspt_avg").getAsDouble());
+            }
+            if (row.has("heap_pressure_pct_avg") && !row.get("heap_pressure_pct_avg").isJsonNull()) {
+                heap.add(row.get("heap_pressure_pct_avg").getAsDouble());
+            }
+            if (row.has("players_max") && !row.get("players_max").isJsonNull()) {
+                players.add(row.get("players_max").getAsInt());
+            }
+        }
+        if (!tps.isEmpty()) {
+            out.addProperty("tps_p50", PerformanceRollupAccumulator.round2(PerformanceRollupAccumulator.p50(tps)));
+            out.addProperty("tps_p95", PerformanceRollupAccumulator.round2(PerformanceRollupAccumulator.p95(tps)));
+        }
+        if (!mspt.isEmpty()) {
+            out.addProperty("mspt_p50", PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.p50(mspt)));
+            out.addProperty("mspt_p95", PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.p95(mspt)));
+        }
+        if (!heap.isEmpty()) {
+            out.addProperty("heap_pressure_pct_p50",
+                    PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.p50(heap)));
+            out.addProperty("heap_pressure_pct_p95",
+                    PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.p95(heap)));
+        }
+        if (!players.isEmpty()) {
+            out.addProperty("players_peak", java.util.Collections.max(players));
+        }
+        return out;
     }
 
     static JsonArray buildCorrelations(
@@ -782,6 +1023,8 @@ public final class PerformanceInsightEngine {
         final List<Integer> players = new ArrayList<>();
         final List<Double> heap = new ArrayList<>();
         final List<Double> cpu = new ArrayList<>();
+        final List<Double> heapPressure = new ArrayList<>();
+        final List<Double> gcPause = new ArrayList<>();
         int lowTps;
 
         DayBucket(String date) {
@@ -807,6 +1050,12 @@ public final class PerformanceInsightEngine {
             }
             if (row.has("cpu_pct_avg")) {
                 cpu.add(row.get("cpu_pct_avg").getAsDouble());
+            }
+            if (row.has("heap_pressure_pct_avg")) {
+                heapPressure.add(row.get("heap_pressure_pct_avg").getAsDouble());
+            }
+            if (row.has("gc_pause_pct_avg")) {
+                gcPause.add(row.get("gc_pause_pct_avg").getAsDouble());
             }
             if (row.has("low_tps_flag") && row.get("low_tps_flag").getAsBoolean()) {
                 lowTps++;
@@ -834,6 +1083,14 @@ public final class PerformanceInsightEngine {
             }
             if (!cpu.isEmpty()) {
                 o.addProperty("cpu_avg", PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.avg(cpu)));
+            }
+            if (!heapPressure.isEmpty()) {
+                o.addProperty("heap_pressure_pct_avg",
+                        PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.avg(heapPressure)));
+            }
+            if (!gcPause.isEmpty()) {
+                o.addProperty("gc_pause_pct_avg",
+                        PerformanceRollupAccumulator.round1(PerformanceRollupAccumulator.avg(gcPause)));
             }
             o.addProperty("low_tps_minutes", lowTps);
             return o;

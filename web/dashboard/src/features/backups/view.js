@@ -63,7 +63,14 @@ function BackupKpis({ backupsLive, facts, warnDays }) {
   const lastBackup = backupsLive?.last_backup ?? facts?.optional?.last_backup ?? null;
   const ageHours = lastBackup?.age_hours
     ?? (lastBackup?.age_days != null ? Number(lastBackup.age_days) * 24 : null);
-  const archives = backupsLive?.inventory_summary?.file_count
+  const liveSummary = backupsLive?.inventory_summary && !Array.isArray(backupsLive.inventory_summary)
+    ? backupsLive.inventory_summary
+    : null;
+  const liveListCount = Array.isArray(backupsLive?.inventory)
+    ? backupsLive.inventory.length
+    : (Array.isArray(backupsLive?.inventory_summary) ? backupsLive.inventory_summary.length : null);
+  const archives = liveSummary?.file_count
+    ?? liveListCount
     ?? lastBackup?.inventory_count
     ?? (facts?.optional?.backup_inventory ?? facts?.optional?.backups ?? []).length
     ?? 0;
@@ -98,9 +105,9 @@ function BackupKpis({ backupsLive, facts, warnDays }) {
   `;
 }
 
-function VerdictCard({ backupsLive, facts, warnDays, localConfigured, externalConfigured }) {
+function VerdictCard({ backupsLive, facts, opsCacheData, warnDays, localConfigured, externalConfigured }) {
   const lastBackup = backupsLive?.last_backup;
-  const ext = facts?.optional?.backup_external ?? null;
+  const ext = facts?.optional?.backup_external ?? opsCacheData?.backup_external ?? null;
   const ageHours = lastBackup?.age_hours
     ?? ext?.age_hours
     ?? (facts?.optional?.last_backup?.age_hours != null
@@ -164,7 +171,7 @@ function VerdictCard({ backupsLive, facts, warnDays, localConfigured, externalCo
           Last backup: ${file} — ${backupAgeLabel(ageHours)}${sizeMb != null ? ` (${formatMb(sizeMb)})` : ''}
         </div>
       `}
-      ${backupsLive?.inventory_summary && html`
+      ${backupsLive?.inventory_summary && !Array.isArray(backupsLive.inventory_summary) && html`
         <div class="feat-backup-verdict__summary">
           ${backupsLive.inventory_summary.file_count} files · ${formatGb(backupsLive.inventory_summary.total_gb)} total
         </div>
@@ -178,9 +185,15 @@ function InventorySection({ backupsLive, facts, warnDays, localConfigured }) {
   const [scanning, setScanning] = useState(false);
 
   const inventory = useMemo(() => {
-    const raw = facts?.optional?.backups ?? facts?.optional?.backup_inventory ?? [];
+    const liveList = Array.isArray(backupsLive?.inventory)
+      ? backupsLive.inventory
+      : (Array.isArray(backupsLive?.inventory_summary) ? backupsLive.inventory_summary : null);
+    const raw = liveList
+      ?? facts?.optional?.backups
+      ?? facts?.optional?.backup_inventory
+      ?? [];
     return raw.map((f) => normalizeInventoryRow(f, warnDays));
-  }, [facts, warnDays]);
+  }, [backupsLive, facts, warnDays]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return inventory;
@@ -285,6 +298,7 @@ export function PageView() {
     (settingsData.backup_tracking_mode ?? 'off') !== 'off'
     || settingsData.backup_external_configured
     || !!facts?.optional?.backup_external
+    || !!opsCacheData?.backup_external
   );
   const anyConfigured = localConfigured || externalConfigured || !trackingEnabled;
 
@@ -323,6 +337,7 @@ export function PageView() {
           <${VerdictCard}
             backupsLive=${backupsLive}
             facts=${facts}
+            opsCacheData=${opsCacheData}
             warnDays=${warnDays}
             localConfigured=${localConfigured}
             externalConfigured=${externalConfigured}

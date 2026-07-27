@@ -1,0 +1,25 @@
+{
+  "query": "com/simibubi/create/content/contraptions/ContraptionCollision",
+  "matches": [
+    {
+      "mod_id": "create",
+      "jar": "create-6.0.0.jar",
+      "class": "com/simibubi/create/content/contraptions/ContraptionCollision",
+      "inner_path": "com/simibubi/create/content/contraptions/ContraptionCollision.class",
+      "source": "jar_entry_scan"
+    },
+    {
+      "mod_id": "luckperms",
+      "jar": "LuckPerms-NeoForge-5.4.jar",
+      "class": "me/lucko/luckperms/common/plugin/AbstractLuckPermsPlugin",
+      "inner_path": "me/lucko/luckperms/common/plugin/AbstractLuckPermsPlugin.class",
+      "source": "jar_entry_scan"
+    }
+  ],
+  "truncated": false,
+  "index": {
+    "state": "ready",
+    "jar_count": 48,
+    "entry_count": 18240
+  }
+}

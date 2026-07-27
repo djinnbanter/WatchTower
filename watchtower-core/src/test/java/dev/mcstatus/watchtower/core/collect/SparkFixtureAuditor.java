@@ -1,13 +1,14 @@
 package dev.mcstatus.watchtower.core.collect;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
 import dev.mcstatus.watchtower.core.spark.proto.SparkSamplerProtos;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -17,13 +18,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Parses real {@code .sparkprofile} fixtures and optionally writes golden JSON.
  */
 public final class SparkFixtureAuditor {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new Gson();
 
     private SparkFixtureAuditor() {
     }
@@ -75,6 +77,17 @@ public final class SparkFixtureAuditor {
             if (writeDir != null && profile != null) {
                 Files.createDirectories(writeDir);
                 Path out = writeDir.resolve("expected-" + key + ".json");
+                JsonObject fullTree = null;
+                if (profile.has("call_tree") && profile.get("call_tree").isJsonObject()) {
+                    fullTree = profile.getAsJsonObject("call_tree");
+                    // Full tree for preview /api/spark/tree (gzipped — compact profiles stay browser-sized).
+                    Path treeOut = writeDir.resolve("expected-" + key + ".tree.json.gz");
+                    writeGzipJson(treeOut, fullTree);
+                    int emitted = fullTree.has("nodes_emitted") ? fullTree.get("nodes_emitted").getAsInt() : 0;
+                    System.out.printf(Locale.US, "  tree %s nodes_emitted=%d -> %s%n",
+                            key, emitted, treeOut.getFileName());
+                    profile.add("call_tree", SparkCallTrees.slim(fullTree, SparkCallTrees.FIXTURE_PREVIEW_NODES));
+                }
                 Files.writeString(out, GSON.toJson(profile) + System.lineSeparator());
             }
             rows.add(toRow(fixture.getFileName().toString(), key, profile));
@@ -111,6 +124,7 @@ public final class SparkFixtureAuditor {
         String sourcePath = "watchtower/spark-upload/" + normalizedName;
         SparkCollectResult result = new SparkCollectResult(
                 Path.of(sourcePath),
+                sourcePath,
                 normalizedName,
                 "spark_upload",
                 capturedAt(data, fixture),
@@ -202,5 +216,12 @@ public final class SparkFixtureAuditor {
             return Optional.empty();
         }
         return Optional.of(GSON.fromJson(Files.readString(golden), JsonObject.class));
+    }
+
+    private static void writeGzipJson(Path path, JsonObject json) throws IOException {
+        byte[] bytes = GSON.toJson(json).getBytes(StandardCharsets.UTF_8);
+        try (OutputStream out = new GZIPOutputStream(Files.newOutputStream(path))) {
+            out.write(bytes);
+        }
     }
 }

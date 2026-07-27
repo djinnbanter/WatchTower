@@ -1,0 +1,47 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'dev.mcstatus.watchtower'
+version = rootProject.findProperty('mod_version') ?: '1.0.0'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api project(':watchtower-core')
+
+    // Auth / TOTP compile (embedded into mod JAR via glue jarJar)
+    implementation 'dev.samstevens.totp:totp:1.7.1'
+    implementation 'com.google.zxing:core:3.4.0'
+    implementation 'com.google.zxing:javase:3.4.0'
+    implementation 'commons-codec:commons-codec:1.13'
+
+    // SLF4J API only — implementation provided by NeoForge at runtime
+    compileOnly 'org.slf4j:slf4j-api:2.0.16'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.slf4j:slf4j-api:2.0.16'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.16'
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes(
+                'Automatic-Module-Name': 'dev.mcstatus.watchtower.neoforge.common',
+                'Implementation-Version': version
+        )
+    }
+}

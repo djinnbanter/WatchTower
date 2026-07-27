@@ -5,7 +5,7 @@ One Gradle subproject per **loader + Minecraft line**. Each depends on [`watchto
 Build from **repo root** (canonical):
 
 ```bash
-./gradlew :neoforge-1.21.1:build
+./gradlew :neoforge-1.21:build
 ./gradlew copyReleaseJars
 ```
 
@@ -17,8 +17,8 @@ See [../CONTRIBUTING.md](../CONTRIBUTING.md) and [../docs/ROADMAP.md](../docs/RO
 
 | Loader | MC line | Folder | Release artifact | Status |
 |--------|---------|--------|------------------|--------|
-| NeoForge | **1.21.x** | [`neoforge-1.21.1/`](neoforge-1.21.1/) → `neoforge-1.21/` | `watchtower-neoforge-*+mc1.21.jar` | **Active** |
-| NeoForge | **1.20.x** | `neoforge-1.20/` (planned) | `watchtower-neoforge-*+mc1.20.jar` | Planned **1.3.0** |
+| NeoForge | **1.21.x** | [`neoforge-1.21/`](neoforge-1.21/) | `watchtower-neoforge-*+mc1.21.jar` | **Active** |
+| NeoForge | **1.20.x** | [`neoforge-1.20/`](neoforge-1.20/) | `watchtower-neoforge-*+mc1.20.jar` | Stub (CI allowed-fail) until **1.3.0** / WT-027 |
 | Fabric | **1.21.x** | `fabric-1.21/` (planned) | `watchtower-neoforge-*+mc1.21-fabric.jar` | Planned **1.2.0** |
 | Forge | 1.20.x | — | — | Low priority |
 
@@ -26,7 +26,7 @@ See [../CONTRIBUTING.md](../CONTRIBUTING.md) and [../docs/ROADMAP.md](../docs/RO
 
 ## Adding a new loader
 
-1. Copy `neoforge-1.21.1/` → `mods/<loader>-<mc-line>/`
+1. Copy `neoforge-1.21/` → `mods/<loader>-<mc-line>/`
 2. Add `include` + `projectDir` in [`settings.gradle`](../settings.gradle)
 3. Extend root [`build.gradle`](../build.gradle) `copyReleaseJars` (artifacts land in `releases/<version>/`)
 4. Document in [CONTRIBUTING.md](../CONTRIBUTING.md)

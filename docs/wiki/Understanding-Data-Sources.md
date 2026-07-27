@@ -1,6 +1,6 @@
 # Understanding Data Sources
 
-Watchtower updates information in **three ways**. You do **not** need to run a full health report every time you open the dashboard.
+Watchtower updates information in **two continuous layers**, plus **Support compose** when you ask for a zip. You do **not** need a manual deep audit for day-to-day dashboard use.
 
 ---
 
@@ -8,29 +8,34 @@ Watchtower updates information in **three ways**. You do **not** need to run a f
 
 | Kind | Plain English | When it updates |
 | ---- | ------------- | --------------- |
-| **Live** | Charts while you watch | Every few seconds while the dashboard is open |
-| **Background scan** | Logs, crashes, recent activity | About once a minute while the server runs |
-| **Full report** | Complete fix list and deep mod check | When you run a report or on a schedule |
+| **Watching** | Charts and vitals | Every ~1 second while the **server** runs (dashboard open or not) |
+| **Scanning** | Logs, crashes, activity, continuous Issues, mods deltas | About once a minute while the server runs |
+| **Support compose** | Frozen support zip + synthesized brief for sharing | On request — rail **Build support pack**, Overview / Help Center **Support pack**, `/watchtower run`, or `/watchtower diagnostics` |
 
-**Short version:** charts refresh while you are looking. The server keeps checking logs and crashes in the background even when nobody has the dashboard open. A **full report** is the deep check — run it on a schedule (e.g. every hour), not every visit.
+**Short version:** Watching + Scanning keep the dashboard useful. Support compose is for sharing a snapshot with your host or mod authors — not day-to-day tab truth.
 
-Open the **Sources** tab to see when each layer last updated on your server.
+Open the **Sources** tab to see when each layer and job last updated, and when the next pull is due. How-to: [[Sources]]. Theory lives on this page.
+
+### First-run Initial discovery
+
+On first setup, after you change the default account, Welcome can enable Modrinth (optional), then may run a **blocking Initial discovery** — a full deep audit baseline before you continue. **Next** stays locked until it finishes. After that, Watching + Scanning keep tabs current with deltas.
 
 ---
 
-## What needs a full report?
+## Which tabs use which layer?
 
-| Feature | Background enough? | Needs full report? |
-| ------- | ------------------ | ------------------ |
-| Live charts | Yes | No |
-| Crash list (basic) | Yes | Deeper details from last report |
-| Recent activity | Yes | Older history from reports |
-| Lag spike notes | Yes | No |
-| **Issues — full fix list** | No | **Yes** |
-| **Mods — full list and conflicts** | Partial (log errors) | **Yes** for deep analysis |
-| Who is online now | Yes | Playtime stats from report |
-| Backups (after setup) | Yes (rescan) | First setup from report |
-| Report history | No | **Yes** |
+| Tab / feature | Watching | Scanning | Support compose |
+| ------------- | -------- | -------- | --------------- |
+| Live charts / Overview vitals | Yes | — | No |
+| Issues Active fix list | Live peeks | Ledger | Optional export |
+| Crashes list + Fix hints | — | Yes | Zip adds extra context |
+| Activity timeline | — | Yes | Optional |
+| Mods inventory / updates | — | Yes | Optional |
+| Session online roster | Poll | Playtime deepens | Optional |
+| Backups freshness | — | Scan job | Optional |
+| Share zip with host | — | — | **Yes** |
+
+Legacy deep-audit facts on disk (older installs or optional schedule) are still read when present, but day-to-day tabs do not depend on them. Optional schedule: [[Health-Reports]].
 
 ---
 
@@ -38,10 +43,14 @@ Open the **Sources** tab to see when each layer last updated on your server.
 
 | Where to look | What it shows |
 | ------------- | ------------- |
-| **Sources tab** | When live, background scan, and last report ran |
-| **Badges on cards** | Live / Scanned / Report / Mixed |
-| **Text under tab titles** | One-line explanation of where data comes from |
-| **Settings → Monitoring** | Read-only list of intervals and retention |
+| **Sources** tab | Watching / Scanning / Support compose freshness + job grid |
+| Badges on cards | Live / Scanning / Mixed |
+| Rail **Build support pack** | Compose a support bundle |
+| Help Center / Overview Support card | Same compose flow |
+| **Settings → Monitoring** | Lag thresholds, baseline, Spark auto-capture, scan intervals |
+| **Settings → Alerts** | Disk warnings and report retention |
+
+> **Do not confuse** Ops **Sources** (pollers) with Spark → **Sources** (which mod owns profile time). Spark details: [[Using-Spark-with-Watchtower]].
 
 ---
 
@@ -51,25 +60,55 @@ Open the **Sources** tab to see when each layer last updated on your server.
 
 | File | Layer | Written by |
 | ---- | ----- | ---------- |
-| `live-history.json` | Live | Metrics while dashboard samples |
+| `live-history.json` | Watching | Metrics while server samples |
 | `performance-rollups.json` | Minute history | Once per minute |
-| `ops-cache.json` | Background scan | Log and crash checks (~60s) |
+| `ops-cache.json` | Scanning | Log/crash/issues_live (~60s) + delta jobs |
 | `incidents/*.json` | Lag snapshots | Auto lag detection |
-| `watchtower-facts-*.json` | Full report | Manual or scheduled report |
+| `watchtower-facts-support-*.json` | Support compose only | Not BAU dashboard master |
+| `watchtower-facts-*.json` (legacy) | Old deep audits | Upgrades / optional schedule only |
 
 ### Settings that control timing
 
 | What | Where to change |
 | ---- | --------------- |
 | Live chart sample rate | `config/watchtower-server.toml` (restart required) |
-| Background scan interval | `watchtower/watchtower.conf` or Settings |
-| Report schedule | **Settings → General** |
+| Background scan interval | `watchtower/watchtower.conf` or Settings → Monitoring |
+| Activity gap backfill | `ACTIVITY_GAP_*` in `watchtower.conf` |
+| Mods deep delta jobs | `MODS_DEEP_*` in `watchtower.conf` |
+| Legacy report schedule | `watchtower.conf` or `/watchtower schedule` (new installs default **Off**) |
 
 ---
 
-## See also
+## Glossary (short)
 
-- [[Health Reports]] — what a full report contains
-- [[Scheduled Reports]] — automate full reports
-- [[Dashboard Tabs]] — per-tab behaviour
-- [[Roadmap]] — upcoming improvements
+| Term | Meaning |
+| ---- | ------- |
+| **Watching** | Live telemetry layer for charts and vitals |
+| **Scanning** | ~60s ops layer for logs, crashes, Issues, mods |
+| **Support compose** | On-demand zip for sharing |
+| **Help Center** | Built-in guides (rail tab) |
+| **TPS** | Ticks per second — 20 is healthy |
+| **Tick lag (MSPT)** | Milliseconds per tick — lower is better |
+| **Heap** | Java memory the game uses |
+| **Issues** | Fix inbox from continuous Scanning |
+| **Sources (Ops)** | Poller health and next pull |
+| **Spark profile** | Capture of where server time went during lag |
+| **Spark Sources** | Profile sub-tab — mod/source attribution (not Ops Sources) |
+| **Freshness** | How recently a layer or job updated |
+| **Poller** | Background job that pulls one kind of data |
+| **Welcome tour** | Skippable first-run walkthrough (`?tab=wizard`) |
+| **Backup tracking** | Folder / webhook Watchtower watches — or Not tracking |
+| **Crash group** | Fingerprinted crash family on Crashes |
+| **Modrinth lookup** | Optional online mod metadata |
+| **Config audit** | Startup / Insights check of JVM and conf |
+| **DR bundle** | Disaster-recovery zip from the CLI tool |
+| **Ops scan** | One Scanning cycle writing ops-cache |
+
+---
+
+## Related
+
+- [[Sources]] — freshness how-to
+- [[Health-Reports]] — Support packs & optional schedule
+- [[Dashboard-Tabs]] — where to click
+- [[Commands]] — `/watchtower run` and diagnostics

@@ -1,31 +1,42 @@
 /**
- * Overview — adaptive ops status page.
- * Trust strip → vitals counters → hero verdict → triage.
+ * Overview — Live-inspired mission control.
+ * Mission band → trust chips → triage | instrument cards.
  */
 
-import { html, useState } from '../../lib/preact.js';
+import { html, useState, useEffect, useRef } from '../../lib/preact.js';
 import {
   Page, Section, MetricTile, ListRow, HealthGrade, Skeleton,
-  StatusPillStrip, BeaconCard, UptimeClock, RadarDial,
+  Gauge, RadarDial, FreshnessBadge, StaggerList,
 } from '../../ui/patterns/index.js';
-import { Button, Grid, Card, Badge, Progress } from '../../ui/primitives/index.js';
+import { Button, Badge, Progress } from '../../ui/primitives/index.js';
 import { Icon } from '../../ui/icons.js';
 import {
   live, reports, overviewMeta, opsCache, issuesPeek,
   performance, ui, noReportYet, acks, crashGroups, settings, auth, issueSuppressions,
+  dataSources,
 } from '../../state/stores.js';
-import { now } from '../../state/clock.js';
+import { untracked, useSignalEffect } from '../../lib/signals.js';
 import { openModal, saveBackupExternal, addToast } from '../../state/actions.js';
+import { openSupportBuilder } from '../support/bundle-builder-modal.js';
 import { navigate } from '../../app/router.js';
-import { displayHealth, buildActionQueue } from '../../domain/health.js';
+import { displayHealth, buildActionQueue, opsCanDriveActionQueue } from '../../domain/health.js';
 import { formatTps, formatPct, formatGb, formatMb, formatDuration } from '../../domain/formats.js';
 import { isStaleReport } from '../../domain/freshness.js';
-import { formatReportFreshness, overviewStatusPills, healthStatus } from '../../domain/labels.js';
-import { buildWelcomeLead, buildStatusSummary } from '../../domain/overview-welcome.js';
+import { overviewStatusPills, healthStatus } from '../../domain/labels.js';
+import { hasLiveSample } from '../../domain/live-sample.js';
+import { buildWelcomeLead } from '../../domain/overview-welcome.js';
 import { get as persistGet } from '../../state/persist.js';
 import { resumeSetupWizard } from '../wizard/view.js';
+import { useCountUp } from '../../motion/use-count-up.js';
+import { DUR } from '../../motion/tokens.js';
 
 const ATTENTION_CAP = 3;
+const LAG_CAP = 3;
+
+/** Read live without subscribing — keeps Overview body from re-rendering on every poll. */
+function peekLive() {
+  return untracked(() => live.value);
+}
 
 function backupsConfiguredFromSettings(data) {
   if (!data) return false;
@@ -53,20 +64,8 @@ function setupResumeChip() {
     };
   }
 
-  if (wiz.baseline === 'pending') {
-    return {
-      text: 'Your optional 30-day baseline report is still running in the background.',
-      actionLabel: 'Report status',
-      onClick: () => openModal('run-report'),
-    };
-  }
-
-  if (wiz.baseline === 'failed') {
-    return {
-      text: 'The optional 30-day baseline did not finish. You can run a report anytime.',
-      actionLabel: 'Run Report',
-      onClick: () => openModal('run-report'),
-    };
+  if (wiz.baseline === 'pending' || wiz.baseline === 'failed') {
+    return null;
   }
 
   if (!backupsConfiguredFromSettings(settings.value?.data)) {
@@ -97,12 +96,6 @@ function cpuTone(v) {
   return v > 90 ? 'danger' : v > 70 ? 'warn' : 'ok';
 }
 
-function heapTone(used, max) {
-  if (used == null || !max) return 'neutral';
-  const pct = used / max;
-  return pct > 0.9 ? 'danger' : pct > 0.75 ? 'warn' : 'ok';
-}
-
 function diskTone(pct) {
   if (pct == null) return 'neutral';
   return pct > 90 ? 'danger' : pct > 75 ? 'warn' : 'ok';
@@ -114,7 +107,6 @@ function severityIcon(sev, kind) {
   return sev === 'critical' ? 'zap' : 'alert-triangle';
 }
 
-/** Map displayHealth.effective → letter grade when meta grade is missing. */
 function gradeFromHealth(effective) {
   if (effective === 'critical') return 'F';
   if (effective === 'warning') return 'C';
@@ -135,7 +127,7 @@ function gradeHeadline(grade, attentionCount, isDown) {
   return 'Control center';
 }
 
-function heroTone(grade, attentionCount, isDown) {
+function missionTone(grade, attentionCount, isDown) {
   if (isDown || attentionCount > 0 || grade === 'F') return 'danger';
   if (grade === 'C' || grade === 'D' || grade === '?') return 'warn';
   return 'ok';
@@ -144,12 +136,20 @@ function heroTone(grade, attentionCount, isDown) {
 function heroSubtext(layoutMode, attentionCount, isDown) {
   if (isDown) return 'Live metrics may be stale until the connection recovers.';
   if (attentionCount > 0) {
-    return 'Fix the items below, then re-run a report to refresh the grade.';
+    return 'Fix the items below — Scanning refreshes the grade as Issues clear.';
   }
   if (layoutMode === 'steady') {
     return 'No active issues. Vitals look steady — open Live for charts or Insights for trends.';
   }
   return 'Vitals look steady. Use Live for real-time charts and Issues when something spikes.';
+}
+
+function gradeWord(grade, healthLabel) {
+  if (healthLabel) return healthLabel;
+  if (grade === 'A' || grade === 'B') return 'Healthy';
+  if (grade === 'C' || grade === 'D') return 'Warning';
+  if (grade === 'F') return 'Critical';
+  return 'Unknown';
 }
 
 function pregenVisible(pregen) {
@@ -160,9 +160,9 @@ function pregenVisible(pregen) {
 }
 
 const DIM_BAR_GRADIENTS = [
-  'linear-gradient(90deg, var(--ui-sky), color-mix(in srgb, var(--ui-sky) 55%, var(--ui-accent)))',
-  'linear-gradient(90deg, var(--ui-accent), color-mix(in srgb, var(--ui-accent) 50%, #22d3ee))',
-  'linear-gradient(90deg, var(--ui-ok), color-mix(in srgb, var(--ui-ok) 45%, var(--ui-sky)))',
+  'linear-gradient(90deg, var(--ui-ch-disk, var(--ui-sky)), color-mix(in srgb, var(--ui-ch-disk, var(--ui-sky)) 55%, var(--ui-accent)))',
+  'linear-gradient(90deg, var(--ui-accent), color-mix(in srgb, var(--ui-accent) 55%, var(--ui-warn)))',
+  'linear-gradient(90deg, var(--ui-ok), color-mix(in srgb, var(--ui-ok) 50%, var(--ui-sky)))',
   'linear-gradient(90deg, var(--ui-info), color-mix(in srgb, var(--ui-info) 50%, var(--ui-accent)))',
   'linear-gradient(90deg, var(--ui-warn), color-mix(in srgb, var(--ui-warn) 55%, var(--ui-accent)))',
 ];
@@ -211,22 +211,77 @@ function resolveOverviewHostname(envelope, facts, settingsData) {
     || null;
 }
 
-function WelcomeBand({ lead, hostLine, panelLabel, summary }) {
-  return html`
-    <div class="ov-welcome" data-tour="overview-welcome">
-      <div class="ov-welcome__copy">
-        <h2 class="ov-welcome__lead">${lead}</h2>
-        ${hostLine && html`
-          <p class="ov-welcome__host">
-            <span class="ov-welcome__host-name">${hostLine}</span>
-            ${panelLabel ? html`<span class="ov-welcome__panel">${panelLabel}</span>` : null}
-          </p>
-        `}
-        ${summary && html`<p class="ov-welcome__summary">${summary}</p>`}
-      </div>
-    </div>
-  `;
+function fmtVital(v, format) {
+  if (v == null) return '—';
+  return format ? format(v) : String(v);
 }
+
+// ── Server spec (loader / MC version) ──────────────────────────────────────────
+
+const LOADER_LABELS = {
+  neoforge: 'NeoForge',
+  forge: 'Forge',
+  fabric: 'Fabric',
+  quilt: 'Quilt',
+  paper: 'Paper',
+  purpur: 'Purpur',
+  spigot: 'Spigot',
+  bukkit: 'Bukkit',
+  vanilla: 'Vanilla',
+};
+
+function modList(facts) {
+  const mods = facts?.optional?.mods;
+  return Array.isArray(mods) ? mods : [];
+}
+
+/** loaderInfo(facts) -> { label, version } | null */
+function loaderInfo(facts) {
+  const raw = String(facts?.meta?.loader ?? '').toLowerCase();
+  // Prefer the authoritative spark platform block when present.
+  const platform = facts?.optional?.startup_profile?.platform
+    ?? facts?.optional?.spark?.platform
+    ?? null;
+  const label = LOADER_LABELS[raw] || platform?.loader || (raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : null);
+  if (!label) return null;
+
+  let version = platform?.loader_version ?? null;
+  if (!version) {
+    const entry = modList(facts).find((m) => String(m.id ?? m.mod_id ?? '').toLowerCase() === raw);
+    version = entry?.version ?? null;
+  }
+  return { label, version };
+}
+
+/** deriveMcVersion(facts) -> "1.21.1" | null */
+function deriveMcVersion(facts) {
+  // 1) Authoritative spark platform block.
+  const platform = facts?.optional?.startup_profile?.platform
+    ?? facts?.optional?.spark?.platform
+    ?? null;
+  if (platform?.minecraft) return String(platform.minecraft);
+
+  // 2) Explicit minecraft mod entry.
+  const mcEntry = modList(facts).find((m) => String(m.id ?? m.mod_id ?? '').toLowerCase() === 'minecraft');
+  if (mcEntry?.version && /^\d+\.\d+/.test(String(mcEntry.version))) return String(mcEntry.version);
+
+  // 3) Parse a +mc<x.y.z> / -<1.21.x> suffix from any mod version string.
+  for (const m of modList(facts)) {
+    const v = String(m.version ?? '');
+    const mc = v.match(/[+-]mc(\d+\.\d+(?:\.\d+)?)/i) || v.match(/[+-](1\.\d+(?:\.\d+)?)/);
+    if (mc) return mc[1];
+  }
+
+  // 4) Fall back to mapping NeoForge major (21.1.x -> 1.21.1).
+  const loader = loaderInfo(facts);
+  if (loader?.version) {
+    const nf = String(loader.version).match(/^(\d+)\.(\d+)\.(\d+)/);
+    if (nf) return `1.${nf[1]}.${nf[2]}`;
+  }
+  return null;
+}
+
+// ── Local UI pieces ───────────────────────────────────────────────────────────
 
 function DisableBackupAlerts() {
   const [saving, setSaving] = useState(false);
@@ -257,6 +312,233 @@ function DisableBackupAlerts() {
   `;
 }
 
+function VitalLive({
+  label, raw, format, unit, tone = 'neutral', channel,
+  caption, online,
+}) {
+  const animated = useCountUp(online ? raw : null, { duration: DUR[5] });
+  const display = animated == null ? '—' : fmtVital(animated, format);
+
+  return html`
+    <div
+      class=${`ov-vital-live ov-vital-live--${tone}${channel ? ` ov-vital-live--${channel}` : ''}${online ? ' is-online' : ''}`}
+    >
+      <div class="ov-vital-live__head">
+        <span class="ov-vital-live__label">${label}</span>
+        ${online ? html`<span class="ov-vital-live__pulse" aria-hidden="true"></span>` : null}
+      </div>
+      <div class="ov-vital-live__figure">
+        <span class="ov-vital-live__value">${display}</span>
+        ${unit && animated != null ? html`<span class="ov-vital-live__unit">${unit}</span>` : null}
+      </div>
+      ${caption ? html`<span class="ov-vital-live__caption">${caption}</span>` : null}
+    </div>
+  `;
+}
+
+function MissionVitals() {
+  // Root kickRender skips Overview on live polls — force this strip alone to refresh.
+  const [, setTick] = useState(0);
+  useSignalEffect(() => {
+    void live.value?.at;
+    setTick((n) => n + 1);
+  });
+  const liveVal = live.value;
+  const latest = liveVal?.latest ?? null;
+  const online = hasLiveSample(latest);
+  const tps = latest?.tps;
+  const mspt = latest?.mspt;
+  const players = latest?.players_online;
+  const cpu = latest?.host_cpu_pct;
+  const heapUsed = latest?.heap_mb?.used ?? null;
+  const heapMax = latest?.heap_mb?.max ?? null;
+  const showCpu = cpu != null;
+
+  return html`
+    <div class=${`ov-mission__vitals${online ? ' ov-mission__vitals--live' : ''}`} aria-label="Live vitals">
+      ${online ? html`
+        <${VitalLive}
+          label="TPS"
+          raw=${tps}
+          format=${(v) => formatTps(v)}
+          tone=${tpsTone(tps)}
+          channel="tps"
+          online=${true}
+        />
+        <${VitalLive}
+          label="MSPT"
+          raw=${mspt}
+          format=${(v) => Number(v).toFixed(1)}
+          unit="ms"
+          tone=${msptTone(mspt)}
+          channel="mspt"
+          online=${true}
+        />
+        <${VitalLive}
+          label="Players"
+          raw=${players}
+          format=${(v) => String(Math.round(v))}
+          tone="neutral"
+          channel="players"
+          online=${true}
+        />
+        <${VitalLive}
+          label="Heap"
+          raw=${heapUsed}
+          format=${(v) => formatMb(v)}
+          tone="neutral"
+          channel="heap"
+          caption=${heapMax != null ? `Max ${formatMb(heapMax)}` : null}
+          online=${true}
+        />
+        ${showCpu ? html`
+          <${VitalLive}
+            label="CPU"
+            raw=${cpu}
+            format=${(v) => formatPct(v)}
+            tone=${cpuTone(cpu)}
+            channel="cpu"
+            online=${true}
+          />
+        ` : null}
+      ` : html`
+        <div class="ov-mission__vitals-empty">
+          ${[1, 2, 3].map((i) => html`<${Skeleton} key=${i} height=${64} className="ov-mission__vital-skel" />`)}
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function MissionBand({
+  grade,
+  gradeLabel,
+  tone,
+  greeting,
+  headline,
+  sub,
+  kpis,
+  latestCrash,
+  reportAt,
+  reportStale,
+}) {
+  const [beaconSettled, setBeaconSettled] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setBeaconSettled(true), 900);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  return html`
+    <div class=${`ov-mission ov-mission--${tone}${reportStale ? ' is-stale' : ''}`} data-tour="overview">
+      <div class="ov-mission__status">
+        <div class="ov-mission__grade">
+          <div class=${`ov-beacon ov-beacon--${tone}${beaconSettled ? ' is-settled' : ''}`}>
+            <span class="ov-beacon__halo" aria-hidden="true"></span>
+            <${HealthGrade}
+              grade=${grade}
+              label=${gradeLabel}
+              size=${72}
+            />
+          </div>
+          <span class="ov-mission__grade-word">${gradeLabel}</span>
+        </div>
+
+        <div class="ov-mission__verdict">
+          ${greeting ? html`<p class="ov-mission__greeting">${greeting}</p>` : null}
+          <h2 class="ov-mission__headline">${headline}</h2>
+          <p class="ov-mission__sub">${sub}</p>
+          ${reportAt ? html`
+            <div class="ov-mission__provenance">
+              <${FreshnessBadge} layer="report" at=${reportAt} stale=${reportStale} />
+            </div>
+          ` : null}
+          ${kpis?.length ? html`
+            <div class="ov-mission__kpis">
+              ${kpis.map((k) => html`
+                <div class=${`ov-kpi ov-kpi--${k.tone || 'neutral'}`} key=${k.label}>
+                  <span class="ov-kpi__label">${k.label}</span>
+                  <span class="ov-kpi__value">${k.value}</span>
+                </div>
+              `)}
+            </div>
+          ` : null}
+          ${latestCrash ? html`
+            <p class="ov-verdict-latest-crash">
+              <${Icon} name="bug" size=${12} />
+              ${latestCrash}
+            </p>
+          ` : null}
+        </div>
+      </div>
+
+      <${MissionVitals} />
+    </div>
+  `;
+}
+
+function TrustChips({ uptimeSec, sessionWord, sessionTone, pills, facts, latest }) {
+  const chips = [];
+
+  const mc = deriveMcVersion(facts);
+  const loader = loaderInfo(facts);
+  const javaRaw = latest?.java_version ?? facts?.system?.java_version ?? null;
+  const jvmHealth = latest?.jvm_health_live ?? facts?.optional?.jvm_health ?? null;
+  const javaMajor = jvmHealth?.java_major;
+  const flagsProfile = jvmHealth?.flags_profile;
+
+  if (mc) chips.push({ key: 'mc', label: 'Minecraft', value: mc, tone: 'info' });
+  if (loader) {
+    chips.push({
+      key: 'loader',
+      label: loader.label,
+      value: loader.version || loader.label,
+      tone: 'info',
+    });
+  }
+  if (javaRaw || javaMajor != null) {
+    const javaLabel = javaMajor != null ? String(javaMajor) : String(javaRaw);
+    chips.push({ key: 'java', label: 'Java', value: javaLabel, tone: 'info' });
+  }
+  if (flagsProfile) {
+    chips.push({ key: 'jvm_flags', label: 'JVM flags', value: String(flagsProfile), tone: 'info' });
+  }
+
+  if (uptimeSec != null) {
+    chips.push({ key: 'uptime', label: 'Uptime', value: formatDuration(uptimeSec), tone: 'info' });
+  }
+  if (sessionWord) {
+    chips.push({ key: 'session', label: 'Session', value: sessionWord, tone: sessionTone || 'neutral' });
+  }
+  for (const p of pills || []) {
+    // Java / hosting already covered by identity chips above — skip duplicates.
+    const label = String(p.label || '').toLowerCase();
+    if (label === 'java' || label === 'hosting' || label === 'environment') continue;
+    chips.push({
+      key: p.label,
+      label: p.label,
+      value: p.value,
+      tone: p.tone || 'neutral',
+    });
+  }
+  if (!chips.length) return null;
+
+  return html`
+    <div class="ov-trust" role="list" aria-label="Server status">
+      ${chips.map((c) => html`
+        <div
+          class=${`ov-trust__chip ov-trust__chip--${c.tone || 'neutral'}`}
+          role="listitem"
+          key=${c.key}
+        >
+          <span class="ov-trust__dot" aria-hidden="true"></span>
+          <span class="ov-trust__label">${c.label}</span>
+          <span class="ov-trust__value">${c.value}</span>
+        </div>
+      `)}
+    </div>
+  `;
+}
+
 function PregenJobCard({ title, pregen, radarKind = 'circle' }) {
   if (!pregenVisible(pregen)) return null;
   const last = pregen.last ?? {};
@@ -265,10 +547,12 @@ function PregenJobCard({ title, pregen, radarKind = 'circle' }) {
   const paused = !!pregen.pregen_paused;
 
   return html`
-    <div class="ov-pregen">
+    <div class=${`ov-instrument ov-instrument--pregen ov-pregen${active ? ' is-active' : ''}`}>
       <div class="ov-pregen__layout">
         ${pct != null ? html`
-          <${RadarDial} pct=${pct} kind=${radarKind} size=${72} />
+          <div class="ov-instrument__dial">
+            <${RadarDial} pct=${pct} kind=${radarKind} size=${88} />
+          </div>
         ` : null}
         <div class="ov-pregen__body">
           <div class="ov-pregen__head">
@@ -314,8 +598,12 @@ function PregenJobCard({ title, pregen, radarKind = 'circle' }) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function PageView() {
-  const liveVal       = live.value;
-  const latest        = liveVal?.latest ?? null;
+  const noReport      = noReportYet.value;
+  // Subscribe to live only during first-run (exit the empty gate). Otherwise peek so
+  // MissionVitals alone re-renders on the 1s poll — not the whole Overview.
+  const liveVal       = noReport ? live.value : peekLive();
+  const latestRaw     = liveVal?.latest ?? null;
+  const latest        = hasLiveSample(latestRaw) ? latestRaw : null;
   const envelope      = liveVal?.envelope ?? null;
   const reportsVal    = reports.value;
   const facts         = reportsVal?.facts ?? null;
@@ -327,16 +615,19 @@ export function PageView() {
   const ovData        = ovMeta?.data ?? null;
   const perfVal       = performance.value;
   const uiVal         = ui.value;
-  const noReport      = noReportYet.value;
-  const nowMs         = now.value;
+  const nowMs         = Date.now();
   const isDown        = uiVal.connectionDown;
   const lagIssues     = issuesPeek.value?.data?.lag_issues ?? [];
+  const incidentStories = Array.isArray(opsCacheData?.incident_stories)
+    ? opsCacheData.incident_stories
+    : (Array.isArray(facts?.optional?.incident_stories) ? facts.optional.incident_stories : []);
+  const latestStory = incidentStories[0] ?? null;
 
   const health = facts ? displayHealth(facts, acksMap, opsCacheData, {
     backupTrackingEnabled: settings.value?.data?.backup_tracking_enabled !== false,
   }) : null;
-  const queue  = facts
-    ? buildActionQueue(facts, acksMap, opsCacheData, crashGroups.value, acksVal?.issues ?? {}, {
+  const queue  = (facts || opsCanDriveActionQueue(opsCacheData))
+    ? buildActionQueue(facts ?? null, acksMap, opsCacheData, crashGroups.value, acksVal?.issues ?? {}, {
       backupTrackingEnabled: settings.value?.data?.backup_tracking_enabled !== false,
       issueSuppressions: issueSuppressions.value?.data
         ?? facts?.optional?.active_suppressions
@@ -346,43 +637,28 @@ export function PageView() {
 
   const scorecard   = ovData?.scorecard ?? null;
   const rightNow    = opsCacheData?.right_now ?? null;
-  const perfTldr    = ovData?.performance_insights_tldr ?? null;
+  const perfTldr    = ovData?.baseline_regression_tldr
+    ?? ovData?.performance_insights_tldr
+    ?? null;
+  const sparkTldr   = ovData?.spark_tldr ?? null;
   const rssHint     = ovData?.rss_hint ?? null;
   const diskJump    = ovData?.disk_jump_tldr ?? null;
+  const diskProjection = ovData?.disk_projection
+    ?? ovData?.disk_projection_tldr
+    ?? null;
+  const safeRestart = ovData?.safe_restart ?? null;
   const reportMeta  = facts?.meta ?? null;
   const stale       = reportMeta ? isStaleReport(reportMeta, nowMs) : false;
 
   const username = auth.value?.session?.username ?? null;
   const hostname = resolveOverviewHostname(envelope, facts, settings.value?.data);
-  const panelLabel = settings.value?.data?.panel_display_name
-    || reportMeta?.panel_display_name
-    || null;
-  const javaRunning = facts?.health?.java_running
-    ?? facts?.flags?.java_running
-    ?? (latest != null ? true : null);
-  const attentionCount = (queue.now?.length ?? 0) + (queue.soon?.length ?? 0);
   const welcomeLead = buildWelcomeLead({
     username,
     hostname,
     firstRun: !!(noReport && !latest),
   });
-  const statusSummary = buildStatusSummary({
-    javaRunning,
-    isDown,
-    players: latest?.players_online ?? facts?.minecraft?.players_online_now,
-    tps: latest?.tps,
-    mspt: latest?.mspt,
-    healthLabel: health?.label || healthStatus(health?.effective),
-    healthEffective: health?.effective ?? 'ok',
-    attentionCount,
-    crashHint: ovData?.crash_tldr?.label ?? null,
-    lagHint: ovData?.lag_tldr?.label ?? null,
-  });
 
   const diskPct   = latest?.disk_use_pct ?? null;
-  const heapUsed  = latest?.heap_mb?.used ?? null;
-  const heapMax   = latest?.heap_mb?.max ?? null;
-  const memAvGb   = latest?.mem_available_gb ?? null;
   const worldGb   = latest?.world_gb ?? null;
   const uptimeSec = latest?.java_uptime_sec ?? null;
   const byDimension = latest?.by_dimension
@@ -390,12 +666,16 @@ export function PageView() {
     ?? [];
   const chunkyPregen = envelope?.chunky_pregen ?? facts?.optional?.chunky_pregen ?? null;
   const dhPregen     = envelope?.dh_pregen ?? facts?.optional?.dh_pregen ?? null;
-  const startupProfile = facts?.optional?.startup_profile ?? null;
+  const startupProfile = facts?.optional?.startup_profile
+    ?? opsCacheData?.startup_profile
+    ?? null;
 
   const grade = ovData?.health_grade ?? (health ? gradeFromHealth(health.effective) : '?');
+  const gradeLabel = gradeWord(grade, health?.label ?? healthStatus(health?.effective));
 
   const attentionItems = [...(queue.now ?? []), ...(queue.soon ?? [])];
   const attentionMore  = Math.max(0, attentionItems.length - ATTENTION_CAP);
+  const hasBackupAttention = attentionItems.some((item) => item.kind === 'backup');
 
   const layoutMode =
     isDown
@@ -405,20 +685,16 @@ export function PageView() {
       ? 'incident'
       : 'steady';
 
-  // Always show available vitals — do not gate Host CPU on warn thresholds (flickers as load oscillates).
-  const showCpu  = latest?.host_cpu_pct != null;
-  const showRam  = memAvGb != null;
-  const showDisk = diskPct != null;
-
   const hasInsight = !!(perfTldr?.label || perfTldr?.detail || perfVal?.insights?.length);
   const hasRightNow = !!(rightNow?.signals?.length);
   const hasLag = lagIssues.length > 0;
+  const hasStory = !!latestStory;
   const showTriage =
-    (layoutMode === 'incident' && (attentionItems.length > 0 || hasRightNow || hasLag))
-    || (layoutMode === 'steady' && hasRightNow);
+    (layoutMode === 'incident' && (attentionItems.length > 0 || hasRightNow || hasLag || hasStory))
+    || (layoutMode === 'steady' && (hasRightNow || hasStory));
 
   const headline = gradeHeadline(grade, attentionItems.length, isDown);
-  const heroClass = `ov-hero ov-hero--${heroTone(grade, attentionItems.length, isDown)}`;
+  const tone = missionTone(grade, attentionItems.length, isDown);
 
   function startTour() {
     import('../../app/tour.js').then((m) => m.startTour());
@@ -426,137 +702,96 @@ export function PageView() {
 
   // ── No-report / first-run gate ─────────────────────────────────────────────
   if (noReport && !latest) {
+    const wiz = persistGet('setupWizard', null);
+    const setupIncomplete = wiz != null && wiz.completed !== true;
     return html`
-      <${Page} title="Overview" subtitle=${welcomeLead.hostLine || 'Your server control center'}>
-        <${WelcomeBand}
-          lead=${welcomeLead.lead}
-          hostLine=${hostname}
-          panelLabel=${panelLabel}
-          summary="Run a report to build your health grade and issue queue — or open Live to watch vitals stream in."
-        />
-        <div class="ov-firstrun" data-tour="overview">
-          <div class="ov-firstrun__card">
-            <span class="ov-firstrun__icon"><${Icon} name="file-text" size=${22} /></span>
-            <strong>Run your first report</strong>
-            <p>Builds the health grade, issue queue, and crash summaries.</p>
-            <${Button} kind="accent" onClick=${() => openModal('run-report')}>Run Report</${Button}>
-          </div>
-          <div class="ov-firstrun__card">
-            <span class="ov-firstrun__icon"><${Icon} name="activity" size=${22} /></span>
-            <strong>Open Live</strong>
-            <p>Watch TPS, MSPT, heap, and players stream in real time.</p>
-            <${Button} kind="neutral" onClick=${() => navigate('live')}>Go to Live</${Button}>
-          </div>
-          <div class="ov-firstrun__card">
-            <span class="ov-firstrun__icon"><${Icon} name="map" size=${22} /></span>
-            <strong>Take the tour</strong>
-            <p>A short walkthrough of every panel and what it’s for.</p>
-            <${Button} kind="neutral" onClick=${startTour}>Start tour</${Button}>
+      <${Page} title="Overview" subtitle=${welcomeLead.hostLine || 'Your server control center'} route="overview" tour="overview">
+        <div class="ui-page__stack" data-tour="overview">
+          <p class="ov-mission__greeting ov-mission__greeting--solo">${welcomeLead.lead}</p>
+          <p class="ov-firstrun-lead">Watching and Scanning are already updating Issues and Live. Open Live for vitals, or Issues for continuous triage.</p>
+          <div class="ov-firstrun">
+            <div class="ov-firstrun__card">
+              <span class="ov-firstrun__icon"><${Icon} name="activity" size=${22} /></span>
+              <strong>Open Live</strong>
+              <p>Watch TPS, MSPT, heap, and players stream in real time.</p>
+              <${Button} kind="accent" onClick=${() => navigate('live')}>Go to Live</${Button}>
+            </div>
+            <div class="ov-firstrun__card">
+              <span class="ov-firstrun__icon"><${Icon} name="alert-triangle" size=${22} /></span>
+              <strong>Open Issues</strong>
+              <p>Continuous scanning fills the fix queue even before a deep audit.</p>
+              <${Button} kind="neutral" onClick=${() => navigate('issues')}>Go to Issues</${Button}>
+            </div>
+            <div class="ov-firstrun__card">
+              <span class="ov-firstrun__icon"><${Icon} name="package" size=${22} /></span>
+              <strong>Support pack</strong>
+              <p>Build a redacted zip to share when something’s wrong — pick what to include.</p>
+              <${Button} kind="neutral" onClick=${() => openSupportBuilder()}>Build support pack</${Button}>
+            </div>
           </div>
         </div>
       </${Page}>
     `;
   }
 
-  const subtitleText = hostname
-    ? `${hostname}${stale ? ' — report stale' : ''}`
-    : 'Server health at a glance';
+  const subtitleText = hostname || 'Server health at a glance';
 
-  const freshnessLabel = reportMeta
-    ? formatReportFreshness(reportMeta)
-    : (latest ? 'Live only — no report yet' : 'Waiting for data');
+  const missionKpis = [];
+  if (scorecard?.crashes?.unreviewed) {
+    missionKpis.push({
+      label: 'Unreviewed',
+      value: `${scorecard.crashes.unreviewed} crash${scorecard.crashes.unreviewed === 1 ? '' : 'es'}`,
+    });
+  }
+  if (scorecard?.crashes?.unreviewed) {
+    missionKpis[missionKpis.length - 1].tone = 'warn';
+  }
+  if (scorecard?.performance?.subtitle) {
+    missionKpis.push({ label: 'Performance', value: scorecard.performance.subtitle });
+  }
+  if (stale) missionKpis.push({ label: 'Scanning', value: 'Check Sources', tone: 'warn' });
+  if (!facts) {
+    const wiz = persistGet('setupWizard', null);
+    if (wiz != null && wiz.completed !== true) {
+      missionKpis.push({ label: 'Next step', value: 'Finish setup', tone: 'accent' });
+    }
+  }
 
-  const vitalsRow = latest ? html`
-    <div class="ov-vitals-row" data-tour="overview-vitals">
-      <${MetricTile}
-        className="ov-vital ov-vital--tps"
-        label="TPS"
-        value=${latest.tps ?? 0}
-        format=${formatTps}
-        tone=${tpsTone(latest.tps)}
-        size="sm"
-        padding="12"
-      />
-      <${MetricTile}
-        className="ov-vital ov-vital--mspt"
-        label="MSPT"
-        value=${latest.mspt ?? 0}
-        format=${(v) => Number(v).toFixed(1)}
-        unit="ms"
-        tone=${msptTone(latest.mspt)}
-        size="sm"
-        padding="12"
-      />
-      <${MetricTile}
-        className="ov-vital ov-vital--heap"
-        label="Heap"
-        value=${heapUsed ?? 0}
-        format=${(v) => formatMb(v)}
-        tone=${heapTone(heapUsed, heapMax)}
-        caption=${heapMax != null ? `Max ${formatMb(heapMax)}` : null}
-        size="sm"
-        padding="12"
-      />
-      <${MetricTile}
-        className="ov-vital ov-vital--players"
-        label="Players"
-        value=${latest.players_online ?? 0}
-        format=${(v) => String(Math.round(v))}
-        caption=${(latest.players_online ?? 0) > 0 ? 'Online' : 'Idle'}
-        size="sm"
-        padding="12"
-      />
-      ${showCpu ? html`
-        <${MetricTile}
-          className="ov-vital ov-vital--cpu"
-          label="CPU"
-          value=${latest.host_cpu_pct ?? 0}
-          format=${formatPct}
-          tone=${cpuTone(latest.host_cpu_pct)}
-          size="sm"
-          padding="12"
-        />
-      ` : null}
-      ${showRam ? html`
-        <${MetricTile}
-          className="ov-vital ov-vital--ram"
-          label="RAM free"
-          value=${memAvGb}
-          format=${formatGb}
-          size="sm"
-          padding="12"
-        />
-      ` : null}
-      ${showDisk ? html`
-        <${MetricTile}
-          className="ov-vital ov-vital--disk"
-          label="Disk"
-          value=${diskPct}
-          format=${formatPct}
-          tone=${diskTone(diskPct)}
-          size="sm"
-          padding="12"
-        />
-      ` : null}
-    </div>
-  ` : html`
-    <div class="ov-vitals-row ov-vitals-row--loading">
-      ${[1, 2, 3, 4, 5, 6].map((i) => html`
-        <${Skeleton} key=${i} height=${72} className="ov-vital-skeleton" />
-      `)}
-    </div>
-  `;
+  const sessionWord = isDown
+    ? 'Offline'
+    : (latest?.players_online ?? 0) > 0
+      ? 'Players online'
+      : 'Idle';
+  const sessionTone = isDown ? 'danger' : (latest?.players_online ?? 0) > 0 ? 'ok' : 'neutral';
+
+  const statusPills = overviewStatusPills({
+    facts,
+    live: latest,
+    opsCache: opsCacheData,
+    overviewMeta: ovData,
+    backupTrackingEnabled: settings.value?.data?.backup_tracking_enabled !== false,
+  });
+
+  const reportAt = dataSources.value?.reportAt
+    ?? reportMeta?.last_report_at
+    ?? reportMeta?.generated
+    ?? null;
+  const liveAt = dataSources.value?.liveAt ?? latest?.ts ?? latest?.at ?? null;
+  const scanAt = dataSources.value?.scanAt ?? null;
 
   const insightSection = hasInsight ? html`
-    <${Section} title="Performance insight">
-      <${Card} tone="accent">
+    <${Section}
+      title="Performance insight"
+      badge=${html`<${FreshnessBadge} layer="report" at=${reportAt} stale=${stale} />`}
+    >
+      <div class=${`ov-instrument ov-instrument--insight${stale ? ' is-stale' : ''}`}>
         <div class="ov-insight-row">
           <div class="ov-insight-text">
-            <div class="ui-text-hi ov-insight-label">
+            <div class="ov-insight-label">
               ${perfTldr?.label ?? perfVal?.insights?.[0]?.title ?? 'Performance insights available'}
             </div>
             ${perfTldr?.detail ? html`
-              <div class="ui-text-low ov-insight-detail">${perfTldr.detail}</div>
+              <div class="ov-insight-detail">${perfTldr.detail}</div>
             ` : null}
           </div>
           <${Button}
@@ -567,51 +802,163 @@ export function PageView() {
             Open Insights
           </${Button}>
         </div>
-      </${Card}>
+      </div>
     </${Section}>
   ` : null;
 
+  const hasSpark = !!(sparkTldr?.label || sparkTldr?.mod_id);
+  const sparkSection = hasSpark ? html`
+    <${Section}
+      title="Spark"
+      badge=${html`<${FreshnessBadge} layer="report" at=${reportAt} stale=${stale} />`}
+    >
+      <div class=${`ov-instrument ov-instrument--insight${stale ? ' is-stale' : ''}`}>
+        <div class="ov-insight-row">
+          <div class="ov-insight-text">
+            <div class="ov-insight-label">
+              ${sparkTldr?.label ?? 'Spark profile available'}
+            </div>
+            ${sparkTldr?.mod_id ? html`
+              <div class="ov-insight-detail">
+                Top mod: ${sparkTldr.mod_id}${sparkTldr.pct != null ? ` ~${Math.round(sparkTldr.pct)}%` : ''}
+              </div>
+            ` : null}
+          </div>
+          <${Button}
+            kind="neutral"
+            size="sm"
+            onClick=${() => navigate('spark', sparkTldr?.source_path ? { profile: sparkTldr.source_path } : {})}
+          >
+            Open Spark
+          </${Button}>
+        </div>
+      </div>
+    </${Section}>
+  ` : null;
+
+  const restartSection = safeRestart?.verdict ? (() => {
+    const verdict = safeRestart.verdict;
+    const tone = verdict === 'wait' ? 'danger' : verdict === 'caution' ? 'warn' : 'ok';
+    const badgeLabel = verdict === 'wait' ? 'Wait' : verdict === 'caution' ? 'Caution' : 'Safe';
+    const reasons = Array.isArray(safeRestart.reasons) ? safeRestart.reasons.slice(0, 5) : [];
+                const checkedAt = safeRestart.checked_at ?? liveAt ?? scanAt;
+
+    function openReason(reason) {
+      const tab = reason?.tab || 'overview';
+      const params = reason?.tab_params && typeof reason.tab_params === 'object'
+        ? { ...reason.tab_params }
+        : {};
+      if (tab === 'insights' && !params.view) {
+        navigate('insights', { view: 'storage' });
+        return;
+      }
+      if (tab === 'settings' && params.panel) {
+        navigate('settings', { panel: params.panel });
+        return;
+      }
+      navigate(tab, params);
+    }
+
+    return html`
+      <${Section}
+        title="Restart"
+        badge=${html`<${FreshnessBadge} layer="live" at=${checkedAt} />`}
+      >
+        <div class=${`ov-instrument ov-instrument--restart ov-restart`} data-verdict=${verdict}>
+          <div class="ov-restart__hero">
+            <${Badge} tone=${tone}>${badgeLabel}</${Badge}>
+            <div class="ov-restart__titles">
+              <div class="ov-restart__headline">${safeRestart.headline || badgeLabel}</div>
+              ${safeRestart.summary ? html`
+                <p class="ov-restart__summary">${safeRestart.summary}</p>
+              ` : null}
+            </div>
+          </div>
+
+          ${reasons.length ? html`
+            <ul class="ov-restart__reasons">
+              ${reasons.map((r) => html`
+                <li class=${`ov-restart-reason ov-restart-reason--${r.severity || 'info'}`} key=${r.id || r.label}>
+                  <div class="ov-restart-reason__text">
+                    <span class="ov-restart-reason__label">${r.label}</span>
+                    ${r.detail ? html`<span class="ov-restart-reason__detail">${r.detail}</span>` : null}
+                  </div>
+                  ${r.tab ? html`
+                    <${Button} kind="neutral" size="sm" onClick=${() => openReason(r)}>
+                      Open
+                    </${Button}>
+                  ` : null}
+                </li>
+              `)}
+            </ul>
+          ` : null}
+
+          <p class="ov-restart__hint">Informational only — your panel or /stop still controls the restart.</p>
+        </div>
+      </${Section}>
+    `;
+  })() : null;
+
   const storageSection = (worldGb != null || latest?.java_rss_gb != null || byDimension.length || diskPct != null) ? (() => {
     const backupTrackingOn = settings.value?.data?.backup_tracking_enabled !== false;
-    const hasBackupAttention = attentionItems.some((item) => item.kind === 'backup');
-    const showDisableBackup = backupTrackingOn && (
-      hasBackupAttention
-      || facts?.optional?.last_backup?.status === 'unconfigured'
-      || facts?.optional?.last_backup?.stale
-    );
+    const showDisableBackup = backupTrackingOn
+      && !hasBackupAttention
+      && (
+        facts?.optional?.last_backup?.status === 'unconfigured'
+        || facts?.optional?.last_backup?.stale
+      );
     const dimTotalGb = byDimension.reduce((sum, d) => sum + (d.gb ?? 0), 0);
 
     return html`
-    <${Section} title="Storage">
-      <div class="ov-storage">
-        <${Grid} min="140px" gap="12">
-          ${worldGb != null ? html`
-            <${MetricTile}
-              label="World size"
-              value=${worldGb}
-              format=${(v) => formatGb(v)}
-            />
-          ` : null}
+    <${Section}
+      title="Storage"
+      badge=${html`<${FreshnessBadge} layer="live" at=${liveAt} />`}
+    >
+      <div class="ov-instrument ov-instrument--storage ov-storage">
+        <div class="ov-storage__hero">
           ${diskPct != null ? html`
-            <${MetricTile}
-              label="Disk used"
-              value=${diskPct}
-              format=${(v) => formatPct(v)}
-              tone=${diskTone(diskPct)}
-            />
+            <div class="ov-storage__dial">
+              <${Gauge}
+                value=${diskPct}
+                max=${100}
+                label="Disk used"
+                labelPlacement="above"
+                unit="%"
+                warnAt=${75}
+                critAt=${90}
+                size=${168}
+                hero=${true}
+                tone=${diskTone(diskPct)}
+              />
+            </div>
           ` : null}
-          ${latest?.java_rss_gb != null ? html`
-            <${MetricTile}
-              label="Java RSS"
-              value=${latest.java_rss_gb}
-              format=${(v) => formatGb(v)}
-            />
+          ${(worldGb != null || latest?.java_rss_gb != null) ? html`
+            <div class="ov-storage__kpis">
+              ${worldGb != null ? html`
+                <${MetricTile}
+                  label="World size"
+                  value=${worldGb}
+                  format=${(v) => formatGb(v)}
+                  size="sm"
+                  padding="12"
+                />
+              ` : null}
+              ${latest?.java_rss_gb != null ? html`
+                <${MetricTile}
+                  label="Java RSS"
+                  value=${latest.java_rss_gb}
+                  format=${(v) => formatGb(v)}
+                  size="sm"
+                  padding="12"
+                />
+              ` : null}
+            </div>
           ` : null}
-        </${Grid}>
+        </div>
 
         ${byDimension.length ? html`
-          <details class="ov-storage__dims" open>
-            <summary>By dimension</summary>
+          <div class="ov-storage__well">
+            <p class="ov-storage__well-label">By dimension</p>
             <div class="ov-dim-list">
               ${[...byDimension]
                 .slice()
@@ -625,7 +972,10 @@ export function PageView() {
                     <div class="ov-dim-row" key=${dim.id ?? dim.path ?? dim.label}>
                       <div class="ov-dim-row__head">
                         <span class="ov-dim-row__label">${formatDimLabel(dim)}</span>
-                        <span class="ov-dim-row__gb">${formatGb(dim.gb ?? 0)}</span>
+                        <span class="ov-dim-row__meta">
+                          ${sharePct > 0 ? html`<span class="ov-dim-row__share">${sharePct}%</span>` : null}
+                          <span class="ov-dim-row__gb">${formatGb(dim.gb ?? 0)}</span>
+                        </span>
                       </div>
                       <div class="ov-dim-row__track" aria-hidden="true">
                         <div
@@ -640,16 +990,31 @@ export function PageView() {
                   `;
                 })}
             </div>
-          </details>
+          </div>
         ` : null}
 
-        ${showDisableBackup ? html`<${DisableBackupAlerts} />` : null}
+        ${(showDisableBackup || (diskJump?.active && diskJump?.label) || diskProjection || (rssHint?.show && rssHint?.message)) ? html`
+          <div class="ov-storage__footer">
+            ${showDisableBackup ? html`<${DisableBackupAlerts} />` : null}
 
-        ${diskJump?.active && diskJump?.label ? html`
-          <p class="ov-storage__note ov-storage__note--warn">${diskJump.label}</p>
-        ` : null}
-        ${rssHint?.show && rssHint?.message ? html`
-          <p class="ov-storage__note">${rssHint.message}</p>
+            ${diskJump?.active && diskJump?.label ? html`
+              <p class="ov-storage__note ov-storage__note--warn">${diskJump.label}</p>
+            ` : null}
+            ${(() => {
+              const proj = diskProjection;
+              if (!proj) return null;
+              const msg = proj.message || proj.label || null;
+              if (!msg) return null;
+              const days = proj.days_until_full;
+              const warnDays = settings.value?.data?.disk_fill_warn_days ?? 14;
+              const warn = proj.verdict === 'filling' && days != null && days <= warnDays;
+              const tone = warn ? 'ov-storage__note--warn' : '';
+              return html`<p class=${`ov-storage__note ${tone}`.trim()}>${msg}</p>`;
+            })()}
+            ${rssHint?.show && rssHint?.message ? html`
+              <p class="ov-storage__note">${rssHint.message}</p>
+            ` : null}
+          </div>
         ` : null}
       </div>
     </${Section}>
@@ -657,7 +1022,10 @@ export function PageView() {
   })() : null;
 
   const pregenSection = (pregenVisible(chunkyPregen) || pregenVisible(dhPregen)) ? html`
-    <${Section} title="World background jobs">
+    <${Section}
+      title="World background jobs"
+      badge=${html`<${FreshnessBadge} layer="live" at=${liveAt || scanAt} />`}
+    >
       <div class="ov-pregen-list">
         <${PregenJobCard} title="Chunky pregen" pregen=${chunkyPregen} radarKind="circle" />
         <${PregenJobCard} title="Distant Horizons pregen" pregen=${dhPregen} radarKind="square" />
@@ -687,19 +1055,38 @@ export function PageView() {
       else if (dir === 'same') deltaLabel = 'same';
       else deltaLabel = Number(cmp.delta_sec) >= 0 ? `+${mag}` : `−${mag}`;
     }
-    const totalLabel = total == null ? '—' : (Number(total) >= 100 ? `${Math.round(total)}s` : `${Number(total).toFixed(1)}s`);
+    const totalLabel = total == null
+      ? '—'
+      : (Number(total) >= 100 ? `${Math.round(total)}` : `${Number(total).toFixed(1)}`);
     return html`
-      <${Section} title="Boot profile">
-        <${Card} tone="accent">
-          <div class="ov-insight-row">
-            <div class="ov-insight-text ov-boot">
-              <div class="ui-text-hi ov-insight-label">${totalLabel} boot</div>
-              <div class="ui-text-low ov-insight-detail ov-boot__meta">
-                <span>Slowest: ${slowLabel}${slow?.sec != null ? ` (${Number(slow.sec).toFixed(1)}s)` : ''}</span>
-                <span>${warnCount} warning${warnCount === 1 ? '' : 's'}</span>
-                <span>vs last: ${deltaLabel}</span>
-              </div>
+      <${Section}
+        title="Boot profile"
+        badge=${html`<${FreshnessBadge} layer="report" at=${reportAt} stale=${stale} />`}
+      >
+        <div class=${`ov-instrument ov-instrument--boot ov-boot${stale ? ' is-stale' : ''}`}>
+          <div class="ov-boot__heroes">
+            <div class="ov-boot__hero ov-boot__hero--primary">
+              <span class="ov-boot__hero-label">Boot time</span>
+              <span class="ov-boot__hero-value">${totalLabel}</span>
+              <span class="ov-boot__hero-unit">sec</span>
             </div>
+            <div class="ov-boot__hero">
+              <span class="ov-boot__hero-label">Slowest</span>
+              <span class="ov-boot__hero-value ov-boot__hero-value--sm">${slowLabel}</span>
+              ${slow?.sec != null ? html`
+                <span class="ov-boot__hero-unit">${Number(slow.sec).toFixed(1)}s</span>
+              ` : null}
+            </div>
+            <div class="ov-boot__hero">
+              <span class="ov-boot__hero-label">Warnings</span>
+              <span class="ov-boot__hero-value">${warnCount}</span>
+            </div>
+            <div class="ov-boot__hero">
+              <span class="ov-boot__hero-label">Vs last</span>
+              <span class="ov-boot__hero-value ov-boot__hero-value--sm">${deltaLabel}</span>
+            </div>
+          </div>
+          <div class="ov-boot__action">
             <${Button}
               kind="neutral"
               size="sm"
@@ -708,10 +1095,12 @@ export function PageView() {
               Open Startup
             </${Button}>
           </div>
-        </${Card}>
+        </div>
       </${Section}>
     `;
   })() : null;
+
+  const lagMore = Math.max(0, lagIssues.length - LAG_CAP);
 
   const triageColumn = showTriage ? html`
     <div class="ov-wide-grid__triage">
@@ -720,7 +1109,7 @@ export function PageView() {
           title="Needs attention"
           badge=${html`<${Badge} tone="danger">${attentionItems.length}</${Badge}>`}
         >
-          <div class="feat-list">
+          <${StaggerList} className="ov-queue" resetKey=${'attn-' + attentionItems.length}>
             ${attentionItems.slice(0, ATTENTION_CAP).map((item) => html`
               <${ListRow}
                 key=${item.key}
@@ -728,27 +1117,33 @@ export function PageView() {
                 icon=${html`<${Icon} name=${severityIcon(item.severity, item.kind)} size=${16} />`}
                 title=${item.title}
                 meta=${item.summary ?? null}
-                actions=${item.primaryAction ? html`
+                actions=${html`
                   <${Button}
                     kind="neutral"
                     size="sm"
-                    onClick=${() => navigate(item.primaryAction.tab)}
+                    onClick=${() => navigate(
+                      item.kind === 'crash' ? 'crashes'
+                        : item.kind === 'backup' ? 'backups'
+                        : 'issues',
+                      item.kind === 'crash' || item.kind === 'backup'
+                        ? undefined
+                        : { view: 'active', issue: item.key },
+                    )}
                   >
-                    ${item.primaryAction.label}
+                    ${item.primaryAction?.label || 'Open Issues'}
                   </${Button}>
-                ` : null}
+                `}
               />
             `)}
-          </div>
+          </${StaggerList}>
           ${attentionMore > 0 ? html`
             <div class="ov-attention-more">
-              <${Button} kind="neutral" size="sm" onClick=${() => navigate('issues')}>
+              <${Button} kind="neutral" size="sm" onClick=${() => navigate('issues', { view: 'active' })}>
                 +${attentionMore} more on Issues
               </${Button}>
             </div>
           ` : null}
-          ${settings.value?.data?.backup_tracking_enabled !== false
-            && attentionItems.some((item) => item.kind === 'backup')
+          ${settings.value?.data?.backup_tracking_enabled !== false && hasBackupAttention
             ? html`<${DisableBackupAlerts} />`
             : null}
         </${Section}>
@@ -756,11 +1151,11 @@ export function PageView() {
 
       ${hasRightNow ? html`
         <${Section} title="Right now">
-          <div class="feat-list">
+          <${StaggerList} className="ov-queue" resetKey=${'rn-' + rightNow.signals.length}>
             ${rightNow.signals.map((sig, i) => html`
               <${ListRow}
                 key=${sig.type + String(i)}
-                tone=${sig.severity === 'warning' ? 'warn' : sig.severity === 'critical' ? 'danger' : 'neutral'}
+                tone=${sig.severity === 'warning' ? 'warn' : sig.severity === 'critical' ? 'danger' : 'info'}
                 icon=${html`<${Icon}
                   name=${sig.severity === 'critical' ? 'zap' : sig.severity === 'warning' ? 'alert-triangle' : 'info'}
                   size=${14}
@@ -778,7 +1173,36 @@ export function PageView() {
                 ` : null}
               />
             `)}
-          </div>
+          </${StaggerList}>
+        </${Section}>
+      ` : null}
+
+      ${hasStory ? html`
+        <${Section}
+          title="Incident story"
+          badge=${html`<${Badge} tone="warn">${incidentStories.length}</${Badge}>`}
+          collapsible=${true}
+          defaultOpen=${layoutMode === 'incident'}
+        >
+          <${ListRow}
+            tone="warn"
+            icon=${html`<${Icon} name="activity" size=${14} />`}
+            title=${latestStory.narrative
+              ? (latestStory.narrative.length > 120
+                ? latestStory.narrative.slice(0, 117) + '…'
+                : latestStory.narrative)
+              : 'Correlated overnight events'}
+            meta=${latestStory.started_at
+              ? new Date(latestStory.started_at).toLocaleString(undefined, {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+              })
+              : null}
+            actions=${html`
+              <${Button} kind="neutral" size="sm" onClick=${() => navigate('activity')}>
+                Open on Activity
+              </${Button}>
+            `}
+          />
         </${Section}>
       ` : null}
 
@@ -789,8 +1213,8 @@ export function PageView() {
           collapsible=${true}
           defaultOpen=${false}
         >
-          <div class="feat-list">
-            ${lagIssues.map((lag) => html`
+          <${StaggerList} className="ov-queue" resetKey=${'lag-' + lagIssues.length}>
+            ${lagIssues.slice(0, LAG_CAP).map((lag) => html`
               <${ListRow}
                 key=${lag.id}
                 tone="warn"
@@ -808,169 +1232,67 @@ export function PageView() {
                 `}
               />
             `)}
-          </div>
+          </${StaggerList}>
+          ${lagMore > 0 ? html`
+            <div class="ov-attention-more">
+              <${Button} kind="neutral" size="sm" onClick=${() => navigate('issues')}>
+                +${lagMore} more on Issues
+              </${Button}>
+            </div>
+          ` : null}
         </${Section}>
       ` : null}
     </div>
   ` : null;
 
-  const statusPills = overviewStatusPills({
-    facts,
-    live: latest,
-    opsCache: opsCacheData,
-    overviewMeta: ovData,
-    backupTrackingEnabled: settings.value?.data?.backup_tracking_enabled !== false,
-  });
-
-  const globalTone = health?.effective === 'critical' || grade === 'F'
-    ? 'danger'
-    : health?.effective === 'warning' || grade === 'C' || grade === 'D'
-      ? 'warn'
-      : 'ok';
-  const sessionTone = isDown
-    ? 'danger'
-    : (latest?.tps != null && latest.tps < 16) || (latest?.mspt != null && latest.mspt > 40)
-      ? 'warn'
-      : 'ok';
-  const globalWord = health?.label
-    ?? (grade === 'A' || grade === 'B' ? 'Healthy' : grade === '?' ? 'Unknown' : 'Degraded');
-  const sessionWord = isDown
-    ? 'Offline'
-    : (latest?.players_online ?? 0) > 0
-      ? 'Players online'
-      : 'Idle';
+  const setupChip = setupResumeChip();
 
   return html`
     <${Page}
       title="Overview"
       subtitle=${subtitleText}
+      tour="overview"
+      route="overview"
     >
       <div data-tour="overview" class="ui-page__stack">
 
-      <${WelcomeBand}
-        lead=${welcomeLead.lead}
-        hostLine=${welcomeLead.hostLine || hostname}
-        panelLabel=${panelLabel}
-        summary=${statusSummary}
+      <${MissionBand}
+        grade=${grade}
+        gradeLabel=${gradeLabel}
+        tone=${tone}
+        greeting=${welcomeLead.lead}
+        headline=${headline}
+        sub=${heroSubtext(layoutMode, attentionItems.length, isDown)}
+        kpis=${missionKpis}
+        latestCrash=${scorecard?.crashes?.latest_label ?? null}
+        reportAt=${reportAt}
+        reportStale=${stale}
       />
 
-      ${(() => {
-        const chip = setupResumeChip();
-        if (!chip) return null;
-        return html`
-          <div class="ov-setup-chip" role="status">
-            <span class="ov-setup-chip__icon"><${Icon} name="map" size=${16} /></span>
-            <span class="ov-setup-chip__text">${chip.text}</span>
-            <${Button} kind="neutral" size="sm" onClick=${chip.onClick}>${chip.actionLabel}</${Button}>
-          </div>
-        `;
-      })()}
-
-      ${vitalsRow}
-
-      <div class="ov-status-strip">
-        <div class="ov-status-strip__item">
-          <span class=${`ov-status-strip__dot ${isDown ? 'ov-status-strip__dot--down' : stale ? 'ov-status-strip__dot--warn' : ''}`}></span>
-          <span class="ov-status-strip__value">${isDown ? 'Connection lost' : 'Connected'}</span>
+      ${setupChip ? html`
+        <div class="ov-setup-chip" role="status">
+          <span class="ov-setup-chip__icon"><${Icon} name="map" size=${16} /></span>
+          <span class="ov-setup-chip__text">${setupChip.text}</span>
+          <${Button} kind="neutral" size="sm" onClick=${setupChip.onClick}>${setupChip.actionLabel}</${Button}>
         </div>
-        <div class="ov-status-strip__item">
-          Report <span class="ov-status-strip__value">${freshnessLabel}</span>
-        </div>
-        <div class="ov-status-strip__item">
-          Players <span class="ov-status-strip__value">${latest?.players_online ?? '—'}</span>
-        </div>
-        ${uptimeSec != null ? html`
-          <div class="ov-status-strip__item">
-            Uptime <span class="ov-status-strip__value">${formatDuration(uptimeSec)}</span>
-          </div>
-        ` : null}
-      </div>
+      ` : null}
 
-      <${StatusPillStrip} pills=${statusPills} className="ov-status-pills" />
-
-      <div class="ov-health-trio">
-        <${BeaconCard}
-          label="Global health"
-          hint="Trust scorecard · full report window"
-          word=${globalWord}
-          tone=${globalTone}
-        />
-        <${BeaconCard}
-          label="Session health"
-          hint="Right now"
-          word=${sessionWord}
-          tone=${sessionTone}
-        />
-        <${BeaconCard} label="Uptime" hint="Java process" tone="neutral">
-          <${UptimeClock} seconds=${uptimeSec} />
-        </${BeaconCard}>
-      </div>
-
-      <div class=${heroClass}>
-        <div class="ov-hero__grade">
-          <${HealthGrade}
-            grade=${grade}
-            label=${health?.label ?? '—'}
-            size=${88}
-          />
-          <div class="ov-grade-legend">
-            <p class="ov-grade-legend__scale">
-              <span class="ov-grade-legend__item ov-grade-legend__item--a">A Healthy</span>
-              <span class="ov-grade-legend__sep">·</span>
-              <span class="ov-grade-legend__item ov-grade-legend__item--c">C Warning</span>
-              <span class="ov-grade-legend__sep">·</span>
-              <span class="ov-grade-legend__item ov-grade-legend__item--f">F Critical</span>
-            </p>
-            <p class="ov-grade-legend__hint">Grade reflects open Issues by severity in your report window.</p>
-          </div>
-        </div>
-        <div class="ov-hero__body">
-          <h2 class="ov-hero__headline">${headline}</h2>
-          <p class="ov-hero__sub">
-            ${heroSubtext(layoutMode, attentionItems.length, isDown)}
-          </p>
-          <div class="ov-hero__kpis">
-            ${scorecard?.crashes?.unreviewed ? html`
-              <div class="ov-kpi">
-                <span class="ov-kpi__label">Unreviewed</span>
-                <span class="ov-kpi__value">${scorecard.crashes.unreviewed} crash${scorecard.crashes.unreviewed === 1 ? '' : 'es'}</span>
-              </div>
-            ` : null}
-            ${scorecard?.performance?.subtitle ? html`
-              <div class="ov-kpi">
-                <span class="ov-kpi__label">Performance</span>
-                <span class="ov-kpi__value">${scorecard.performance.subtitle}</span>
-              </div>
-            ` : null}
-            ${stale ? html`
-              <div class="ov-kpi">
-                <span class="ov-kpi__label">Report</span>
-                <span class="ov-kpi__value">Stale</span>
-              </div>
-            ` : null}
-            ${!facts ? html`
-              <div class="ov-kpi">
-                <span class="ov-kpi__label">Next step</span>
-                <span class="ov-kpi__value">Run a report</span>
-              </div>
-            ` : null}
-          </div>
-          ${scorecard?.crashes?.latest_label ? html`
-            <p class="ov-verdict-latest-crash">
-              <${Icon} name="bug" size=${12} />
-              ${scorecard.crashes.latest_label}
-            </p>
-          ` : null}
-        </div>
-      </div>
+      <${TrustChips}
+        uptimeSec=${uptimeSec}
+        sessionWord=${sessionWord}
+        sessionTone=${sessionTone}
+        pills=${statusPills}
+        facts=${facts}
+        latest=${latest}
+      />
 
       ${!facts && latest ? html`
         <div class="ov-firstrun">
           <div class="ov-firstrun__card">
-            <span class="ov-firstrun__icon"><${Icon} name="file-text" size=${20} /></span>
-            <strong>Live is flowing — run a report</strong>
-            <p>Live metrics are here. A report unlocks the health grade, issues queue, and crash analysis.</p>
-            <${Button} kind="accent" size="sm" onClick=${() => openModal('run-report')}>Run Report</${Button}>
+            <span class="ov-firstrun__icon"><${Icon} name="activity" size=${20} /></span>
+            <strong>Live is flowing</strong>
+            <p>Issues and Crashes update from continuous Scanning. Deep Mods deltas keep building in the background; use rail <strong>Build pack</strong> only when you need a shareable zip.</p>
+            <${Button} kind="neutral" size="sm" onClick=${() => navigate('issues')}>Open Issues</${Button}>
           </div>
         </div>
       ` : null}
@@ -980,6 +1302,8 @@ export function PageView() {
         <div class="ov-wide-grid__metrics">
           <div class="ov-secondary">
             ${insightSection}
+            ${sparkSection}
+            ${restartSection}
             ${storageSection}
             ${pregenSection}
             ${bootSection}

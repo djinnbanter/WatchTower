@@ -60,11 +60,17 @@ class ModJarMetadataReaderTest {
                 modId="neoforge"
                 type="required"
                 mandatory=true
+                versionRange="[21.0,)"
                 """);
         var entries = ModJarMetadataReader.readJar(jar);
         assertEquals(1, entries.size());
         assertFalse(entries.get(0).dependencies().isEmpty());
-        assertEquals("neoforge", entries.get(0).dependencies().get(0).modId());
+        var dep = entries.get(0).dependencies().get(0);
+        assertEquals("neoforge", dep.modId());
+        assertEquals("[21.0,)", dep.versionRange());
+        JsonObject json = ModJarMetadataReader.toJson(entries.get(0));
+        assertEquals("[21.0,)", json.getAsJsonArray("dependencies").get(0).getAsJsonObject()
+                .get("versionRange").getAsString());
     }
 
     @Test
@@ -160,6 +166,55 @@ class ModJarMetadataReaderTest {
         JsonObject json = ModJarMetadataReader.toJson(ModJarMetadataReader.readJar(jar).get(0));
         assertTrue(json.has("mixin_configs"));
         assertEquals(0, json.getAsJsonArray("mixin_configs").size());
+    }
+
+    @Test
+    void parsesNestedJarInJarOntoParent(@TempDir Path modsDir) throws IOException {
+        Path jar = modsDir.resolve("create-6.0.0.jar");
+        byte[] innerToml = """
+                [[mods]]
+                modId="flywheel"
+                version="1.0.2"
+                displayName="Flywheel"
+                """.getBytes(StandardCharsets.UTF_8);
+        byte[] innerJarBytes;
+        try (java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+             ZipOutputStream inner = new ZipOutputStream(bos)) {
+            inner.putNextEntry(new ZipEntry("META-INF/neoforge.mods.toml"));
+            inner.write(innerToml);
+            inner.closeEntry();
+            inner.finish();
+            innerJarBytes = bos.toByteArray();
+        }
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(jar))) {
+            zos.putNextEntry(new ZipEntry("META-INF/neoforge.mods.toml"));
+            zos.write("""
+                    [[mods]]
+                    modId="create"
+                    version="6.0.0"
+                    displayName="Create"
+                    """.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+            zos.putNextEntry(new ZipEntry("META-INF/jarjar/flywheel.jar"));
+            zos.write(innerJarBytes);
+            zos.closeEntry();
+        }
+
+        var entries = ModJarMetadataReader.readJar(jar);
+        assertEquals(1, entries.size(), "nested jar must not be a top-level ModEntry");
+        assertEquals("create", entries.get(0).id());
+        assertEquals(1, entries.get(0).jarInJar().size());
+        var nested = entries.get(0).jarInJar().get(0);
+        assertEquals("flywheel", nested.id());
+        assertEquals("Flywheel", nested.displayName());
+        assertEquals("META-INF/jarjar/flywheel.jar", nested.nestedPath());
+
+        JsonObject json = ModJarMetadataReader.toJson(entries.get(0));
+        assertTrue(json.has("jar_in_jar"));
+        assertTrue(json.has("nested_mod_ids"));
+        assertEquals("flywheel", json.getAsJsonArray("nested_mod_ids").get(0).getAsString());
+        assertEquals("flywheel",
+                json.getAsJsonArray("jar_in_jar").get(0).getAsJsonObject().get("id").getAsString());
     }
 
     private static void writeJar(Path jar, String toml) throws IOException {

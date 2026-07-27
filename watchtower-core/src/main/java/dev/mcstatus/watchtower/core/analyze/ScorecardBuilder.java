@@ -6,6 +6,7 @@ import dev.mcstatus.watchtower.core.live.PerformanceRollupWriter;
 import dev.mcstatus.watchtower.core.ops.OpsCacheSchema;
 
 import java.nio.file.Path;
+import java.time.Instant;
 
 /**
  * Builds trust scorecard from L1 rollups, ops cache, and L3 facts.
@@ -95,6 +96,11 @@ public final class ScorecardBuilder {
                     latestAt = latest.get("time").getAsString();
                 }
             }
+            // Newest unreviewed entry time (latest may be acknowledged)
+            String unreviewedAt = newestUnreviewedCrashAt(block);
+            if (unreviewedAt != null && !unreviewedAt.isBlank()) {
+                crashes.addProperty("latest_unreviewed_at", unreviewedAt);
+            }
         }
 
         if (unreviewed == 0 && facts != null && facts.has("optional")) {
@@ -134,7 +140,70 @@ public final class ScorecardBuilder {
         if (!latestAt.isBlank()) {
             crashes.addProperty("latest_at", latestAt);
         }
+        if (!crashes.has("latest_unreviewed_at") && facts != null && facts.has("optional")) {
+            JsonObject optional = facts.getAsJsonObject("optional");
+            if (optional.has("crash_summaries")) {
+                for (var el : optional.getAsJsonArray("crash_summaries")) {
+                    JsonObject c = el.getAsJsonObject();
+                    if (c.has("acknowledged") && c.get("acknowledged").getAsBoolean()) {
+                        continue;
+                    }
+                    String t = str(c, "time");
+                    if (!t.isBlank()) {
+                        crashes.addProperty("latest_unreviewed_at", t);
+                        break;
+                    }
+                }
+            }
+        }
         return crashes;
+    }
+
+    /** Newest crash entry that is not explicitly acknowledged (mtime → ISO). */
+    static String newestUnreviewedCrashAt(JsonObject crashesBlock) {
+        if (crashesBlock == null) {
+            return null;
+        }
+        if (crashesBlock.has("latest_unreviewed") && crashesBlock.get("latest_unreviewed").isJsonObject()) {
+            JsonObject u = crashesBlock.getAsJsonObject("latest_unreviewed");
+            if (u.has(OpsCacheSchema.ENTRY_MTIME)) {
+                return CrashMtimeScannerFormat.isoFromEpoch(u.get(OpsCacheSchema.ENTRY_MTIME).getAsLong());
+            }
+            if (u.has("time")) {
+                return u.get("time").getAsString();
+            }
+        }
+        if (!crashesBlock.has(OpsCacheSchema.CRASHES_ENTRIES)
+                || !crashesBlock.get(OpsCacheSchema.CRASHES_ENTRIES).isJsonArray()) {
+            return null;
+        }
+        long best = 0;
+        String bestIso = null;
+        for (var el : crashesBlock.getAsJsonArray(OpsCacheSchema.CRASHES_ENTRIES)) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            if (row.has("acknowledged") && row.get("acknowledged").getAsBoolean()) {
+                continue;
+            }
+            // Skip rows with no ack flag only when we know some rows are stamped —
+            // otherwise treat missing as unreviewed (scan path).
+            long mt = row.has(OpsCacheSchema.ENTRY_MTIME) ? row.get(OpsCacheSchema.ENTRY_MTIME).getAsLong() : 0;
+            String iso = null;
+            if (mt > 0) {
+                iso = CrashMtimeScannerFormat.isoFromEpoch(mt);
+            } else if (row.has("time")) {
+                iso = row.get("time").getAsString();
+                Instant t = dev.mcstatus.watchtower.core.util.TimeParse.parseTime(iso);
+                mt = t != null ? t.getEpochSecond() : 0;
+            }
+            if (mt > best && iso != null) {
+                best = mt;
+                bestIso = iso;
+            }
+        }
+        return bestIso;
     }
 
     private static String computeGrade(

@@ -3,11 +3,17 @@ package dev.mcstatus.watchtower.core.collect;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModSideScorerTest {
+
+    @AfterEach
+    void tearDown() {
+        ModrinthLookupService.resetForTests();
+    }
 
     @Test
     void flagsKnownClientModAsLikelyRemovable() {
@@ -162,6 +168,36 @@ class ModSideScorerTest {
         ModSideScorer.Score merged = ModSideScorer.mergeModrinth(layer1, info);
         assertEquals(ModSideScorer.Bucket.UNCERTAIN, merged.bucket());
         assertTrue(merged.signals().contains("modrinth:optional_both"));
+    }
+
+    @Test
+    void modrinthLookupEnrichesAllModsWithJars(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir)
+            throws Exception {
+        java.nio.file.Path modsDir = dir.resolve("mods");
+        java.nio.file.Files.createDirectories(modsDir);
+        java.nio.file.Path jar = modsDir.resolve("randomlib-1.0.jar");
+        java.nio.file.Files.write(jar, "randomlib-bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String hash = ModrinthLookupService.sha512Hex(jar);
+
+        java.nio.file.Path cache = dir.resolve("watchtower").resolve("modrinth-cache.json");
+        java.nio.file.Files.createDirectories(cache.getParent());
+        java.nio.file.Files.writeString(cache, """
+                {"schema":3,"entries":{"%s":{"project_id":"rl","slug":"randomlib",
+                "client_side":"required","server_side":"unsupported","title":"Random Lib",
+                "version_id":"v1","version_number":"1.0","icon_url":"https://cdn.example/icon.png",
+                "miss":false,"fetched_at":"2026-07-16T00:00:00Z"}}}
+                """.formatted(hash));
+
+        JsonObject mod = mod("randomlib", "1.0", "Random Lib", null);
+        mod.addProperty("jar_file", "randomlib-1.0.jar");
+        JsonObject optional = baseOptional(mod);
+        ModSideScorer.apply(optional, ReportConfig.builder().modrinthLookup(true).build(), dir.toString());
+
+        JsonObject out = optional.getAsJsonArray("mods").get(0).getAsJsonObject();
+        assertEquals("randomlib", out.get("modrinth_slug").getAsString());
+        assertEquals("https://cdn.example/icon.png", out.get("modrinth_icon_url").getAsString());
+        assertEquals("likely_removable", out.get("side_score").getAsString());
+        assertEquals(0, ModrinthLookupService.httpClientCreationsForTests());
     }
 
     private static JsonObject baseOptional(JsonObject... mods) {

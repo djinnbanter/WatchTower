@@ -16,7 +16,9 @@
   text-decoration: none;
   transition: background var(--ui-dur-1) var(--ui-ease-out),
               color var(--ui-dur-1) var(--ui-ease-out),
-              opacity var(--ui-dur-1) var(--ui-ease-out);
+              opacity var(--ui-dur-1) var(--ui-ease-out),
+              transform var(--ui-dur-2) var(--ui-ease-out),
+              box-shadow var(--ui-dur-1) var(--ui-ease-out);
   position: relative;
   user-select: none;
   -webkit-user-select: none;
@@ -47,7 +49,7 @@
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset,
     0 6px 18px color-mix(in srgb, var(--ui-accent) 42%, transparent);
 }
-.ui-btn--primary:active:not(:disabled) {
+.ui-btn--primary:active:not(:disabled):not(.ui-btn--loading) {
   background: var(--ui-accent-press);
   box-shadow: none;
   transform: translateY(1px);
@@ -65,7 +67,7 @@
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset,
     0 6px 20px color-mix(in srgb, var(--ui-accent) 45%, transparent);
 }
-.ui-btn--accent:active:not(:disabled) {
+.ui-btn--accent:active:not(:disabled):not(.ui-btn--loading) {
   background: var(--ui-accent-press);
   transform: translateY(1px);
 }
@@ -81,6 +83,9 @@
   background: var(--ui-bg3);
   border-color: color-mix(in srgb, var(--ui-accent) 28%, var(--ui-line-strong));
 }
+.ui-btn--neutral:active:not(:disabled):not(.ui-btn--loading) {
+  transform: translateY(1px);
+}
 
 /* Danger */
 .ui-btn--danger {
@@ -91,6 +96,9 @@
   background: var(--ui-danger);
   color: #fff;
 }
+.ui-btn--danger:active:not(:disabled):not(.ui-btn--loading) {
+  transform: translateY(1px);
+}
 
 /* Ghost */
 .ui-btn--ghost {
@@ -100,6 +108,9 @@
 .ui-btn--ghost:hover:not(:disabled) {
   background: var(--ui-bg3);
   color: var(--ui-text-hi);
+}
+.ui-btn--ghost:active:not(:disabled):not(.ui-btn--loading) {
+  transform: translateY(1px);
 }
 
 /* Disabled */
@@ -135,13 +146,18 @@
   color: var(--ui-text-mid);
   cursor: pointer;
   transition: background var(--ui-dur-1) var(--ui-ease-out),
-              color var(--ui-dur-1) var(--ui-ease-out);
+              color var(--ui-dur-1) var(--ui-ease-out),
+              transform var(--ui-dur-2) var(--ui-ease-out);
   flex-shrink: 0;
 }
 
 .ui-icon-btn:hover:not(:disabled) {
   background: var(--ui-bg3);
   color: var(--ui-text-hi);
+}
+
+.ui-icon-btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .ui-icon-btn--active,

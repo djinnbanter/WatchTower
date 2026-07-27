@@ -1,0 +1,81 @@
+/* Roadmap — reuse Help Center / Overview plate language (no left accent bars) */
+
+.roadmap-grid {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .roadmap-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roadmap-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .roadmap-grid:not(.roadmap-grid--2):not(.roadmap-grid--3) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Match help-guide-card / docs-widget-feature / src-job plates */
+.roadmap-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-height: 7.25rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--wt-line) 88%, transparent);
+  background: color-mix(in srgb, var(--wt-bg1) 92%, transparent);
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.roadmap-tile__icon {
+  display: inline-flex;
+  color: var(--wt-accent);
+  margin-bottom: 0.1rem;
+}
+
+.roadmap-tile__title {
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--wt-text);
+  letter-spacing: -0.01em;
+}
+
+.roadmap-tile__body {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--wt-text-mid);
+}
+
+.roadmap-themes {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .roadmap-themes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.roadmap-themes > * {
+  min-height: 0;
+}
+
+.roadmap-plate {
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--wt-line) 88%, transparent);
+  background: color-mix(in srgb, var(--wt-bg1) 92%, transparent);
+  box-sizing: border-box;
+}

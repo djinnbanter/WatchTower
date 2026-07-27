@@ -196,70 +196,7 @@
   );
 }
 
-/* --- Card (glass + top sheen — no left accent bar) --- */
-.ui-card {
-  position: relative;
-  background: var(--ui-glass, var(--ui-bg1));
-  border: 1px solid var(--ui-glass-border, var(--ui-line));
-  border-radius: var(--ui-rad-xl);
-  overflow: hidden;
-  box-shadow: var(--ui-shadow-rest);
-  backdrop-filter: blur(var(--ui-blur, 12px));
-  -webkit-backdrop-filter: blur(var(--ui-blur, 12px));
-}
-
-.ui-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 40%;
-  pointer-events: none;
-  background: var(--ui-sheen);
-  opacity: 0.9;
-  z-index: 0;
-}
-
-.ui-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.ui-card--interactive {
-  transition: transform var(--ui-dur-2) var(--ui-ease-out),
-              box-shadow var(--ui-dur-2) var(--ui-ease-out),
-              border-color var(--ui-dur-2) var(--ui-ease-out);
-}
-
-.ui-card--interactive:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--ui-shadow-lift);
-  border-color: color-mix(in srgb, var(--ui-sky) 35%, var(--ui-line-strong));
-}
-
-.ui-card--ok {
-  background: color-mix(in srgb, var(--ui-ok) 12%, var(--ui-glass, var(--ui-bg1)));
-  border-color: color-mix(in srgb, var(--ui-ok) 32%, var(--ui-glass-border, var(--ui-line)));
-}
-
-.ui-card--warn {
-  background: color-mix(in srgb, var(--ui-warn) 12%, var(--ui-glass, var(--ui-bg1)));
-  border-color: color-mix(in srgb, var(--ui-warn) 32%, var(--ui-glass-border, var(--ui-line)));
-}
-
-.ui-card--danger {
-  background: color-mix(in srgb, var(--ui-danger) 12%, var(--ui-glass, var(--ui-bg1)));
-  border-color: color-mix(in srgb, var(--ui-danger) 32%, var(--ui-glass-border, var(--ui-line)));
-}
-
-.ui-card--info {
-  background: color-mix(in srgb, var(--ui-info) 12%, var(--ui-glass, var(--ui-bg1)));
-  border-color: color-mix(in srgb, var(--ui-info) 32%, var(--ui-glass-border, var(--ui-line)));
-}
-
-.ui-card--accent {
-  background: color-mix(in srgb, var(--ui-accent) 12%, var(--ui-glass, var(--ui-bg1)));
-  border-color: color-mix(in srgb, var(--ui-accent) 34%, var(--ui-glass-border, var(--ui-line)));
-}
+/* --- Card plate owned by 30-patterns/instrument.css (.ui-card) --- */
 
 /* Status pip (replaces left accent bars) */
 .ui-pip {

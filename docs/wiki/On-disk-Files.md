@@ -8,8 +8,8 @@
 
 | Path | In plain English |
 |------|------------------|
-| `watchtower/watchtower.conf` | Schedule, backups, warnings — edit via **Settings** |
-| `config/watchtower/rules/*.yaml` | Optional crash rule packs — [[Crash Rule Packs]] |
+| `watchtower/watchtower.conf` | Backups, warnings, optional legacy schedule — most keys via **Settings**; schedule via conf or `/watchtower schedule` |
+| `config/watchtower/rules/*.yaml` | Optional crash rule packs — [[Crash-Rule-Packs]] |
 | `config/watchtower-server.toml` | Dashboard port, chart speed — needs restart |
 | `watchtower/watchtower-facts-*.json` | Health report data for the dashboard |
 | `watchtower/watchtower-brief-*.txt` | Human-readable report summary |

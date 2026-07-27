@@ -1,6 +1,23 @@
 # Troubleshooting
 
-Symptom-first fixes for common Watchtower problems.
+Symptom → where to click. Prefer the linked tab guide after you land.
+
+---
+
+## Quick index
+
+| If you see… | Open first |
+|-------------|------------|
+| Lag / low TPS right now | [[Live-Charts|Live]] → [[Issues]] → [[Using-Spark-with-Watchtower|Spark]] |
+| Crash / restart loop | [[Crashes]] → [[Logs]] |
+| Empty or stale Overview / Issues | [[Sources]] → refresh browser |
+| “Is Watchtower working?” | [[Sources]] |
+| Login / password / 2FA | Below + [[Security-and-Access]] |
+| Backup worry | [[Backups]] → Sources → Backup scan |
+| Blank charts | Live + hard-refresh; see [[Live-Charts]] |
+| Need to share with host | Rail **Build support pack** · [[Health-Reports]] |
+| Server will not start | [[Disaster-Recovery]] |
+| Lost in the UI | [[Dashboard-Tabs]] · **Help Center** |
 
 ---
 
@@ -24,7 +41,7 @@ Wait **15 minutes** (5 tries per IP).
 
 ### Stuck on "Checking session…"
 
-Hard-refresh the browser (`Ctrl+Shift+R`) after updating the mod. Use Watchtower **1.0.0+**.
+Hard-refresh the browser (`Ctrl+Shift+R`) after updating the mod.
 
 ---
 
@@ -32,132 +49,72 @@ Hard-refresh the browser (`Ctrl+Shift+R`) after updating the mod. Use Watchtower
 
 ### Overview / Issues empty
 
-**Usually:** no full health report yet.
+**Usually:** Watching/Scanning still warming up, or the browser needs a refresh.
 
-**Fix:** Click **Run Report** or `/watchtower run`. The full **Issues** list needs a report; some other tabs update from background scans sooner.
+**Fix:** Open [[Sources]] for freshness. Open [[Live-Charts|Live]] and [[Issues]] — Scanning fills Issues without a deep audit. Resume Welcome if setup is unfinished. For a shareable snapshot: rail **Build support pack** or [[Health-Reports]].
 
 ### Crashes tab empty
 
-Run a report, or open **Crashes** and click **Refresh** (background folder scan).
+Open [[Crashes]] and wait for Scanning, or click **Refresh** (background folder scan).
 
 ### Activity tab has few events
 
-Turn on [[Scheduled Reports]] and run reports regularly. **Refresh** on Activity helps without a full report.
+Activity fills from Scanning and gap backfill. **Refresh** on [[Activity]] helps without a full audit.
 
 ### Live numbers work but charts are blank
 
-Update to **1.0.0+**, replace the mod JAR, hard-refresh the browser.
+Replace the mod JAR if needed, hard-refresh the browser. See [[Live-Charts]].
 
-### Charts slow on 90-day range
+### Charts slow on long ranges
 
-Normal — long ranges refresh less often. Try a shorter range if needed.
+Normal — long ranges refresh less often. Try a shorter window.
 
 ### Session tab empty
 
-Server must be **online**. Run a report for historical playtime stats.
+Server must be **online**. Playtime deepens from Scanning. See [[Session]].
 
 ---
 
-## Reports
+## Support compose / diagnostics
 
-### Report stuck or failed
+### `/watchtower diagnostics` or Support download fails
 
-- Check server console for errors
-- Ensure enough disk space
-- Very large logs may need longer timeout in TOML (`reportTimeoutMinutes`)
+Wait for Scanning to write `ops-cache.json` (usually within a minute after boot). Retry rail **Build support pack** or `/watchtower diagnostics`. Compose builds from continuous data — no legacy facts file required.
 
-### `/watchtower diagnostics` fails
-
-Run `/watchtower run` successfully first.
+> **Coming soon:** the in-app zip download may still be finishing. You can still use console commands and the DR CLI when you need a bundle today.
 
 ---
 
 ## Backups
 
-### Always says "not configured"
-
-Set backup location — **Backups** tab or **Settings → Backups**.
-
-### Backups not found after choosing folder
-
-- Path must be readable by the server process
-- Click **Rescan**
-- Archives should be `.tar.gz`, `.zip`, or similar
+| Symptom | Fix |
+|---------|-----|
+| “Not tracking” and you expected a folder | [[Backups]] — complete Step A (folder) and optional Step B (webhook) |
+| Freshness looks wrong | [[Sources]] → Backup scan job; Settings → Backups |
 
 ---
 
-## Network and security
+## Performance
 
-### Yellow exposure banner
-
-Dashboard may be reachable from outside. On public hosts, bind to localhost and use SSH tunnel — [[Security and Access]].
-
-### Can't reach port 8787
-
-- Check firewall and panel port settings
-- Confirm dashboard is enabled in TOML
-- On the server itself, try `http://127.0.0.1:8787`
+| Symptom | Path |
+|---------|------|
+| Lag spike now | Live → Issues → Spark profile |
+| Patterns over days | [[Insights]] |
+| Suspect a mod | [[Mods]] + Spark Sources (profile share — not Ops Sources) |
 
 ---
 
-## Server won't boot (recovery)
+## When to escalate
 
-### CLI can't find server folder
-
-Run from `mods/` or use `--server /path` — [[DR CLI Reference]].
-
-### Can't write zip on panel
-
-`java -jar watchtower-cli-*.jar dr --out /tmp`
-
-### DR viewer blank
-
-Open via a web server (HTTP), not `file://` — [[DR Viewer]].
+1. [[Health-Reports]] — Support pack for your host or a mod author  
+2. [[Disaster-Recovery]] — server will not start  
+3. [[DR-CLI-Reference]] — recovery tool flags  
 
 ---
 
-## Mods and hosting
+## Related
 
-### Wrong hosting panel shown
-
-Set `PANEL=none` or the correct panel in config — [[Hosting Panels]].
-
-### Temperature missing on Live tab
-
-Normal on VPS/containers.
-
-### Health still "critical" after fixing crashes
-
-Mark crashes as **reviewed** on the **Crashes** tab.
-
-### Client mod warnings
-
-Often harmless — **Keep on server** on **Mods** tab or remove client-only mods.
-
----
-
-## Installation
-
-### Crash on boot: QrGenerator / TOTP error
-
-Update to **1.0.0+** JAR (TOTP libraries included).
-
-### CLI JAR in mods folder?
-
-**Yes — recommended.** NeoForge does not load it as a mod.
-
----
-
-## Still stuck?
-
-1. `/watchtower diagnostics` — share zip (redact secrets)
-2. [GitHub Issues](https://github.com/djinnbanter/WatchTower/issues)
-3. Include: NeoForge version, host type, relevant log excerpt
-
----
-
-## See also
-
-- [[Security and Access]]
-- [[Health Reports]]
-- [[Disaster Recovery]]
+- [[Dashboard-Tabs]]
+- [[Understanding-Data-Sources]]
+- [[Sources]]
+- [[Commands]]

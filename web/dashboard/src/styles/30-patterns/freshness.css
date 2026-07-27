@@ -49,6 +49,12 @@
   animation: ui-pulse-live 2s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .ui-freshness-badge--live .ui-freshness-badge__dot {
+    animation: none;
+  }
+}
+
 .ui-freshness-badge__label {
   font-weight: 500;
 }

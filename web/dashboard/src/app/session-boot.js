@@ -11,6 +11,7 @@ import { ui, setUi, reports, noReportYet } from '../state/stores.js';
 import { initRouter } from './router.js';
 import { initPalette } from './palette.js';
 import { shouldShowSetupWizard, relaunchSetupWizard } from '../features/wizard/view.js';
+import { kickRender } from './kick-render.js';
 
 let _source = null;
 let _sessionReady = false;
@@ -65,7 +66,11 @@ export async function resumeAfterAuth() {
         _source.fetchOpsCache?.(),
         _source.fetchDataSources?.(),
         _source.fetchIssueSuppressions?.(),
+        // Prefetch chart series so Live paints filled on first visit
+        _source.fetchSamples?.(ui.value.chartWindow),
+        _source.fetchLive?.(),
       ]);
+      kickRender();
     } catch (err) {
       console.warn('[WatchTower] Initial report load failed:', err);
     }

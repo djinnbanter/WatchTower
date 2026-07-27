@@ -26,6 +26,7 @@ export function ChartFrame({
           ${at && html`<span class="ui-chart-frame__at">${at}</span>`}
         </div>
         <div class="ui-chart-frame__actions">
+          <div class="ui-chart-frame__legend" aria-live="polite"></div>
           ${windowOptions && html`
             <${Segmented}
               options=${windowOptions}

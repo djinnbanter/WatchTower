@@ -3,6 +3,7 @@ package dev.mcstatus.watchtower.core.collect;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.spark.proto.SparkHeapProtos;
 import dev.mcstatus.watchtower.core.spark.proto.SparkProtos;
+import dev.mcstatus.watchtower.core.spark.proto.SparkSamplerProtos;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -41,13 +42,23 @@ class SparkHeapParserTest {
                 Instant.now(),
                 data);
 
-        JsonObject summary = SparkHeapParser.toSummary(result);
+        SparkCollectResult cpu = new SparkCollectResult(
+                java.nio.file.Path.of("config/spark/profile.sparkprofile"),
+                "config/spark/profile.sparkprofile",
+                "profile.sparkprofile",
+                "config_spark",
+                result.capturedAt().minusSeconds(30),
+                SparkSamplerProtos.SamplerData.getDefaultInstance());
+        JsonObject summary = SparkHeapParser.toSummary(result, cpu);
         assertNotNull(summary);
         assertEquals("https://spark.lucko.me/H5BVV4Annz", summary.get("spark_viewer_url").getAsString());
         assertEquals(8.0, summary.get("total_mb").getAsDouble(), 0.01);
         assertEquals(1, summary.getAsJsonArray("top_entries").size());
-        assertEquals("sable", summary.getAsJsonArray("top_entries").get(0).getAsJsonObject()
+        assertEquals("unknown", summary.getAsJsonArray("top_entries").get(0).getAsJsonObject()
                 .get("mod_id").getAsString());
         assertTrue(summary.has("jvm_heap"));
+        assertEquals("conservative", summary.getAsJsonObject("attribution").get("mode").getAsString());
+        assertEquals("nearby_capture", summary.getAsJsonObject("pairing").get("status").getAsString());
+        assertEquals(30, summary.getAsJsonObject("pairing").get("delta_seconds").getAsLong());
     }
 }

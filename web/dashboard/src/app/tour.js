@@ -12,13 +12,13 @@ const STEPS = [
   {
     target: '[data-tour="rail"]',
     title: 'Navigation rail',
-    body: 'Switch panels from the rail — click the logo to collapse it.',
+    body: 'Switch panels from the rail — use Collapse at the bottom to shrink it.',
     placement: 'right',
   },
   {
     target: '[data-tour="topbar"]',
     title: 'Top bar',
-    body: 'Connection status, Ctrl/Cmd+K palette, inbox, and theme live here.',
+    body: 'Live/Offline and report freshness chips, Ctrl/Cmd+K search, and inbox live here.',
     placement: 'bottom',
   },
   {
@@ -60,7 +60,7 @@ const STEPS = [
     tab: 'issues',
     target: '[data-tour="issues"]',
     title: 'Issues',
-    body: 'Prioritized fix list from reports plus live peeks — mark items reviewed when done.',
+    body: 'Prioritized fix list from continuous Scanning plus peeks — mark items reviewed when done.',
     placement: 'bottom',
   },
   {
@@ -88,7 +88,7 @@ const STEPS = [
     tab: 'mods',
     target: '[data-tour="mods"]',
     title: 'Mods',
-    body: 'Mod inventory, conflicts, client-only scoring, dependencies, and forensics.',
+    body: 'Mod inventory, updates with pack impact, conflicts, changes, and forensics.',
     placement: 'bottom',
   },
   {
@@ -109,14 +109,14 @@ const STEPS = [
     tab: 'sources',
     target: '[data-tour="sources"]',
     title: 'Sources',
-    body: 'When live, scanned, and report data last updated — and what each layer powers.',
+    body: 'Watching, Scanning, and Support compose — when each layer last updated and what it powers.',
     placement: 'bottom',
   },
   {
     tab: 'settings',
     target: '[data-tour="settings"]',
     title: 'Settings',
-    body: 'Schedule, monitoring, backups, security, rules, and About / updates.',
+    body: 'Schedule (Off by default), monitoring, backups, security, Advanced support bundle, and About.',
     placement: 'bottom',
   },
   {
@@ -124,6 +124,13 @@ const STEPS = [
     target: '[data-tour="docs"]',
     title: 'Docs',
     body: 'Built-in operator wiki with search — reopen the setup wizard from here anytime.',
+    placement: 'bottom',
+  },
+  {
+    tab: 'roadmap',
+    target: '[data-tour="roadmap"]',
+    title: 'Roadmap',
+    body: 'What works today, what’s coming next by situation, and what we’re not building — plain English.',
     placement: 'bottom',
   },
 ];

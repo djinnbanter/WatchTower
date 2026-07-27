@@ -1,0 +1,6 @@
+---- Minecraft Crash Report ----
+Time: 2026-06-19 11:02:18
+Description: Watching Server
+
+java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds (should be max 0.05)
+	at TRANSFORMER/chunky@1.4/org.popcraft.chunky.ChunkyTask.run(ChunkyTask.java:88)

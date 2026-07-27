@@ -99,6 +99,42 @@ class JarClassIndexTest {
         assertFalse(index.findPackage("com/example/mod", "exact_package").isEmpty());
     }
 
+    @Test
+    void incrementalRebuildOnlyTouchesChangedJar() throws Exception {
+        Path mods = tmp.resolve("mods");
+        Files.createDirectories(mods);
+        writeJarWithClass(mods.resolve("alpha-1.jar"), "com/alpha/A.class");
+        writeJarWithClass(mods.resolve("beta-1.jar"), "com/beta/B.class");
+
+        JsonArray modsJson = new JsonArray();
+        JsonObject a = new JsonObject();
+        a.addProperty("id", "alpha");
+        a.addProperty("jar_file", "alpha-1.jar");
+        modsJson.add(a);
+        JsonObject b = new JsonObject();
+        b.addProperty("id", "beta");
+        b.addProperty("jar_file", "beta-1.jar");
+        modsJson.add(b);
+
+        Path cache = tmp.resolve("watchtower").resolve("forensics-cache.json");
+        JarClassIndex first = JarClassIndex.build(mods, modsJson, cache);
+        assertEquals(2, first.stats().jarCount());
+        assertEquals(2, first.stats().jarsRebuilt());
+        assertEquals(0, first.stats().jarsReused());
+
+        // Touch only beta (new content → new size/mtime)
+        Thread.sleep(5);
+        writeJarWithClass(mods.resolve("beta-1.jar"), "com/beta/B2.class");
+
+        JarClassIndex second = JarClassIndex.build(mods, modsJson, cache);
+        assertFalse(second.stats().fromCache());
+        assertEquals(1, second.stats().jarsRebuilt());
+        assertEquals(1, second.stats().jarsReused());
+        assertFalse(second.findClass("com.alpha.A", true).isEmpty());
+        assertFalse(second.findClass("com.beta.B2", true).isEmpty());
+        assertTrue(second.findClass("com.beta.B", true).isEmpty());
+    }
+
     private static void writeJarWithClass(Path jar, String classEntry) throws Exception {
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar))) {
             jos.putNextEntry(new ZipEntry(classEntry));

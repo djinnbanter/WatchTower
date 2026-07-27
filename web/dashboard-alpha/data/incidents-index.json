@@ -1,0 +1,14 @@
+{
+  "incidents": [
+    {
+      "id": "2026-07-26T18-37-38Z",
+      "pinned_at": "2026-07-26T18:37:38.529Z",
+      "severity": "critical",
+      "title": "Lag spike — MSPT 118ms · TPS 8.4",
+      "narrative": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
+      "source": "ops"
+    }
+  ],
+  "count": 1,
+  "updated_at": "2026-07-26T18:37:38.529Z"
+}

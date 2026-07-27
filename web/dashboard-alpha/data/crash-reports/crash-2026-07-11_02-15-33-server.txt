@@ -1,0 +1,6 @@
+---- Minecraft Crash Report ----
+Time: 2026-07-11 02:15:33
+Description: Exception generating new chunk
+
+java.io.EOFException: Unexpected end of ZLIB input stream
+	at java.base/java.util.zip.InflaterInputStream.fill(InflaterInputStream.java:255)

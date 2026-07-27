@@ -69,4 +69,20 @@ class DiskNudgeEvaluatorTest {
         JsonObject nudge = DiskNudgeEvaluator.evaluateBackup(backup, 7);
         assertFalse(nudge.get("active").getAsBoolean());
     }
+
+    @Test
+    void backupNudgeInactiveWhenLocalStaleButExternalFresh() {
+        JsonObject backup = new JsonObject();
+        backup.addProperty("status", "stale");
+        backup.addProperty("stale", true);
+        backup.addProperty("age_days", 10.0);
+
+        JsonObject external = new JsonObject();
+        external.addProperty("configured", true);
+        external.addProperty("status", "success");
+        external.addProperty("stale", false);
+
+        JsonObject nudge = DiskNudgeEvaluator.evaluateBackup(backup, external, 7);
+        assertFalse(nudge.get("active").getAsBoolean());
+    }
 }

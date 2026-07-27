@@ -1,77 +1,50 @@
 # Health Reports
 
-A **health report** is Watchtower’s main check: it reads logs, crashes, mods, backups, and server stats, then writes a short summary and detailed data files.
+Day-to-day tabs stay current via **Watching** and **Scanning** — [[Understanding-Data-Sources]]. This page is about **Support packs** (shareable zips) and an **optional** legacy schedule.
 
 ---
 
 ## At a glance
 
-- **Run one:** **Run Report** in the dashboard, `/watchtower run`, or on a schedule — [[Scheduled Reports]]
-- **Output files:** `watchtower-brief-*.txt` (readable) and `watchtower-facts-*.json` (for the dashboard) in `<server>/watchtower/`
-- **Powers:** **Issues** fix list, deep **Mods** analysis, **Activity** history, and more
-- **Faster reruns:** “Incremental” mode only scans since the last report when enabled in Settings
-
----
-
-## What happens during a report
-
-1. Watchtower scans your server’s logs, crash folder, mod list, backups, and machine stats
-2. Rule-based checks find problems (no AI, no cloud)
-3. A text summary and JSON file are saved with a timestamp
-4. `DR-README.txt` is updated with recovery instructions
-
----
-
-## How to run a report
-
-| Method | When to use |
-|--------|-------------|
-| **Run Report** button | Easiest — in the dashboard top bar |
-| **Setup wizard** (optional baseline) | First visit — live discovery audit; optional 30-day baseline via Run Report (does not block Finish) |
-| `/watchtower run [hours]` | From console — optional hours of history |
-| Scheduled reports | Hands-off — Settings → General |
-
-**Recommended first report:** 30 days — optional from the setup wizard, or `/watchtower run 720`, or **Run Report** with a 720h lookback.
-
----
-
-## Output files
-
-| File | Purpose |
-|------|---------|
-| `watchtower-brief-*.txt` | Human-readable summary — start here |
-| `watchtower-facts-*.json` | Data the dashboard loads |
-| `DR-README.txt` | Emergency recovery command |
-
-In-game summary: `/watchtower brief`
-
----
-
-## Reports vs live charts vs background scan
-
-| Type | What it does |
+| Mode | Plain English |
 |------|----------------|
-| **Live charts** | Updates while dashboard is open |
-| **Background scan** | Logs, crashes, recent activity ~every minute |
-| **Full report** | Complete fix list and deep analysis — run on a schedule |
-
-You do not need a full report every visit, but schedule them regularly for a useful **Issues** tab and history.
+| **Day-to-day** | Watching + Scanning — no homework |
+| **Support pack** | Zip when you need to share with a host or mod author |
+| **Optional schedule** | Legacy deep audits — off on new installs |
 
 ---
 
-## Incremental reports
+## Day-to-day vs share
 
-When **Incremental scans** is on in **Settings → General**:
+| Day-to-day | Share |
+|------------|-------|
+| Live, Issues, Crashes, Mods stay current | Frozen zip + brief for someone else |
+| Open [[Sources]] for freshness | Rail **Build support pack** |
 
-- Only new logs/events since the last report are scanned
-- Faster on large servers
-- Small overlap prevents gaps at boundaries
+---
+
+## Support pack entry points
+
+Use these (Support lives on the rail — not under Settings → Integrations):
+
+1. Rail footer **Build support pack**
+2. Overview **Support pack** card
+3. Help Center hub **Build pack**
+4. Console: `/watchtower run` or `/watchtower diagnostics`
+
+> **Coming soon:** the in-app downloadable zip may still be finishing on some builds. Console compose and on-disk outputs remain the reliable path when the UI download is not ready yet.
+
+### What goes in a pack (intent)
+
+Environment, redacted ops/config, optional logs/crashes/Spark, synthesized support facts + brief **for the zip only**. Never includes dashboard auth, world data, backups, or mod jars. Spark profiles are binary and unredacted when included.
+
+**How to read the zip:** server issues → `PROBLEM.txt` → `report/brief.txt` → `evidence/`; Watchtower bugs → `environment.json` → redacted conf → ops-cache.
 
 ---
 
 ## Problem types you might see
 
-In **Issues** and `/watchtower issues`:
+In [[Issues]] and `/watchtower issues` (examples):
 
 | ID | Plain English |
 |----|----------------|
@@ -79,37 +52,38 @@ In **Issues** and `/watchtower issues`:
 | `OOM` | Ran out of memory |
 | `CRASH_REPORT` | Crash files on disk |
 | `DISK_HIGH` | Disk almost full |
-| `TICK_LAG` / `MSPT_HIGH` / `TPS_LOW` | Server struggling to keep up |
-| `BACKUP_NOT_CONFIGURED` | Backup location not set |
-| `BACKUP_STALE` | No recent backup |
+| `TICK_LAG` / `MSPT_HIGH` / `TPS_LOW` | Server struggling |
+| `BACKUP_*` | Backup not configured / missing / stale |
 | `MOD_UPDATE_CONFLICT` | Mod version problems |
 
-Full list in technical appendix below.
+---
+
+## Optional schedule (legacy deep audits)
+
+Automatic legacy deep audits are **optional**. New installs default schedule **Off**. Watching / Scanning cover day-to-day — you do not configure a deep audit schedule in Settings.
+
+| Command | Effect |
+|---------|--------|
+| `/watchtower schedule show` | Show current mode |
+| `/watchtower schedule set 60` | Interval example (minutes) |
+| `/watchtower schedule off` | Turn off |
+
+Needs OP level 2 by default. Or edit `watchtower/watchtower.conf`:
+
+| Key | Default (new installs) | Notes |
+|-----|------------------------|-------|
+| `REPORT_SCHEDULE_MODE` | `off` | `wall_clock`, `interval`, or `off` |
+| `REPORT_WALL_CLOCK_HOURS` | `0,12` | Hours 0–23, server local time |
+| `REPORT_INTERVAL_MINUTES` | `720` | When mode is `interval` |
+
+Scheduled runs write legacy `watchtower-facts-*.json` / `watchtower-brief-*.txt`. They do **not** replace Live charts. Upgrades keep existing schedules unless you turn them off.
 
 ---
 
-## Technical details
+## Related
 
-### Facts JSON sections
-
-| Section | Contains |
-|---------|----------|
-| `meta` | Hostname, time, lookback |
-| `health` | Overall status |
-| `issues` | Problems with fix steps |
-| `events` | Activity timeline data |
-| `minecraft` | TPS, MSPT, players, mods |
-| `system` | CPU, RAM, disk |
-
-### All issue IDs
-
-`SERVER_DOWN`, `ABNORMAL_STOP`, `OOM`, `CRASH_REPORT`, `DISK_HIGH`, `MEM_LOW`, `TICK_LAG`, `MSPT_HIGH`, `TPS_LOW`, `LOG_STALE`, `PANEL_DOWN`, `MOD_LOAD_FAILED`, `MOD_UPDATE_CONFLICT`, `BACKUP_NOT_CONFIGURED`, `BACKUP_NOT_FOUND`, `BACKUP_STALE`, `MANUAL_REBOOT`, `DH_PREGEN_THROTTLE`, `DH_PREGEN_STALL`. DR-only: `CRASH_LOOP`, `MISSING_CRASH_REPORT`.
-
----
-
-## See also
-
+- [[Understanding-Data-Sources]]
+- [[Sources]]
 - [[Commands]]
-- [[Scheduled Reports]]
-- [[Dashboard Tabs#Issues]]
-- [[On-disk Files]]
+- [[Configuration]]
+- [[Troubleshooting]]

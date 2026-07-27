@@ -11,9 +11,12 @@ plugins {
 rootProject.name = 'watchtower'
 
 include 'watchtower-core'
+include 'watchtower-neoforge-common'
 include 'watchtower-cli'
-include 'neoforge-1.21.1'
-project(':neoforge-1.21.1').projectDir = file('mods/neoforge-1.21.1')
+include 'neoforge-1.21'
+project(':neoforge-1.21').projectDir = file('mods/neoforge-1.21')
+include 'neoforge-1.20'
+project(':neoforge-1.20').projectDir = file('mods/neoforge-1.20')
 
 // Future loader projects — uncomment and add mods/<loader>-<mc>/ source tree:
 // include 'fabric-1.21.1'

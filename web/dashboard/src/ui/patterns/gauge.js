@@ -1,12 +1,15 @@
 import { html, useMemo, useRef } from '../../lib/preact.js';
+import { useCountUp } from '../../motion/use-count-up.js';
+import { DUR } from '../../motion/tokens.js';
 
 let _gaugeUid = 0;
 
 /**
  * Gauge — SVG arc dial for temperatures or 0–100 progress.
- * Gauge({ value, max=100, label, band, warnAt, critAt, size=120, unit='°', tone, className, hero })
+ * Gauge({ value, max=100, label, band, warnAt, critAt, size=120, unit='°', tone, className, hero, labelPlacement })
  * band: 'cool'|'warm'|'hot'|null — overrides auto band from warn/crit
  * hero: larger glow + gradient stroke + glass halo (Live thermal dials)
+ * labelPlacement: 'inside' (default) | 'above' — title above dial, number only in center
  */
 export function Gauge({
   value,
@@ -20,17 +23,21 @@ export function Gauge({
   tone,
   className = '',
   hero = false,
+  labelPlacement = 'inside',
 }) {
   const uidRef = useRef(null);
   if (uidRef.current == null) uidRef.current = `g${++_gaugeUid}`;
   const uid = uidRef.current;
-  const v = value == null || Number.isNaN(Number(value)) ? null : Number(value);
+  const raw = value == null || Number.isNaN(Number(value)) ? null : Number(value);
+  const animated = useCountUp(raw, { duration: DUR[5] });
+  const v = animated == null || Number.isNaN(Number(animated)) ? null : Number(animated);
   const frac = v == null ? 0 : Math.min(1, Math.max(0, v / max));
 
   const autoBand = v == null ? null : v >= critAt ? 'hot' : v >= warnAt ? 'warm' : 'cool';
   const resolvedBand = band || autoBand;
   const resolvedTone = tone
     || (resolvedBand === 'hot' ? 'danger' : resolvedBand === 'warm' ? 'warn' : 'ok');
+  const labelAbove = labelPlacement === 'above';
 
   const r = size * (hero ? 0.36 : 0.34);
   const cx = size / 2;
@@ -83,61 +90,66 @@ export function Gauge({
         'ui-gauge',
         resolvedTone ? `ui-gauge--${resolvedTone}` : '',
         hero ? 'ui-gauge--hero' : '',
+        labelAbove ? 'ui-gauge--label-above' : '',
         className,
       ].filter(Boolean).join(' ')}
-      style=${{ width: size, height: size }}
       role="img"
       aria-label=${`${label || 'Gauge'}: ${v == null ? 'unavailable' : `${Math.round(v)}${unit}`}`}
     >
-      <div class="ui-gauge__halo" aria-hidden="true"></div>
-      <svg width=${size} height=${size} viewBox=${`0 0 ${size} ${size}`}>
-        <defs>
-          <linearGradient id=${gradId} x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="var(--ui-ok)" />
-            <stop offset="55%" stop-color="var(--ui-warn)" />
-            <stop offset="100%" stop-color="var(--ui-danger)" />
-          </linearGradient>
-          <filter id=${glowId} x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation=${hero ? 3.5 : 2} result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        ${arc.glowTrack && html`
-          <path class="ui-gauge__glow-track" d=${arc.glowTrack} fill="none" />
-        `}
-        ${arc.ticks.map((t) => html`
-          <line
-            key=${t.key}
-            class=${`ui-gauge__tick${t.major ? ' ui-gauge__tick--major' : ''}`}
-            x1=${t.x1} y1=${t.y1} x2=${t.x2} y2=${t.y2}
-          />
-        `)}
-        <path class="ui-gauge__track" d=${arc.track} fill="none" />
-        ${arc.valuePath && html`
-          <path
-            class="ui-gauge__value"
-            d=${arc.valuePath}
-            fill="none"
-            stroke=${hero ? `url(#${gradId})` : undefined}
-            filter=${`url(#${glowId})`}
-          />
-        `}
-        ${hero && html`
-          <circle class="ui-gauge__hub-ring" cx=${arc.hub.x} cy=${arc.hub.y} r=${size * 0.08} fill="none" />
-        `}
-        ${arc.needle && html`
-          <circle class="ui-gauge__needle-glow" cx=${arc.needle.x} cy=${arc.needle.y} r=${hero ? 8 : 5} />
-          <circle class="ui-gauge__needle" cx=${arc.needle.x} cy=${arc.needle.y} r=${hero ? 5 : 4} />
-          <circle class="ui-gauge__needle-core" cx=${arc.needle.x} cy=${arc.needle.y} r=${hero ? 2.5 : 2} />
-        `}
-      </svg>
-      <div class="ui-gauge__readout">
-        <div class="ui-gauge__value-text">${v == null ? '—' : Math.round(v)}${v != null ? unit : ''}</div>
-        ${label && html`<div class="ui-gauge__label">${label}</div>`}
-        ${bandLabel && html`<div class="ui-gauge__band">${bandLabel}</div>`}
+      ${labelAbove && label ? html`
+        <div class="ui-gauge__title">${label}</div>
+      ` : null}
+      <div class="ui-gauge__face" style=${{ width: size, height: size }}>
+        <div class="ui-gauge__halo" aria-hidden="true"></div>
+        <svg width=${size} height=${size} viewBox=${`0 0 ${size} ${size}`}>
+          <defs>
+            <linearGradient id=${gradId} x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="var(--ui-ok)" />
+              <stop offset="55%" stop-color="var(--ui-warn)" />
+              <stop offset="100%" stop-color="var(--ui-danger)" />
+            </linearGradient>
+            <filter id=${glowId} x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation=${hero ? 3.5 : 2} result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          ${arc.glowTrack && html`
+            <path class="ui-gauge__glow-track" d=${arc.glowTrack} fill="none" />
+          `}
+          ${arc.ticks.map((t) => html`
+            <line
+              key=${t.key}
+              class=${`ui-gauge__tick${t.major ? ' ui-gauge__tick--major' : ''}`}
+              x1=${t.x1} y1=${t.y1} x2=${t.x2} y2=${t.y2}
+            />
+          `)}
+          <path class="ui-gauge__track" d=${arc.track} fill="none" />
+          ${arc.valuePath && html`
+            <path
+              class="ui-gauge__value"
+              d=${arc.valuePath}
+              fill="none"
+              stroke=${hero ? `url(#${gradId})` : undefined}
+              filter=${`url(#${glowId})`}
+            />
+          `}
+          ${hero && html`
+            <circle class="ui-gauge__hub-ring" cx=${arc.hub.x} cy=${arc.hub.y} r=${size * 0.08} fill="none" />
+          `}
+          ${arc.needle && html`
+            <circle class="ui-gauge__needle-glow" cx=${arc.needle.x} cy=${arc.needle.y} r=${hero ? 8 : 5} />
+            <circle class="ui-gauge__needle" cx=${arc.needle.x} cy=${arc.needle.y} r=${hero ? 5 : 4} />
+            <circle class="ui-gauge__needle-core" cx=${arc.needle.x} cy=${arc.needle.y} r=${hero ? 2.5 : 2} />
+          `}
+        </svg>
+        <div class="ui-gauge__readout">
+          <div class="ui-gauge__value-text">${v == null ? '—' : Math.round(v)}${v != null ? unit : ''}</div>
+          ${!labelAbove && label ? html`<div class="ui-gauge__label">${label}</div>` : null}
+          ${!labelAbove && bandLabel ? html`<div class="ui-gauge__band">${bandLabel}</div>` : null}
+        </div>
       </div>
     </div>
   `;
@@ -148,7 +160,8 @@ export function Gauge({
  * kind: 'square' (DH-like) | 'circle' (Chunky-like)
  */
 export function RadarDial({ pct = 0, kind = 'circle', size = 72, className = '' }) {
-  const p = Math.min(100, Math.max(0, Number(pct) || 0));
+  const animated = useCountUp(Number(pct) || 0, { duration: DUR[5] });
+  const p = Math.min(100, Math.max(0, Number(animated) || 0));
   const cx = size / 2;
   const cy = size / 2;
 

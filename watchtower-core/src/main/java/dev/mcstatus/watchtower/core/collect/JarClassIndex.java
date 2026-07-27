@@ -38,7 +38,19 @@ public final class JarClassIndex {
     public record Match(String modId, String jar, String innerPath, String source) {
     }
 
-    public record BuildStats(String builtAt, int jarCount, int entryCount, boolean fromCache) {
+    public record BuildStats(
+            String builtAt,
+            int jarCount,
+            int entryCount,
+            boolean fromCache,
+            int jarsRebuilt,
+            int jarsReused
+    ) {
+        public BuildStats(String builtAt, int jarCount, int entryCount, boolean fromCache) {
+            this(builtAt, jarCount, entryCount, fromCache,
+                    fromCache ? 0 : jarCount,
+                    fromCache ? jarCount : 0);
+        }
     }
 
     private final Map<String, List<Match>> byClassPath;
@@ -129,32 +141,90 @@ public final class JarClassIndex {
     }
 
     public static JarClassIndex build(Path modsDir, JsonArray mods, Path cacheFile) throws IOException {
+        return build(modsDir, mods, cacheFile, Integer.MAX_VALUE);
+    }
+
+    public static JarClassIndex build(Path modsDir, JsonArray mods, Path cacheFile, int maxJarsPerWake)
+            throws IOException {
         Map<String, String> jarToMod = jarToModId(mods);
-        Map<String, JarFingerprint> fps = fingerprintModsDir(modsDir);
-        if (cacheFile != null) {
-            JarClassIndex cached = loadCache(cacheFile, fps);
-            if (cached != null) {
-                return cached;
-            }
+        Map<String, JarFingerprint> currentFps = fingerprintModsDir(modsDir);
+        CachedPayload prior = cacheFile != null ? loadCachePayload(cacheFile) : null;
+
+        if (prior != null && prior.fingerprints().equals(currentFps)) {
+            BuildStats stats = new BuildStats(
+                    prior.builtAt(),
+                    prior.jarCount(),
+                    prior.entryCount(),
+                    true,
+                    0,
+                    currentFps.size());
+            return new JarClassIndex(prior.byClassPath(), prior.bySimpleName(), prior.packageCounts(), stats, currentFps);
         }
+
         Map<String, List<Match>> byClass = new HashMap<>();
         Map<String, List<Match>> bySimple = new HashMap<>();
         Map<String, Map<String, Integer>> packages = new HashMap<>();
-        int entryCount = 0;
-        int jarCount = 0;
-        if (modsDir != null && Files.isDirectory(modsDir)) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
-                for (Path jar : stream) {
-                    jarCount++;
-                    String jarName = jar.getFileName().toString();
-                    String modId = jarToMod.getOrDefault(jarName.toLowerCase(Locale.ROOT),
-                            guessModId(jarName));
-                    entryCount += scanJar(jar, modId, jarName, byClass, bySimple, packages);
+        int jarsReused = 0;
+        int jarsRebuilt = 0;
+        int rebuildBudget = Math.max(1, maxJarsPerWake);
+
+        if (prior != null) {
+            byClass.putAll(deepCopyMatches(prior.byClassPath()));
+            bySimple.putAll(deepCopyMatches(prior.bySimpleName()));
+            packages.putAll(deepCopyPackages(prior.packageCounts()));
+
+            Set<String> removedOrChanged = new LinkedHashSet<>();
+            for (String jar : prior.fingerprints().keySet()) {
+                if (!currentFps.containsKey(jar) || !currentFps.get(jar).equals(prior.fingerprints().get(jar))) {
+                    removedOrChanged.add(jar);
+                }
+            }
+            for (String jar : removedOrChanged) {
+                stripJar(jar, byClass, bySimple, packages);
+            }
+            for (Map.Entry<String, JarFingerprint> e : currentFps.entrySet()) {
+                String jar = e.getKey();
+                JarFingerprint old = prior.fingerprints().get(jar);
+                if (old != null && old.equals(e.getValue())) {
+                    jarsReused++;
+                } else {
+                    if (jarsRebuilt >= rebuildBudget) {
+                        continue;
+                    }
+                    jarsRebuilt++;
+                    String modId = jarToMod.getOrDefault(jar.toLowerCase(Locale.ROOT), guessModId(jar));
+                    Path jarPath = modsDir.resolve(jar);
+                    if (Files.isRegularFile(jarPath)) {
+                        scanJar(jarPath, modId, jar, byClass, bySimple, packages);
+                    }
+                }
+            }
+        } else {
+            if (modsDir != null && Files.isDirectory(modsDir)) {
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
+                    for (Path jar : stream) {
+                        if (jarsRebuilt >= rebuildBudget) {
+                            break;
+                        }
+                        jarsRebuilt++;
+                        String jarName = jar.getFileName().toString();
+                        String modId = jarToMod.getOrDefault(jarName.toLowerCase(Locale.ROOT), guessModId(jarName));
+                        scanJar(jar, modId, jarName, byClass, bySimple, packages);
+                    }
                 }
             }
         }
-        BuildStats stats = new BuildStats(Instant.now().toString(), jarCount, entryCount, false);
-        JarClassIndex index = new JarClassIndex(byClass, bySimple, packages, stats, fps);
+
+        int entryCount = countEntries(byClass);
+        int jarCount = currentFps.size();
+        BuildStats stats = new BuildStats(
+                Instant.now().toString(),
+                jarCount,
+                entryCount,
+                false,
+                jarsRebuilt,
+                jarsReused);
+        JarClassIndex index = new JarClassIndex(byClass, bySimple, packages, stats, currentFps);
         if (cacheFile != null) {
             saveCache(cacheFile, index);
         }
@@ -443,6 +513,37 @@ public final class JarClassIndex {
 
     private static JarClassIndex loadCache(Path cacheFile, Map<String, JarFingerprint> current)
             throws IOException {
+        CachedPayload prior = loadCachePayload(cacheFile);
+        if (prior == null || !prior.fingerprints().equals(current)) {
+            return null;
+        }
+        BuildStats stats = new BuildStats(
+                prior.builtAt(),
+                prior.jarCount(),
+                prior.entryCount(),
+                true,
+                0,
+                current.size());
+        return new JarClassIndex(
+                prior.byClassPath(),
+                prior.bySimpleName(),
+                prior.packageCounts(),
+                stats,
+                current);
+    }
+
+    private record CachedPayload(
+            Map<String, List<Match>> byClassPath,
+            Map<String, List<Match>> bySimpleName,
+            Map<String, Map<String, Integer>> packageCounts,
+            Map<String, JarFingerprint> fingerprints,
+            String builtAt,
+            int jarCount,
+            int entryCount
+    ) {
+    }
+
+    private static CachedPayload loadCachePayload(Path cacheFile) throws IOException {
         if (!Files.isRegularFile(cacheFile)) {
             return null;
         }
@@ -458,9 +559,6 @@ public final class JarClassIndex {
             }
             JsonObject fp = e.getValue().getAsJsonObject();
             fps.put(e.getKey(), new JarFingerprint(fp.get("size").getAsLong(), fp.get("mtime").getAsLong()));
-        }
-        if (!fps.equals(current)) {
-            return null;
         }
         Map<String, List<Match>> byClass = new HashMap<>();
         Map<String, List<Match>> bySimple = new HashMap<>();
@@ -492,8 +590,68 @@ public final class JarClassIndex {
         }
         int jarCount = root.has("jar_count") ? root.get("jar_count").getAsInt() : fps.size();
         String builtAt = root.has("built_at") ? root.get("built_at").getAsString() : Instant.now().toString();
-        BuildStats stats = new BuildStats(builtAt, jarCount, entryCount, true);
-        return new JarClassIndex(byClass, bySimple, packages, stats, fps);
+        return new CachedPayload(byClass, bySimple, packages, fps, builtAt, jarCount, entryCount);
+    }
+
+    private static void stripJar(
+            String jarName,
+            Map<String, List<Match>> byClass,
+            Map<String, List<Match>> bySimple,
+            Map<String, Map<String, Integer>> packages) {
+        stripJarFromMatchMap(jarName, byClass);
+        stripJarFromMatchMap(jarName, bySimple);
+        List<String> emptyPkgs = new ArrayList<>();
+        for (Map.Entry<String, Map<String, Integer>> e : packages.entrySet()) {
+            e.getValue().entrySet().removeIf(je -> {
+                String jarKey = je.getKey();
+                int bar = jarKey.indexOf('|');
+                String jar = bar >= 0 ? jarKey.substring(bar + 1) : jarKey;
+                return jarName.equals(jar);
+            });
+            if (e.getValue().isEmpty()) {
+                emptyPkgs.add(e.getKey());
+            }
+        }
+        for (String pkg : emptyPkgs) {
+            packages.remove(pkg);
+        }
+    }
+
+    private static void stripJarFromMatchMap(String jarName, Map<String, List<Match>> map) {
+        List<String> emptyKeys = new ArrayList<>();
+        for (Map.Entry<String, List<Match>> e : map.entrySet()) {
+            e.getValue().removeIf(m -> jarName.equals(m.jar()));
+            if (e.getValue().isEmpty()) {
+                emptyKeys.add(e.getKey());
+            }
+        }
+        for (String k : emptyKeys) {
+            map.remove(k);
+        }
+    }
+
+    private static Map<String, List<Match>> deepCopyMatches(Map<String, List<Match>> src) {
+        Map<String, List<Match>> out = new HashMap<>();
+        for (Map.Entry<String, List<Match>> e : src.entrySet()) {
+            out.put(e.getKey(), new ArrayList<>(e.getValue()));
+        }
+        return out;
+    }
+
+    private static Map<String, Map<String, Integer>> deepCopyPackages(Map<String, Map<String, Integer>> src) {
+        Map<String, Map<String, Integer>> out = new HashMap<>();
+        for (Map.Entry<String, Map<String, Integer>> e : src.entrySet()) {
+            out.put(e.getKey(), new HashMap<>(e.getValue()));
+        }
+        return out;
+    }
+
+    private static int countEntries(Map<String, List<Match>> byClass) {
+        int n = 0;
+        for (List<Match> list : byClass.values()) {
+            n += list.size();
+        }
+        return n;
     }
 
     private static String str(JsonObject o, String key) {

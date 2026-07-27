@@ -68,22 +68,61 @@ public final class ModsInventoryDiff {
         JsonObject result = new JsonObject();
         Map<String, JsonObject> curByJar = indexByJar(current);
         Map<String, JsonObject> baseByJar = indexByJar(baseline);
-        JsonArray added = new JsonArray();
-        JsonArray removed = new JsonArray();
+
+        Set<String> matchedJars = new HashSet<>();
         JsonArray changed = new JsonArray();
 
         for (Map.Entry<String, JsonObject> e : curByJar.entrySet()) {
             JsonObject prev = baseByJar.get(e.getKey());
-            if (prev == null) {
-                added.add(summaryRow(e.getValue(), "added"));
-            } else if (isChanged(e.getValue(), prev)) {
+            if (prev != null && isChanged(e.getValue(), prev)) {
                 changed.add(changeRow(e.getValue(), prev));
+                matchedJars.add(e.getKey());
+            } else if (prev != null) {
+                matchedJars.add(e.getKey());
+            }
+        }
+
+        List<JsonObject> unmatchedAdded = new ArrayList<>();
+        List<JsonObject> unmatchedRemoved = new ArrayList<>();
+        for (Map.Entry<String, JsonObject> e : curByJar.entrySet()) {
+            if (!matchedJars.contains(e.getKey()) && !baseByJar.containsKey(e.getKey())) {
+                unmatchedAdded.add(e.getValue());
             }
         }
         for (Map.Entry<String, JsonObject> e : baseByJar.entrySet()) {
-            if (!curByJar.containsKey(e.getKey())) {
-                removed.add(summaryRow(e.getValue(), "removed"));
+            if (!matchedJars.contains(e.getKey()) && !curByJar.containsKey(e.getKey())) {
+                unmatchedRemoved.add(e.getValue());
             }
+        }
+
+        // Same mod_id with a new jar file name is an update (version bump), not remove+add.
+        Map<String, JsonObject> addedByMod = indexUniqueByModId(unmatchedAdded);
+        Map<String, JsonObject> removedByMod = indexUniqueByModId(unmatchedRemoved);
+        Set<String> coalescedMods = new HashSet<>();
+        for (Map.Entry<String, JsonObject> e : addedByMod.entrySet()) {
+            JsonObject prev = removedByMod.get(e.getKey());
+            if (prev == null) {
+                continue;
+            }
+            changed.add(changeRow(e.getValue(), prev));
+            coalescedMods.add(e.getKey());
+        }
+
+        JsonArray added = new JsonArray();
+        for (JsonObject row : unmatchedAdded) {
+            String modId = modIdOf(row);
+            if (modId != null && coalescedMods.contains(modId)) {
+                continue;
+            }
+            added.add(summaryRow(row, "added"));
+        }
+        JsonArray removed = new JsonArray();
+        for (JsonObject row : unmatchedRemoved) {
+            String modId = modIdOf(row);
+            if (modId != null && coalescedMods.contains(modId)) {
+                continue;
+            }
+            removed.add(summaryRow(row, "removed"));
         }
 
         result.add("added", added);
@@ -116,6 +155,15 @@ public final class ModsInventoryDiff {
             return new JsonArray();
         }
         return state.getAsJsonArray("last_mods_snapshot").deepCopy();
+    }
+
+    /** Previous ops-poll jar snapshot used to detect on-disk changes between scans. */
+    public static JsonArray loadOpsBaseline(JsonObject state) {
+        if (state == null || !state.has("last_mods_ops_snapshot")
+                || !state.get("last_mods_ops_snapshot").isJsonArray()) {
+            return new JsonArray();
+        }
+        return state.getAsJsonArray("last_mods_ops_snapshot").deepCopy();
     }
 
     public static String summarizeTldr(JsonObject diff) {
@@ -169,16 +217,38 @@ public final class ModsInventoryDiff {
         if (row.has("version")) {
             out.addProperty("version", row.get("version").getAsString());
         }
+        if (row.has("mtime") && !row.get("mtime").isJsonNull()) {
+            out.addProperty("mtime", row.get("mtime").getAsLong());
+        }
+        if (row.has("size") && !row.get("size").isJsonNull()) {
+            out.addProperty("size", row.get("size").getAsLong());
+        }
         out.addProperty("change", changeType);
         return out;
     }
 
     private static JsonObject changeRow(JsonObject current, JsonObject previous) {
         JsonObject out = summaryRow(current, "changed");
+        if (previous.has("version") && previous.get("version").isJsonPrimitive()) {
+            String prevVer = previous.get("version").getAsString();
+            if (prevVer != null && !prevVer.isBlank()) {
+                out.addProperty("prev_version", prevVer);
+            }
+        }
+        if (previous.has("jar") && current.has("jar")
+                && !previous.get("jar").getAsString().equals(current.get("jar").getAsString())) {
+            out.addProperty("prev_jar", previous.get("jar").getAsString());
+        }
         if (previous.has("size") && current.has("size")
                 && previous.get("size").getAsLong() != current.get("size").getAsLong()) {
             out.addProperty("prev_size", previous.get("size").getAsLong());
             out.addProperty("size", current.get("size").getAsLong());
+        } else if (previous.has("size") && !out.has("prev_size")) {
+            // Keep size trail when jar renamed even if sizes match.
+            out.addProperty("prev_size", previous.get("size").getAsLong());
+            if (current.has("size")) {
+                out.addProperty("size", current.get("size").getAsLong());
+            }
         }
         if (previous.has("mtime") && current.has("mtime")
                 && previous.get("mtime").getAsLong() != current.get("mtime").getAsLong()) {
@@ -189,12 +259,43 @@ public final class ModsInventoryDiff {
     }
 
     private static boolean isChanged(JsonObject current, JsonObject previous) {
+        if (current.has("version") && previous.has("version")
+                && !current.get("version").getAsString().equals(previous.get("version").getAsString())) {
+            return true;
+        }
         if (current.has("size") && previous.has("size")
                 && current.get("size").getAsLong() != previous.get("size").getAsLong()) {
             return true;
         }
         return current.has("mtime") && previous.has("mtime")
                 && current.get("mtime").getAsLong() != previous.get("mtime").getAsLong();
+    }
+
+    private static String modIdOf(JsonObject row) {
+        if (row == null || !row.has("mod_id") || row.get("mod_id").isJsonNull()) {
+            return null;
+        }
+        String id = row.get("mod_id").getAsString();
+        return id == null || id.isBlank() ? null : id;
+    }
+
+    /** Index rows by mod_id only when that id appears once (safe 1:1 coalesce). */
+    private static Map<String, JsonObject> indexUniqueByModId(List<JsonObject> rows) {
+        Map<String, Integer> counts = new HashMap<>();
+        for (JsonObject row : rows) {
+            String id = modIdOf(row);
+            if (id != null) {
+                counts.merge(id, 1, Integer::sum);
+            }
+        }
+        Map<String, JsonObject> map = new HashMap<>();
+        for (JsonObject row : rows) {
+            String id = modIdOf(row);
+            if (id != null && counts.getOrDefault(id, 0) == 1) {
+                map.put(id, row);
+            }
+        }
+        return map;
     }
 
     private static Map<String, JsonObject> indexByJar(JsonArray arr) {

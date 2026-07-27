@@ -1,6 +1,6 @@
 # HTTP API
 
-**For developers and automation** — scripts, external tools, or custom integrations. Server owners can use the dashboard and `/watchtower` commands instead; you do not need this page for normal use.
+**Most owners can skip this page.** Use the dashboard and `/watchtower` commands for normal ops. This API is for developers, scripts, and automation.
 
 The dashboard exposes a REST API on the same port as the UI (default **8787**). All endpoints except `/api/config` and `/api/auth/*` require a valid session after login (+ 2FA if enabled).
 
@@ -37,9 +37,9 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/config` | GET | `live_sample_interval_sec`, `live_retention_hours`, `embedded`, `hostname`, `bind_exposed` |
-| `/api/settings` | GET | Schedule, lookback, incremental, `modrinth_lookup`, backup dirs, external tracking mode, panel, `ops_poll_sec`, `ops_log_scan_sec`, `report_retention_count`, `report_retention_days`, `live_sample_interval_seconds` |
-| `/api/settings` | POST | `{ reportIntervalMinutes?, lookbackHours?, incremental?, modrinthLookup?, … }` |
-| `/api/data-sources` | GET | Freshness timestamps for Sources tab: `live_at`, `ops_scan_at`, `full_report_at`, `next_scheduled_minutes`, `ops_log_scan_sec`, `ops_poll_sec` |
+| `/api/settings` | GET | Schedule, lookback, incremental, `modrinth_lookup`, `modrinth_auto_scan_on_mod_changes`, `spark_enabled`, `spark_mod_loaded`, `spark_auto_capture_on_lag`, `spark_auto_capture_window_sec`, `spark_auto_capture_cooldown_sec`, backup dirs, external tracking mode, panel, `ops_poll_sec`, `ops_log_scan_sec`, `report_retention_count`, `report_retention_days`, `live_sample_interval_seconds` |
+| `/api/settings` | POST | `{ reportIntervalMinutes?, lookbackHours?, incremental?, modrinthLookup?, modrinthAutoScanOnModChanges?, sparkAutoCaptureOnLag?, … }` |
+| `/api/data-sources` | GET | Freshness timestamps for Sources tab: `live_at`, `ops_scan_at`, `full_report_at`, `issues_live_at`, `next_scheduled_minutes`, `ops_log_scan_sec`, `ops_poll_sec` |
 | `/api/update/check` | GET | Read-only version check against GitHub Releases / Modrinth |
 
 ---
@@ -48,7 +48,10 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/onboarding/audit` | POST | Live discovery only (activity / crashes / mods / backup scans). Returns operator flags such as `backup_configured`, `has_facts_report`, `schedule_summary`. Does **not** start a 30-day report — the wizard (or Run Report) starts that separately. |
+| `/api/onboarding/discovery/start` | POST | Start blocking Initial discovery (**deep audit baseline**). Returns 202 / 409 if already running. |
+| `/api/onboarding/discovery/status` | GET | Discovery progress: `stage`, `stage_label`, `stage_detail`, `progress`, `counts`, `running`, `success`. |
+| `/api/onboarding/audit` | POST | Alias that starts Initial discovery (prefer `/discovery/*` for progress). |
+| `/api/config-audit` | GET | Read-only launch & config audit (`server.properties` verdicts + JVM summary from live/report). Same shape as facts `optional.config_launch_audit`. Kill-switch: `CONFIG_AUDIT_ENABLED=false` → `status: disabled`. |
 
 ---
 
@@ -62,7 +65,7 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 
 Default `max_points` is 2000 (clamped 100–5000). Client typically requests ~500 for charts.
 
-`/api/samples` includes `mem_used_gb` series (host RAM used, not free) where host metrics exist. RAM charts plot **used** GB on Overview and Live. When thermal sensors are available, samples also include `thermal_package` and `thermal_ambient` (°C) for Live System dials.
+`/api/samples` includes `mem_used_gb` series (host RAM used, not free) where host metrics exist. RAM charts plot **used** GB on Overview and Live. When thermal sensors are available, samples also include `thermal_package` and `thermal_ambient` (°C) for Live System dials. Live snapshots may include `jvm_gc` (pause % of wall), `heap_mb.pressure_pct`, `gc_pause_pct` series, and `jvm_health_live` (flags profile, verdict, advice, optional `recommended_flags`). L1 rollup rows may include `heap_pressure_pct_avg`, `heap_pressure_pct_max`, `heap_used_gb_max`, `gc_pause_pct_avg`, and disk fields `disk_use_pct_avg`, `disk_free_gb_avg`, `disk_write_mb_s_avg`, `disk_write_await_ms_avg`. Live `disk_io` may include `write_await_ms` and `latency_source` (`diskstats` | `fsync_probe` | `unavailable`). Report facts expose `optional.jvm_health`, `optional.disk_projection`, and may raise issues `GC_PRESSURE` and `DISK_FILL_PROJECTED`. `GET /api/performance/dashboard` includes `ram_sizing`, `baseline_regression`, and `disk_projection` plus optional `disk_io_lag_align` insight.
 
 ---
 
@@ -94,31 +97,41 @@ Reads **L1 local JSON only** — not health-report facts. Also serves `/api/perf
 | Endpoint | Method | Query | Purpose |
 |----------|--------|-------|---------|
 | `/api/performance/insights` | GET | `window=7d\|30d` | Busy/quiet hours, player bins, outlier minutes, sticky lag episodes, ranked insights (Overview poll) |
-| `/api/performance/dashboard` | GET | `window=7d\|30d` | Full **Insights** tab payload: insights + `hour_of_week`, `daily_series`, `period_compare`, `correlations`, `related_events`, `scorecard_perf` |
+| `/api/performance/dashboard` | GET | `window=7d\|30d` | Full **Insights** tab payload: insights + `hour_of_week`, `daily_series`, `period_compare`, `correlations`, `related_events`, `scorecard_perf`, `ram_sizing`, `baseline_regression`, `disk_projection` |
+| `/api/performance/baseline` | POST | `{ "action": "set_now" }` | Freeze a new performance baseline from recent L1 history; returns `baseline` + fresh `baseline_regression` |
 | `/api/performance/export` | GET | `window=7d`, `format=csv` | Download minute rollup rows as CSV |
 
 ---
 
 ## Spark profiles
 
-| Endpoint | Method | Query | Purpose |
-|----------|--------|-------|---------|
-| `/api/spark/profiles` | GET | — | List `.sparkprofile` files on disk (newest first, capped) |
-| `/api/spark/profile` | GET | `path=` | Parse one profile on demand — used by Spark tab dropdown |
+| Endpoint | Method | Query / body | Purpose |
+|----------|--------|--------------|---------|
+| `/api/spark/profiles` | GET | — | List `.sparkprofile` files on disk (newest first, capped). Includes `profiles`, `skipped`, `search_dirs`, report/auto-selected paths, and the `auto_capture` status envelope |
+| `/api/spark/profile` | GET | `path=` | Parse one profile on demand. Parsed results are cached by normalized path + mtime + size |
+| `/api/spark/tree` | GET | `path=`, optional `thread`, `window`, `source`, `search`, `min_share`, `max_nodes` | Return the bounded v2 call tree or a legacy flat-method fallback, with truncation metadata |
+| `/api/spark/compare` | GET | `baseline=`, `target=` | Deterministic normalized comparison. `compatible=false` explains sampler-mode or thread-scope mismatches |
+| `/api/spark/import` | POST | `{ "url": "https://spark.lucko.me/…" }` | Download a bytebin sampler into `watchtower/spark-upload/{key}.sparkprofile` (allowlisted hosts only) |
+| `/api/spark/upload` | POST | `name=` and raw `.sparkprofile` request body | Validate and save a local profile under the configured upload directory (64 MB maximum) |
 
-See [[Using-Spark-with-Watchtower]] for capture workflow.
+The parsed profile keeps legacy summary aliases while adding `analysis_version: 2`, mode-aware units, source own/involvement shares, deterministic evidence, and bounded tree data. See [[Using-Spark-with-Watchtower]] for capture and interpretation rules.
 
 ---
 
-## Reports
+## Reports & support
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/reports/latest` | GET | Newest facts + brief |
+| `/api/reports/latest` | GET | Newest legacy facts + brief (excludes `-support-` artifacts) |
 | `/api/reports/index` | GET | Report history list |
 | `/api/reports/get` | GET | `?facts=<filename>` |
-| `/api/reports/status` | GET | In-progress report status (`running`, `started_at`, `finished_at`, `success`, `message`, `facts_path`; while running also `stage` / `stage_label`: `window`, `collect`, `analyze`, `enrich`, `write`, `finalize`) |
-| `/api/reports/run` | POST | `{ lookbackHours?, incremental? }` → 202 started |
+| `/api/reports/status` | GET | Compose status (`running`, `zip_ready`, `zip_path`, `success`, `message`) |
+| `/api/reports/run` | POST | Alias for support compose (Quick preset unless body has `preset`) → 202 |
+| `/api/support/catalog` | GET | Builder catalog (logs, crashes, spark, stores, presets, budgets) |
+| `/api/support/compose` | POST | Start async support compose with builder options JSON → 202 / 409 |
+| `/api/support/bundle` | GET | Download ready support zip (`?path=` optional basename under `watchtower/`) |
+| `/api/modrinth/status` | GET | Dedicated Modrinth scan status (`enabled`, `running`, `stage`, `stage_label`, `stage_detail`, `progress`, `batch`, `eta_seconds`, `last_run`, `stats`, `success`, `error`) |
+| `/api/modrinth/scan` | POST | Start Modrinth scan → 202 started; 400 if lookup disabled; 409 if already running |
 
 ### Facts `optional` — crash intelligence (1.0.13)
 
@@ -182,8 +195,8 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/activity` | GET | `?hours=` — timeline events (ops-cache ledger merged with report events when fresher) |
-| `/api/activity/scan` | POST | Incremental log tail → update `ops-cache.json` activity ledger |
+| `/api/activity` | GET | `?hours=` — timeline events (ops-cache ledger merged with report events when fresher) plus `incident_stories[]` when correlated |
+| `/api/activity/scan` | POST | Incremental log tail → update `ops-cache.json` activity ledger (also rebuilds incident stories) |
 | `/api/issues/peek` | GET | Live lag + mod issues from ops cache (`lag_issues[]`, `mod_issues[]`); optional `log_stale` when live stale |
 | `/api/issues/acks` | GET | Acknowledged Issues-tab keys (`acknowledged_issues`) |
 | `/api/issues/ack` | POST | `{ id, reviewed?: true }` — mark/unmark an issue reviewed (`issue:…`, `lag:…`, `mod:…`, `backup:…`, `modrinth:…`, `log_stale`) |
@@ -214,8 +227,9 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | `/api/inbox` | GET | Notification inbox items (`crash_group`, `update_check`) |
 | `/api/inbox/dismiss` | POST | `{ id }` — dismiss inbox item → `state.json` |
 | `/api/logs/list` | GET | List `logs/latest.log`, `debug.log`, and `*.log.gz` (`{ files:[{ name, size, mtime, gz }] }`) |
+| `/api/logs/index` | GET | Alias of `/api/logs/list` (older dashboard builds) |
 | `/api/logs/content` | GET | `?file=&tail=` — tail of a log file (plain or gzip); returns `{ file, content, truncated, size, lines }` |
-| `/api/ops-cache` | GET | L2.5 ops cache (`crashes`, `scorecard`, `activity`, `lag_issues`, `mod_log_errors`, `running_mods`, `mod_issues`, `right_now`, `log_stale`, `backups_live`, reconcile timestamps) |
+| `/api/ops-cache` | GET | L2.5 ops cache (`crashes`, `scorecard`, `activity`, `lag_issues`, `incident_stories`, `mod_log_errors`, `running_mods`, `mod_issues`, `right_now`, `log_stale`, `backups_live`, `issues_live[]` continuous issue ledger, `startup_profile`, `mods_light`, `player_directory`, reconcile timestamps) |
 | `/api/client-mods/ignores` | GET | Ignored client-only mods |
 | `/api/client-mods/ignore` | POST | Ignore/unignore client mod |
 
@@ -241,7 +255,7 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 - **Backup slow poll** — `BACKUP_POLL_MIN` rescans backup folders → `backups_live`
 - **Session-gated (optional)** — `OPS_POLL_SEC` runs extra crash folder refreshes while ≥1 dashboard session is open
 
-`GET /api/overview/meta` adds `mod_tldr`, `right_now`, `performance_insights_tldr`, `log_stale_tldr`, `mods_changed_tldr`, `disk_jump_tldr`, `backup_mode`, `backup_external_tldr`, `backup_poll_active`, `backups_scanned_at`, and related ops fields.
+`GET /api/overview/meta` adds `mod_tldr`, `right_now`, `performance_insights_tldr`, `baseline_regression_tldr` (when active; also prefers into `performance_insights_tldr`), `safe_restart`, `log_stale_tldr`, `mods_changed_tldr`, `disk_jump_tldr`, `disk_projection` / `disk_projection_tldr`, `backup_mode`, `backup_external_tldr`, `backup_poll_active`, `backups_scanned_at`, and related ops fields.
 
 ---
 

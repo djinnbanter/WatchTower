@@ -24,8 +24,23 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: Install dashboard deps
+        working-directory: web/dashboard-alpha
+        run: npm ci
+
       - name: Gradle test and mod build
-        run: ./gradlew :watchtower-core:test :neoforge-1.21.1:build --no-configuration-cache
+        run: ./gradlew :watchtower-core:test :watchtower-neoforge-common:test :neoforge-1.21:build --no-configuration-cache
+
+      - name: Dashboard packaging audits
+        run: |
+          node tools/audit-dashboard-alpha-packaging.mjs
+          node tools/audit-dashboard-alpha-parity.mjs
+
+      - name: NeoForge 1.20 stub (expected fail until WT-027)
+        continue-on-error: true
+        run: |
+          echo "::notice::WT-026 placeholder — :neoforge-1.20:build expected to fail until WT-027 / roadmap 1.3.0"
+          ./gradlew :neoforge-1.20:build --no-configuration-cache
 
       - name: Install DR viewer deps
         working-directory: web/dr-viewer

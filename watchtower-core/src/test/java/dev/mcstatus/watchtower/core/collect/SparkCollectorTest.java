@@ -90,6 +90,7 @@ class SparkCollectorTest {
                 server.toString(), config, "watchtower/spark-upload/mine.sparkprofile");
         assertTrue(result.isPresent());
         assertEquals("mine.sparkprofile", result.get().sourceFile());
+        assertEquals("watchtower/spark-upload/mine.sparkprofile", result.get().relativeSourcePath());
     }
 
     @Test
@@ -103,6 +104,90 @@ class SparkCollectorTest {
         }
         ReportConfig config = ReportConfig.builder().serverDir(server.toString()).build();
         assertEquals(SparkCollector.MAX_PROFILES, SparkCollector.listProfiles(server.toString(), config).size());
+    }
+
+    @Test
+    void scanProfilesReportsSkippedCorruptFiles(@TempDir Path temp) throws Exception {
+        assumeFixture(FIXTURE);
+        Path server = temp.resolve("server");
+        Path upload = server.resolve("watchtower/spark-upload");
+        Files.createDirectories(upload);
+        Files.copy(FIXTURE, upload.resolve("good.sparkprofile"));
+        Files.writeString(upload.resolve("bad.sparkprofile"), "not protobuf");
+
+        ReportConfig config = ReportConfig.builder().serverDir(server.toString()).build();
+        SparkProfileScan scan = SparkCollector.scanProfiles(server.toString(), config);
+        assertEquals(1, scan.profiles().size());
+        assertEquals("good.sparkprofile", scan.profiles().get(0).sourceFile());
+        assertEquals(1, scan.skipped().size());
+        assertEquals("watchtower/spark-upload/bad.sparkprofile", scan.skipped().get(0).sourcePath());
+        assertEquals(SparkSkippedProfile.REASON_UNREADABLE, scan.skipped().get(0).reason());
+    }
+
+    @Test
+    void readProfileReturnsRelativeSourcePath(@TempDir Path temp) throws Exception {
+        assumeFixture(FIXTURE);
+        Path server = temp.resolve("server");
+        Path upload = server.resolve("watchtower/spark-upload");
+        Files.createDirectories(upload);
+        Files.copy(FIXTURE, upload.resolve("mine.sparkprofile"));
+
+        ReportConfig config = ReportConfig.builder().serverDir(server.toString()).build();
+        Optional<SparkCollectResult> result = SparkCollector.readProfile(
+                server.toString(), config, "watchtower/spark-upload/mine.sparkprofile");
+        assertTrue(result.isPresent());
+        assertEquals("watchtower/spark-upload/mine.sparkprofile", result.get().relativeSourcePath());
+        assertFalse(result.get().relativeSourcePath().startsWith("/"));
+    }
+
+    @Test
+    void normalizeSourcePathRelativizesAbsoluteUnderServer(@TempDir Path temp) {
+        Path server = temp.resolve("server").toAbsolutePath().normalize();
+        String abs = server.resolve("config/spark/profile-x.sparkprofile").toString().replace('\\', '/');
+        assertEquals(
+                "config/spark/profile-x.sparkprofile",
+                SparkCollector.normalizeSourcePath(server.toString(), abs));
+    }
+
+    @Test
+    void findNewestInMtimeWindow(@TempDir Path temp) throws Exception {
+        assumeFixture(FIXTURE);
+        SparkCollector.clearListCacheForTests();
+        Path server = temp.resolve("server");
+        Path upload = server.resolve("watchtower/spark-upload");
+        Files.createDirectories(upload);
+
+        Instant t0 = Instant.now().minusSeconds(120);
+        Instant t1 = Instant.now().minusSeconds(30);
+        Path older = upload.resolve("older.sparkprofile");
+        Path newer = upload.resolve("newer.sparkprofile");
+        Files.copy(FIXTURE, older);
+        Files.copy(FIXTURE, newer);
+        Files.setLastModifiedTime(older, java.nio.file.attribute.FileTime.from(t0));
+        Files.setLastModifiedTime(newer, java.nio.file.attribute.FileTime.from(t1));
+
+        ReportConfig config = ReportConfig.builder().serverDir(server.toString()).build();
+        Optional<SparkProfileEntry> found = SparkCollector.findNewestInMtimeWindow(
+                server.toString(), config, Instant.now().minusSeconds(60), Instant.now().plusSeconds(5));
+        assertTrue(found.isPresent());
+        assertEquals("newer.sparkprofile", found.get().sourceFile());
+    }
+
+    @Test
+    void listProfilesUsesCacheForUnchangedFiles(@TempDir Path temp) throws Exception {
+        assumeFixture(FIXTURE);
+        SparkCollector.clearListCacheForTests();
+        Path server = temp.resolve("server");
+        Path upload = server.resolve("watchtower/spark-upload");
+        Files.createDirectories(upload);
+        Files.copy(FIXTURE, upload.resolve("cached.sparkprofile"));
+
+        ReportConfig config = ReportConfig.builder().serverDir(server.toString()).build();
+        assertEquals(1, SparkCollector.listProfiles(server.toString(), config).size());
+        int afterFirst = SparkCollector.listCacheSizeForTests();
+        assertTrue(afterFirst >= 1);
+        assertEquals(1, SparkCollector.listProfiles(server.toString(), config).size());
+        assertEquals(afterFirst, SparkCollector.listCacheSizeForTests());
     }
 
     private static void assumeFixture(Path path) {

@@ -80,7 +80,7 @@ export function InboxBell() {
     <div class="ui-topbar__inbox" ref=${rootRef}>
       <button
         type="button"
-        class="ui-topbar__palette-btn ui-topbar__inbox-btn"
+        class=${'ui-topbar__inbox-btn' + (open ? ' ui-topbar__inbox-btn--open' : '')}
         aria-label=${count ? `Inbox (${count})` : 'Inbox'}
         aria-expanded=${open}
         title="Inbox"

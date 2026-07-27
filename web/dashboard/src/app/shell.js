@@ -1,17 +1,20 @@
 import { html } from '../lib/preact.js';
 import { useState, useCallback, useEffect } from '../lib/preact.js';
+import { useStaggerPhase } from '../motion/mount-enter.js';
+import { DUR } from '../motion/tokens.js';
 import { ui, setUi, issuesPeek, opsCache } from '../state/stores.js';
-import { set as persistSet } from '../state/persist.js';
+import { set as persistSet, get as persistGet } from '../state/persist.js';
 import { getPage } from './registry.js';
 import { isEmbedded } from '../api/index.js';
 import { ensureReportsPresent } from './session-boot.js';
 import { Rail } from './rail.js';
 import { TopBar } from './topbar.js';
 import { CommandPalette } from './palette.js';
-import { RunReportModal } from './report-controls.js';
 import { getActiveBanners } from './shell-banners.js';
-import { ScrollRegion, CopyButton } from '../ui/primitives/index.js';
+import { ScrollRegion, CopyButton, Button } from '../ui/primitives/index.js';
 import { formatTps, formatMspt } from '../domain/formats.js';
+import { navigate } from './router.js';
+import { SupportBundleBuilderModal } from '../features/support/bundle-builder-modal.js';
 
 // ── Banner host ────────────────────────────────────────────────────────────────
 
@@ -132,7 +135,14 @@ function LagIncidentModal({ id, entry: passedEntry }) {
     `;
   }
 
-  const { title, narrative, metrics, players, findings, hints, primary_suspect, time, severity } = entry;
+  const { title, narrative, metrics, players, findings, hints, primary_suspect, time, severity,
+    spark_profile_path, top_mods, spark_auto_capture_status } = entry;
+
+  function openSparkProfile() {
+    if (!spark_profile_path) return;
+    setUi({ modal: null });
+    navigate('spark', { profile: spark_profile_path });
+  }
 
   return html`
     <div class="ui-modal-lag">
@@ -143,6 +153,17 @@ function LagIncidentModal({ id, entry: passedEntry }) {
       ${primary_suspect ? html`
         <div class="ui-modal-lag__suspect">
           <strong>Primary suspect:</strong> ${primary_suspect}
+        </div>
+      ` : null}
+
+      ${spark_profile_path ? html`
+        <div class="ui-modal-lag__spark">
+          <${Button} kind="primary" size="sm" onClick=${openSparkProfile}>
+            Open in Spark
+          </${Button}>
+          ${spark_auto_capture_status ? html`
+            <span class="ui-modal-lag__spark-status">Auto-capture: ${spark_auto_capture_status}</span>
+          ` : null}
         </div>
       ` : null}
 
@@ -186,7 +207,6 @@ function LagIncidentModal({ id, entry: passedEntry }) {
 // ── Modal host ─────────────────────────────────────────────────────────────────
 
 function ModalContent({ type, props }) {
-  if (type === 'run-report') return html`<${RunReportModal} />`;
   if (type === 'crash-log') return html`<${CrashLogModal} file=${props?.file} />`;
   if (type === 'lag-incident') return html`<${LagIncidentModal} id=${props?.id} entry=${props?.entry} />`;
   return html`<div class="ui-modal__stub"><p>Modal: ${type}</p></div>`;
@@ -198,6 +218,11 @@ function ModalHost() {
 
   function closeModal() {
     setUi({ modal: null });
+  }
+
+  // Support builder owns its own Modal chrome (size/footer/steps).
+  if (modal.type === 'support-builder') {
+    return html`<${SupportBundleBuilderModal} />`;
   }
 
   return html`
@@ -229,8 +254,8 @@ function MobileDrawer({ onClose }) {
   return html`
     <div class="ui-rail-drawer" aria-label="Mobile navigation">
       <div class="ui-rail-drawer__scrim" onClick=${onClose}></div>
-      <div class="ui-rail-drawer__panel">
-        <${Rail} />
+      <div class="ui-rail-drawer__panel" id="rail-drawer">
+        <${Rail} forceExpanded=${true} />
       </div>
     </div>
   `;
@@ -238,16 +263,32 @@ function MobileDrawer({ onClose }) {
 
 // ── Main page outlet ───────────────────────────────────────────────────────────
 
-function PageOutlet({ tab }) {
+/** Stable string so subtab/param changes always change a child prop (busts SCU stalls). */
+export function routeRenderKey(route) {
+  const tab = route?.tab || 'overview';
+  const params = route?.params || {};
+  const parts = [tab];
+  for (const key of Object.keys(params).sort()) {
+    const v = params[key];
+    if (v == null || v === '') continue;
+    parts.push(`${key}=${v}`);
+  }
+  return parts.join('&');
+}
+
+function PageOutlet({ tab, routeKey }) {
   const page = getPage(tab);
+  const outletMotion = useStaggerPhase(tab, { childCount: 1, staggerMs: 0, durationMs: DUR[3] });
 
   if (!page) {
     return html`
-      <div class="ui-page ui-page--404">
-        <div class="ui-page__header">
-          <div class="ui-page__title-group">
-            <h1 class="ui-page__title">Page not found</h1>
-            <p class="ui-page__subtitle">No page registered for tab "${tab}".</p>
+      <div class="ui-page-outlet" data-motion=${outletMotion}>
+        <div class="ui-page ui-page--404">
+          <div class="ui-page__header">
+            <div class="ui-page__title-group">
+              <h1 class="ui-page__title">Page not found</h1>
+              <p class="ui-page__subtitle">No page registered for tab "${tab}".</p>
+            </div>
           </div>
         </div>
       </div>
@@ -255,7 +296,12 @@ function PageOutlet({ tab }) {
   }
 
   const PageComponent = page.render;
-  return html`<${PageComponent} />`;
+  // key=tab remounts when switching pages; routeKey prop forces update on subtabs
+  return html`
+    <div class="ui-page-outlet" data-motion=${outletMotion} data-tab=${tab}>
+      <${PageComponent} key=${tab} routeKey=${routeKey} />
+    </div>
+  `;
 }
 
 // ── AppShell ───────────────────────────────────────────────────────────────────
@@ -267,10 +313,17 @@ function PageOutlet({ tab }) {
 export function AppShell() {
   const { route, mobileNavOpen, railExpanded } = ui.value;
   const tab = route?.tab || 'overview';
+  const routeKey = routeRenderKey(route);
 
   // Safety net: if hydrate raced or /latest failed, retry once when shell mounts
   useEffect(() => {
     ensureReportsPresent();
+  }, []);
+
+  // Restore rail collapse preference (persist writes on toggle; hydrate on boot)
+  useEffect(() => {
+    const saved = persistGet('railExpanded', null);
+    if (typeof saved === 'boolean') setUi({ railExpanded: saved });
   }, []);
 
   function closeMobileNav() {
@@ -290,7 +343,7 @@ export function AppShell() {
         <${TopBar} />
         <${BannerHost} />
         <main id="main" class="ui-shell-main" tabIndex=${-1}>
-          <${PageOutlet} tab=${tab} />
+          <${PageOutlet} tab=${tab} routeKey=${routeKey} />
         </main>
       </div>
 

@@ -25,8 +25,16 @@ PANEL=auto
 # RCON_PORT=25575
 # RCON_PASSWORD=rcon-password-here
 # RCON_TPS_COMMAND=neoforge tps
-# RCON_SPARK_TPS=false
 # RCON_ENTITY_POLL=false
+
+# --- Spark (CPU profiler integration) ---
+# SPARK_ENABLED=true
+# SPARK_FRESH_HOURS=24
+# SPARK_UPLOAD_DIR=
+# SPARK_AUTO_CAPTURE_ON_LAG=false
+# SPARK_AUTO_CAPTURE_WINDOW_SEC=45
+# SPARK_AUTO_CAPTURE_COOLDOWN_SEC=900
+# SPARK_AUTO_CAPTURE_COPY_TO_UPLOAD=true
 
 # --- Java process detection (extended regex, case-insensitive) ---
 JAVA_PATTERN=forge|neoforge|fabric|minecraft.*jar|unix_args

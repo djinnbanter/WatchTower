@@ -31,6 +31,7 @@ public final class LiveHistoryStore {
     private final List<LiveSeriesRetention.Point> hostCpuSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> playersSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> heapMbSeries = new ArrayList<>();
+    private final List<LiveSeriesRetention.Point> gcPausePctSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> memAvailableSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> memUsedSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> memTotalSeries = new ArrayList<>();
@@ -84,6 +85,7 @@ public final class LiveHistoryStore {
             loadSeries(series, "host_cpu", hostCpuSeries);
             loadSeries(series, "players", playersSeries);
             loadSeries(series, "heap_mb", heapMbSeries);
+            loadSeries(series, "gc_pause_pct", gcPausePctSeries);
             loadSeries(series, "mem_available_gb", memAvailableSeries);
             loadSeries(series, "mem_used_gb", memUsedSeries);
             loadSeries(series, "mem_total_gb", memTotalSeries);
@@ -139,6 +141,7 @@ public final class LiveHistoryStore {
                             heap.get("used").getAsDouble(), retentionHours, MAX_SERIES_POINTS);
                 }
             }
+            appendOptionalPoint(snapshot, "gc_pause_pct", gcPausePctSeries, epoch);
             if (snapshot.has("mem_available_gb") && !snapshot.get("mem_available_gb").isJsonNull()) {
                 LiveSeriesRetention.appendPoint(memAvailableSeries, epoch,
                         snapshot.get("mem_available_gb").getAsDouble(), retentionHours, MAX_SERIES_POINTS);
@@ -166,7 +169,7 @@ public final class LiveHistoryStore {
     }
 
     /**
-     * Record host thermal readings (sampled ~every 60s on the server).
+     * Record host thermal readings (sampled ~every 15s on the server).
      */
     public void appendThermal(long epoch, Double packageC, Double ambientC) {
         lock.writeLock().lock();
@@ -285,6 +288,7 @@ public final class LiveHistoryStore {
             out.add("host_cpu", cappedSeriesArray(hostCpuSeries, cutoff, cap));
             out.add("players", cappedSeriesArray(playersSeries, cutoff, cap));
             out.add("heap_mb", cappedSeriesArray(heapMbSeries, cutoff, cap));
+            out.add("gc_pause_pct", cappedSeriesArray(gcPausePctSeries, cutoff, cap));
             out.add("mem_available_gb", cappedSeriesArray(memAvailableSeries, cutoff, cap));
             out.add("mem_used_gb", cappedSeriesArray(memUsedSeries, cutoff, cap));
             out.add("mem_total_gb", cappedSeriesArray(memTotalSeries, cutoff, cap));
@@ -450,6 +454,7 @@ public final class LiveHistoryStore {
         series.add("host_cpu", seriesArray(hostCpuSeries, 0));
         series.add("players", seriesArray(playersSeries, 0));
         series.add("heap_mb", seriesArray(heapMbSeries, 0));
+        series.add("gc_pause_pct", seriesArray(gcPausePctSeries, 0));
         series.add("mem_available_gb", seriesArray(memAvailableSeries, 0));
         series.add("mem_used_gb", seriesArray(memUsedSeries, 0));
         series.add("mem_total_gb", seriesArray(memTotalSeries, 0));

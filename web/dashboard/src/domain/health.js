@@ -58,6 +58,19 @@ function unacknowledgedCrashes(facts, acks) {
   return summaries.filter((c) => !isAcked(acks, c.file));
 }
 
+/**
+ * True when ops-cache alone can produce action-queue cards (backups, crashes, live issues).
+ * Callers should still invoke buildActionQueue when facts exist.
+ */
+export function opsCanDriveActionQueue(opsCacheData) {
+  if (!opsCacheData) return false;
+  if (Array.isArray(opsCacheData.issues_live) && opsCacheData.issues_live.length > 0) return true;
+  if (opsCacheData.crashes) return true;
+  if (opsCacheData.backups_live) return true;
+  if (opsCacheData.backup_external) return true;
+  return false;
+}
+
 function _bareFile(f) {
   if (!f) return '';
   return f.replace(/^.*[/\\]/, '').replace(/\.txt$/, '');
@@ -65,44 +78,94 @@ function _bareFile(f) {
 
 // ── Backup driver ─────────────────────────────────────────────────────────────
 
-function backupDriver(facts, opsCacheData, trackingEnabled = true) {
+function isExternalFresh(ext) {
+  if (!ext?.configured) return false;
+  return (ext.status === 'success' || ext.status === 'running') && !ext.stale;
+}
+
+/** Prefer live scan last_backup when present; else facts. Exported for unit tests. */
+export function resolveLocalBackup(facts, opsCacheData) {
+  const live = opsCacheData?.backups_live?.last_backup;
+  if (live && (live.status || live.age_hours != null || live.age_days != null || live.path || live.file)) {
+    return live;
+  }
+  return facts?.optional?.last_backup ?? null;
+}
+
+function backupAgeHours(b) {
+  if (!b) return null;
+  if (b.age_hours != null && Number.isFinite(Number(b.age_hours))) return Number(b.age_hours);
+  if (b.age_days != null && Number.isFinite(Number(b.age_days))) return Number(b.age_days) * 24;
+  return null;
+}
+
+/** BAU Issues freshness: backup within 24h (not report LOOKBACK_HOURS / warn-days alone). */
+const BACKUP_FRESH_HOURS = 24;
+
+function isLocalBackupFresh(b) {
+  if (!b) return false;
+  const st = b.status;
+  if (st === 'not_found' || st === 'unconfigured' || st === 'missing') return false;
+  if (st === 'stale' || b.stale) return false;
+  const age = backupAgeHours(b);
+  if (age != null && age > BACKUP_FRESH_HOURS) return false;
+  return st === 'success' || (age != null && age <= BACKUP_FRESH_HOURS);
+}
+
+export function backupDriver(facts, opsCacheData, trackingEnabled = true) {
   if (trackingEnabled === false) return null;
   if (facts?.meta?.backup_tracking_enabled === false) return null;
 
-  const b = facts?.optional?.last_backup;
+  const b = resolveLocalBackup(facts, opsCacheData);
   const ext = facts?.optional?.backup_external ?? opsCacheData?.backup_external;
 
+  if (isExternalFresh(ext)) {
+    return { id: 'BACKUP_OK', kind: 'backup', severity: 'ok', title: 'Backups OK', historical: false, fixes: [] };
+  }
+
   if (ext?.configured) {
-    if (ext.status === 'success' && !ext.stale) {
-      return { id: 'BACKUP_OK', kind: 'backup', severity: 'ok', title: 'Backups OK', historical: false, fixes: [] };
-    }
     if (ext.status === 'running') {
       return { id: 'BACKUP_OK', kind: 'backup', severity: 'ok', title: 'Backup running', historical: false, fixes: [] };
     }
     if (ext.stale || ext.status === 'stale') {
+      // Local fresh still OK in hybrid
+      if (isLocalBackupFresh(b)) {
+        return { id: 'BACKUP_OK', kind: 'backup', severity: 'ok', title: 'Backups OK', historical: false, fixes: [] };
+      }
       return { id: 'BACKUP_STALE', kind: 'backup', severity: 'warning', title: 'Backup is stale', historical: false, fixes: [] };
     }
     if (ext.status === 'missing' || ext.status === 'failed') {
+      if (isLocalBackupFresh(b)) {
+        return { id: 'BACKUP_OK', kind: 'backup', severity: 'ok', title: 'Backups OK', historical: false, fixes: [] };
+      }
       return { id: 'BACKUP_NOT_FOUND', kind: 'backup', severity: 'warning', title: 'Backup failure', historical: false, fixes: [] };
     }
   }
 
   if (!b) return null;
   const st = b.status;
-  if (st === 'success') return { id: 'BACKUP_OK', kind: 'backup', severity: 'ok', title: 'Backups OK', historical: false, fixes: [] };
   if (st === 'unconfigured') return null;
-  if (st === 'not_found' || st === 'stale' || b.stale) {
-    if (ext?.configured && (ext.status === 'success' || ext.status === 'running') && !ext.stale) return null;
+  if (st === 'not_found' || st === 'missing') {
     return { id: 'BACKUP_NOT_FOUND', kind: 'backup', severity: 'warning', title: 'Backup failure', historical: false, fixes: [] };
+  }
+  if (isLocalBackupFresh(b)) {
+    return { id: 'BACKUP_OK', kind: 'backup', severity: 'ok', title: 'Backups OK', historical: false, fixes: [] };
+  }
+  const age = backupAgeHours(b);
+  if (st === 'stale' || b.stale || (age != null && age > BACKUP_FRESH_HOURS)) {
+    return { id: 'BACKUP_STALE', kind: 'backup', severity: 'warning', title: 'Backup is stale', historical: false, fixes: [] };
+  }
+  if (st === 'success') {
+    return { id: 'BACKUP_OK', kind: 'backup', severity: 'ok', title: 'Backups OK', historical: false, fixes: [] };
   }
   return null;
 }
 
 // ── Issue drivers ─────────────────────────────────────────────────────────────
 
-function issueDrivers(facts, trackingEnabled = true) {
+function issueDrivers(facts, trackingEnabled = true, opsCacheData = null) {
   const trackingOff = trackingEnabled === false || facts?.meta?.backup_tracking_enabled === false;
-  const skip = new Set(['CRASH_REPORT', 'MOD_LOAD_FAILED', 'BACKUP_NOT_CONFIGURED', 'BACKUP_NOT_FOUND']);
+  const skip = new Set(['CRASH_REPORT', 'MOD_LOAD_FAILED', 'BACKUP_NOT_CONFIGURED', 'BACKUP_NOT_FOUND', 'BACKUP_STALE']);
   return (facts?.issues ?? [])
     .filter((i) => !skip.has(i.id))
     .filter((i) => !(trackingOff && typeof i.id === 'string' && i.id.startsWith('BACKUP_')))
@@ -185,13 +248,16 @@ export function buildActionQueue(facts, acks, opsCacheData, crashGroupsData, iss
   if (backup && backup.severity !== 'ok') {
     ['BACKUP_NOT_CONFIGURED', 'BACKUP_NOT_FOUND', 'BACKUP_STALE'].forEach((id) => coveredIssueIds.add(id));
     const backupIssue = issues.find((i) => i.id.startsWith('BACKUP_')) ?? null;
+    const fallbackSummary = backup.id === 'BACKUP_STALE'
+      ? 'No backup in the last 24 hours.'
+      : 'No backup archive found.';
     items.push({
       key: `backup:${backup.id}`,
       kind: 'backup',
       severity: 'warning',
       tier: backupIssue?.historical ? 'historical' : 'now',
       title: backup.title,
-      summary: backupIssue?.message ?? 'No recent backup found.',
+      summary: backupIssue?.message ?? fallbackSummary,
       primaryAction: { label: 'Open Backups', tab: 'backups' },
       evidence: backupIssue?.evidence ?? [],
       when: null,
@@ -225,7 +291,7 @@ export function buildActionQueue(facts, acks, opsCacheData, crashGroupsData, iss
           : 'A newer loader-compatible build is on Modrinth — open the link to update manually.',
         primaryAction: u.modrinth_compatible_url
           ? { label: 'Open Modrinth', href: u.modrinth_compatible_url }
-          : { label: 'Open Mods', tab: 'mods', params: { view: 'overview', mod: modId } },
+          : { label: 'Open Updates', tab: 'mods', params: { view: 'updates', mod: modId } },
         evidence: [],
         when: null,
         meta: {
@@ -237,9 +303,50 @@ export function buildActionQueue(facts, acks, opsCacheData, crashGroupsData, iss
     }
   }
 
-  // Mod issues from facts.issues not already covered
+  // Continuous issue ledger (ops-cache.issues_live) — primary for Active queue
+  const liveIssues = Array.isArray(opsCacheData?.issues_live) ? opsCacheData.issues_live : [];
+  for (const li of liveIssues) {
+    const id = li?.id || li?.key;
+    if (!id) continue;
+    const status = String(li.status || 'open').toLowerCase();
+    if (status === 'resolved' || status === 'suppressed') continue;
+    if (isIssueSuppressed(suppressions, id)) continue;
+    coveredIssueIds.add(String(id).toUpperCase());
+    coveredIssueIds.add(String(id));
+    const tab = _issueActionTab(id);
+    const item = {
+      key: `issue:${id}`,
+      kind: 'issue',
+      severity: li.severity || 'warning',
+      tier: status === 'reviewed' ? 'reviewed' : 'now',
+      title: _issueTitle(id),
+      summary: li.message || _issueSummary({ id, message: li.message }),
+      detail: li.message ?? null,
+      primaryAction: tab
+        ? {
+            label: tab === 'mods' && id === 'MOD_UPDATE_CONFLICT' ? 'Open Conflicts' : `Open ${tab[0].toUpperCase()}${tab.slice(1)}`,
+            tab,
+            params: tab === 'mods' ? { view: id === 'MOD_UPDATE_CONFLICT' ? 'conflicts' : 'overview' } : undefined,
+          }
+        : null,
+      evidence: [],
+      when: li.last_seen || li.first_seen || null,
+      meta: {
+        issueId: id,
+        source: li.source || 'ops',
+        fingerprint: li.evidence_fingerprint || null,
+      },
+      fixSteps: Array.isArray(li.fix_steps) ? li.fix_steps : [],
+    };
+    if (status === 'reviewed') {
+      // handled below via issueAcks / tier reviewed
+    }
+    items.push(item);
+  }
+
+  // Mod issues from facts.issues not already covered by ledger
   issues.forEach((i) => {
-    if (coveredIssueIds.has(i.id)) return;
+    if (coveredIssueIds.has(i.id) || coveredIssueIds.has(String(i.id).toUpperCase())) return;
     if (isIssueSuppressed(suppressions, i.id)) return;
     const tab = _issueActionTab(i.id);
     items.push({
@@ -259,7 +366,7 @@ export function buildActionQueue(facts, acks, opsCacheData, crashGroupsData, iss
         : null,
       evidence: i.evidence ?? [],
       when: i.event_time ?? null,
-      meta: { issueId: i.id },
+      meta: { issueId: i.id, source: 'catchup' },
     });
   });
 
@@ -321,10 +428,12 @@ export function displayHealth(facts, acks, opsCacheData, options) {
   let effective = overall;
 
   const criticalDrivers = drivers.filter((d) => d.severity === 'critical');
+  const crashesCleared =
+    unacknowledgedCrashes(facts, acks).length === 0
+    && !(Number(opsCacheData?.crashes?.unreviewed_groups) > 0);
   const allCriticalResolved =
     criticalDrivers.length === 0 ||
-    (criticalDrivers.some((d) => d.id === 'CRASH_REPORT') &&
-      unacknowledgedCrashes(facts, acks).length === 0);
+    (criticalDrivers.some((d) => d.id === 'CRASH_REPORT') && crashesCleared);
 
   if (overall === 'critical' && allCriticalResolved) {
     const activeWorst = drivers
@@ -353,15 +462,32 @@ function _buildDrivers(facts, acks, opsCacheData, trackingEnabled = true) {
   const backup = backupDriver(facts, opsCacheData, trackingEnabled);
   if (backup && backup.severity !== 'ok') drivers.push(backup);
 
-  const crash = _crashDriver(facts, acks);
+  const crash = _crashDriver(facts, acks, opsCacheData);
   if (crash) drivers.push(crash);
 
-  drivers.push(...issueDrivers(facts, trackingEnabled));
+  drivers.push(...issueDrivers(facts, trackingEnabled, opsCacheData));
   return drivers;
 }
 
-function _crashDriver(facts, acks) {
+function _crashDriver(facts, acks, opsCacheData) {
   const unacked = unacknowledgedCrashes(facts, acks);
+  const unreviewedGroups = opsCacheData?.crashes?.unreviewed_groups ?? null;
+  const unreviewedFiles = opsCacheData?.crashes?.unreviewed ?? unacked.length;
+
+  if (unreviewedGroups != null && unreviewedGroups > 0) {
+    const count = Number(unreviewedFiles) > 0 ? Number(unreviewedFiles) : unreviewedGroups;
+    return {
+      id: 'CRASH_REPORT',
+      kind: 'crash',
+      severity: 'critical',
+      title: `Unresolved Crashes (${count})`,
+      summary: `${count} crash report(s) need review`,
+      historical: false,
+      fixes: [],
+      crashes: unacked,
+    };
+  }
+
   if (!unacked.length) return null;
   return {
     id: 'CRASH_REPORT',
@@ -391,7 +517,9 @@ function _issueTitle(id) {
     MANUAL_REBOOT: 'Server machine rebooted',
     OOM: 'Out of memory',
     DISK_HIGH: 'Disk almost full',
+    DISK_FILL_PROJECTED: 'Disk filling soon',
     MEM_LOW: 'Low system memory',
+    GC_PRESSURE: 'GC / heap pressure',
     TICK_LAG: 'Server falling behind',
     MSPT_HIGH: 'High tick time',
     TPS_LOW: 'Low TPS',
@@ -408,15 +536,19 @@ function _issueTitle(id) {
 }
 
 function _issueSummary(i) {
-  if (i.id === 'CRASH_REPORT') return 'Crash reports found in the lookback window — review before next session.';
+  if (i.id === 'CRASH_REPORT') return 'Crash reports need review before the next session.';
+  if (i.id === 'GC_PRESSURE') return 'Heap is full or GC is eating wall time — check Live GC before adding RAM.';
   if (i.id === 'BACKUP_NOT_CONFIGURED') return 'No backup directory configured.';
-  if (i.id === 'BACKUP_NOT_FOUND') return 'No backup archive found in the lookback window.';
+  if (i.id === 'BACKUP_NOT_FOUND') return 'No backup archive found.';
+  if (i.id === 'BACKUP_STALE') return 'No backup in the last 24 hours.';
   if (i.id === 'MOD_LOAD_FAILED') return 'One or more mods failed to load correctly.';
   return (i.message || '').split('—')[0].trim().slice(0, 120);
 }
 
 function _issueActionTab(issueId) {
   if (issueId === 'CRASH_REPORT') return 'crashes';
+  if (issueId === 'GC_PRESSURE') return 'live';
+  if (issueId === 'DISK_HIGH' || issueId === 'DISK_FILL_PROJECTED') return 'insights';
   if (issueId === 'MOD_LOAD_FAILED' || issueId === 'MOD_UPDATE_CONFLICT') return 'mods';
   if (issueId?.startsWith('BACKUP_')) return 'backups';
   return null;

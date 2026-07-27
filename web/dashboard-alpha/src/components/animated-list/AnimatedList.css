@@ -1,0 +1,97 @@
+/* Watchtower selectable list (formerly React Bits Animated List — rewritten in-house). */
+
+.scroll-list-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.scroll-list {
+  max-height: min(28rem, 60vh);
+  height: 100%;
+  overflow-y: auto;
+  padding: 0.65rem 0.55rem 0.85rem;
+  outline: none;
+}
+
+.scroll-list:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--wt-accent) 35%, transparent);
+}
+
+.scroll-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-list::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--wt-bg2) 80%, transparent);
+  border-radius: 4px;
+}
+
+.scroll-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--wt-line) 80%, var(--wt-bg3));
+  border-radius: 4px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.animated-list__item-wrap {
+  margin-bottom: 0.45rem;
+  cursor: default;
+}
+
+.animated-list__item-wrap:has(.is-selectable) {
+  cursor: pointer;
+}
+
+.animated-list__item {
+  border-radius: 0.75rem;
+}
+
+.animated-list__item.is-selectable {
+  border: 1px solid color-mix(in srgb, var(--wt-line) 90%, transparent);
+  background: color-mix(in srgb, var(--wt-bg2) 55%, transparent);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.animated-list__item.is-selectable:hover {
+  border-color: color-mix(in srgb, var(--wt-accent) 30%, var(--wt-line));
+  background: color-mix(in srgb, var(--wt-accent) 8%, var(--wt-bg2));
+}
+
+.animated-list__item.is-selected {
+  border-color: color-mix(in srgb, var(--wt-accent) 45%, var(--wt-line));
+  background: color-mix(in srgb, var(--wt-accent) 14%, var(--wt-bg2));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wt-accent) 25%, transparent);
+}
+
+.top-gradient,
+.bottom-gradient {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.top-gradient {
+  top: 0;
+  height: 42px;
+  background: linear-gradient(to bottom, var(--wt-bg1), transparent);
+}
+
+.bottom-gradient {
+  bottom: 0;
+  height: 72px;
+  background: linear-gradient(to top, var(--wt-bg1), transparent);
+}

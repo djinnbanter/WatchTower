@@ -4,19 +4,21 @@ Active UI source for Watchtower — **not** throwaway samples. Built or synced i
 
 | Folder | Role |
 |--------|------|
-| [`dashboard/`](dashboard/) | Embedded server dashboard — synced into the mod JAR via Gradle `syncDashboard` |
+| [`dashboard-alpha/`](dashboard-alpha/) | **Production** React + Vite dashboard — Gradle `syncDashboard` builds `dist/` into the mod JAR |
+| [`dashboard/`](dashboard/) | Legacy Preact dashboard (archive only — not synced) |
 | [`dr-viewer/`](dr-viewer/) | Browser-local disaster recovery viewer (static site) |
 
-## Dashboard (`web/dashboard/`)
-
-Gradle `syncDashboard` (in `mods/neoforge-1.21.1/build.gradle`) copies `*.html`, `*.js`, `*.css`, and `assets/**` into the mod JAR.
-
-Local static preview:
+## Dashboard (`web/dashboard-alpha/`)
 
 ```bash
-cd web/dashboard
-python -m http.server 8080
+cd web/dashboard-alpha
+npm install
+npm run preview          # fixture preview :8081
+WATCHTOWER_ORIGIN=http://127.0.0.1:8787 npm run preview:live
+npm run build            # → dist/ (what the JAR embeds)
 ```
+
+See [`dashboard-alpha/README.md`](dashboard-alpha/README.md) and [`dashboard-alpha/scripts/soak-checklist.md`](dashboard-alpha/scripts/soak-checklist.md).
 
 ## DR viewer (`web/dr-viewer/`)
 

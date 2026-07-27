@@ -1,9 +1,10 @@
 import * as ep from './endpoints.js';
+import { normalizeLiveLatest } from '../domain/live-sample.js';
 import {
   live, samples, overviewMeta, players, reports, opsCache,
   issuesPeek, activity, updateCheck, dataSources, spark,
   performance, settings, auth, noReportYet, acks, crashGroups, inbox,
-  issueSuppressions,
+  issueSuppressions, modrinthScan, discovery,
 } from '../state/stores.js';
 
 /**
@@ -15,7 +16,12 @@ export class LiveSource {
 
   async fetchLive(signal) {
     const data = await ep.live(signal);
-    live.value = { envelope: data, latest: data?.latest ?? null, error: null, at: Date.now() };
+    live.value = {
+      envelope: data,
+      latest: normalizeLiveLatest(data?.latest),
+      error: null,
+      at: Date.now(),
+    };
     return data;
   }
 
@@ -48,8 +54,11 @@ export class LiveSource {
       liveAt: data?.live_at ?? null,
       scanAt: data?.scan_at ?? data?.ops_scan_at ?? null,
       reportAt: data?.report_at ?? data?.full_report_at ?? null,
+      supportComposeAt: data?.support_compose_at ?? null,
+      issuesLiveAt: data?.issues_live_at ?? null,
       nextScheduledMin: data?.next_scheduled_minutes ?? data?.next_scheduled_min ?? null,
       opsPollSec: data?.ops_poll_sec ?? 60,
+      opsLogScanSec: data?.ops_log_scan_sec ?? null,
     };
     return data;
   }
@@ -197,6 +206,8 @@ export class LiveSource {
         stageDetail: running
           ? (data?.stage_detail ?? prev.stageDetail)
           : null,
+        zipReady: !!data?.zip_ready,
+        zipPath: data?.zip_path ?? null,
       },
     };
     return data;
@@ -204,6 +215,40 @@ export class LiveSource {
 
   async runReport(payload) {
     return ep.reportsRun(payload);
+  }
+
+  async fetchModrinthStatus() {
+    const data = await ep.modrinthStatus();
+    modrinthScan.value = {
+      ...modrinthScan.value,
+      status: {
+        ...modrinthScan.value.status,
+        ...data,
+        running: !!data?.running,
+      },
+    };
+    return data;
+  }
+
+  async runModrinthScan() {
+    return ep.modrinthScanStart();
+  }
+
+  async startDiscovery() {
+    return ep.discoveryStart();
+  }
+
+  async fetchDiscoveryStatus() {
+    const data = await ep.discoveryStatus();
+    discovery.value = {
+      ...discovery.value,
+      status: {
+        ...discovery.value.status,
+        ...data,
+        running: !!data?.running,
+      },
+    };
+    return data;
   }
 
   // ── Ops cache ─────────────────────────────────────────────────────────────
@@ -232,6 +277,7 @@ export class LiveSource {
     const data = await ep.activityGet(hours);
     activity.value = {
       events: data?.events ?? [],
+      incidentStories: data?.incident_stories ?? [],
       at: Date.now(),
       loading: false,
     };
@@ -253,7 +299,42 @@ export class LiveSource {
   }
 
   async scanBackups() {
-    return ep.backupsScan();
+    const data = await ep.backupsScan();
+    // Apply scan response into ops-cache immediately so UI refreshes before refetch.
+    if (data?.last_backup || data?.backup_inventory) {
+      const prev = opsCache.value.data ?? {};
+      const inv = Array.isArray(data.backup_inventory) ? data.backup_inventory : null;
+      let inventory_summary = prev.backups_live?.inventory_summary ?? null;
+      if (inv) {
+        let totalGb = 0;
+        for (const row of inv) {
+          if (row?.size_gb != null) totalGb += Number(row.size_gb);
+          else if (row?.size_mb != null) totalGb += Number(row.size_mb) / 1024;
+        }
+        inventory_summary = {
+          file_count: inv.length,
+          total_gb: Math.round(totalGb * 10) / 10,
+        };
+      }
+      const last = data.last_backup ? { ...data.last_backup } : prev.backups_live?.last_backup;
+      if (last && last.age_hours == null && last.age_days != null) {
+        last.age_hours = Math.round(Number(last.age_days) * 24 * 10) / 10;
+      }
+      opsCache.value = {
+        data: {
+          ...prev,
+          backups_live: {
+            ...(prev.backups_live ?? {}),
+            scanned_at: new Date().toISOString(),
+            last_backup: last ?? null,
+            ...(inv ? { inventory: inv } : {}),
+            ...(inventory_summary ? { inventory_summary } : {}),
+          },
+        },
+        at: Date.now(),
+      };
+    }
+    return data;
   }
 
   async saveBackupDirs(dirs) {
@@ -463,18 +544,44 @@ export class LiveSource {
 
   async fetchSparkProfiles() {
     const data = await ep.sparkProfiles();
+    const profiles = data?.profiles ?? [];
+    const reportPath = data?.report_profile_path ?? null;
     spark.value = {
       ...spark.value,
-      profiles: data?.profiles ?? [],
+      profiles,
+      skipped: data?.skipped ?? [],
       searchDirs: data?.search_dirs ?? [],
-      enabled: data?.enabled !== false,
+      reportProfilePath: reportPath,
+      enabled: data?.spark_enabled !== false && data?.enabled !== false,
+      listLoading: false,
+      lastRefreshedAt: Date.now(),
     };
+    // Auto-open report profile (or first) when nothing selected yet.
+    if (!spark.value.activePath && !spark.value.profile && profiles.length > 0) {
+      const preferred =
+        reportPath
+        ?? profiles[0]?.source_path
+        ?? profiles[0]?.path
+        ?? null;
+      if (preferred) await this.fetchSparkProfile(preferred);
+    }
     return data;
   }
 
   async fetchSparkProfile(path) {
     const data = await ep.sparkProfile(path);
-    spark.value = { ...spark.value, profile: data, activePath: path, loading: false, error: null };
+    const profile = data?.spark_profile ?? data;
+    spark.value = { ...spark.value, profile, activePath: path, loading: false, error: null };
+    return profile;
+  }
+
+  async importSparkProfile(url) {
+    const data = await ep.sparkImport(url);
+    await this.fetchSparkProfiles();
+    const path = data?.source_path ?? data?.entry?.source_path;
+    if (path) {
+      await this.fetchSparkProfile(path);
+    }
     return data;
   }
 
@@ -497,6 +604,10 @@ export class LiveSource {
     return data;
   }
 
+  async setPerformanceBaselineNow() {
+    return ep.performanceBaselineSetNow();
+  }
+
   // ── Settings ──────────────────────────────────────────────────────────────
 
   async fetchSettings() {
@@ -507,7 +618,10 @@ export class LiveSource {
 
   async saveSettings(payload) {
     const data = await ep.settingsPost(payload);
-    settings.value = { ...settings.value, data: { ...settings.value.data, ...payload }, error: null };
+    const next = data?.settings && typeof data.settings === 'object'
+      ? data.settings
+      : { ...(settings.value.data ?? {}), ...payload };
+    settings.value = { ...settings.value, data: next, error: null };
     return data;
   }
 
@@ -544,7 +658,7 @@ function _countPoints(raw) {
   if (!raw) return 0;
   return [
     'tps', 'mspt', 'host_cpu', 'players', 'heap_mb',
-    'mem_available_gb', 'disk_use_pct', 'net_rx_mbps',
+    'mem_available_gb', 'mem_used_gb', 'mem_total_gb', 'disk_use_pct', 'net_rx_mbps',
     'net_tx_mbps', 'disk_read_mb_s', 'disk_write_mb_s',
     'thermal_package', 'thermal_ambient',
   ].reduce((n, k) => n + (raw[k]?.length ?? 0), 0);

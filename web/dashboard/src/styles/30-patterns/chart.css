@@ -61,6 +61,43 @@
   flex-shrink: 0;
 }
 
+.ui-chart-frame__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-chart-frame__legend:empty {
+  display: none;
+}
+
+.ui-chart-frame__legend .ui-timeseries__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--ui-rad-m);
+  border: 1px solid var(--ui-glass-border, var(--ui-line));
+  background: color-mix(in srgb, var(--ui-bg0) 55%, transparent);
+  font-size: 11px;
+  font-family: var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-text-mid);
+  white-space: nowrap;
+}
+
+.ui-chart-frame__legend .ui-timeseries__legend-value {
+  color: var(--ui-text-hi);
+  font-weight: 650;
+}
+
+.ui-timeseries--legend-header .ui-timeseries__legend {
+  display: none;
+}
+
 .ui-chart-frame__body {
   position: relative;
   overflow: hidden;
@@ -86,6 +123,8 @@
 
 .ui-timeseries {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   overflow: visible;
 }

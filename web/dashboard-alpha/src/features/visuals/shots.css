@@ -1,0 +1,62 @@
+/* Inline page previews on the Visuals studio */
+
+.wt-shot-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--wt-line);
+  background: var(--wt-bg0);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  aspect-ratio: 16 / 10;
+}
+
+.wt-shot-capture {
+  width: 1280px;
+  min-height: 800px;
+  /* Preview viewport only — export temporarily lifts this so nothing is cropped */
+  max-height: 800px;
+  overflow: hidden;
+  transform-origin: top left;
+  padding: 1.25rem 1.5rem;
+  box-sizing: border-box;
+  background: var(--wt-bg0);
+  transform: scale(var(--wt-shot-scale, 0.4));
+  pointer-events: none;
+  user-select: none;
+}
+
+/* While exporting, let capture nodes expand to full content height */
+html.wt-shot-exporting .wt-shot-capture {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+html.wt-shot-exporting .wt-shot-frame {
+  overflow: visible;
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+.wt-shot-frame--header {
+  aspect-ratio: 2 / 1;
+}
+
+.wt-shot-frame--header .wt-shot-capture {
+  width: 1280px;
+  min-height: auto;
+  max-height: none;
+  padding: 0;
+  background: transparent;
+}
+
+.wt-shot-exporting {
+  cursor: wait;
+}
+
+.wt-shot-exporting .wt-shot-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--wt-bg0) 35%, transparent);
+  pointer-events: none;
+}

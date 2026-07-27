@@ -24,7 +24,15 @@ const PROVIDED_BY_MOD = /provided by mod\s+(\w+)/i;
 const MOD_LOADING = /Mod\s+\(([^)]+)\)/i;
 
 function parseLogTimestamp(line) {
-  const m = LOG_TIME_RE.exec(line);
+  if (!line) return null;
+  let s = String(line)
+    .replace(/\u001B\[[0-9;?]*[ -/]*[@-~]/g, '')
+    .replace(/\u001B\][^\u0007\u001B]*(?:\u0007|\u001B\\)?/g, '')
+    .replace(/\u001B./g, '')
+    .replace(/^\s*\[stderr\]\s*/i, '')
+    .replace(/^\s*stderr:\s*/i, '')
+    .replace(/^\s+/, '');
+  const m = LOG_TIME_RE.exec(s);
   if (!m) return null;
   try {
     const d = new Date(m[1].replace(/(\d{2})(\w{3})(\d{4})/, '$2 $1 $3'));
@@ -112,23 +120,41 @@ export function scanStartupProfile(lines, opts = {}) {
     }
   }
 
-  // Estimate phase durations from log timestamps when available
-  const phases = [];
-  for (let i = 0; i < phaseHits.length; i++) {
-    const cur = phaseHits[i];
+  // Estimate phase durations from log timestamps when available; never invent epochs.
+  const knownSec = phaseHits.map((cur, i) => {
     const next = phaseHits[i + 1];
     let sec = null;
     if (cur.ts && next?.ts) {
       sec = Math.round(((new Date(next.ts) - new Date(cur.ts)) / 1000) * 10) / 10;
     } else if (cur.ts && doneAt && i === phaseHits.length - 1) {
       sec = Math.round(((new Date(doneAt) - new Date(cur.ts)) / 1000) * 10) / 10;
-    } else if (totalSec != null && phaseHits.length) {
-      sec = Math.round((totalSec / phaseHits.length) * 10) / 10;
     }
-    const row = { id: cur.id, label: cur.label };
-    if (sec != null && Number.isFinite(sec) && sec >= 0) row.sec = sec;
-    phases.push(row);
+    if (sec != null && Number.isFinite(sec) && sec >= 0) {
+      if (totalSec != null) sec = Math.min(sec, totalSec);
+      return Math.round(sec * 10) / 10;
+    }
+    return null;
+  });
+
+  const knownSum = knownSec.reduce((sum, s) => sum + (s != null ? s : 0), 0);
+  const unknownCount = knownSec.filter((s) => s == null).length;
+  if (totalSec != null && unknownCount > 0) {
+    const remaining = Math.max(0, totalSec - knownSum);
+    const share = Math.round((remaining / unknownCount) * 10) / 10;
+    for (let i = 0; i < knownSec.length; i++) {
+      if (knownSec[i] == null) knownSec[i] = share;
+    }
   }
+
+  const phases = phaseHits.map((cur, i) => {
+    const row = { id: cur.id, label: cur.label };
+    if (knownSec[i] != null && Number.isFinite(knownSec[i]) && knownSec[i] >= 0) {
+      let sec = knownSec[i];
+      if (totalSec != null) sec = Math.min(sec, totalSec);
+      row.sec = Math.round(sec * 10) / 10;
+    }
+    return row;
+  });
 
   const withSec = phases.filter((p) => p.sec != null).sort((a, b) => b.sec - a.sec);
   const slowest = withSec.slice(0, 3).map((p) => ({ phase: p.id, sec: p.sec }));

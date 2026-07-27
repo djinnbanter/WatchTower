@@ -1,10 +1,9 @@
 import { html, useState, useMemo } from '../../lib/preact.js';
-import { players, live, reports, samples } from '../../state/stores.js';
-import { Page, Section, MetricTile, DataTable, FilterBar, EmptyState } from '../../ui/patterns/index.js';
-import { Button, CopyButton } from '../../ui/primitives/index.js';
+import { players, live, reports, samples, dataSources } from '../../state/stores.js';
+import { Page, Section, MetricTile, DataTable, FilterBar, EmptyState, FreshnessBadge } from '../../ui/patterns/index.js';
+import { CopyButton } from '../../ui/primitives/index.js';
 import { Icon } from '../../ui/icons.js';
 import { formatDuration } from '../../domain/formats.js';
-import { openModal } from '../../state/actions.js';
 
 const STATUS_OPTS = [
   { value: 'all', label: 'All' },
@@ -211,13 +210,20 @@ export function PageView() {
     return list;
   }, [allPlayers, statusFilter, search]);
 
-  const peakPlayers = facts?.summary?.players_peak
-    ?? facts?.stats?.players_peak
+  const peakFromLive = useMemo(() => {
+    const raw = samplesSeries?.players ?? [];
+    if (!raw.length) return null;
+    return Math.max(...raw.map((p) => p?.v ?? 0));
+  }, [samplesSeries]);
+
+  const peakPlayers = peakFromLive
     ?? directory?.window_stats?.peak_concurrent
+    ?? facts?.summary?.players_peak
+    ?? facts?.stats?.players_peak
     ?? null;
-  const uniquePlayers = facts?.summary?.unique_players
+  const uniquePlayers = directory?.known_count
     ?? directory?.window_stats?.unique_players
-    ?? directory?.known_count
+    ?? facts?.summary?.unique_players
     ?? allPlayers.length;
 
   const playerSpark = useMemo(() => {
@@ -326,7 +332,6 @@ export function PageView() {
 
   const hasData = allPlayers.length > 0 || playersOnline > 0;
   const hasPlaytime = allPlayers.some((p) => (p.playtime_seconds ?? 0) > 0);
-  const hasReport = !!facts;
   const spark = playerSpark.length > 1 ? playerSpark : undefined;
   const showGrouped = statusFilter === 'all' && onlinePlayers.length > 0 && offlinePlayers.length > 0;
 
@@ -334,6 +339,7 @@ export function PageView() {
     <${Page}
       title="Session"
       subtitle="Who's online and who's been here"
+      actions=${html`<${FreshnessBadge} layer="live" at=${dataSources.value?.liveAt ?? live.value?.at} />`}
     >
       <div data-tour="session" class="ui-page__stack">
         <div class="feat-session-hero">
@@ -348,18 +354,18 @@ export function PageView() {
           ${peakPlayers != null && html`
             <${MetricTile}
               className="feat-session-hero__tile"
-              label="Peak (window)"
+              label="Peak (live window)"
               value=${peakPlayers}
               format=${(v) => String(Math.round(v))}
-              source=${{ layer: 'report', at: playersAt }}
+              source=${{ layer: peakFromLive != null ? 'live' : 'report', at: peakFromLive != null ? live.value?.at : playersAt }}
             />
           `}
           <${MetricTile}
             className="feat-session-hero__tile"
-            label="Unique (report)"
+            label="Known players"
             value=${uniquePlayers}
             format=${(v) => String(Math.round(v))}
-            source=${{ layer: 'report', at: playersAt }}
+            source=${{ layer: 'scan', at: playersAt }}
           />
         </div>
 
@@ -383,16 +389,11 @@ export function PageView() {
           <div class="feat-session-playtime-cta">
             <${Icon} name="clock" size=${18} />
             <div class="feat-session-playtime-cta__copy">
-              <strong>${hasReport ? 'Playtime not in this report yet' : 'Playtime needs a report'}</strong>
+              <strong>Playtime still warming up</strong>
               <p>
-                ${hasReport
-                  ? 'Live roster is here, but per-player hours come from log analysis in a full report. Run one to fill playtime and last-seen history.'
-                  : 'Online players show up live. UUIDs, playtime, and session history need at least one full report.'}
+                Online players show up from Watching. UUIDs and playtime fill from world stats on the next Scanning poll (usually within ~15 minutes).
               </p>
             </div>
-            <${Button} kind=${hasReport ? 'neutral' : 'accent'} size="sm" onClick=${() => openModal('run-report')}>
-              ${hasReport ? 'Run another report' : 'Run Report'}
-            </${Button}>
           </div>
         `}
 
@@ -412,8 +413,7 @@ export function PageView() {
                 <${EmptyState}
                   icon=${html`<${Icon} name="users" size=${20} />`}
                   title="No player data yet"
-                  body="Run a report to fill playtime, UUIDs, and session history. Online players appear here live."
-                  action=${html`<${Button} kind="accent" onClick=${() => openModal('run-report')}>Run Report</${Button}>`}
+                  body="Online players appear from Watching. Playtime and the roster fill from Scanning as world stats are read."
                 />
               `
             : showGrouped

@@ -66,6 +66,8 @@ html[data-theme="dark"] {
   --ui-ch-disk: #fb923c;
   --ui-ch-rx: #5eb8ef;
   --ui-ch-tx: #7ec8f5;
+  --ui-ch-insight: #8b7cf7;
+  --ui-ch-net: #3ecfcf;
   --ui-ch-grid: rgba(140, 200, 255, 0.08);
 
   --ui-shadow-rest: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 4px 16px rgba(0, 12, 28, 0.35);
@@ -75,6 +77,12 @@ html[data-theme="dark"] {
   --ui-shadow-overlay: 0 28px 72px rgba(0, 8, 24, 0.6), 0 10px 28px rgba(0, 12, 32, 0.4);
   --ui-shadow-glow: 0 0 0 1px color-mix(in srgb, var(--ui-sky) 35%, transparent),
     0 0 28px color-mix(in srgb, var(--ui-sky) 18%, transparent);
+
+  /* Scrollbars — soft sky glass thumb on a quiet track */
+  --ui-scroll-size: 10px;
+  --ui-scroll-track: color-mix(in srgb, var(--ui-bg0) 55%, transparent);
+  --ui-scroll-thumb: color-mix(in srgb, var(--ui-sky) 32%, var(--ui-bg3));
+  --ui-scroll-thumb-hover: color-mix(in srgb, var(--ui-sky) 52%, var(--ui-bg2));
 }
 
 html[data-theme="light"] {
@@ -139,6 +147,8 @@ html[data-theme="light"] {
   --ui-ch-disk: #d97706;
   --ui-ch-rx: #1a9fd9;
   --ui-ch-tx: #3db4e6;
+  --ui-ch-insight: #6b5fd4;
+  --ui-ch-net: #1b8a8f;
   --ui-ch-grid: rgba(40, 100, 140, 0.1);
 
   --ui-shadow-rest: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 4px 16px rgba(40, 100, 140, 0.1);
@@ -212,6 +222,8 @@ html[data-theme="black"] {
   --ui-ch-disk: #fb923c;
   --ui-ch-rx: #4aa8e0;
   --ui-ch-tx: #6bb8e8;
+  --ui-ch-insight: #7a6ee0;
+  --ui-ch-net: #2dd4bf;
   --ui-ch-grid: rgba(100, 180, 240, 0.06);
 
   --ui-shadow-rest: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 4px 18px rgba(0, 0, 0, 0.55);

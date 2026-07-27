@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.mcstatus.watchtower.core.collect.CrashMtimeScanner;
+import dev.mcstatus.watchtower.core.collect.RunningModsCollector;
 import dev.mcstatus.watchtower.core.incident.IncidentReader;
 import dev.mcstatus.watchtower.core.live.PerformanceRollupWriter;
 import dev.mcstatus.watchtower.core.report.StateManager;
@@ -25,6 +26,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+
+import dev.mcstatus.watchtower.core.util.WatchtowerPathLocks;
 
 /**
  * Writes and reconciles {@code watchtower/ops-cache.json}.
@@ -44,22 +48,27 @@ public final class OpsCacheWriter {
             CrashMtimeScanner.ScanResult scan,
             String source
     ) throws IOException {
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        int seq = StateManager.incrementOpsCacheSeq(statePath);
-        StateManager.updateCrashMtimeIndex(statePath, scan.updatedIndex());
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            int seq = StateManager.incrementOpsCacheSeq(statePath);
+            StateManager.updateCrashMtimeIndex(statePath, scan.updatedIndex());
+            if (scan.updatedFingerprints() != null && !scan.updatedFingerprints().isEmpty()) {
+                StateManager.updateCrashFingerprintIndex(statePath, scan.updatedFingerprints());
+            }
 
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-        cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
-        cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
-        cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
-        cache.add(OpsCacheSchema.CRASHES, buildCrashesBlock(scan, source));
-        if (!cache.has(OpsCacheSchema.SCORECARD)) {
-            cache.add(OpsCacheSchema.SCORECARD, buildScorecardBlock(rollupsPath));
-        } else {
-            cache.add(OpsCacheSchema.SCORECARD, buildScorecardBlock(rollupsPath));
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
+            cache.add(OpsCacheSchema.CRASHES, buildCrashesBlock(scan, source, cache));
+            if (!cache.has(OpsCacheSchema.SCORECARD)) {
+                cache.add(OpsCacheSchema.SCORECARD, buildScorecardBlock(rollupsPath));
+            } else {
+                cache.add(OpsCacheSchema.SCORECARD, buildScorecardBlock(rollupsPath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
         }
-        writeAtomic(opsCachePath, cache);
-        return cache;
     }
 
     public static JsonObject applyActivityScanResult(
@@ -82,6 +91,43 @@ public final class OpsCacheWriter {
         return applyOpsLogScanResult(opsCachePath, statePath, rollupsPath, unified, null, null, null);
     }
 
+    /** Merge activity-only events from async gap backfill (no mod-log / right-now refresh). */
+    public static JsonObject applyActivityBackfillChunk(
+            Path opsCachePath,
+            Path statePath,
+            List<JsonObject> events,
+            int newCount
+    ) throws IOException {
+        if (events == null || events.isEmpty()) {
+            return OpsCacheReader.load(opsCachePath);
+        }
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            int seq = statePath != null ? StateManager.incrementOpsCacheSeq(statePath) : 0;
+            int ledgerSeq = cache.has(OpsCacheSchema.LEDGER_SEQ) ? cache.get(OpsCacheSchema.LEDGER_SEQ).getAsInt() : 0;
+            ledgerSeq++;
+
+            JsonArray mergedEvents = mergeActivityEvents(cache, events, false);
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+
+            JsonObject activity = cache.has(OpsCacheSchema.ACTIVITY)
+                    ? cache.getAsJsonObject(OpsCacheSchema.ACTIVITY).deepCopy()
+                    : new JsonObject();
+            activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
+            activity.addProperty(OpsCacheSchema.ACTIVITY_NEW_COUNT, newCount);
+            activity.addProperty("backfill_active", true);
+            activity.add(OpsCacheSchema.ACTIVITY_EVENTS, mergedEvents);
+            cache.add(OpsCacheSchema.ACTIVITY, activity);
+
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
+            cache.addProperty(OpsCacheSchema.LEDGER_SEQ, ledgerSeq);
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
     public static JsonObject applyOpsLogScanResult(
             Path opsCachePath,
             Path statePath,
@@ -91,84 +137,166 @@ public final class OpsCacheWriter {
             JsonObject lagHint,
             JsonObject logStale
     ) throws IOException {
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        if (!scan.hadNewData() && cache.has(OpsCacheSchema.MOD_LOG_ERRORS)) {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            if (!scan.hadNewData() && cache.has(OpsCacheSchema.MOD_LOG_ERRORS)) {
+                ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+                JsonObject activity = cache.has(OpsCacheSchema.ACTIVITY)
+                        ? cache.getAsJsonObject(OpsCacheSchema.ACTIVITY).deepCopy()
+                        : new JsonObject();
+                activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
+                cache.add(OpsCacheSchema.ACTIVITY, activity);
+                if (logStale != null) {
+                    cache.add(OpsCacheSchema.LOG_STALE, logStale.deepCopy());
+                }
+                if (pregenHint != null || lagHint != null || logStale != null || !scan.backgroundJobs().isEmpty()) {
+                    cache.add(OpsCacheSchema.RIGHT_NOW, buildRightNowBlock(cache, scan, pregenHint, lagHint, now));
+                }
+                writeAtomicUnlocked(opsCachePath, cache);
+                return cache;
+            }
+
+            int seq = StateManager.incrementOpsCacheSeq(statePath);
+            int ledgerSeq = cache.has(OpsCacheSchema.LEDGER_SEQ) ? cache.get(OpsCacheSchema.LEDGER_SEQ).getAsInt() : 0;
+            ledgerSeq++;
+
+            JsonArray mergedEvents = mergeActivityEvents(cache, scan.activityEvents(), false);
+            JsonArray mergedModErrors = mergeModLogErrors(cache, scan.modLogErrors());
+            JsonArray modPeek = ModIssuePeekBuilder.buildPeekEntries(mergedModErrors);
+
             ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-            JsonObject activity = cache.has(OpsCacheSchema.ACTIVITY)
-                    ? cache.getAsJsonObject(OpsCacheSchema.ACTIVITY).deepCopy()
-                    : new JsonObject();
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
+            cache.addProperty(OpsCacheSchema.LEDGER_SEQ, ledgerSeq);
+
+            JsonObject activity = new JsonObject();
             activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
+            activity.addProperty(OpsCacheSchema.ACTIVITY_NEW_COUNT, scan.newActivityCount());
+            activity.add(OpsCacheSchema.ACTIVITY_EVENTS, mergedEvents);
             cache.add(OpsCacheSchema.ACTIVITY, activity);
+
+            JsonObject modBlock = new JsonObject();
+            modBlock.addProperty(OpsCacheSchema.MOD_LOG_SCANNED_AT, now.format(ISO));
+            modBlock.addProperty(OpsCacheSchema.MOD_LOG_NEW_COUNT, countNewModErrors(scan.modLogErrors()));
+            modBlock.add(OpsCacheSchema.MOD_LOG_ENTRIES, mergedModErrors);
+            cache.add(OpsCacheSchema.MOD_LOG_ERRORS, modBlock);
+
+            JsonObject modIssues = new JsonObject();
+            modIssues.addProperty(OpsCacheSchema.MOD_ISSUES_UPDATED_AT, now.format(ISO));
+            modIssues.addProperty(OpsCacheSchema.MOD_ISSUES_ACTIVE_COUNT, modPeek.size());
+            modIssues.add(OpsCacheSchema.MOD_ISSUES_ENTRIES, modPeek);
+            cache.add(OpsCacheSchema.MOD_ISSUES, modIssues);
+
             if (logStale != null) {
                 cache.add(OpsCacheSchema.LOG_STALE, logStale.deepCopy());
             }
-            if (pregenHint != null || lagHint != null || logStale != null || !scan.backgroundJobs().isEmpty()) {
-                cache.add(OpsCacheSchema.RIGHT_NOW, buildRightNowBlock(cache, scan, pregenHint, lagHint, now));
+
+            cache.add(OpsCacheSchema.RIGHT_NOW, buildRightNowBlock(cache, scan, pregenHint, lagHint, now));
+
+            if (!cache.has(OpsCacheSchema.SCORECARD)) {
+                cache.add(OpsCacheSchema.SCORECARD, buildScorecardBlock(rollupsPath));
             }
-            writeAtomic(opsCachePath, cache);
+            writeAtomicUnlocked(opsCachePath, cache);
             return cache;
         }
-
-        int seq = StateManager.incrementOpsCacheSeq(statePath);
-        int ledgerSeq = cache.has(OpsCacheSchema.LEDGER_SEQ) ? cache.get(OpsCacheSchema.LEDGER_SEQ).getAsInt() : 0;
-        ledgerSeq++;
-
-        JsonArray mergedEvents = mergeActivityEvents(cache, scan.activityEvents(), false);
-        JsonArray mergedModErrors = mergeModLogErrors(cache, scan.modLogErrors());
-        JsonArray modPeek = ModIssuePeekBuilder.buildPeekEntries(mergedModErrors);
-
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-        cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
-        cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
-        cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
-        cache.addProperty(OpsCacheSchema.LEDGER_SEQ, ledgerSeq);
-
-        JsonObject activity = new JsonObject();
-        activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
-        activity.addProperty(OpsCacheSchema.ACTIVITY_NEW_COUNT, scan.newActivityCount());
-        activity.add(OpsCacheSchema.ACTIVITY_EVENTS, mergedEvents);
-        cache.add(OpsCacheSchema.ACTIVITY, activity);
-
-        JsonObject modBlock = new JsonObject();
-        modBlock.addProperty(OpsCacheSchema.MOD_LOG_SCANNED_AT, now.format(ISO));
-        modBlock.addProperty(OpsCacheSchema.MOD_LOG_NEW_COUNT, countNewModErrors(scan.modLogErrors()));
-        modBlock.add(OpsCacheSchema.MOD_LOG_ENTRIES, mergedModErrors);
-        cache.add(OpsCacheSchema.MOD_LOG_ERRORS, modBlock);
-
-        JsonObject modIssues = new JsonObject();
-        modIssues.addProperty(OpsCacheSchema.MOD_ISSUES_UPDATED_AT, now.format(ISO));
-        modIssues.addProperty(OpsCacheSchema.MOD_ISSUES_ACTIVE_COUNT, modPeek.size());
-        modIssues.add(OpsCacheSchema.MOD_ISSUES_ENTRIES, modPeek);
-        cache.add(OpsCacheSchema.MOD_ISSUES, modIssues);
-
-        if (logStale != null) {
-            cache.add(OpsCacheSchema.LOG_STALE, logStale.deepCopy());
-        }
-
-        cache.add(OpsCacheSchema.RIGHT_NOW, buildRightNowBlock(cache, scan, pregenHint, lagHint, now));
-
-        if (!cache.has(OpsCacheSchema.SCORECARD)) {
-            cache.add(OpsCacheSchema.SCORECARD, buildScorecardBlock(rollupsPath));
-        }
-        writeAtomic(opsCachePath, cache);
-        return cache;
     }
 
     public static JsonObject applyRunningMods(Path opsCachePath, Path statePath, JsonArray mods) throws IOException {
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-        JsonObject block = new JsonObject();
-        block.addProperty(OpsCacheSchema.RUNNING_MODS_SCANNED_AT, now.format(ISO));
-        block.addProperty(OpsCacheSchema.RUNNING_MODS_COUNT, mods.size());
-        block.add(OpsCacheSchema.RUNNING_MODS_MODS, mods.deepCopy());
-        cache.add(OpsCacheSchema.RUNNING_MODS, block);
-        cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
-        cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
-        if (statePath != null) {
-            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+            JsonObject block = new JsonObject();
+            block.addProperty(OpsCacheSchema.RUNNING_MODS_SCANNED_AT, now.format(ISO));
+            block.addProperty(OpsCacheSchema.RUNNING_MODS_COUNT, RunningModsCollector.topLevelCount(mods));
+            block.add(OpsCacheSchema.RUNNING_MODS_MODS, mods.deepCopy());
+            cache.add(OpsCacheSchema.RUNNING_MODS, block);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
         }
-        writeAtomic(opsCachePath, cache);
-        return cache;
+    }
+
+    /**
+     * Load → mutate → write under the ops-cache path lock (prevents clobber from concurrent schedulers).
+     */
+    public static JsonObject mutate(Path opsCachePath, Consumer<JsonObject> mutator) throws IOException {
+        if (opsCachePath == null) {
+            return OpsCacheReader.empty();
+        }
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            if (mutator != null) {
+                mutator.accept(cache);
+            }
+            String now = ZonedDateTime.now(ZoneId.systemDefault()).format(ISO);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now);
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /**
+     * Replace or merge continuous issue ledger rows into ops-cache.
+     */
+    public static JsonObject applyIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            List<IssuesLiveRecord> records
+    ) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            String now = ZonedDateTime.now(ZoneId.systemDefault()).format(ISO);
+            IssuesLiveStore.writeAll(cache, records != null ? records : List.of(), now);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now);
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /**
+     * Evaluate peeks → merge ledger → write under one lock (avoids wiping concurrent acks).
+     */
+    public static JsonObject refreshIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            boolean backupTrackingEnabled
+    ) throws IOException {
+        return refreshIssuesLive(
+                opsCachePath, statePath, backupTrackingEnabled,
+                IssuesLiveEvaluators.DEFAULT_DISK_FILL_WARN_DAYS);
+    }
+
+    public static JsonObject refreshIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            boolean backupTrackingEnabled,
+            double diskFillWarnDays
+    ) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            String now = ZonedDateTime.now(ZoneId.systemDefault()).format(ISO);
+            List<IssuesLiveRecord> existing = IssuesLiveStore.readAll(cache);
+            List<IssuesLiveRecord> merged = IssuesLiveEvaluators.evaluateAndMerge(
+                    cache, existing, backupTrackingEnabled, now, diskFillWarnDays);
+            IssuesLiveStore.writeAll(cache, merged, now);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now);
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
     }
 
     public static JsonObject applyModsInventory(
@@ -176,15 +304,83 @@ public final class OpsCacheWriter {
             Path statePath,
             JsonObject block
     ) throws IOException {
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        cache.add(OpsCacheSchema.MODS_INVENTORY, block);
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            cache.add(OpsCacheSchema.MODS_INVENTORY, block);
+            touchCacheMeta(cache, statePath);
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /** Merge {@code mods_deep} under the ops-cache path lock (async delta jobs). */
+    public static JsonObject applyModsDeep(Path opsCachePath, JsonObject deep) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            cache.add(OpsCacheSchema.MODS_DEEP, deep.deepCopy());
+            touchCacheMeta(cache, null);
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /** Merge {@code mods_light} under the ops-cache path lock (jar-change snapshot). */
+    public static JsonObject applyModsLight(Path opsCachePath, JsonObject light) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            cache.add("mods_light", light.deepCopy());
+            touchCacheMeta(cache, null);
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /** Persist Modrinth scan output for BAU when no legacy facts file exists. */
+    public static JsonObject applyModrinthScan(
+            Path opsCachePath,
+            JsonObject optionalSnapshot
+    ) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            JsonObject block = new JsonObject();
+            block.addProperty("updated_at", ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
+            if (optionalSnapshot != null) {
+                if (optionalSnapshot.has("modrinth_updates")) {
+                    block.add("updates", optionalSnapshot.get("modrinth_updates").deepCopy());
+                }
+                if (optionalSnapshot.has("mods")) {
+                    block.add("mods", optionalSnapshot.get("mods").deepCopy());
+                }
+                if (optionalSnapshot.has("client_only_mods_summary")) {
+                    block.add("client_only_mods_summary",
+                            optionalSnapshot.get("client_only_mods_summary").deepCopy());
+                }
+            }
+            cache.add(OpsCacheSchema.MODRINTH_SCAN, block);
+            touchCacheMeta(cache, null);
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /** Record Support compose timestamp for Sources tab freshness. */
+    public static JsonObject applySupportComposeAt(Path opsCachePath) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            cache.addProperty(OpsCacheSchema.LAST_SUPPORT_COMPOSE_AT,
+                    ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
+            touchCacheMeta(cache, null);
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    private static void touchCacheMeta(JsonObject cache, Path statePath) throws IOException {
         cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
         cache.addProperty(OpsCacheSchema.UPDATED_AT, ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
         if (statePath != null) {
             cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
         }
-        writeAtomic(opsCachePath, cache);
-        return cache;
     }
 
     public static JsonObject applyDiskJump(
@@ -192,15 +388,35 @@ public final class OpsCacheWriter {
             Path statePath,
             JsonObject block
     ) throws IOException {
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        cache.add(OpsCacheSchema.DISK_JUMP, block);
-        cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
-        cache.addProperty(OpsCacheSchema.UPDATED_AT, ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
-        if (statePath != null) {
-            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            cache.add(OpsCacheSchema.DISK_JUMP, block);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
         }
-        writeAtomic(opsCachePath, cache);
-        return cache;
+    }
+
+    public static JsonObject applyDiskProjection(
+            Path opsCachePath,
+            Path statePath,
+            JsonObject block
+    ) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            cache.add(OpsCacheSchema.DISK_PROJECTION, block);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
     }
 
     public static JsonObject applyBackupsLive(
@@ -209,24 +425,106 @@ public final class OpsCacheWriter {
             JsonObject lastBackup,
             JsonElement backupInventory
     ) throws IOException {
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-        JsonObject block = new JsonObject();
-        block.addProperty("scanned_at", now.format(ISO));
-        if (lastBackup != null) {
-            block.add("last_backup", lastBackup.deepCopy());
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+            JsonObject block = new JsonObject();
+            block.addProperty("scanned_at", now.format(ISO));
+            if (lastBackup != null) {
+                JsonObject lb = lastBackup.deepCopy();
+                // Ensure live consumers always have age_hours
+                if (!lb.has("age_hours") || lb.get("age_hours").isJsonNull()) {
+                    if (lb.has("age_days") && !lb.get("age_days").isJsonNull()) {
+                        lb.addProperty("age_hours",
+                                Math.round(lb.get("age_days").getAsDouble() * 24.0 * 10.0) / 10.0);
+                    }
+                }
+                block.add("last_backup", lb);
+                // Mirror status for older consumers that read backups_live.status
+                if (lb.has("status") && lb.get("status").isJsonPrimitive()) {
+                    block.addProperty("status", lb.get("status").getAsString());
+                }
+            }
+            if (backupInventory != null && backupInventory.isJsonArray()) {
+                JsonArray inv = backupInventory.getAsJsonArray();
+                block.add("inventory", inv.deepCopy());
+                double totalGb = 0;
+                for (JsonElement el : inv) {
+                    if (el.isJsonObject() && el.getAsJsonObject().has("size_gb")
+                            && !el.getAsJsonObject().get("size_gb").isJsonNull()) {
+                        totalGb += el.getAsJsonObject().get("size_gb").getAsDouble();
+                    }
+                }
+                JsonObject summary = new JsonObject();
+                summary.addProperty("file_count", inv.size());
+                summary.addProperty("total_gb", Math.round(totalGb * 10.0) / 10.0);
+                block.add("inventory_summary", summary);
+            } else if (backupInventory != null) {
+                block.add("inventory_summary", backupInventory.deepCopy());
+            }
+            cache.add(OpsCacheSchema.BACKUPS_LIVE, block);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
         }
-        if (backupInventory != null) {
-            block.add("inventory_summary", backupInventory.deepCopy());
+    }
+
+    /**
+     * Re-stamp crash {@code acknowledged} flags and {@code unreviewed} from StateManager.
+     * Called after dashboard ack/unack so Overview scorecard stays fresh without a rescan.
+     */
+    public static JsonObject applyCrashAcks(Path opsCachePath, Path statePath) throws IOException {
+        if (opsCachePath == null || statePath == null) {
+            return null;
         }
-        cache.add(OpsCacheSchema.BACKUPS_LIVE, block);
-        cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
-        cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
-        if (statePath != null) {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            if (!cache.has(OpsCacheSchema.CRASHES) || !cache.get(OpsCacheSchema.CRASHES).isJsonObject()) {
+                return cache;
+            }
+            JsonObject crashes = cache.getAsJsonObject(OpsCacheSchema.CRASHES).deepCopy();
+            if (!crashes.has(OpsCacheSchema.CRASHES_ENTRIES)
+                    || !crashes.get(OpsCacheSchema.CRASHES_ENTRIES).isJsonArray()) {
+                return cache;
+            }
+            JsonObject acks = StateManager.getAcknowledgedCrashes(statePath);
+            JsonArray entries = crashes.getAsJsonArray(OpsCacheSchema.CRASHES_ENTRIES);
+            int unreviewed = 0;
+            JsonObject latestUnreviewed = null;
+            for (JsonElement el : entries) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject row = el.getAsJsonObject();
+                String file = row.has(OpsCacheSchema.ENTRY_FILE)
+                        ? row.get(OpsCacheSchema.ENTRY_FILE).getAsString() : "";
+                boolean acked = !file.isBlank() && StateManager.isCrashAcked(acks, file);
+                row.addProperty("acknowledged", acked);
+                if (!acked && !file.isBlank()) {
+                    unreviewed++;
+                    if (latestUnreviewed == null) {
+                        latestUnreviewed = row;
+                    }
+                }
+            }
+            crashes.addProperty(OpsCacheSchema.CRASHES_UNREVIEWED, unreviewed);
+            if (latestUnreviewed != null) {
+                crashes.add("latest_unreviewed", latestUnreviewed.deepCopy());
+            } else {
+                crashes.remove("latest_unreviewed");
+            }
+            cache.add(OpsCacheSchema.CRASHES, crashes);
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
             cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
         }
-        writeAtomic(opsCachePath, cache);
-        return cache;
     }
 
     public static JsonObject applyBackupExternal(
@@ -234,18 +532,43 @@ public final class OpsCacheWriter {
             Path statePath,
             JsonObject backupExternal
     ) throws IOException {
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-        if (backupExternal != null) {
-            cache.add(OpsCacheSchema.BACKUP_EXTERNAL, backupExternal.deepCopy());
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+            if (backupExternal != null) {
+                cache.add(OpsCacheSchema.BACKUP_EXTERNAL, backupExternal.deepCopy());
+            }
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
         }
-        cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
-        cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
-        if (statePath != null) {
-            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+    }
+
+    /**
+     * Rebuild and persist {@code incident_stories} from the current ops-cache contents.
+     */
+    public static JsonObject applyIncidentStories(
+            Path opsCachePath,
+            Path statePath,
+            IncidentStoryBuilder.Settings settings,
+            JsonArray factsEvents
+    ) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            JsonArray stories = IncidentStoryBuilder.build(cache, factsEvents, settings);
+            cache.add(OpsCacheSchema.INCIDENT_STORIES, stories);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
         }
-        writeAtomic(opsCachePath, cache);
-        return cache;
     }
 
     private static int countNewModErrors(JsonArray incoming) {
@@ -451,57 +774,85 @@ public final class OpsCacheWriter {
             JsonObject lagIssueEntry,
             JsonObject lagIncidentEvent
     ) throws IOException {
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        int seq = StateManager.incrementOpsCacheSeq(statePath);
-        int ledgerSeq = cache.has(OpsCacheSchema.LEDGER_SEQ) ? cache.get(OpsCacheSchema.LEDGER_SEQ).getAsInt() : 0;
-        ledgerSeq++;
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            int seq = StateManager.incrementOpsCacheSeq(statePath);
+            int ledgerSeq = cache.has(OpsCacheSchema.LEDGER_SEQ) ? cache.get(OpsCacheSchema.LEDGER_SEQ).getAsInt() : 0;
+            ledgerSeq++;
 
-        List<JsonObject> newEvents = new java.util.ArrayList<>();
-        if (lagIncidentEvent != null) {
-            newEvents.add(lagIncidentEvent);
-        }
-        JsonArray merged = mergeActivityEvents(cache, newEvents, false);
-
-        JsonObject lagIssues = cache.has(OpsCacheSchema.LAG_ISSUES)
-                ? cache.getAsJsonObject(OpsCacheSchema.LAG_ISSUES).deepCopy()
-                : new JsonObject();
-        JsonArray entries = lagIssues.has(OpsCacheSchema.LAG_ISSUES_ENTRIES)
-                ? lagIssues.getAsJsonArray(OpsCacheSchema.LAG_ISSUES_ENTRIES)
-                : new JsonArray();
-        JsonArray updatedEntries = new JsonArray();
-        updatedEntries.add(lagIssueEntry);
-        for (JsonElement el : entries) {
-            updatedEntries.add(el.deepCopy());
-        }
-        while (updatedEntries.size() > 50) {
-            updatedEntries.remove(updatedEntries.size() - 1);
-        }
-        int active = 0;
-        for (JsonElement el : updatedEntries) {
-            if (!el.getAsJsonObject().has("resolved")
-                    || !el.getAsJsonObject().get("resolved").getAsBoolean()) {
-                active++;
+            List<JsonObject> newEvents = new java.util.ArrayList<>();
+            if (lagIncidentEvent != null) {
+                newEvents.add(lagIncidentEvent);
             }
+            JsonArray merged = mergeActivityEvents(cache, newEvents, false);
+
+            JsonObject lagIssues = cache.has(OpsCacheSchema.LAG_ISSUES)
+                    ? cache.getAsJsonObject(OpsCacheSchema.LAG_ISSUES).deepCopy()
+                    : new JsonObject();
+            JsonArray entries = lagIssues.has(OpsCacheSchema.LAG_ISSUES_ENTRIES)
+                    ? lagIssues.getAsJsonArray(OpsCacheSchema.LAG_ISSUES_ENTRIES)
+                    : new JsonArray();
+            String replaceKey = lagIssueKey(lagIssueEntry);
+            JsonObject previous = null;
+            JsonArray updatedEntries = new JsonArray();
+            for (JsonElement el : entries) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject existing = el.getAsJsonObject();
+                String existingKey = lagIssueKey(existing);
+                if (replaceKey != null && replaceKey.equals(existingKey)) {
+                    previous = existing;
+                    continue; // replace in-place (e.g. Spark auto-capture patch)
+                }
+                updatedEntries.add(existing.deepCopy());
+            }
+            JsonObject mergedEntry = lagIssueEntry.deepCopy();
+            if (previous != null) {
+                // Preserve resolution state when refreshing the same incident (auto-Spark patch).
+                if (previous.has("resolved")) {
+                    mergedEntry.add("resolved", previous.get("resolved"));
+                }
+                if (previous.has("resolved_at_epoch")) {
+                    mergedEntry.add("resolved_at_epoch", previous.get("resolved_at_epoch"));
+                }
+            }
+            JsonArray withHead = new JsonArray();
+            withHead.add(mergedEntry);
+            for (JsonElement el : updatedEntries) {
+                withHead.add(el);
+            }
+            updatedEntries = withHead;
+            while (updatedEntries.size() > 50) {
+                updatedEntries.remove(updatedEntries.size() - 1);
+            }
+            int active = 0;
+            for (JsonElement el : updatedEntries) {
+                if (!el.getAsJsonObject().has("resolved")
+                        || !el.getAsJsonObject().get("resolved").getAsBoolean()) {
+                    active++;
+                }
+            }
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+            lagIssues.addProperty(OpsCacheSchema.LAG_ISSUES_UPDATED_AT, now.format(ISO));
+            lagIssues.addProperty(OpsCacheSchema.LAG_ISSUES_ACTIVE_COUNT, active);
+            lagIssues.add(OpsCacheSchema.LAG_ISSUES_ENTRIES, updatedEntries);
+
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
+            cache.addProperty(OpsCacheSchema.LEDGER_SEQ, ledgerSeq);
+            cache.add(OpsCacheSchema.LAG_ISSUES, lagIssues);
+
+            JsonObject activity = new JsonObject();
+            activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
+            activity.addProperty(OpsCacheSchema.ACTIVITY_NEW_COUNT, lagIncidentEvent != null ? 1 : 0);
+            activity.add(OpsCacheSchema.ACTIVITY_EVENTS, merged);
+            cache.add(OpsCacheSchema.ACTIVITY, activity);
+
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
         }
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-        lagIssues.addProperty(OpsCacheSchema.LAG_ISSUES_UPDATED_AT, now.format(ISO));
-        lagIssues.addProperty(OpsCacheSchema.LAG_ISSUES_ACTIVE_COUNT, active);
-        lagIssues.add(OpsCacheSchema.LAG_ISSUES_ENTRIES, updatedEntries);
-
-        cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
-        cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
-        cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
-        cache.addProperty(OpsCacheSchema.LEDGER_SEQ, ledgerSeq);
-        cache.add(OpsCacheSchema.LAG_ISSUES, lagIssues);
-
-        JsonObject activity = new JsonObject();
-        activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
-        activity.addProperty(OpsCacheSchema.ACTIVITY_NEW_COUNT, lagIncidentEvent != null ? 1 : 0);
-        activity.add(OpsCacheSchema.ACTIVITY_EVENTS, merged);
-        cache.add(OpsCacheSchema.ACTIVITY, activity);
-
-        writeAtomic(opsCachePath, cache);
-        return cache;
     }
 
     public static JsonObject applyPerformanceSpikeEvents(
@@ -512,7 +863,6 @@ public final class OpsCacheWriter {
         if (stickyEpisodes == null || stickyEpisodes.isEmpty()) {
             return OpsCacheReader.load(opsCachePath);
         }
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
         List<JsonObject> incoming = new ArrayList<>();
         ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
         long nowEpoch = Instant.now().getEpochSecond();
@@ -537,25 +887,28 @@ public final class OpsCacheWriter {
             incoming.add(ev);
         }
         if (incoming.isEmpty()) {
+            return OpsCacheReader.load(opsCachePath);
+        }
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            int seq = StateManager.incrementOpsCacheSeq(statePath);
+            int ledgerSeq = cache.has(OpsCacheSchema.LEDGER_SEQ) ? cache.get(OpsCacheSchema.LEDGER_SEQ).getAsInt() : 0;
+            ledgerSeq++;
+            JsonArray merged = mergeActivityEvents(cache, incoming, false);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
+            cache.addProperty(OpsCacheSchema.LEDGER_SEQ, ledgerSeq);
+            JsonObject activity = cache.has(OpsCacheSchema.ACTIVITY)
+                    ? cache.getAsJsonObject(OpsCacheSchema.ACTIVITY).deepCopy()
+                    : new JsonObject();
+            activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
+            activity.addProperty(OpsCacheSchema.ACTIVITY_NEW_COUNT, incoming.size());
+            activity.add(OpsCacheSchema.ACTIVITY_EVENTS, merged);
+            cache.add(OpsCacheSchema.ACTIVITY, activity);
+            writeAtomicUnlocked(opsCachePath, cache);
             return cache;
         }
-        int seq = StateManager.incrementOpsCacheSeq(statePath);
-        int ledgerSeq = cache.has(OpsCacheSchema.LEDGER_SEQ) ? cache.get(OpsCacheSchema.LEDGER_SEQ).getAsInt() : 0;
-        ledgerSeq++;
-        JsonArray merged = mergeActivityEvents(cache, incoming, false);
-        cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
-        cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
-        cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
-        cache.addProperty(OpsCacheSchema.LEDGER_SEQ, ledgerSeq);
-        JsonObject activity = cache.has(OpsCacheSchema.ACTIVITY)
-                ? cache.getAsJsonObject(OpsCacheSchema.ACTIVITY).deepCopy()
-                : new JsonObject();
-        activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
-        activity.addProperty(OpsCacheSchema.ACTIVITY_NEW_COUNT, incoming.size());
-        activity.add(OpsCacheSchema.ACTIVITY_EVENTS, merged);
-        cache.add(OpsCacheSchema.ACTIVITY, activity);
-        writeAtomic(opsCachePath, cache);
-        return cache;
     }
 
     public static JsonObject updateLagIssueResolution(
@@ -565,16 +918,18 @@ public final class OpsCacheWriter {
             double tpsWarn,
             double msptWarn
     ) throws IOException {
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        if (!cache.has(OpsCacheSchema.LAG_ISSUES)) {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            if (!cache.has(OpsCacheSchema.LAG_ISSUES)) {
+                return cache;
+            }
+            JsonObject lagIssues = cache.getAsJsonObject(OpsCacheSchema.LAG_ISSUES).deepCopy();
+            LagIssueBuilder.updateResolvedFlags(lagIssues, tps, mspt, tpsWarn, msptWarn,
+                    Instant.now().getEpochSecond());
+            cache.add(OpsCacheSchema.LAG_ISSUES, lagIssues);
+            writeAtomicUnlocked(opsCachePath, cache);
             return cache;
         }
-        JsonObject lagIssues = cache.getAsJsonObject(OpsCacheSchema.LAG_ISSUES).deepCopy();
-        LagIssueBuilder.updateResolvedFlags(lagIssues, tps, mspt, tpsWarn, msptWarn,
-                Instant.now().getEpochSecond());
-        cache.add(OpsCacheSchema.LAG_ISSUES, lagIssues);
-        writeAtomic(opsCachePath, cache);
-        return cache;
     }
 
     public static JsonObject reconcileFromFacts(
@@ -651,59 +1006,106 @@ public final class OpsCacheWriter {
 
         JsonObject acks = StateManager.getAcknowledgedCrashes(statePath);
         int unreviewed = 0;
+        JsonObject latestUnreviewed = null;
         for (JsonElement el : entriesArr) {
             JsonObject row = el.getAsJsonObject();
             String file = row.get(OpsCacheSchema.ENTRY_FILE).getAsString();
-            if (!StateManager.isCrashAcked(acks, file)) {
+            boolean acked = StateManager.isCrashAcked(acks, file);
+            row.addProperty("acknowledged", acked);
+            if (!acked) {
                 unreviewed++;
-            }
-        }
-
-        JsonObject cache = OpsCacheReader.load(opsCachePath);
-        int seq = StateManager.incrementOpsCacheSeq(statePath);
-        StateManager.updateCrashMtimeIndex(statePath, scan.updatedIndex());
-
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-        cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
-        cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
-        cache.addProperty(OpsCacheSchema.REPORT_RECONCILE_AT, now.format(ISO));
-        cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
-
-        JsonObject crashes = new JsonObject();
-        crashes.addProperty(OpsCacheSchema.CRASHES_SCANNED_AT, now.format(ISO));
-        crashes.addProperty(OpsCacheSchema.CRASHES_COUNT, entriesArr.size());
-        crashes.addProperty(OpsCacheSchema.CRASHES_UNREVIEWED, unreviewed);
-        if (!entriesArr.isEmpty()) {
-            crashes.add(OpsCacheSchema.CRASHES_LATEST, entriesArr.get(0).deepCopy());
-        }
-        crashes.add(OpsCacheSchema.CRASHES_ENTRIES, entriesArr);
-        cache.add(OpsCacheSchema.CRASHES, crashes);
-        cache.add(OpsCacheSchema.SCORECARD, buildScorecardBlock(rollupsPath));
-
-        if (facts.has("events")) {
-            JsonArray reportEvents = facts.getAsJsonArray("events");
-            List<JsonObject> parsed = new java.util.ArrayList<>();
-            for (JsonElement el : reportEvents) {
-                if (el.isJsonObject()) {
-                    JsonObject ev = el.getAsJsonObject().deepCopy();
-                    ev.addProperty(OpsCacheSchema.EVENT_SOURCE, OpsCacheSchema.SOURCE_REPORT);
-                    parsed.add(ev);
+                if (latestUnreviewed == null) {
+                    latestUnreviewed = row;
                 }
             }
-            JsonArray mergedEvents = mergeActivityEvents(cache, parsed, false);
-            JsonObject activity = cache.has(OpsCacheSchema.ACTIVITY)
-                    ? cache.getAsJsonObject(OpsCacheSchema.ACTIVITY).deepCopy()
-                    : new JsonObject();
-            activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
-            activity.add(OpsCacheSchema.ACTIVITY_EVENTS, mergedEvents);
-            cache.add(OpsCacheSchema.ACTIVITY, activity);
         }
 
-        reconcileLagIssues(Path.of(serverDir), (long) cutoff, cache, now);
-        reconcileModLogErrorsFromFacts(facts, cache, now);
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            int seq = StateManager.incrementOpsCacheSeq(statePath);
+            StateManager.updateCrashMtimeIndex(statePath, scan.updatedIndex());
 
-        writeAtomic(opsCachePath, cache);
-        return cache;
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            cache.addProperty(OpsCacheSchema.REPORT_RECONCILE_AT, now.format(ISO));
+            cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, seq);
+
+            JsonObject crashes = new JsonObject();
+            crashes.addProperty(OpsCacheSchema.CRASHES_SCANNED_AT, now.format(ISO));
+            crashes.addProperty(OpsCacheSchema.CRASHES_COUNT, entriesArr.size());
+            crashes.addProperty(OpsCacheSchema.CRASHES_UNREVIEWED, unreviewed);
+            if (!entriesArr.isEmpty()) {
+                crashes.add(OpsCacheSchema.CRASHES_LATEST, entriesArr.get(0).deepCopy());
+            }
+            if (latestUnreviewed != null) {
+                crashes.add("latest_unreviewed", latestUnreviewed.deepCopy());
+            }
+            crashes.add(OpsCacheSchema.CRASHES_ENTRIES, entriesArr);
+            cache.add(OpsCacheSchema.CRASHES, crashes);
+            cache.add(OpsCacheSchema.SCORECARD, buildScorecardBlock(rollupsPath));
+
+            if (facts.has("events")) {
+                JsonArray reportEvents = facts.getAsJsonArray("events");
+                List<JsonObject> parsed = new java.util.ArrayList<>();
+                for (JsonElement el : reportEvents) {
+                    if (el.isJsonObject()) {
+                        JsonObject ev = el.getAsJsonObject().deepCopy();
+                        ev.addProperty(OpsCacheSchema.EVENT_SOURCE, OpsCacheSchema.SOURCE_REPORT);
+                        parsed.add(ev);
+                    }
+                }
+                JsonArray mergedEvents = mergeActivityEvents(cache, parsed, false);
+                JsonObject activity = cache.has(OpsCacheSchema.ACTIVITY)
+                        ? cache.getAsJsonObject(OpsCacheSchema.ACTIVITY).deepCopy()
+                        : new JsonObject();
+                activity.addProperty(OpsCacheSchema.ACTIVITY_SCANNED_AT, now.format(ISO));
+                activity.add(OpsCacheSchema.ACTIVITY_EVENTS, mergedEvents);
+                cache.add(OpsCacheSchema.ACTIVITY, activity);
+            }
+
+            reconcileLagIssues(Path.of(serverDir), (long) cutoff, cache, now);
+            reconcileModLogErrorsFromFacts(facts, cache, now);
+            enrichIssuesLiveFromFacts(facts, cache, now);
+
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /** Merge facts.issues into continuous ledger without wiping opens or resetting reviewed. */
+    static void enrichIssuesLiveFromFacts(JsonObject facts, JsonObject cache, ZonedDateTime now) {
+        if (facts == null || !facts.has("issues") || !facts.get("issues").isJsonArray()) {
+            return;
+        }
+        List<IssuesLiveRecord> existing = IssuesLiveStore.readAll(cache);
+        String nowIso = now.format(ISO);
+        for (JsonElement el : facts.getAsJsonArray("issues")) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject issue = el.getAsJsonObject();
+            String id = issue.has("id") ? issue.get("id").getAsString() : null;
+            if (id == null || id.isBlank()) {
+                continue;
+            }
+            IssuesLiveRecord.Builder b = IssuesLiveRecord.builder()
+                    .id(id)
+                    .key(id)
+                    .severity(issue.has("severity") ? issue.get("severity").getAsString() : "warning")
+                    .message(issue.has("message") ? issue.get("message").getAsString() : "")
+                    .source(IssuesLiveSchema.SOURCE_CATCHUP)
+                    .addEvidenceRef("facts:issues");
+            if (issue.has("fix_steps") && issue.get("fix_steps").isJsonArray()) {
+                for (JsonElement step : issue.getAsJsonArray("fix_steps")) {
+                    if (step.isJsonPrimitive()) {
+                        b.addFixStep(step.getAsString());
+                    }
+                }
+            }
+            existing = IssuesLiveStore.enrich(existing, b.build(), nowIso);
+        }
+        IssuesLiveStore.writeAll(cache, existing, nowIso);
     }
 
     private static void reconcileModLogErrorsFromFacts(JsonObject facts, JsonObject cache, ZonedDateTime now) {
@@ -873,6 +1275,30 @@ public final class OpsCacheWriter {
     }
 
     private static JsonObject buildCrashesBlock(CrashMtimeScanner.ScanResult scan, String source) {
+        return buildCrashesBlock(scan, source, null);
+    }
+
+    private static JsonObject buildCrashesBlock(
+            CrashMtimeScanner.ScanResult scan, String source, JsonObject priorCache) {
+        Map<String, JsonObject> priorByFile = new HashMap<>();
+        if (priorCache != null
+                && priorCache.has(OpsCacheSchema.CRASHES)
+                && priorCache.get(OpsCacheSchema.CRASHES).isJsonObject()) {
+            JsonObject prior = priorCache.getAsJsonObject(OpsCacheSchema.CRASHES);
+            if (prior.has(OpsCacheSchema.CRASHES_ENTRIES)
+                    && prior.get(OpsCacheSchema.CRASHES_ENTRIES).isJsonArray()) {
+                for (JsonElement el : prior.getAsJsonArray(OpsCacheSchema.CRASHES_ENTRIES)) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject row = el.getAsJsonObject();
+                    if (row.has(OpsCacheSchema.ENTRY_FILE)) {
+                        priorByFile.put(bareFile(row.get(OpsCacheSchema.ENTRY_FILE).getAsString()), row);
+                    }
+                }
+            }
+        }
+
         JsonObject crashes = new JsonObject();
         ZonedDateTime scanned = scan.scannedAt().atZone(ZoneId.systemDefault());
         crashes.addProperty(OpsCacheSchema.CRASHES_SCANNED_AT, scanned.format(ISO));
@@ -881,11 +1307,37 @@ public final class OpsCacheWriter {
 
         JsonArray entries = new JsonArray();
         for (CrashMtimeScanner.CrashEntry entry : scan.entries()) {
-            entries.add(entryToJson(entry, source));
+            JsonObject row = entryToJson(entry, source);
+            JsonObject prior = priorByFile.get(bareFile(entry.file()));
+            if (prior != null) {
+                for (String key : List.of(
+                        OpsCacheSchema.ENTRY_DISPLAY_LABEL,
+                        "failure_kind", "primary_mod_id", "stall_mod_id", "exception",
+                        "summary", "plain_english", "category", "suspect_mod_id",
+                        "likely_cause", "confidence", "manual_review", "fix_hints", "fingerprint")) {
+                    boolean blank = !row.has(key) || row.get(key).isJsonNull()
+                            || (row.get(key).isJsonPrimitive() && row.get(key).getAsString().isBlank());
+                    if (key.equals("fix_hints")) {
+                        blank = !row.has(key) || row.get(key).isJsonNull()
+                                || (row.get(key).isJsonArray() && row.getAsJsonArray(key).size() == 0);
+                    }
+                    // "unknown" is a weak classify result — keep a stronger prior label when present.
+                    if (key.equals("failure_kind") && !blank
+                            && "unknown".equalsIgnoreCase(row.get(key).getAsString())
+                            && prior.has(key) && !prior.get(key).isJsonNull()
+                            && !"unknown".equalsIgnoreCase(prior.get(key).getAsString())) {
+                        blank = true;
+                    }
+                    if (blank && prior.has(key) && !prior.get(key).isJsonNull()) {
+                        row.add(key, prior.get(key));
+                    }
+                }
+            }
+            entries.add(row);
         }
         crashes.add(OpsCacheSchema.CRASHES_ENTRIES, entries);
-        if (!scan.entries().isEmpty()) {
-            crashes.add(OpsCacheSchema.CRASHES_LATEST, entryToJson(scan.entries().get(0), source));
+        if (!entries.isEmpty()) {
+            crashes.add(OpsCacheSchema.CRASHES_LATEST, entries.get(0).deepCopy());
         }
         return crashes;
     }
@@ -896,6 +1348,9 @@ public final class OpsCacheWriter {
         row.addProperty(OpsCacheSchema.ENTRY_MTIME, entry.mtime());
         row.addProperty(OpsCacheSchema.ENTRY_SIZE, entry.size());
         row.addProperty(OpsCacheSchema.ENTRY_SOURCE, source);
+        if (entry.fingerprint() != null && !entry.fingerprint().isBlank()) {
+            row.addProperty("fingerprint", entry.fingerprint());
+        }
         if (entry.displayLabel() != null && !entry.displayLabel().isBlank()) {
             row.addProperty(OpsCacheSchema.ENTRY_DISPLAY_LABEL, entry.displayLabel());
         }
@@ -910,6 +1365,21 @@ public final class OpsCacheWriter {
         }
         if (entry.exception() != null && !entry.exception().isBlank()) {
             row.addProperty("exception", entry.exception());
+        }
+        if (entry.plainEnglish() != null && !entry.plainEnglish().isBlank()) {
+            row.addProperty("plain_english", entry.plainEnglish());
+        }
+        if (entry.likelyCause() != null && !entry.likelyCause().isBlank()) {
+            row.addProperty("likely_cause", entry.likelyCause());
+        }
+        if (entry.confidence() != null && !entry.confidence().isBlank()) {
+            row.addProperty("confidence", entry.confidence());
+        }
+        if (entry.manualReview() != null) {
+            row.addProperty("manual_review", entry.manualReview());
+        }
+        if (entry.fixHints() != null && entry.fixHints().size() > 0) {
+            row.add("fix_hints", entry.fixHints().deepCopy());
         }
         return row;
     }
@@ -947,6 +1417,15 @@ public final class OpsCacheWriter {
     }
 
     public static void writeAtomic(Path opsCachePath, JsonObject cache) throws IOException {
+        if (opsCachePath == null) {
+            return;
+        }
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            writeAtomicUnlocked(opsCachePath, cache);
+        }
+    }
+
+    static void writeAtomicUnlocked(Path opsCachePath, JsonObject cache) throws IOException {
         if (opsCachePath == null) {
             return;
         }

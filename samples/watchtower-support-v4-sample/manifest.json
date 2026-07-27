@@ -1,0 +1,21 @@
+{
+  "bundle_version": 4,
+  "report_mode": "support_compose",
+  "generated_at": "2026-07-22T10:00:00Z",
+  "composed_from_continuous": true,
+  "redaction": true,
+  "preset": "QUICK",
+  "caps": {
+    "log_tail_lines": 500,
+    "max_log_bytes_total": 52428800,
+    "max_spark_bytes": 8388608,
+    "max_zip_evidence_bytes": 104857600,
+    "soft_budget_bytes": 26214400,
+    "hard_budget_bytes": 104857600
+  },
+  "facts": "report/watchtower-facts-support-sample.json",
+  "brief": "report/watchtower-brief-support-sample.txt",
+  "ops_cache": "watchtower/ops-cache.json",
+  "evidence": [],
+  "omissions": []
+}

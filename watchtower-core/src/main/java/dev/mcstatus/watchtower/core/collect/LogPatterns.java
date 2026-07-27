@@ -89,6 +89,10 @@ public final class LogPatterns {
             Pattern.CASE_INSENSITIVE);
     public static final Pattern DONE_BOOT = Pattern.compile(
             "Done \\(([\\d.]+)s\\)!", Pattern.CASE_INSENSITIVE);
+    /** ModernFix (and similar) full dedicated-server load duration — includes mod loading. */
+    public static final Pattern MODERNFIX_FULL_LOAD = Pattern.compile(
+            "Dedicated server took\\s+([\\d.]+)\\s+seconds?\\s+to\\s+load",
+            Pattern.CASE_INSENSITIVE);
     public static final Pattern FML_ISSUE_HEADER = Pattern.compile(
             "^-- Mod loading issue(?: for: ([\\w.-]+))? --\\s*$");
     public static final Pattern PLAYER_DISCONNECT = Pattern.compile(

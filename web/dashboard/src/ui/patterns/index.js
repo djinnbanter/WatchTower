@@ -1,6 +1,7 @@
 export { Page } from './page.js';
 export { Section } from './section.js';
 export { MetricReadout } from './metric-readout.js';
+export { AnimatedNumber } from './animated-number.js';
 export { MetricTile } from './metric-tile.js';
 export { DualMetricTile } from './dual-metric-tile.js';
 export { Sparkline } from './sparkline.js';
@@ -27,3 +28,4 @@ export { Gauge, RadarDial } from './gauge.js';
 export { BarMeter, HourBars } from './bar-meter.js';
 export { StatusPill, StatusPillStrip } from './status-pill.js';
 export { BeaconCard, UptimeClock } from './beacon-card.js';
+export { StaggerList } from './stagger-list.js';

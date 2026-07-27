@@ -63,7 +63,9 @@ public final class OverviewMetaBuilder {
         try {
             Path latestFacts = ReportArtifactFinder.findLatestFacts(reportDir);
             if (latestFacts == null) {
-                meta.addProperty("stale", true);
+                // No legacy BAU facts: neutral for schedule Off — do not force stale / "run a report" homework.
+                // Scan/support freshness (ops_cache_updated_at, last_support_compose_at) is layered on by the HTTP handler.
+                meta.addProperty("stale", false);
                 return;
             }
             Instant mtime = Files.getLastModifiedTime(latestFacts).toInstant();
@@ -74,7 +76,7 @@ public final class OverviewMetaBuilder {
             meta.addProperty("stale", ageHours >= STALE_HOURS);
             meta.addProperty("last_report_file", latestFacts.getFileName().toString());
         } catch (IOException ignored) {
-            meta.addProperty("stale", true);
+            meta.addProperty("stale", false);
         }
     }
 

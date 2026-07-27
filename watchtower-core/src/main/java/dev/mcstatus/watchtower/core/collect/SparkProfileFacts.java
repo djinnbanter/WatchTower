@@ -24,14 +24,32 @@ public final class SparkProfileFacts {
         if (profile == null || freshHours <= 0) {
             return false;
         }
+        Instant captured = parseCapturedAt(profile);
+        // Clock skew / future timestamps must never count as fresh.
+        if (captured != null && captured.isAfter(Instant.now())) {
+            return false;
+        }
         if (profile.has("fresh")) {
             return profile.get("fresh").getAsBoolean();
         }
-        Instant captured = parseCapturedAt(profile);
         if (captured == null) {
             return false;
         }
-        return Duration.between(captured, Instant.now()).toHours() < freshHours;
+        return isFreshInstant(captured, freshHours);
+    }
+
+    /**
+     * Whether {@code captured} is within {@code freshHours} of now and not in the future.
+     */
+    public static boolean isFreshInstant(Instant captured, int freshHours) {
+        if (captured == null || freshHours <= 0) {
+            return false;
+        }
+        Instant now = Instant.now();
+        if (captured.isAfter(now)) {
+            return false;
+        }
+        return Duration.between(captured, now).toHours() < freshHours;
     }
 
     public static Instant parseCapturedAt(JsonObject profile) {

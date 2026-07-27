@@ -1,0 +1,47 @@
+/* Shared glass search + filter strip (Issues / Crashes / Mods) */
+
+.feat-queue-chrome,
+.issues-queue__chrome,
+.crashes-queue__chrome,
+.feat-mods-catalog__chrome,
+.feat-mods-forensics__chrome,
+.feat-subnav-search.feat-queue-chrome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-sp-10);
+  padding: var(--ui-sp-10) var(--ui-sp-12);
+  border: 1px solid var(--ui-glass-border, var(--ui-line));
+  border-radius: var(--ui-rad-xl);
+  background: color-mix(in srgb, var(--ui-glass, var(--ui-bg1)) 70%, transparent);
+  box-shadow: var(--ui-shadow-rest);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.feat-queue-chrome > .ui-field,
+.issues-queue__chrome > .ui-field,
+.crashes-queue__chrome > .ui-field,
+.feat-mods-catalog__chrome > .ui-field,
+.feat-mods-forensics__chrome > .ui-field,
+.feat-subnav-search.feat-queue-chrome > .ui-field {
+  flex: 1 1 180px;
+  min-width: 140px;
+  margin: 0;
+}
+
+.feat-queue-chrome__count,
+.issues-queue__count,
+.crashes-queue__count {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-sp-6) var(--ui-sp-8);
+}
+
+.feat-queue-chrome__sep {
+  opacity: 0.6;
+}

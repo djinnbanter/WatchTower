@@ -1,4 +1,4 @@
-/* IBM Plex — self-hosted woff2 (latin subsets) */
+﻿/* IBM Plex â€” self-hosted woff2 (latin subsets) */
 
 @font-face {
   font-family: "IBM Plex Sans";
@@ -46,6 +46,90 @@
   font-weight: 600;
   font-display: swap;
   src: url("../../assets/fonts/IBMPlexMono-SemiBold.woff2") format("woff2");
+}
+
+
+/* Inter — Sass skin (Classic v1) UI */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/Inter-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../../assets/fonts/Inter-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../../assets/fonts/Inter-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../assets/fonts/Inter-Bold.woff2") format("woff2");
+}
+
+/* Plus Jakarta Sans â€” Sass skin UI */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/PlusJakartaSans-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../../assets/fonts/PlusJakartaSans-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../../assets/fonts/PlusJakartaSans-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../assets/fonts/PlusJakartaSans-Bold.woff2") format("woff2");
+}
+
+/* JetBrains Mono â€” Sass skin metrics / code */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../../assets/fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
 }
 
 /* Typography utilities */

@@ -18,6 +18,10 @@ const FIXTURE_MAP = [
   { key: 'vbk9p8wibc', file: 'VBK9P8wiBc.sparkprofile' },
   { key: 'zsz5e2hnrb', file: 'ZSz5E2HnRb.sparkprofile' },
   { key: 'uurblpnmju', file: 'uUrbLpnMju.sparkprofile' },
+  { key: 'profile-2026-07-23_20.37.29', file: 'profile-2026-07-23_20.37.29.sparkprofile' },
+  { key: 'homestead-prod_profile-2026-07-13_12.59.52', file: 'homestead-prod_profile-2026-07-13_12.59.52.sparkprofile' },
+  { key: 'homestead-prod_profile-2026-07-13_13.30.25', file: 'homestead-prod_profile-2026-07-13_13.30.25.sparkprofile' },
+  { key: 'homestead-staging_profile-2026-07-13_07.25.40', file: 'homestead-staging_profile-2026-07-13_07.25.40.sparkprofile' },
 ];
 
 function mockSourcePath(fileName) {
@@ -78,7 +82,7 @@ for (const { key, file } of FIXTURE_MAP) {
 listEntries.sort((a, b) => Date.parse(b.captured_at || 0) - Date.parse(a.captured_at || 0));
 
 const mocksOut = { profiles };
-fs.writeFileSync(path.join(dataDir, 'spark-profile-mocks.json'), `${JSON.stringify(mocksOut, null, 2)}\n`);
+fs.writeFileSync(path.join(dataDir, 'spark-profile-mocks.json'), `${JSON.stringify(mocksOut)}\n`);
 
 const defaultPath = listEntries[0]?.source_path || mockSourcePath('H5BVV4Annz.sparkprofile');
 const listOut = {

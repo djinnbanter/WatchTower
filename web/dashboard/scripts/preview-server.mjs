@@ -34,7 +34,8 @@ const EMBEDDED_CSP = {
   'X-Frame-Options': 'DENY',
   'X-Content-Type-Options': 'nosniff',
   'Content-Security-Policy':
-    "default-src 'self'; script-src 'self'; img-src 'self' data: https://crafthead.net; "
+    "default-src 'self'; script-src 'self'; "
+    + "img-src 'self' data: https://crafthead.net https://cdn.modrinth.com; "
     + "style-src 'self' 'unsafe-inline'; "
     + "font-src 'self'",
 };

@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -69,6 +70,7 @@ public final class ExtrasCollector {
                 result.addProperty("logs_mb", Math.round(lb / (1024.0 * 1024.0) * 10.0) / 10.0);
             }
         }
+        DimensionStorageScanner.attachCategoryBreakdowns(Path.of(serverDir), result);
         return result;
     }
 
@@ -353,10 +355,18 @@ public final class ExtrasCollector {
                 }
                 long readSectors = Long.parseLong(parts[5]);
                 long writeSectors = Long.parseLong(parts[9]);
+                long writesCompleted = Long.parseLong(parts[7]);
+                long timeWritingMs = Long.parseLong(parts[10]);
+                long readsCompleted = Long.parseLong(parts[3]);
+                long timeReadingMs = Long.parseLong(parts[6]);
                 JsonObject io = new JsonObject();
                 io.addProperty("device", name);
                 io.addProperty("read_bytes", readSectors * 512L);
                 io.addProperty("write_bytes", writeSectors * 512L);
+                io.addProperty("reads_completed", readsCompleted);
+                io.addProperty("writes_completed", writesCompleted);
+                io.addProperty("time_reading_ms", timeReadingMs);
+                io.addProperty("time_writing_ms", timeWritingMs);
                 io.addProperty("source", "diskstats");
                 return io;
             }
@@ -456,6 +466,87 @@ public final class ExtrasCollector {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * True when the filesystem backing {@code serverDir} looks networked (NFS/CIFS/SMB/FUSE).
+     */
+    public static boolean isNetworkFilesystem(String serverDir) {
+        String fstype = resolveMountFsType(serverDir);
+        if (fstype == null) {
+            return false;
+        }
+        String t = fstype.toLowerCase(Locale.ROOT);
+        return t.contains("nfs") || t.contains("cifs") || t.contains("smb")
+                || t.contains("fuse") || t.equals("9p") || t.contains("gluster");
+    }
+
+    /**
+     * Timed write+fsync probe (≤4 KiB) under {@code watchtower/.io-probe.tmp}.
+     * Returns {@code write_latency_ms} or null on failure / network mounts.
+     */
+    public static JsonObject probeWriteLatency(String serverDir) {
+        if (serverDir == null || serverDir.isBlank() || isNetworkFilesystem(serverDir)) {
+            return null;
+        }
+        Path dir = Path.of(serverDir, "watchtower");
+        Path probe = dir.resolve(".io-probe.tmp");
+        try {
+            Files.createDirectories(dir);
+            byte[] payload = new byte[4096];
+            long start = System.nanoTime();
+            try (var channel = java.nio.channels.FileChannel.open(probe,
+                    java.nio.file.StandardOpenOption.CREATE,
+                    java.nio.file.StandardOpenOption.WRITE,
+                    java.nio.file.StandardOpenOption.TRUNCATE_EXISTING)) {
+                channel.write(java.nio.ByteBuffer.wrap(payload));
+                channel.force(true);
+            }
+            double ms = (System.nanoTime() - start) / 1_000_000.0;
+            JsonObject out = new JsonObject();
+            out.addProperty("write_latency_ms", Math.round(ms * 10.0) / 10.0);
+            out.addProperty("latency_source", "fsync_probe");
+            return out;
+        } catch (Exception e) {
+            return null;
+        } finally {
+            try {
+                Files.deleteIfExists(probe);
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    public static String resolveMountFsType(String serverDir) {
+        try {
+            Path serverPath = Path.of(serverDir).toAbsolutePath().normalize();
+            Path mount = serverPath;
+            while (mount != null && !Files.exists(mount)) {
+                mount = mount.getParent();
+            }
+            while (mount != null && !mount.equals(mount.getRoot())) {
+                if (isMountPoint(mount)) {
+                    break;
+                }
+                mount = mount.getParent();
+            }
+            if (mount == null) {
+                mount = serverPath.getRoot();
+            }
+            Path mounts = Path.of("/proc/mounts");
+            if (!Files.isRegularFile(mounts)) {
+                return null;
+            }
+            String mountStr = mount.toString();
+            for (String line : Files.readAllLines(mounts, StandardCharsets.UTF_8)) {
+                String[] parts = line.split("\\s+");
+                if (parts.length >= 3 && parts[1].equals(mountStr)) {
+                    return parts[2];
+                }
+            }
+        } catch (IOException ignored) {
+        }
+        return null;
     }
 
     private static String resolveBlockDevice(String serverDir) {

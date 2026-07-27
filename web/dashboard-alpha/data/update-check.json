@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "current": "1.1.3a",
+  "current_version": "1.1.3a",
+  "update_available": true,
+  "latest_version": "1.1.4",
+  "published_at": "2026-07-23T18:45:39.164Z",
+  "channel": "stable",
+  "release_url": "https://github.com/djinnbanter/WatchTower/releases/tag/v1.1.4",
+  "modrinth_url": "https://modrinth.com/mod/watchtower",
+  "urls": {
+    "github": "https://github.com/djinnbanter/WatchTower/releases/download/v1.1.4/watchtower-neoforge-1.1.4+mc1.21.jar",
+    "release_page": "https://github.com/djinnbanter/WatchTower/releases/tag/v1.1.4",
+    "modrinth": "https://modrinth.com/mod/watchtower"
+  }
+}

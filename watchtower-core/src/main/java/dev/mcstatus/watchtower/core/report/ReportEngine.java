@@ -11,6 +11,10 @@ import dev.mcstatus.watchtower.core.collect.SparkCollector;
 import dev.mcstatus.watchtower.core.collect.StagingBuilder;
 import dev.mcstatus.watchtower.core.incident.IncidentReader;
 import dev.mcstatus.watchtower.core.ops.LagIssueBuilder;
+import dev.mcstatus.watchtower.core.ops.IncidentStoryBuilder;
+import dev.mcstatus.watchtower.core.ops.OpsCacheReader;
+import dev.mcstatus.watchtower.core.ops.OpsCacheSchema;
+import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.util.TimeParse;
 
 import java.io.IOException;
@@ -98,7 +102,9 @@ public final class ReportEngine {
 
             stages.stage("enrich", "Enriching incidents and scorecard");
             stages.detail("Attaching recent lag incidents…");
-            enrichRecentIncidents(facts, config.serverDir());
+            enrichRecentIncidents(facts, config.serverDir(), config);
+            stages.detail("Attaching incident stories…");
+            enrichIncidentStories(facts, config);
 
             stages.stage("write", "Writing facts and brief");
             stages.detail("Writing facts JSON…");
@@ -208,10 +214,13 @@ public final class ReportEngine {
         }
     }
 
-    private static void enrichRecentIncidents(JsonObject facts, String serverDir) {
+    private static void enrichRecentIncidents(JsonObject facts, String serverDir, ReportConfig config) {
         if (serverDir == null || serverDir.isBlank() || facts == null) {
             return;
         }
+        int sparkFreshHours = config != null
+                ? config.sparkFreshHours()
+                : LagIssueBuilder.DEFAULT_SPARK_FRESH_HOURS;
         try {
             Path incidentsDir = Path.of(serverDir, "watchtower", "incidents");
             var summaries = IncidentReader.listSummaries(incidentsDir, 5);
@@ -232,7 +241,7 @@ public final class ReportEngine {
                 }
                 JsonObject full = IncidentReader.loadById(incidentsDir, summary.get("id").getAsString());
                 if (full != null) {
-                    peekEntries.add(LagIssueBuilder.buildPeekEntry(full, sparkProfile));
+                    peekEntries.add(LagIssueBuilder.buildPeekEntry(full, sparkProfile, sparkFreshHours));
                 }
             }
             int active = 0;
@@ -251,6 +260,45 @@ public final class ReportEngine {
 
             facts.add("optional", optional);
         } catch (IOException ignored) {
+            // optional enrichment
+        }
+    }
+
+    private static void enrichIncidentStories(JsonObject facts, ReportConfig config) {
+        if (facts == null || config == null || config.serverDir() == null || config.serverDir().isBlank()) {
+            return;
+        }
+        try {
+            Path opsCachePath = Path.of(config.serverDir(), "watchtower", "ops-cache.json");
+            Path statePath = config.stateFile() != null && !config.stateFile().isBlank()
+                    ? Path.of(config.stateFile())
+                    : Path.of(config.serverDir(), "watchtower", "state.json");
+            JsonArray factsEvents = facts.has("events") && facts.get("events").isJsonArray()
+                    ? facts.getAsJsonArray("events") : null;
+            IncidentStoryBuilder.Settings settings = new IncidentStoryBuilder.Settings(
+                    config.incidentStoryEnabled(),
+                    config.incidentStoryWindowMin(),
+                    config.incidentStoryLookbackHours(),
+                    config.incidentStoryMax()
+            );
+            // DR mode must not mutate server state (or ops-cache seq mirrored there).
+            JsonArray stories;
+            if (config.disasterRecovery()) {
+                JsonObject cache = OpsCacheReader.load(opsCachePath);
+                stories = IncidentStoryBuilder.build(cache, factsEvents, settings);
+            } else {
+                JsonObject updated = OpsCacheWriter.applyIncidentStories(opsCachePath, statePath, settings, factsEvents);
+                stories = updated.has(OpsCacheSchema.INCIDENT_STORIES)
+                        && updated.get(OpsCacheSchema.INCIDENT_STORIES).isJsonArray()
+                        ? updated.getAsJsonArray(OpsCacheSchema.INCIDENT_STORIES).deepCopy()
+                        : new JsonArray();
+            }
+            JsonObject optional = facts.has("optional") && facts.get("optional").isJsonObject()
+                    ? facts.getAsJsonObject("optional")
+                    : new JsonObject();
+            optional.add("incident_stories", stories);
+            facts.add("optional", optional);
+        } catch (Exception ignored) {
             // optional enrichment
         }
     }

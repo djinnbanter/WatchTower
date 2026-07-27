@@ -6,7 +6,7 @@ Thanks for your interest in Watchtower. This repo is a Gradle multi-project: Jav
 
 - **JDK 21+** (NeoForge 1.21.1 toolchain)
 - **Git**
-- **Node.js 18+** (DR viewer smoke tests only)
+- **Node.js 18+** (dashboard Vite build + DR viewer smoke tests)
 
 ## Quick start (clone and build)
 
@@ -14,15 +14,15 @@ Thanks for your interest in Watchtower. This repo is a Gradle multi-project: Jav
 git clone https://github.com/djinnbanter/WatchTower.git
 cd WatchTower
 
-./gradlew :watchtower-core:test :neoforge-1.21.1:build
+./gradlew :watchtower-core:test :neoforge-1.21:build
 
-cd web/dr-viewer && npm ci && cd ../..
+# Optional — React dashboard preview (fixtures; Vite on :8081)
+cd web/dashboard-alpha && npm ci && npm run preview
+
+cd ../dr-viewer && npm ci && cd ../..
 node tools/test-dr-analyze.mjs
 node tools/test-dr-viewer.mjs
 node tools/test-dr-bundle.mjs
-
-# Optional — static dashboard preview (synthetic demo data in web/dashboard/data/)
-cd web/dashboard && python -m http.server 8080
 ```
 
 Build release JARs locally (not committed):
@@ -70,11 +70,14 @@ GPL-3.0-or-later — see [LICENSE](LICENSE). By contributing, you agree that you
 |------|------|
 | `watchtower-core/` | Report engine, collectors, analysis (loader-agnostic) |
 | `watchtower-cli/` | DR CLI when the server will not boot |
-| `mods/neoforge-1.21.1/` | NeoForge mod (dashboard HTTP, commands, live metrics) |
-| `web/dashboard/` | Embedded dashboard source — synced into mod JAR at build |
+| `mods/neoforge-1.21/` | NeoForge mod (dashboard HTTP, commands, live metrics) |
+| `web/dashboard-alpha/` | Embedded React dashboard (Vite) — synced into the NeoForge 1.21 JAR at build |
+| `web/dashboard/` | Legacy Preact archive — do not re-point Gradle here |
 | `web/dr-viewer/` | Static DR viewer (`npm run sync:dashboard` copies shared assets) |
 | `tools/` | Smoke tests, wiki sync, issue import helpers |
+| `samples/` | Tracked golden fixtures + sample DR/support bundles (not the local gitignored `fixtures/`) |
 | `docs/wiki/` | Wiki source (publish with `node tools/sync-wiki.mjs --push`) |
+| `docs/research/` | Optional web-research reference dumps (not runtime inputs) |
 | `docs/ROADMAP.md` | Public planned releases |
 
 Mod subprojects: see [`mods/README.md`](mods/README.md). Web UI: see [`web/README.md`](web/README.md).

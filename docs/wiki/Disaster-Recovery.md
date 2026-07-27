@@ -9,9 +9,9 @@ Use this when **Minecraft will not start** — crash loop, mod error on boot, or
 | Step | What to do |
 |------|------------|
 | 1 | SSH to your server, go to the **`mods/`** folder |
-| 2 | Run `java -jar watchtower-cli-1.0.0.jar dr` |
-| 3 | Download the zip file it creates |
-| 4 | Open it in the [[DR Viewer]] in your browser — start on the **Fix** tab *(viewer is early preview — may not work fully yet; see [[DR Viewer]])* |
+| 2 | Run `java -jar watchtower-cli-<version>.jar dr` (match [[Downloads-and-Releases]]) |
+| 3 | Download the zip it creates |
+| 4 | Prefer reading the zip contents / logs first. Optionally open [[DR-Viewer]] — **Coming soon** for full Fix-tab reliability |
 
 ---
 
@@ -21,8 +21,8 @@ Use this when **Minecraft will not start** — crash loop, mod error on boot, or
 |-----------|---------------------|
 | Server crash loop, won't stay up | **Yes** |
 | Mod won't load on boot | **Yes** |
-| Server running fine | **No** — use dashboard + **Run Report** |
-| Want live charts | **No** — recovery viewer has no Live tab |
+| Server running fine | **No** — use the dashboard + Watching/Scanning |
+| Want live charts | **No** — recovery path has no Live tab |
 
 ---
 
@@ -30,63 +30,50 @@ Use this when **Minecraft will not start** — crash loop, mod error on boot, or
 
 ```bash
 cd /path/to/your/server/mods
-java -jar watchtower-cli-1.0.0.jar dr
+java -jar watchtower-cli-<version>.jar dr
 ```
 
 Creates **`watchtower-dr-bundle-<timestamp>.zip`** in the current folder.
 
-Upload that zip to the [[DR Viewer]]. Analysis runs **in your browser** — nothing is sent to Watchtower's servers. The viewer is still **early preview**; if upload or tabs fail, use the zip contents and logs directly (see [[DR Viewer]]).
+Analysis in [[DR-Viewer]] runs **in your browser** — nothing is sent to Watchtower servers. If the viewer is incomplete, open the zip and inspect logs / crash-reports directly. Full CLI flags: [[DR-CLI-Reference]].
 
 ---
 
 ## Before problems happen
 
-Each successful health report updates `watchtower/DR-README.txt` with the exact command for your server path.
-
-Keep **`watchtower-cli-*.jar`** in `mods/` ahead of time, or download from [Releases](https://github.com/djinnbanter/WatchTower/releases) during an incident.
+Successful Support / legacy report flows update `watchtower/DR-README.txt` with the exact command for your path. Keep **`watchtower-cli-*.jar`** in `mods/` ahead of time.
 
 ---
 
 ## Panel won't let you save the zip?
 
 ```bash
-java -jar watchtower-cli-1.0.0.jar dr --out /tmp
+java -jar watchtower-cli-<version>.jar dr --out /tmp
 ```
 
 Download from `/tmp` via SFTP.
 
 ---
 
-## No CLI? Manual upload
+## No CLI? Manual files
 
-In the DR viewer, expand **Advanced: analyze log files locally** and upload:
+Drop into the viewer (or inspect locally):
 
 - `logs/latest.log` (required)
 - `crash-reports/*.txt` (recommended)
 - `mods/*.jar` (optional)
-- Old `watchtower-facts-*.json` (optional)
-
----
-
-## DR viewer tabs
-
-| Tab | Purpose |
-|-----|---------|
-| **Fix** | What went wrong and what to try first |
-| **Attempts** | Restart attempts since last good boot |
-| **Logs** | Log excerpts from the bundle |
-| **Mods** | What changed vs last report |
-| **Report** | Full brief-style summary |
 
 ---
 
 ## Privacy
 
-Analysis is **100% in your browser**. Optional cache stays on your machine only.
+Bundle review is **local to your browser** when using the viewer. Optional cache stays on your machine.
 
 ---
 
-## See also
+## Related
 
-- [[DR CLI Reference]]
-- [[DR Viewer]]
+- [[DR-CLI-Reference]]
+- [[DR-Viewer]]
+- [[Troubleshooting]]
+- [[Downloads-and-Releases]]

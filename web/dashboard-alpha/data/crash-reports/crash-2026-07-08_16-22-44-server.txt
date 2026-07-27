@@ -1,0 +1,5 @@
+---- Minecraft Crash Report ----
+Time: 2026-07-08 16:22:44
+Description: Initializing game
+
+java.lang.UnsupportedClassVersionError: me/lucko/luckperms/common/plugin/AbstractLuckPermsPlugin has been compiled by a more recent version of the Java Runtime (class file version 65.0), this version of the Java Runtime only recognizes class file versions up to 61.0

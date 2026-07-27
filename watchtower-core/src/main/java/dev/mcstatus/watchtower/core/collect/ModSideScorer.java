@@ -134,90 +134,33 @@ public final class ModSideScorer {
         }
 
         Map<String, ModrinthLookupService.SideInfo> modrinthById = Map.of();
-        if (config.modrinthLookup() && config.modrinthLookupOnReport() && !config.disasterRecovery()) {
-            Set<String> crashSuspects = crashSuspectModIds(optional);
-            Set<String> priorityIds = new HashSet<>(crashSuspects);
-            priorityIds.addAll(SERVER_REQUIRED_IDS);
-            priorityIds.add("chunky");
-            priorityIds.add("squaremap");
-            priorityIds.add("bluemap");
-
-            // Crash suspects first, then Layer-1 ambiguous, then known ops-relevant ids.
-            List<String> candidateOrder = new ArrayList<>();
-            for (String id : crashSuspects) {
-                if (!candidateOrder.contains(id)) {
-                    candidateOrder.add(id);
-                }
-            }
-            for (String id : layer1Scores.keySet()) {
-                if (!candidateOrder.contains(id) && !protectedIds.contains(id)) {
-                    candidateOrder.add(id);
-                }
-            }
-            for (String id : List.of("create", "flywheel", "chunky", "squaremap", "bluemap", "spark")) {
-                if (modPresent(mods, id) && !candidateOrder.contains(id)) {
-                    candidateOrder.add(id);
-                }
-            }
-
-            List<ModrinthLookupService.Candidate> candidates = new ArrayList<>();
-            Set<String> added = new HashSet<>();
-            for (String id : candidateOrder) {
-                if (candidates.size() >= ModrinthLookupService.maxJarsPerReport()) {
-                    break;
-                }
-                if (!added.add(id)) {
-                    continue;
-                }
-                Path jar = resolveModJar(mods, id, serverDir);
-                if (jar != null) {
-                    candidates.add(new ModrinthLookupService.Candidate(id, jar));
-                }
-            }
-
+        if (config.modrinthLookup() && !config.disasterRecovery()) {
+            List<ModrinthLookupService.Candidate> candidates = ModrinthScanJob.buildCandidates(optional, serverDir);
             Path cacheFile = serverDir != null && !serverDir.isBlank()
                     ? Path.of(serverDir, "watchtower", "modrinth-cache.json")
                     : null;
+            Map<Path, String> hashByPath = new HashMap<>();
+            ModrinthLookupService.hashCandidates(candidates, hashByPath, ModrinthScanProgress.NOOP);
             Map<String, ModrinthLookupService.SideInfo> byHash =
-                    ModrinthLookupService.lookup(candidates, cacheFile, config);
+                    ModrinthLookupService.lookupCacheOnly(candidates, cacheFile, hashByPath);
             Map<String, ModrinthLookupService.SideInfo> byId = new HashMap<>();
-            Map<String, String> hashById = new HashMap<>();
             for (ModrinthLookupService.Candidate c : candidates) {
-                try {
-                    String hash = ModrinthLookupService.sha512Hex(c.jarPath());
-                    hashById.put(c.modId(), hash);
-                    ModrinthLookupService.SideInfo info = byHash.get(hash);
-                    if (info != null && !info.miss()) {
-                        byId.put(c.modId(), info);
-                    }
-                } catch (Exception ex) {
-                    // never block scoring
+                String hash = hashByPath.get(c.jarPath());
+                if (hash == null) {
+                    continue;
+                }
+                ModrinthLookupService.SideInfo info = byHash.get(hash);
+                if (info != null && !info.miss()) {
+                    byId.put(c.modId(), info);
                 }
             }
-
-            String mcVersion = ModrinthLookupService.minecraftVersionFromMods(mods);
-            ModrinthLookupService.enrichCompatibleUpdates(
-                    byId,
-                    hashById,
-                    priorityIds,
-                    config.loader(),
-                    mcVersion,
-                    config.modrinthRateLimit());
-
-            ModrinthLookupService.applyIdentityToMods(mods, byId);
+            ModrinthLookupService.applyIdentityToMods(mods, byId, config.loader());
             JsonArray updates = ModrinthLookupService.buildUpdatesSummary(mods);
+            updates = ModUpdateImpactAnalyzer.enrich(mods, updates, byId);
             if (updates.size() > 0) {
                 optional.add("modrinth_updates", updates);
-            }
-            // Refresh disk cache with compatible-update fields
-            if (cacheFile != null) {
-                for (Map.Entry<String, ModrinthLookupService.SideInfo> e : byId.entrySet()) {
-                    String hash = hashById.get(e.getKey());
-                    if (hash != null) {
-                        byHash.put(hash, e.getValue());
-                    }
-                }
-                ModrinthLookupService.persistCache(cacheFile, byHash);
+            } else {
+                optional.remove("modrinth_updates");
             }
             modrinthById = byId;
         }
@@ -264,19 +207,22 @@ public final class ModSideScorer {
                 }
             }
             Score score = scoreMod(id, mod, logWarnings, graph, scan);
+            ModrinthLookupService.SideInfo mr = modrinthById.get(id);
             if (score.bucket() == null) {
-                writeModFields(mod, null, List.of(), graph.dependentsCount(id));
-                continue;
+                if (mr != null && !mr.miss()) {
+                    score = mergeModrinth(score, mr);
+                }
+                if (score.bucket() == null) {
+                    writeModFields(mod, null, List.of(), graph.dependentsCount(id));
+                    continue;
+                }
+            } else if (mr != null) {
+                score = mergeModrinth(score, mr);
             }
             if (score.bucket() == Bucket.LIKELY_REMOVABLE
                     && graph.hasServerDependents(id, candidateIds)) {
                 score = score.withBucket(Bucket.UNCERTAIN, Confidence.MEDIUM,
                         "Other mods depend on this jar — review dependents before removing.");
-            }
-
-            ModrinthLookupService.SideInfo mr = modrinthById.get(id);
-            if (mr != null) {
-                score = mergeModrinth(score, mr);
             }
 
             writeModFields(mod, score.bucket(), score.signals(), graph.dependentsCount(id));
@@ -335,12 +281,20 @@ public final class ModSideScorer {
                 return layer1;
             }
             signals.add("modrinth:client_only");
+            String reason = layer1.reason() != null && !layer1.reason().isBlank()
+                    ? layer1.reason()
+                    : "Modrinth marks this mod as client-only";
             return new Score(Bucket.LIKELY_REMOVABLE, Confidence.HIGH, signals,
-                    layer1.reason(),
+                    reason,
                     removalAdviceFor(Bucket.LIKELY_REMOVABLE));
         }
         if ("optional".equals(server) && "optional".equals(client)) {
             signals.add("modrinth:optional_both");
+            if (layer1.bucket() == null) {
+                return new Score(Bucket.UNCERTAIN, Confidence.MEDIUM, signals,
+                        "Modrinth lists both client and server as optional",
+                        removalAdviceFor(Bucket.UNCERTAIN));
+            }
             return new Score(layer1.bucket(), layer1.confidence(), signals, layer1.reason(), layer1.removalAdvice());
         }
         return layer1;

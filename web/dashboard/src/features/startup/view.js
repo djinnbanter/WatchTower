@@ -1,9 +1,31 @@
-import { html } from '../../lib/preact.js';
-import { reports } from '../../state/stores.js';
+import { html, useEffect, useState } from '../../lib/preact.js';
+import { reports, dataSources, opsCache } from '../../state/stores.js';
 import { navigate } from '../../app/router.js';
-import { Page, Section, EmptyState } from '../../ui/patterns/index.js';
+import { Page, Section, EmptyState, FreshnessBadge, ListRow } from '../../ui/patterns/index.js';
 import { Badge, Button, Card } from '../../ui/primitives/index.js';
 import { Icon } from '../../ui/icons.js';
+import { configAuditGet } from '../../api/endpoints.js';
+
+const DISMISS_KEY = 'wt.configAuditDismissals';
+
+function loadDismissals() {
+  try {
+    const raw = localStorage.getItem(DISMISS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveDismissals(map) {
+  try {
+    localStorage.setItem(DISMISS_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore quota */
+  }
+}
 
 function statusTone(status) {
   const s = (status ?? '').toLowerCase();
@@ -28,6 +50,15 @@ function formatSec(sec) {
   if (n >= 100) return `${Math.round(n)}s`;
   if (n >= 10) return `${n.toFixed(1)}s`;
   return `${n.toFixed(2)}s`;
+}
+
+/** Drop absurd phase durations (e.g. old line-index-as-epoch bug) for display. */
+function sanePhaseSec(sec, totalSec) {
+  const n = Number(sec);
+  if (!Number.isFinite(n) || n < 0) return null;
+  const total = Number(totalSec);
+  if (Number.isFinite(total) && total > 0 && n > total * 2) return null;
+  return n;
 }
 
 function formatDoneAt(iso) {
@@ -62,9 +93,12 @@ function phaseLabel(phases, phaseId) {
   return hit?.label ?? humanId(phaseId);
 }
 
-function maxPhaseSec(phases) {
+function maxPhaseSec(phases, totalSec) {
   if (!phases?.length) return 0;
-  return Math.max(...phases.map((p) => Number(p.sec) || 0), 0.01);
+  const vals = phases
+    .map((p) => sanePhaseSec(p.sec, totalSec))
+    .filter((n) => n != null);
+  return Math.max(...vals, 0.01);
 }
 
 function slowRankMap(slowest) {
@@ -75,23 +109,215 @@ function slowRankMap(slowest) {
   return map;
 }
 
+function verdictTone(verdict) {
+  if (verdict === 'fine') return 'ok';
+  if (verdict === 'consider_lowering' || verdict === 'consider_raising') return 'warn';
+  return 'neutral';
+}
+
+function verdictLabel(verdict) {
+  switch (verdict) {
+    case 'fine': return 'Fine';
+    case 'consider_lowering': return 'Consider lowering';
+    case 'consider_raising': return 'Consider raising';
+    case 'missing': return 'Missing';
+    default: return verdict ? String(verdict).replace(/_/g, ' ') : 'Unknown';
+  }
+}
+
+function ConfigAuditCard({ audit, dismissals, showDismissed, onDismiss, onUndismiss, onToggleDismissed }) {
+  if (!audit || audit.status === 'disabled') return null;
+
+  const rows = Array.isArray(audit.properties) ? audit.properties : [];
+  const active = rows.filter((r) => !dismissals[r.key]);
+  const dismissed = rows.filter((r) => !!dismissals[r.key]);
+  const visible = showDismissed ? rows : active;
+  const jvm = audit.jvm || null;
+  const summary = audit.summary || {};
+  const considerCount = summary.consider ?? 0;
+
+  if (audit.status === 'unavailable' && !rows.length) {
+    return html`
+      <${Section}
+        title="Launch & config audit"
+        badge=${html`<${Badge} tone="neutral">Read-only</${Badge}>`}
+      >
+        <${Card} className="startup-audit" tone="neutral" padding="20">
+          <div class="startup-audit__banner">
+            <${Icon} name="alert-triangle" size=${16} />
+            <p>${audit.detail || 'Could not read server.properties'}</p>
+          </div>
+        </${Card}>
+      </${Section}>
+    `;
+  }
+
+  return html`
+    <${Section}
+      title="Launch & config audit"
+      badge=${html`<${Badge} tone=${considerCount > 0 ? 'warn' : 'ok'}>Read-only advisory</${Badge}>`}
+      actions=${dismissed.length ? html`
+        <${Button} kind="ghost" size="sm" onClick=${onToggleDismissed}>
+          ${showDismissed ? 'Hide dismissed' : `Show dismissed (${dismissed.length})`}
+        </${Button}>
+      ` : null}
+    >
+      <${Card} className="startup-audit" tone=${considerCount > 0 ? 'warn' : 'neutral'} padding="20">
+        <div class="startup-audit__head">
+          <div>
+            <div class="startup-audit__eyebrow">server.properties</div>
+            <p class="startup-audit__lede">
+              Read-only advisory — Watchtower will not change these files.
+            </p>
+          </div>
+          <div class="startup-audit__counts" aria-label="Audit summary">
+            <span class="startup-audit__count">
+              <strong>${summary.fine ?? 0}</strong> fine
+            </span>
+            <span class="startup-audit__count startup-audit__count--consider">
+              <strong>${considerCount}</strong> consider
+            </span>
+          </div>
+        </div>
+
+        ${visible.length ? html`
+          <div class="startup-audit__list">
+            ${visible.map((row, i) => {
+              const isDismissed = !!dismissals[row.key];
+              const tone = verdictTone(row.verdict);
+              return html`
+                <${ListRow}
+                  key=${row.key}
+                  className=${isDismissed ? 'startup-audit__row startup-audit__row--dismissed' : 'startup-audit__row'}
+                  staggerIndex=${i}
+                  tone=${tone}
+                  icon=${html`<${Icon} name="settings" size=${14} />`}
+                  title=${`${row.title || row.key}${row.value != null ? ` · ${row.value}` : ''}`}
+                  meta=${row.detail}
+                  badge=${html`<${Badge} tone=${tone}>${verdictLabel(row.verdict)}</${Badge}>`}
+                  actions=${html`
+                    <${Button}
+                      kind="neutral"
+                      size="sm"
+                      onClick=${(e) => {
+                        e?.stopPropagation?.();
+                        if (isDismissed) onUndismiss(row.key);
+                        else onDismiss(row.key);
+                      }}
+                    >${isDismissed ? 'Restore' : 'Dismiss'}</${Button}>
+                  `}
+                />
+              `;
+            })}
+          </div>
+        ` : html`
+          <div class="startup-empty startup-empty--ok">
+            <${Icon} name="check" size=${16} />
+            <span>${dismissed.length ? 'All rows dismissed' : 'No settings to review'}</span>
+          </div>
+        `}
+
+        ${jvm ? html`
+          <div class="startup-audit__jvm">
+            <div class="startup-audit__jvm-text">
+              <div class="startup-audit__jvm-label">JVM launch flags</div>
+              <p class="startup-audit__jvm-advice">
+                ${jvm.flags_profile ? html`<code class="startup-audit__profile">${jvm.flags_profile}</code>` : null}
+                ${jvm.flags_profile ? ' · ' : ''}
+                ${jvm.advice || 'Open Insights → Configs for full flag advice.'}
+              </p>
+            </div>
+            <${Button}
+              kind="accent"
+              size="sm"
+              onClick=${() => navigate('insights', { view: 'configs' })}
+            >Open Insights → Configs</${Button}>
+          </div>
+        ` : null}
+      </${Card}>
+    </${Section}>
+  `;
+}
+
+function useConfigAudit() {
+  const factsAudit = reports.value?.facts?.optional?.config_launch_audit ?? null;
+  const [audit, setAudit] = useState(factsAudit);
+  const [dismissals, setDismissals] = useState(loadDismissals);
+  const [showDismissed, setShowDismissed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await configAuditGet();
+        if (!cancelled && data) setAudit(data);
+      } catch {
+        if (!cancelled && factsAudit) setAudit(factsAudit);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!audit && factsAudit) setAudit(factsAudit);
+  }, [factsAudit]);
+
+  const onDismiss = (key) => {
+    setDismissals((prev) => {
+      const next = { ...prev, [key]: true };
+      saveDismissals(next);
+      return next;
+    });
+  };
+  const onUndismiss = (key) => {
+    setDismissals((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      saveDismissals(next);
+      return next;
+    });
+  };
+
+  return {
+    audit,
+    dismissals,
+    showDismissed,
+    onDismiss,
+    onUndismiss,
+    onToggleDismissed: () => setShowDismissed((v) => !v),
+  };
+}
+
 export function PageView() {
   const facts = reports.value?.facts;
-  const profile = facts?.optional?.startup_profile ?? null;
+  const factsProfile = facts?.optional?.startup_profile ?? null;
+  const opsProfile = opsCache.value?.data?.startup_profile ?? null;
+  const profile = factsProfile ?? opsProfile ?? null;
+  const profileFromOps = !factsProfile && !!opsProfile;
+  const freshnessLayer = profileFromOps ? 'scan' : 'report';
+  const freshnessAt = profileFromOps
+    ? (dataSources.value?.scanAt ?? opsCache.value?.at ?? null)
+    : (dataSources.value?.reportAt ?? null);
+  const auditState = useConfigAudit();
 
   if (!profile) {
     return html`
-      <${Page} title="Startup" subtitle="Last boot timeline and warnings">
-        <div class="ui-page__stack" data-tour="startup">
+      <${Page}
+      title="Startup"
+      subtitle="Last boot timeline and warnings"
+      actions=${html`<${FreshnessBadge} layer=${freshnessLayer} at=${freshnessAt} />`}
+    >
+        <div class="ui-page__stack" data-view="startup">
           <${EmptyState}
             title="No boot profile yet"
-            body="Run a report after the server reaches Done! to capture boot phases, warnings, and errors."
+            body="Waiting for a boot profile — after the server reaches Done!, Watchtower captures phases automatically via Scanning."
             action=${html`
               <${Button} kind="accent" size="sm" onClick=${() => navigate('overview')}>
                 Back to Overview
               </${Button}>
             `}
           />
+          <${ConfigAuditCard} ...${auditState} />
         </div>
       </${Page}>
     `;
@@ -108,19 +334,24 @@ export function PageView() {
     done_at,
   } = profile;
 
-  const phaseMax = maxPhaseSec(phases);
+  const phaseMax = maxPhaseSec(phases, total_sec);
   const tone = statusTone(status);
   const delta = formatDelta(compare_to_last_boot);
   const ranks = slowRankMap(slowest);
   const blocking = errors.filter((e) => e.blocking).length;
   const doneLabel = formatDoneAt(done_at);
-  const slowestLabel = slowest[0]
-    ? `${phaseLabel(phases, slowest[0].phase)} · ${formatSec(slowest[0].sec)}`
+  const slowestSec = slowest[0] ? sanePhaseSec(slowest[0].sec, total_sec) : null;
+  const slowestLabel = slowest[0] && slowestSec != null
+    ? `${phaseLabel(phases, slowest[0].phase)} · ${formatSec(slowestSec)}`
     : null;
 
   return html`
-    <${Page} title="Startup" subtitle="Last boot timeline and warnings">
-      <div class="ui-page__stack" data-tour="startup">
+    <${Page}
+      title="Startup"
+      subtitle="Last boot timeline and warnings"
+      actions=${html`<${FreshnessBadge} layer=${freshnessLayer} at=${freshnessAt} />`}
+    >
+      <div class="ui-page__stack" data-view="startup">
 
         <section class=${`startup-hero startup-hero--${tone}`}>
           <div class="startup-hero__main">
@@ -162,13 +393,18 @@ export function PageView() {
           </div>
         </section>
 
+        <${ConfigAuditCard} ...${auditState} />
+
         <${Section} title="Boot phases">
           ${phases.length ? html`
             <div class="startup-phases">
               ${phases.map((p) => {
-                const sec = Number(p.sec) || 0;
-                const pct = Math.min(100, (sec / phaseMax) * 100);
-                const share = total_sec > 0 ? Math.round((sec / Number(total_sec)) * 100) : null;
+                const sec = sanePhaseSec(p.sec, total_sec);
+                const pct = sec != null ? Math.min(100, (sec / phaseMax) * 100) : 0;
+                const shareRaw = sec != null && total_sec > 0
+                  ? Math.round((sec / Number(total_sec)) * 100)
+                  : null;
+                const share = shareRaw != null ? Math.max(0, Math.min(100, shareRaw)) : null;
                 const rank = ranks.get(p.id);
                 const isSlow = rank === 1;
                 return html`

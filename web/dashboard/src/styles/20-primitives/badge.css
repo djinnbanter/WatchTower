@@ -62,7 +62,7 @@
   color: var(--ui-src-report);
 }
 
-/* Pulse dot prefix */
+/* Pulse dot prefix — animate only with .is-live (healthy stream) */
 .ui-badge--pulse::before {
   content: '';
   display: inline-block;
@@ -70,6 +70,11 @@
   height: 6px;
   border-radius: var(--ui-rad-full);
   background: currentColor;
-  animation: ui-live-pulse 2s var(--ui-ease-inout) infinite;
   flex-shrink: 0;
+  opacity: 0.55;
+}
+
+.ui-badge--pulse.is-live::before {
+  animation: ui-live-pulse 2s var(--ui-ease-inout) infinite;
+  opacity: 1;
 }

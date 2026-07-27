@@ -1,4 +1,7 @@
-import { ui, setUi, setRoute } from '../state/stores.js';
+import { ui, setRoute } from '../state/stores.js';
+import { kickRenderNow } from './kick-render.js';
+import { kickTask } from '../state/scheduler.js';
+import { Motion } from '../motion/reduced.js';
 
 const ALIASES = {
   performance: 'insights',
@@ -38,6 +41,17 @@ export function parseRoute() {
 export function applyRoute(route, { replace = false } = {}) {
   const { tab, params = {} } = route;
   setRoute(tab, params);
+  // setUi already kickRenders; flush immediately so rail/subnav clicks paint this frame
+  kickRenderNow();
+  // Samples/live only poll on certain tabs — kick immediately on navigation so Live isn't empty
+  if (tab === 'live' || tab === 'overview') {
+    kickTask('samples');
+    kickTask('live');
+  }
+  if (tab === 'session') {
+    kickTask('live');
+    kickTask('players');
+  }
 
   const qs = new URLSearchParams({ tab, ...params }).toString();
   const url = `${location.pathname}?${qs}`;
@@ -54,9 +68,23 @@ export function applyRoute(route, { replace = false } = {}) {
 
 /**
  * Navigate to a tab with optional params.
+ * Uses View Transitions when supported (opacity-safe for sticky panes).
  */
 export function navigate(tab, params = {}, { replace = false } = {}) {
-  applyRoute({ tab, params }, { replace });
+  const run = () => applyRoute({ tab, params }, { replace });
+  if (
+    Motion.enabled
+    && typeof document !== 'undefined'
+    && typeof document.startViewTransition === 'function'
+  ) {
+    try {
+      document.startViewTransition(run);
+      return;
+    } catch {
+      // fall through
+    }
+  }
+  run();
 }
 
 /**
@@ -66,6 +94,15 @@ export function initRouter() {
   window.addEventListener('popstate', () => {
     const route = parseRoute();
     setRoute(route.tab, route.params);
+    kickRenderNow();
+    if (route.tab === 'live' || route.tab === 'overview') {
+      kickTask('samples');
+      kickTask('live');
+    }
+    if (route.tab === 'session') {
+      kickTask('live');
+      kickTask('players');
+    }
   });
   const initial = parseRoute();
   setRoute(initial.tab, initial.params);

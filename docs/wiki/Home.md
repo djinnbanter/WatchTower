@@ -1,15 +1,6 @@
 # Watchtower
 
-Watchtower helps you keep your Minecraft server healthy. It checks logs, crashes, mods, backups, and how hard the machine is working — then shows the results in a web dashboard on your server. Everything stays on your machine. No cloud accounts, no AI, no data sent elsewhere.
-
----
-
-## At a glance
-
-- **Works on:** Linux servers running NeoForge for Minecraft **1.21.x**
-- **Dashboard:** open `http://<your-server-ip>:8787` in a browser (you must sign in)
-- **First login:** username `watchtower`, password `password` — you will be asked to change the password
-- **Download:** [GitHub Releases](https://github.com/djinnbanter/WatchTower/releases) · [Modrinth](https://modrinth.com/mod/watchtower)
+Watchtower watches your Minecraft server and shows what to fix — on your machine. It checks logs, crashes, mods, backups, and how hard the host is working, then shows the results in a web dashboard. No cloud accounts, no AI, no data sent elsewhere.
 
 ---
 
@@ -17,54 +8,50 @@ Watchtower helps you keep your Minecraft server healthy. It checks logs, crashes
 
 | Feature | In plain English |
 |---------|------------------|
-| **Health reports** | A full check of your server — logs, crashes, mods, backups — saved as files you can read or share |
-| **Live dashboard** | See server speed, lag, players, memory, and CPU with charts |
-| **Fix list** | A prioritized list of problems from your latest report |
+| **Watching + Scanning** | Charts and continuous Issues stay current without homework |
+| **Live dashboard** | Server speed, lag, players, memory, and CPU with charts |
+| **Fix list** | Prioritized problems from continuous Scanning ([[Issues]]) |
+| **Support compose** | A zip snapshot when you need to share with your host or mod authors |
 | **Recovery tools** | Help when the server will not start (separate command-line tool) |
-| **Built-in guides** | **Docs** tab in the dashboard — search and browse help without leaving the game |
+| **Built-in guides** | **Help Center** in the dashboard — search and browse without leaving the UI |
 
 ---
 
-## Start here
+## How data works
 
-**New to Watchtower?** Read in this order:
+| Layer | Plain English |
+|-------|----------------|
+| **Watching** | Live charts and vitals while the server runs |
+| **Scanning** | Logs, crashes, Issues, mods — about once a minute |
+| **Support compose** | Frozen zip when you ask — not day-to-day tab truth |
+
+Full detail: [[Understanding-Data-Sources]]. Day-to-day freshness: [[Sources]].
+
+---
+
+## First hour
 
 1. [[Installation]] — download and add the mod
-2. [[Quick Start Checklist]] — first login, report, backups, schedule
-3. [[Dashboard Overview]] — where everything is in the dashboard
-4. [[Dashboard Tabs]] — what each tab is for
-5. [[Understanding-Data-Sources]] — what updates right away vs needs a full report
-6. [[Using-Spark-with-Watchtower]] — find what is slowing the server (optional)
+2. [[Quick-Start-Checklist]] — sign in, first-run setup wizard, Sources check, backups
+3. [[Dashboard-Overview]] — mission control
+4. [[Dashboard-Tabs]] — where to click next
 
-**Server will not start?** → [[Disaster Recovery]]
+**Server will not start?** → [[Disaster-Recovery]]
 
 **Something not working?** → [[Troubleshooting]]
 
-**What is planned next?** → [[Roadmap]]
+**Is Watchtower working?** → [[Sources]]
 
 ---
 
-## Download (1.1.0)
+## Download
 
-| File | What to do with it |
-|------|---------------------|
-| `watchtower-neoforge-1.1.0+mc1.21.jar` | Put in your server **`mods/`** folder |
-| `watchtower-cli-1.1.0.jar` | Put in **`mods/`** too (recovery tool — not loaded as a mod) |
-
-See [[Downloads and Releases]] for GitHub, Modrinth, and build instructions.
+Get the **current release** jars from [[Downloads-and-Releases]] (GitHub Releases and Modrinth). Put the NeoForge jar in `mods/`; keep the CLI jar nearby for recovery.
 
 ---
 
-## What's in 1.1.0
+## Related
 
-Live dashboard with Monitor / Triage / Ops tabs plus Admin **Docs**. Setup wizard, scheduled reports, performance insights (Patterns sub-panels), crash intelligence, Startup profile, Logs viewer, Spark profiler, backup tracking (or **Not tracking**), Session roster, always-on background scans, and disaster recovery CLI.
-
-Details: [[Changelog]]
-
----
-
-## For developers
-
-Build and contributing: [CONTRIBUTING.md](https://github.com/djinnbanter/WatchTower/blob/main/CONTRIBUTING.md) on GitHub.
-
-**Upcoming features (plain summary):** [[Roadmap]]
+- [[Roadmap]] — what is planned next
+- [[Changelog]] — what changed
+- [CONTRIBUTING.md](https://github.com/djinnbanter/WatchTower/blob/main/CONTRIBUTING.md) — build and contribute

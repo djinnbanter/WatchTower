@@ -26,7 +26,7 @@ Some panels must be set manually (TCAdmin, WISP, PebbleHost).
 
 | Concern | What to do |
 |---------|------------|
-| Dashboard on public IP | Bind to localhost + SSH tunnel — [[Security and Access]] |
+| Dashboard on public IP | Bind to localhost + SSH tunnel — [[Security-and-Access]] |
 | Temperature missing on charts | Normal on VPS — not always available |
 | Cannot see backup folder | Use **Settings → Backups** for panel-only backups |
 | Recovery tool cannot write | Run CLI with output to `/tmp` |

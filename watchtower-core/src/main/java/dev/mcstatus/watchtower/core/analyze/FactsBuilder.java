@@ -7,6 +7,8 @@ import dev.mcstatus.watchtower.core.brief.BriefFormatters;
 import dev.mcstatus.watchtower.core.collect.CrashDetails;
 import dev.mcstatus.watchtower.core.collect.FmlIssueParser;
 import dev.mcstatus.watchtower.core.collect.JarClassIndex;
+import dev.mcstatus.watchtower.core.collect.JvmHealthCollector;
+import dev.mcstatus.watchtower.core.collect.ServerPropertiesReader;
 import dev.mcstatus.watchtower.core.collect.MixinConfigIndex;
 import dev.mcstatus.watchtower.core.collect.ModForensicsCollector;
 import dev.mcstatus.watchtower.core.collect.ModrinthLookupService;
@@ -94,8 +96,18 @@ public final class FactsBuilder {
             Map.entry("DISK_HIGH", List.of(
                     "Free disk space on the server volume; world backups and logs can fill the disk."
             )),
+            Map.entry("DISK_FILL_PROJECTED", List.of(
+                    "Prune old logs, crash reports, and local backups on the server volume.",
+                    "Expand the volume or move large worlds/backups off the primary disk.",
+                    "Check dimension growth on Insights → Storage if the world is the main driver."
+            )),
             Map.entry("MEM_LOW", List.of(
                     "Available system RAM is low — reduce heap, players, or loaded chunks."
+            )),
+            Map.entry("GC_PRESSURE", List.of(
+                    "Check Live → GC health for pause % of wall and heap pressure.",
+                    "Heap-bound: raise -Xmx (leave OS headroom) or find a leak; GC-bound: adopt Paper/flags.sh Aikar G1 flags (Xms=Xmx, MaxGCPauseMillis=200) or fix ≥12G overrides.",
+                    "Confirm with /spark gcmonitor; do not throw RAM at single-thread/mod lag."
             )),
             Map.entry("TICK_LAG", List.of(
                     "Server logged 'Can't keep up' warnings — reduce MSPT load, factories, or view distance."
@@ -425,6 +437,21 @@ public final class FactsBuilder {
         if (optional == null) {
             optional = new JsonObject();
         }
+
+        JsonObject diskProjection = optional.has("disk_projection") && optional.get("disk_projection").isJsonObject()
+                ? optional.getAsJsonObject("disk_projection") : null;
+        double fillWarnDays = dbl(thresholds, "disk_fill_warn_days") != null
+                ? dbl(thresholds, "disk_fill_warn_days") : 14.0;
+        if (DiskProjectionAnalyzer.shouldRaiseIssue(diskProjection, fillWarnDays)) {
+            String msg = diskProjection.has("message")
+                    ? diskProjection.get("message").getAsString()
+                    : String.format(Locale.US, "Disk projected to fill within %.0f days.", fillWarnDays);
+            String severity = diskProjection.has("days_until_full")
+                    && diskProjection.get("days_until_full").getAsDouble() <= 2
+                    ? "warning" : "info";
+            ctx.addIssue("DISK_FILL_PROJECTED", msg, severity, null, false);
+        }
+
         addCrashSummaries(optional, crashReports, serverStarted, acknowledgedCrashFiles(optional), meta, events);
         mergeFmlIssues(optional, crashReports);
         applyCaParityScanners(optional, ctx, crashReports);
@@ -504,20 +531,22 @@ public final class FactsBuilder {
             }
             if (backup != null && "not_found".equals(str(backup, "status")) && !resolved.suppressLocalNotFound()) {
                 ctx.addIssue("BACKUP_NOT_FOUND",
-                        "No backup archive found in the lookback window.",
+                        "No backup archive found.",
                         "warning", null, false);
             }
             if (backupExternal != null && bool(backupExternal, "configured", false)) {
                 String extStatus = str(backupExternal, "status");
+                boolean localFresh = backup != null && "success".equals(str(backup, "status"))
+                        && !bool(backup, "stale", false);
                 if ("missing".equals(extStatus) && resolved.mode() == BackupStatusResolver.Mode.EXTERNAL_ONLY) {
                     ctx.addIssue("BACKUP_NOT_FOUND",
                             "No external backup heartbeat received yet.",
                             "warning", null, false);
-                } else if ("failed".equals(extStatus)) {
+                } else if ("failed".equals(extStatus) && !localFresh) {
                     ctx.addIssue("BACKUP_NOT_FOUND",
                             strOr(backupExternal, "detail", "External backup reported failure."),
                             "warning", null, false);
-                } else if (bool(backupExternal, "stale", false) || "stale".equals(extStatus)) {
+                } else if ((bool(backupExternal, "stale", false) || "stale".equals(extStatus)) && !localFresh) {
                     Double age = dbl(backupExternal, "age_days");
                     String ageStr = age != null ? String.format(Locale.US, "%.1f", age) : "?";
                     int warnDays = integer(backup, "warn_days", 7);
@@ -529,15 +558,44 @@ public final class FactsBuilder {
                 }
             }
             if (backup != null && bool(backup, "stale", false)) {
-                String age = str(backup, "age_days");
-                if (age == null) {
-                    age = "?";
+                boolean externalFresh = backupExternal != null && bool(backupExternal, "configured", false)
+                        && (("success".equals(str(backupExternal, "status"))
+                        || "running".equals(str(backupExternal, "status")))
+                        && !bool(backupExternal, "stale", false));
+                if (!externalFresh) {
+                    String age = str(backup, "age_days");
+                    if (age == null) {
+                        Double ageD = dbl(backup, "age_days");
+                        age = ageD != null ? String.format(Locale.US, "%.1f", ageD) : "?";
+                    }
+                    int warnDays = integer(backup, "warn_days", 7);
+                    ctx.addIssue("BACKUP_STALE",
+                            String.format("Newest backup is %s days old (warn > %d days): %s",
+                                    age, warnDays, strOr(backup, "path", "?")),
+                            "warning", null, false);
                 }
-                int warnDays = integer(backup, "warn_days", 7);
-                ctx.addIssue("BACKUP_STALE",
-                        String.format("Newest backup is %s days old (warn > %d days): %s",
-                                age, warnDays, strOr(backup, "path", "?")),
-                        "warning", null, false);
+            } else if (backup != null
+                    && !"not_found".equals(str(backup, "status"))
+                    && !"unconfigured".equals(str(backup, "status"))) {
+                // BAU freshness: raise when newest archive is older than 24h (independent of LOOKBACK_HOURS / warn days)
+                Double ageHours = dbl(backup, "age_hours");
+                if (ageHours == null) {
+                    Double ageDays = dbl(backup, "age_days");
+                    if (ageDays != null) {
+                        ageHours = ageDays * 24.0;
+                    }
+                }
+                if (ageHours != null && ageHours > 24.0) {
+                    boolean externalFresh = backupExternal != null && bool(backupExternal, "configured", false)
+                            && (("success".equals(str(backupExternal, "status"))
+                            || "running".equals(str(backupExternal, "status")))
+                            && !bool(backupExternal, "stale", false));
+                    if (!externalFresh) {
+                        ctx.addIssue("BACKUP_STALE",
+                                "No backup in the last 24 hours.",
+                                "warning", null, false);
+                    }
+                }
             }
         }
 
@@ -686,6 +744,10 @@ public final class FactsBuilder {
         }
 
         String statusNote = BriefFormatters.buildStatusNote(overallStatus[0], currentStatus, issues);
+
+        applyJvmHealth(optional, ctx, system, mc, meta);
+        applyConfigLaunchAudit(optional, meta);
+        applySafeRestart(optional, system, mc, thresholds, meta, overallStatus[0]);
 
         // CA-27: filter suppressed Issues (queue only — crash groups untouched)
         IssueSuppressionStore suppressions = IssueSuppressionStore.load(
@@ -1119,24 +1181,9 @@ public final class FactsBuilder {
         if (optional == null || meta == null) {
             return;
         }
-        boolean lookup = bool(meta, "modrinth_lookup", false);
-        boolean onReport = bool(meta, "modrinth_lookup_on_report", true);
-        boolean dr = bool(meta, "disaster_recovery", false)
-                || "dr".equalsIgnoreCase(str(meta, "report_mode"));
-        if (!lookup || !onReport || dr) {
-            return;
-        }
-        String serverDir = str(meta, "server_dir");
-        int rate = integer(meta, "modrinth_rate_limit", 4);
-        String loader = str(meta, "loader");
-        ReportConfig cfg = ReportConfig.builder()
-                .modrinthLookup(true)
-                .modrinthLookupOnReport(true)
-                .modrinthRateLimit(rate)
-                .loader(loader != null ? loader : "neoforge")
-                .serverDir(serverDir != null ? serverDir : "")
-                .build();
-        ModrinthLookupService.enrichCrashSuspects(optional, cfg, serverDir);
+        // Reports must not initiate Modrinth I/O. This only rebuilds the summary from fields
+        // already stored on optional.mods by the dedicated scan/cache path.
+        ModrinthLookupService.enrichCrashSuspects(optional, null, null);
     }
 
     private static void enrichCrashModLinks(JsonObject optional, JsonArray modRecs) {
@@ -1473,6 +1520,195 @@ public final class FactsBuilder {
                         "Java heap out-of-memory detected (crash kind remains host_resource).",
                         "critical", null, false);
             }
+        }
+    }
+
+    private static void applyJvmHealth(
+            JsonObject optional, IssueContext ctx, JsonObject system, JsonObject mc, JsonObject meta) {
+        if (optional == null) {
+            return;
+        }
+        JsonObject sample = optional.has("jvm_health_sample") && optional.get("jvm_health_sample").isJsonObject()
+                ? optional.getAsJsonObject("jvm_health_sample")
+                : null;
+        if (sample == null) {
+            try {
+                Double xmxHint = dbl(system, "java_xmx_gb");
+                String serverDir = str(meta, "server_dir");
+                sample = JvmHealthCollector.sampleReport(serverDir, xmxHint);
+            } catch (Exception e) {
+                return;
+            }
+        }
+        JsonObject advisorIn = new JsonObject();
+        JsonObject tpsData = obj(mc, "tps");
+        JsonObject ow = tpsData != null ? obj(tpsData, "overworld") : null;
+        Double msptNow = ow != null ? dbl(ow, "mspt") : null;
+        if (msptNow != null) {
+            advisorIn.addProperty("mspt", msptNow);
+        }
+        if (integer(mc, "cant_keep_up_session_count", 0) > 0
+                || integer(mc, "cant_keep_up_count", 0) > 0) {
+            advisorIn.addProperty("tick_lag", true);
+        }
+        String mcVer = str(mc, "version");
+        if (mcVer == null) {
+            mcVer = str(meta, "minecraft_version");
+        }
+        if (mcVer != null) {
+            advisorIn.addProperty("mc_version", mcVer);
+        }
+        String loader = str(meta, "loader");
+        if (loader == null) {
+            loader = str(mc, "loader");
+        }
+        if (loader != null) {
+            advisorIn.addProperty("loader", loader);
+        }
+        if (system.has("cpu_count") && !system.get("cpu_count").isJsonNull()) {
+            advisorIn.add("cpu_count", system.get("cpu_count"));
+        }
+        // Prefer L1 sustained averages when report optional carries them.
+        if (optional.has("jvm_health_l1") && optional.get("jvm_health_l1").isJsonObject()) {
+            JsonObject l1 = optional.getAsJsonObject("jvm_health_l1");
+            if (l1.has("heap_pressure_pct_avg")) {
+                advisorIn.add("heap_pressure_pct", l1.get("heap_pressure_pct_avg"));
+                advisorIn.addProperty("sustained_heap_pressure", true);
+            }
+            if (l1.has("gc_pause_pct_avg")) {
+                advisorIn.add("gc_pause_pct_of_wall", l1.get("gc_pause_pct_avg"));
+                advisorIn.addProperty("sustained_gc_pause", true);
+                advisorIn.addProperty("pause_source", "l1");
+            }
+        } else if (sample.has("jvm_gc") && sample.getAsJsonObject("jvm_gc").has("pause_source")) {
+            advisorIn.add("pause_source", sample.getAsJsonObject("jvm_gc").get("pause_source"));
+        }
+        JsonObject health = GcAdvisor.buildJvmHealth(sample, advisorIn);
+        optional.add("jvm_health", health);
+        optional.remove("jvm_health_sample");
+        // Keep jvm_health_l1 for debugging / Insights handoff visibility in facts JSON.
+        if (health.has("raise_gc_pressure_issue") && health.get("raise_gc_pressure_issue").getAsBoolean()) {
+            String verdict = str(health, "verdict");
+            String advice = str(health, "advice");
+            String msg = "heap_bound".equals(verdict)
+                    ? "Heap pressure is high — the server may need more -Xmx or a leak check."
+                    : "GC pause share of wall time is high while the heap is not full — check flags/Java before adding RAM.";
+            if (advice != null && !advice.isBlank()) {
+                msg = advice;
+            }
+            ctx.addIssue("GC_PRESSURE", msg, "warning", null, false);
+        }
+    }
+
+    private static void applyConfigLaunchAudit(JsonObject optional, JsonObject meta) {
+        if (optional == null) {
+            return;
+        }
+        if (!bool(meta, "config_audit_enabled", true)) {
+            optional.remove("config_launch_audit");
+            return;
+        }
+        try {
+            String serverDir = str(meta, "server_dir");
+            if (serverDir == null || serverDir.isBlank()) {
+                return;
+            }
+            ServerPropertiesReader.Result props = ServerPropertiesReader.read(Path.of(serverDir));
+            JsonObject jvmHealth = optional.has("jvm_health") && optional.get("jvm_health").isJsonObject()
+                    ? optional.getAsJsonObject("jvm_health")
+                    : null;
+            optional.add("config_launch_audit", ConfigLaunchAdvisor.build(props, jvmHealth));
+        } catch (Exception ignored) {
+            // Non-fatal
+        }
+    }
+
+    private static void applySafeRestart(
+            JsonObject optional,
+            JsonObject system,
+            JsonObject mc,
+            JsonObject thresholds,
+            JsonObject meta,
+            String healthStatus) {
+        if (optional == null) {
+            return;
+        }
+        try {
+            JsonObject input = new JsonObject();
+            JsonObject lastBackupEarly = obj(optional, "last_backup");
+            Double warnDays = lastBackupEarly != null ? dbl(lastBackupEarly, "warn_days") : null;
+            if (warnDays == null) {
+                warnDays = dbl(thresholds, "backup_warn_days");
+            }
+            input.addProperty("backup_warn_days", warnDays != null ? warnDays.intValue() : 7);
+            Double diskWarn = dbl(thresholds, "disk_warn_pct");
+            input.addProperty("disk_warn_pct", diskWarn != null ? diskWarn : 85.0);
+            Double lookback = dbl(meta, "lookback_hours");
+            if (lookback == null) {
+                lookback = dbl(thresholds, "lookback_hours");
+            }
+            input.addProperty("lookback_hours", lookback != null ? lookback : 24.0);
+            input.addProperty("backup_tracking_enabled", bool(meta, "backup_tracking_enabled", true));
+
+            if (optional.has("last_backup") && optional.get("last_backup").isJsonObject()) {
+                input.add("last_backup", optional.getAsJsonObject("last_backup").deepCopy());
+            }
+            if (optional.has("backup_external") && optional.get("backup_external").isJsonObject()) {
+                input.add("backup_external", optional.getAsJsonObject("backup_external").deepCopy());
+            }
+            if (optional.has("chunky_pregen") && optional.get("chunky_pregen").isJsonObject()) {
+                input.add("chunky_pregen", optional.getAsJsonObject("chunky_pregen").deepCopy());
+            }
+            if (optional.has("dh_pregen") && optional.get("dh_pregen").isJsonObject()) {
+                input.add("dh_pregen", optional.getAsJsonObject("dh_pregen").deepCopy());
+            }
+
+            int players = integer(mc, "players_online_now", -1);
+            if (players < 0) {
+                JsonObject dir = obj(optional, "player_directory");
+                players = dir != null ? integer(dir, "online_count", 0) : 0;
+            }
+            input.addProperty("players_online", players);
+
+            Double diskPct = dbl(system, "disk_use_pct");
+            if (diskPct != null) {
+                input.addProperty("disk_use_pct", diskPct);
+            }
+            Double diskFree = dbl(system, "disk_free_gb");
+            JsonObject lastBackup = obj(optional, "last_backup");
+            input.add("disk_nudge", DiskNudgeEvaluator.evaluateDisk(diskFree, lastBackup));
+
+            JsonObject crashes = new JsonObject();
+            JsonArray summaries = array(optional, "crash_summaries");
+            int unreviewed = 0;
+            String latestAt = null;
+            if (summaries != null) {
+                for (JsonElement el : summaries) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject c = el.getAsJsonObject();
+                    if (!bool(c, "acknowledged", false)) {
+                        unreviewed++;
+                        if (latestAt == null && str(c, "time") != null) {
+                            latestAt = str(c, "time");
+                        }
+                    }
+                }
+            }
+            crashes.addProperty("unreviewed", unreviewed);
+            if (latestAt != null) {
+                crashes.addProperty("latest_at", latestAt);
+                crashes.addProperty("latest_unreviewed_at", latestAt);
+            }
+            input.add("crashes", crashes);
+            if (healthStatus != null) {
+                input.addProperty("health_status", healthStatus);
+            }
+
+            optional.add("safe_restart", SafeRestartAdvisor.evaluate(input));
+        } catch (Exception ignored) {
+            // Non-fatal
         }
     }
 

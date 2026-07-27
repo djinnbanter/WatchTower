@@ -52,6 +52,7 @@ export function resolveSourceLayer(field) {
   const liveFields = [
     'tps', 'mspt', 'host_cpu_pct', 'players_online', 'heap_mb',
     'mem_available_gb', 'disk_use_pct', 'disk_free_gb', 'world_gb',
+    'mem_used_gb', 'mem_total_gb',
     'net_rx_mbps', 'net_tx_mbps', 'disk_read_mb_s', 'disk_write_mb_s',
     'entities', 'chunks', 'java_rss_gb',
   ];

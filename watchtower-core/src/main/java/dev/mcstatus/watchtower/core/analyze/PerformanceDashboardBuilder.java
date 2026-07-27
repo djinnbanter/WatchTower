@@ -71,7 +71,97 @@ public final class PerformanceDashboardBuilder {
             out.add("scorecard_perf", context.scorecardPerf().deepCopy());
         }
 
+        JsonObject ramStats = PerformanceInsightEngine.buildRamSizingStats(current);
+        double xmxGb = Double.NaN;
+        String xmxSource = "unknown";
+        if (context != null && context.xmxGb() != null && context.xmxGb() > 0) {
+            xmxGb = context.xmxGb();
+            xmxSource = context.xmxSource() != null ? context.xmxSource() : "live";
+        }
+        JsonObject gcIn = PerformanceInsightEngine.buildWindowGcAdvisorInput(ramStats, msptWarn);
+        if (!Double.isNaN(xmxGb)) {
+            gcIn.addProperty("xmx_gb", xmxGb);
+        }
+        JsonObject gcOut = GcAdvisor.evaluate(gcIn);
+        String gcVerdict = gcOut.has("verdict") ? gcOut.get("verdict").getAsString() : GcAdvisor.VERDICT_HEALTHY;
+        JsonObject ramSizing = RamSizingAdvisor.evaluate(win, ramStats, xmxGb, xmxSource, gcVerdict);
+        out.add("ram_sizing", ramSizing);
+        attachAlignedJvmRecommendedFlags(out, ramSizing, xmxGb);
+
+        JsonObject modsInv = null;
+        if (context != null && context.opsCache() != null
+                && context.opsCache().has("mods_inventory")
+                && context.opsCache().get("mods_inventory").isJsonObject()) {
+            modsInv = context.opsCache().getAsJsonObject("mods_inventory");
+        }
+        JsonObject baseline = context != null ? context.perfBaseline() : null;
+        double thresh = context != null ? context.baselineThresholdPct() : 10.0;
+        out.add("baseline_regression",
+                PerformanceBaselineTracker.evaluate(baseline, allRows, thresh, modsInv));
+
+        Double freeNow = null;
+        Double usePct = null;
+        JsonObject storageOpt = null;
+        int lookbackH = 24;
+        int minSpanH = 6;
+        double outlierGb = 5;
+        double latencyWarnMs = 50;
+        if (context != null) {
+            lookbackH = context.diskFillLookbackHours();
+            minSpanH = context.diskFillMinSpanHours();
+            outlierGb = context.diskFillOutlierGb();
+            latencyWarnMs = context.diskIoLatencyWarnMs();
+            freeNow = context.diskFreeGb();
+            usePct = context.diskUsePct();
+            storageOpt = context.storageOptional();
+        }
+        JsonObject projection = DiskProjectionAnalyzer.analyze(
+                current, freeNow, usePct, lookbackH, minSpanH, outlierGb, storageOpt);
+        out.add("disk_projection", projection);
+
+        JsonObject diskAlign = DiskIoLagAlign.evaluate(current, msptWarn, latencyWarnMs, 5.0);
+        if (diskAlign != null) {
+            JsonArray insightsArr = out.has("insights") && out.get("insights").isJsonArray()
+                    ? out.getAsJsonArray("insights") : new JsonArray();
+            DiskIoLagAlign.appendToInsights(insightsArr, diskAlign);
+            out.add("insights", insightsArr);
+            JsonArray corr = out.has("correlations") && out.get("correlations").isJsonArray()
+                    ? out.getAsJsonArray("correlations") : new JsonArray();
+            JsonObject corrRow = DiskIoLagAlign.toCorrelation(diskAlign);
+            if (corrRow != null) {
+                corr.add(corrRow);
+            }
+            out.add("correlations", corr);
+        }
+
         return out;
+    }
+
+    /**
+     * Prefer RAM-sizing suggested heap for the Configs cut-paste Aikar set when available.
+     */
+    static void attachAlignedJvmRecommendedFlags(JsonObject out, JsonObject ramSizing, double currentXmxGb) {
+        if (out == null) {
+            return;
+        }
+        double pasteHeap = Double.NaN;
+        if (ramSizing != null) {
+            if (ramSizing.has("suggested_xmx_gb_min") && !ramSizing.get("suggested_xmx_gb_min").isJsonNull()) {
+                double min = ramSizing.get("suggested_xmx_gb_min").getAsDouble();
+                double max = ramSizing.has("suggested_xmx_gb_max") && !ramSizing.get("suggested_xmx_gb_max").isJsonNull()
+                        ? ramSizing.get("suggested_xmx_gb_max").getAsDouble()
+                        : min;
+                pasteHeap = (min + max) / 2.0;
+            }
+        }
+        if (Double.isNaN(pasteHeap) || pasteHeap <= 0) {
+            pasteHeap = currentXmxGb;
+        }
+        if (Double.isNaN(pasteHeap) || pasteHeap <= 0) {
+            return;
+        }
+        out.addProperty("jvm_recommended_flags", GcAdvisor.aikarsSnippetForHeapGb(pasteHeap));
+        out.addProperty("jvm_recommended_flags_xmx_gb", Math.round(pasteHeap));
     }
 
     private static List<JsonObject> sortRows(List<JsonObject> rows) {
