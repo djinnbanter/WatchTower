@@ -2,16 +2,15 @@ package dev.mcstatus.watchtower;
 
 import dev.mcstatus.watchtower.runtime.ModRuntime;
 
-import dev.mcstatus.watchtower.runtime.ServerContext;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import dev.mcstatus.watchtower.core.audit.AuditEvent;
+import dev.mcstatus.watchtower.core.auth.AccountRole;
 import dev.mcstatus.watchtower.core.auth.DashboardAuthRecord;
 import dev.mcstatus.watchtower.core.auth.DashboardAuthStore;
-import dev.mcstatus.watchtower.core.auth.GeneratedCredentials;
 import dev.mcstatus.watchtower.core.auth.RecoveryCodeService;
 import dev.mcstatus.watchtower.core.auth.SessionManager;
 import dev.mcstatus.watchtower.core.auth.TotpService;
@@ -21,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 
 /** Dashboard session auth HTTP handlers and middleware. */
 public final class DashboardAuthHttp {
@@ -44,6 +44,9 @@ public final class DashboardAuthHttp {
             sendText(ex, 405, "Method not allowed");
             return;
         }
+        if (rejectWhenAuthUnavailable(ex)) {
+            return;
+        }
         JsonObject out = buildSessionJson(resolveSession(ex), hostname);
         sendJson(ex, 200, out);
     }
@@ -51,6 +54,9 @@ public final class DashboardAuthHttp {
     public static void handleLogin(HttpExchange ex) throws IOException {
         if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
             sendText(ex, 405, "Method not allowed");
+            return;
+        }
+        if (rejectWhenAuthUnavailable(ex)) {
             return;
         }
         String ip = clientIp(ex);
@@ -64,27 +70,29 @@ public final class DashboardAuthHttp {
         boolean remember = body.has("remember") && body.get("remember").getAsBoolean();
 
         DashboardAuthStore store = DashboardAuthServices.store();
-        if (store == null || !store.verifyUsername(username) || !store.verifyPassword(password.toCharArray())) {
+        DashboardAuthRecord account = store != null ? store.findByUsername(username) : null;
+        if (account == null || !store.verifyPassword(account.id, password.toCharArray())) {
             DashboardAuthServices.rateLimiter().recordFailure(ip);
+            DashboardAudit.recordAnonymous("login_failed", username, null, ip, AuditEvent.FAILED);
             sendJson(ex, 401, errorJson("invalid_credentials", "Invalid username or password"));
             return;
         }
         DashboardAuthServices.rateLimiter().recordSuccess(ip);
 
-        boolean totpEnabled = store.totpEnabled();
-        boolean mustChange = store.mustChangePassword();
+        boolean totpEnabled = store.totpEnabled(account.id);
+        boolean mustChange = store.mustChangePassword(account.id);
+        AccountRole role = AccountRole.fromWire(account.role);
         long ttl = remember ? SessionManager.REMEMBER_TTL_SECONDS : SessionManager.DEFAULT_TTL_SECONDS;
         SessionManager.SessionState session = DashboardAuthServices.sessions().createSession(
-                store.username(),
-                mustChange,
-                !totpEnabled,
-                ttl
-        );
+                account.id, account.username, role, mustChange, totpEnabled, !totpEnabled, ttl);
+        store.recordLogin(account.id);
+        DashboardAudit.record("login_ok", session, null, remember ? "remember=true" : null, ip);
         setSessionCookie(ex, session, remember, secureCookie(ex));
 
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
-        out.addProperty("username", store.username());
+        out.addProperty("username", account.username);
+        out.addProperty("role", role.wire());
         out.addProperty("must_change_password", mustChange);
         out.addProperty("totp_required", totpEnabled && !mustChange);
         sendJson(ex, 200, out);
@@ -100,7 +108,7 @@ public final class DashboardAuthHttp {
             return;
         }
         DashboardAuthStore store = DashboardAuthServices.store();
-        if (store == null || !store.totpEnabled()) {
+        if (store == null || !store.totpEnabled(session.accountId())) {
             sendJson(ex, 400, errorJson("totp_not_enabled", "2FA is not enabled"));
             return;
         }
@@ -108,7 +116,9 @@ public final class DashboardAuthHttp {
         String code = text(body, "code");
         boolean recovery = body.has("recovery") && body.get("recovery").getAsBoolean();
 
-        boolean ok = recovery ? store.verifyTotpOrRecovery(code) : store.verifyTotpCode(code);
+        boolean ok = recovery
+                ? store.verifyTotpOrRecovery(session.accountId(), code)
+                : store.verifyTotpCode(session.accountId(), code);
         if (!ok) {
             sendJson(ex, 401, errorJson("invalid_code", "Invalid authenticator or recovery code"));
             return;
@@ -132,6 +142,7 @@ public final class DashboardAuthHttp {
         }
         SessionManager.SessionState session = resolveSession(ex);
         if (session != null) {
+            DashboardAudit.record("logout", session, null, null, clientIp(ex));
             DashboardAuthServices.sessions().revoke(session.sessionId());
         }
         clearSessionCookie(ex, secureCookie(ex));
@@ -158,7 +169,7 @@ public final class DashboardAuthHttp {
             return;
         }
         DashboardAuthStore store = DashboardAuthServices.store();
-        if (!store.verifyPassword(current.toCharArray())) {
+        if (store == null || !store.verifyPassword(session.accountId(), current.toCharArray())) {
             sendJson(ex, 401, errorJson("invalid_password", "Current password is incorrect"));
             return;
         }
@@ -177,24 +188,24 @@ public final class DashboardAuthHttp {
                 return;
             }
             try {
-                store.changeUsername(trimmed);
-                resolvedUsername = store.username();
+                store.changeUsername(session.accountId(), trimmed);
+                resolvedUsername = trimmed;
             } catch (IllegalArgumentException e) {
                 sendJson(ex, 400, errorJson("invalid_username", e.getMessage()));
                 return;
             }
         } else if (newUsername != null && !newUsername.isBlank()) {
-            // Optional username change outside first-login gate (same request)
             try {
-                store.changeUsername(newUsername);
-                resolvedUsername = store.username();
+                store.changeUsername(session.accountId(), newUsername);
+                resolvedUsername = store.findById(session.accountId()).username;
             } catch (IllegalArgumentException e) {
                 sendJson(ex, 400, errorJson("invalid_username", e.getMessage()));
                 return;
             }
         }
 
-        store.setPassword(newPassword.toCharArray());
+        store.setPassword(session.accountId(), newPassword.toCharArray());
+        DashboardAudit.record("password_changed", session, null, null, clientIp(ex));
         SessionManager.SessionState updated = DashboardAuthServices.sessions()
                 .markAccountSetup(session.sessionId(), resolvedUsername);
         JsonObject out = new JsonObject();
@@ -219,14 +230,14 @@ public final class DashboardAuthHttp {
         JsonObject body = parseBody(ex);
         String newUsername = text(body, "username");
         try {
-            DashboardAuthServices.store().changeUsername(newUsername);
+            DashboardAuthServices.store().changeUsername(session.accountId(), newUsername);
         } catch (IllegalArgumentException e) {
             sendJson(ex, 400, errorJson("invalid_username", e.getMessage()));
             return;
         }
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
-        out.addProperty("username", DashboardAuthServices.store().username());
+        out.addProperty("username", DashboardAuthServices.store().findById(session.accountId()).username);
         sendJson(ex, 200, out);
     }
 
@@ -240,9 +251,9 @@ public final class DashboardAuthHttp {
             return;
         }
         DashboardAuthStore store = DashboardAuthServices.store();
-        String secret = store.beginTotpSetup();
+        String secret = store.beginTotpSetup(session.accountId());
         TotpService totp = store.totpService();
-        QrData qrData = totp.buildQrData(issuer, store.username(), secret);
+        QrData qrData = totp.buildQrData(issuer, session.username(), secret);
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
         out.addProperty("secret", secret);
@@ -267,7 +278,9 @@ public final class DashboardAuthHttp {
         JsonObject body = parseBody(ex);
         String code = text(body, "code");
         try {
-            RecoveryCodeService.GeneratedCodes codes = DashboardAuthServices.store().confirmTotpSetup(code);
+            RecoveryCodeService.GeneratedCodes codes =
+                    DashboardAuthServices.store().confirmTotpSetup(session.accountId(), code);
+            DashboardAudit.record("totp_enabled", session, null, null, clientIp(ex));
             JsonObject out = new JsonObject();
             out.addProperty("ok", true);
             JsonArray plain = new JsonArray();
@@ -293,9 +306,11 @@ public final class DashboardAuthHttp {
         JsonObject body = parseBody(ex);
         try {
             DashboardAuthServices.store().disableTotp(
+                    session.accountId(),
                     text(body, "password").toCharArray(),
                     text(body, "code")
             );
+            DashboardAudit.record("totp_disabled", session, null, null, clientIp(ex));
             JsonObject out = new JsonObject();
             out.addProperty("ok", true);
             sendJson(ex, 200, out);
@@ -315,10 +330,13 @@ public final class DashboardAuthHttp {
         }
         JsonObject body = parseBody(ex);
         try {
-            RecoveryCodeService.GeneratedCodes codes = DashboardAuthServices.store().regenerateRecoveryCodes(
-                    text(body, "password").toCharArray(),
-                    text(body, "code")
-            );
+            RecoveryCodeService.GeneratedCodes codes =
+                    DashboardAuthServices.store().regenerateRecoveryCodes(
+                            session.accountId(),
+                            text(body, "password").toCharArray(),
+                            text(body, "code")
+                    );
+            DashboardAudit.record("recovery_codes_regenerated", session, null, null, clientIp(ex));
             JsonObject out = new JsonObject();
             out.addProperty("ok", true);
             JsonArray plain = new JsonArray();
@@ -341,25 +359,59 @@ public final class DashboardAuthHttp {
             boolean allowMustChange,
             boolean allowTotpPending
     ) throws IOException {
+        if (rejectWhenAuthUnavailable(ex)) {
+            return null;
+        }
         SessionManager.SessionState session = resolveSession(ex);
         if (session == null) {
             sendJson(ex, 401, errorJson("unauthorized", "Unauthorized"));
             return null;
         }
-        DashboardAuthStore store = DashboardAuthServices.store();
-        boolean totpEnabled = store != null && store.totpEnabled();
         if (!allowMustChange && session.mustChangePassword()) {
             sendJson(ex, 403, errorJson("password_change_required", "Password change required"));
             return null;
         }
-        if (!allowTotpPending && totpEnabled && !session.totpVerified()) {
+        if (!allowTotpPending && session.totpRequired() && !session.totpVerified()) {
             sendJson(ex, 403, errorJson("totp_required", "Authenticator code required"));
             return null;
         }
+        ex.setAttribute("wt.session", session);
         return session;
     }
 
+    public static SessionManager.SessionState sessionOf(HttpExchange ex) {
+        Object attr = ex.getAttribute("wt.session");
+        return attr instanceof SessionManager.SessionState s ? s : null;
+    }
+
+    /** Actor name for state records; falls back to the legacy literal when no session is attached. */
+    public static String actorOf(HttpExchange ex) {
+        SessionManager.SessionState s = sessionOf(ex);
+        return s != null ? s.username() : "dashboard";
+    }
+
+    public static void sendReadOnly(HttpExchange ex) throws IOException {
+        sendJson(ex, 403, errorJson("read_only_account",
+                "Your account can view Watchtower but not change it"));
+    }
+
+    public static boolean requireOwner(HttpExchange ex, SessionManager.SessionState session) throws IOException {
+        if (session != null && session.role().canManageAccounts()) {
+            return true;
+        }
+        DashboardAudit.recordDenied(session, requestTarget(ex), clientIp(ex));
+        sendJson(ex, 403, errorJson("owner_required", "Only an owner can manage accounts"));
+        return false;
+    }
+
+    public static String requestTarget(HttpExchange ex) {
+        return ex.getRequestMethod().toUpperCase(Locale.ROOT) + " " + ex.getRequestURI().getPath();
+    }
+
     public static SessionManager.SessionState resolveSession(HttpExchange ex) {
+        if (DashboardAuthServices.sessions() == null) {
+            return null;
+        }
         String cookie = cookieValue(ex, SessionManager.COOKIE_NAME);
         if (cookie == null) {
             return null;
@@ -375,23 +427,35 @@ public final class DashboardAuthHttp {
         out.addProperty("dashboard_bind_host", bindHost);
         out.addProperty("bind_exposed", "0.0.0.0".equals(bindHost));
         out.addProperty("security_update", DashboardAuthServices.wasFreshAccountCreated());
-        if (store != null) {
-            out.addProperty("totp_enabled", store.totpEnabled());
-        }
         if (session == null) {
             out.addProperty("authenticated", false);
             return out;
         }
-        boolean totpEnabled = store != null && store.totpEnabled();
+        DashboardAuthRecord account = store != null ? store.findById(session.accountId()) : null;
         out.addProperty("authenticated", true);
         out.addProperty("username", session.username());
         out.addProperty("must_change_password", session.mustChangePassword());
-        out.addProperty("totp_required", totpEnabled && !session.totpVerified() && !session.mustChangePassword());
-        out.addProperty("fully_authenticated", session.isFullyAuthenticated(totpEnabled));
+        out.addProperty("totp_enabled", account != null && account.totp_enabled);
+        out.addProperty("totp_required",
+                session.totpRequired() && !session.totpVerified() && !session.mustChangePassword());
+        out.addProperty("role", session.role().wire());
+        out.addProperty("can_write", session.role().canWrite());
+        out.addProperty("can_manage_accounts", session.role().canManageAccounts());
+        out.addProperty("fully_authenticated", session.isFullyAuthenticated());
         if (hostname != null) {
             out.addProperty("hostname", hostname);
         }
         return out;
+    }
+
+    private static boolean rejectWhenAuthUnavailable(HttpExchange ex) throws IOException {
+        if (!DashboardAuthServices.isUnavailable()) {
+            return false;
+        }
+        sendJson(ex, 503, errorJson("auth_unavailable",
+                "Dashboard accounts could not be loaded. Check the server log, then run "
+                        + "/watchtower dashboard reset-password to rebuild the owner account."));
+        return true;
     }
 
     public static String cookieValue(HttpExchange ex, String name) {
