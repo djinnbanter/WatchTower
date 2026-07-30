@@ -1,1 +1,76 @@
 /* AppShell rail — brand, nav groups, footer. Tokens: --wt-* */
+
+.sh-rail__scroll {
+  padding: 0.5rem 0.5rem 0.75rem;
+}
+
+.sh-rail__group {
+  margin-bottom: 0.85rem;
+}
+
+.sh-rail__group-label {
+  padding: 0.35rem 0.7rem 0.3rem;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wt-text-low);
+}
+
+.sh-rail__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0.15rem;
+  padding: 0.4rem 0.65rem 0.4rem 0.7rem;
+  border-radius: var(--radius-wt-sm);
+  border: 0;
+  border-left: 2px solid transparent;
+  font-size: 0.875rem;
+  color: var(--wt-text-mid);
+  text-decoration: none;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.sh-rail__link:hover {
+  background: color-mix(in srgb, var(--wt-bg2) 70%, transparent);
+  color: var(--wt-text);
+}
+
+.sh-rail__link:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 1px;
+}
+
+.sh-rail__link.is-active {
+  border-left-color: var(--wt-accent);
+  background: var(--wt-accent-soft);
+  color: var(--wt-text);
+  font-weight: 550;
+}
+
+.sh-rail__link-icon {
+  color: var(--wt-text-low);
+  flex-shrink: 0;
+}
+
+.sh-rail__link.is-active .sh-rail__link-icon {
+  color: var(--wt-accent);
+}
+
+.sh-rail__badge {
+  margin-left: auto;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--wt-danger) 15%, transparent);
+  padding: 0 0.35rem;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--wt-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sh-rail__link {
+    transition: none;
+  }
+}

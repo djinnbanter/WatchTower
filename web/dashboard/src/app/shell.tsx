@@ -98,15 +98,13 @@ export function AppShell({ route, page, children }: Props) {
         </div>
       </div>
 
-      <div className="sh-rail__scroll flex-1 overflow-y-auto px-1.5 py-2">
+      <div className="sh-rail__scroll flex-1 overflow-y-auto">
         {GROUPS.map((group) => {
           const groupPages = pages.filter((p) => p.group === group.id && p.rail !== false);
           if (!groupPages.length) return null;
           return (
-            <div key={group.id} className="sh-rail__group mb-3">
-              <div className="sh-rail__group-label px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-wt-text-low">
-                {group.label}
-              </div>
+            <div key={group.id} className="sh-rail__group">
+              <div className="sh-rail__group-label">{group.label}</div>
               <div>
                 {groupPages.map((p) => {
                   const active = route.tab === p.id;
@@ -121,28 +119,14 @@ export function AppShell({ route, page, children }: Props) {
                         e.preventDefault();
                         navigate({ tab: p.id, view: null, panel: null });
                       }}
-                      className={cn(
-                        'sh-rail__link flex items-center gap-2 border-l-2 px-2.5 py-1.5 text-sm transition-colors',
-                        active
-                          ? 'is-active border-transparent bg-wt-accent font-medium text-wt-accent-ink'
-                          : 'border-transparent text-wt-text-mid hover:bg-wt-bg2/60 hover:text-wt-text',
-                      )}
+                      className={cn('sh-rail__link', active && 'is-active')}
                     >
                       {PageIcon ? (
-                        <PageIcon
-                          size={16}
-                          className={cn(
-                            'sh-rail__link-icon shrink-0',
-                            active ? 'text-wt-accent-ink' : 'text-wt-text-low',
-                          )}
-                          aria-hidden
-                        />
+                        <PageIcon size={16} className="sh-rail__link-icon" aria-hidden />
                       ) : null}
                       <span className="truncate">{p.title}</span>
                       {badge != null && badge !== 0 ? (
-                        <span className="sh-rail__badge ml-auto rounded-[2px] bg-wt-danger/15 px-1.5 text-[10px] font-semibold text-wt-danger">
-                          {badge}
-                        </span>
+                        <span className="sh-rail__badge">{badge}</span>
                       ) : null}
                     </a>
                   );
