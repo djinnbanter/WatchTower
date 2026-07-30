@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Named admin accounts (1.1.18)** — per-person logins with three roles: **owner** (everything, including accounts), **admin** (operate, no account management), **viewer** (read-only). Existing installs keep their credentials and become the owner
 - **Side rail signed-in account + Sign out** — rail footer shows who is signed in and a **Sign out** control
+- **Minecraft player link** — optional UUID/name on a dashboard account; rail (and Accounts) show that player's Crafthead skin. Owner sets links in Accounts; anyone can link themselves under Security
 - **Audit log (1.1.18)** — `watchtower/audit-log.jsonl` records settings changes, acknowledgements, suppressions, account management, and sign-ins (including failures and blocked writes), readable from **Settings → Audit log**
 - **Join & pack sync clinic (1.1.10)** — Parses Forge/NeoForge/Fabric join rejections from `latest.log` (`JoinRejectionSignatures` on the ops-log tail), diffs named mods against the server inventory (suppresses known client-only), writes `ops-cache.join_clinic`, opens continuous Issues `JOIN_SYNC:*` with Session deep-link, and surfaces failed joins on Session → **Session activity** with a player-safe **Copy fix**. Kill-switch `JOIN_CLINIC_ENABLED` (default on). Read-only — never changes `mods/`. Wiki `Join-Clinic.md`; fixtures under `samples/fixtures/join-clinic/`
 - **Insights Storage Space map** — WinDirStat-style squarified treemap on Insights → Storage as a new **Space map** card (meters + share tables kept). Zoom / breadcrumb drill-in; World dimensions, Logs, Other; Mods and Backups drill when sizes exist; client tree from existing `optional.storage` (+ live dimension / backup sizes). Backend `by_mods` top-40 jar sizes + Other for Mods drill. Camera zoom animation, GB/MB/KB labels, dynamic label scale, fills available width. `d3-hierarchy` + visx `ParentSize` (not nivo)
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Setup wizard is owner-only** — invited admin/viewer accounts skip the full server setup wizard after password change
 - **Acknowledgements and suppressions attribute the account name** instead of the literal `dashboard` (rows written before the update keep `dashboard`)
 - **Session activity plate** — right-column feed merges live `player_join` / `player_leave` from ops-cache activity with `join_clinic` failures (expand + **Copy fix**); replaces full-width Join clinic and Recent sessions; Issues action **Open Session activity**
 - **Dashboard UI identity pass (Jul 29)** — accent off Linear-style periwinkle onto bold signal blue (`#4C8DFF` family); shadcn token layer aliased to `--wt-*`; radius ladder tightened; solid rail (less glass mush); lantern/logo lockup; channel colours (TPS/MSPT/heap/CPU/…) separated from status colours (ok/warn/danger) so gauges are not ambiguous; shared `.wt-plate` / `HeroCard` across Overview + ops heroes; Geist + JetBrains Mono; dead UI surface cleanup for one language

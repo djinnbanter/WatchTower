@@ -32,6 +32,17 @@ Changing someone’s role (or disabling them) ends that person’s sessions imme
 
 ---
 
+## Minecraft player link
+
+You can link a Minecraft player to a dashboard account. The side rail then shows that player's skin. Linking is optional and does not replace the dashboard password.
+
+- **Owner:** **Settings → Accounts** — pick a player from the server roster for any account.
+- **Anyone:** **Settings → Security** — link or clear your own player.
+
+Skins load from Crafthead using the linked UUID. If the image fails, the rail falls back to a letter mark.
+
+---
+
 ## Recover the owner
 
 Forgot the owner password, or locked out of 2FA:
