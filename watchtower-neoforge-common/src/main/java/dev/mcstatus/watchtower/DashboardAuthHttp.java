@@ -8,9 +8,11 @@ import com.google.gson.JsonObject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import dev.mcstatus.watchtower.core.audit.AuditEvent;
+import dev.mcstatus.watchtower.core.audit.AuditLog;
 import dev.mcstatus.watchtower.core.auth.AccountRole;
 import dev.mcstatus.watchtower.core.auth.DashboardAuthRecord;
 import dev.mcstatus.watchtower.core.auth.DashboardAuthStore;
+import dev.mcstatus.watchtower.core.auth.GeneratedCredentials;
 import dev.mcstatus.watchtower.core.auth.RecoveryCodeService;
 import dev.mcstatus.watchtower.core.auth.SessionManager;
 import dev.mcstatus.watchtower.core.auth.TotpService;
@@ -19,6 +21,7 @@ import dev.samstevens.totp.qr.QrData;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 
@@ -348,6 +351,257 @@ public final class DashboardAuthHttp {
         } catch (Exception e) {
             sendJson(ex, 400, errorJson("regenerate_failed", e.getMessage()));
         }
+    }
+
+    /** GET lists accounts; POST creates one. Owner only. */
+    public static void handleAccounts(HttpExchange ex) throws IOException {
+        String method = ex.getRequestMethod();
+        if ("GET".equalsIgnoreCase(method)) {
+            handleAccountsList(ex);
+            return;
+        }
+        if ("POST".equalsIgnoreCase(method)) {
+            handleAccountCreate(ex);
+            return;
+        }
+        sendText(ex, 405, "Method not allowed");
+    }
+
+    private static void handleAccountsList(HttpExchange ex) throws IOException {
+        SessionManager.SessionState session = sessionOf(ex);
+        if (!requireOwner(ex, session)) {
+            return;
+        }
+        DashboardAuthStore store = DashboardAuthServices.store();
+        JsonArray accounts = new JsonArray();
+        if (store != null) {
+            for (DashboardAuthRecord r : store.accounts()) {
+                JsonObject row = new JsonObject();
+                row.addProperty("id", r.id);
+                row.addProperty("username", r.username);
+                row.addProperty("role", AccountRole.fromWire(r.role).wire());
+                row.addProperty("disabled", r.disabled);
+                row.addProperty("totp_enabled", r.totp_enabled);
+                row.addProperty("created_at", r.created_at);
+                row.addProperty("last_login_at", r.last_login_at);
+                row.addProperty("is_you", session != null && session.accountId().equals(r.id));
+                accounts.add(row);
+            }
+        }
+        JsonObject out = new JsonObject();
+        out.add("accounts", accounts);
+        sendJson(ex, 200, out);
+    }
+
+    private static void handleAccountCreate(HttpExchange ex) throws IOException {
+        SessionManager.SessionState session = sessionOf(ex);
+        if (!requireOwner(ex, session)) {
+            return;
+        }
+        JsonObject body = parseBody(ex);
+        String username = text(body, "username");
+        String roleRaw = text(body, "role");
+        AccountRole role = AccountRole.fromWire(roleRaw);
+        try {
+            GeneratedCredentials creds = DashboardAuthServices.store()
+                    .createAccount(username, role, session.accountId());
+            DashboardAuthRecord created = DashboardAuthServices.store().findByUsername(creds.username());
+            DashboardAudit.record("account_created", session, creds.username(),
+                    "role=" + role.wire(), clientIp(ex));
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            if (created != null) {
+                out.addProperty("id", created.id);
+            }
+            out.addProperty("username", creds.username());
+            out.addProperty("role", role.wire());
+            out.addProperty("temp_password", creds.password());
+            sendJson(ex, 200, out);
+        } catch (IllegalArgumentException e) {
+            sendJson(ex, 400, errorJson("invalid_account", e.getMessage()));
+        }
+    }
+
+    public static void handleAccountUpdate(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            sendText(ex, 405, "Method not allowed");
+            return;
+        }
+        SessionManager.SessionState session = sessionOf(ex);
+        if (!requireOwner(ex, session)) {
+            return;
+        }
+        JsonObject body = parseBody(ex);
+        String id = text(body, "id");
+        if (id.isBlank()) {
+            sendJson(ex, 400, errorJson("invalid_account", "Missing id"));
+            return;
+        }
+        DashboardAuthStore store = DashboardAuthServices.store();
+        DashboardAuthRecord existing = store != null ? store.findById(id) : null;
+        if (existing == null) {
+            sendJson(ex, 400, errorJson("invalid_account", "Unknown account"));
+            return;
+        }
+        boolean hasRole = body.has("role") && !body.get("role").isJsonNull();
+        boolean hasDisabled = body.has("disabled") && !body.get("disabled").isJsonNull();
+        String ip = clientIp(ex);
+        try {
+            boolean roleChanged = false;
+            boolean newlyDisabled = false;
+            if (hasRole) {
+                AccountRole newRole = AccountRole.fromWire(text(body, "role"));
+                AccountRole oldRole = AccountRole.fromWire(existing.role);
+                if (newRole != oldRole) {
+                    store.setRole(id, newRole);
+                    roleChanged = true;
+                    DashboardAudit.record("account_role_changed", session, existing.username,
+                            oldRole.wire() + " -> " + newRole.wire(), ip);
+                }
+            }
+            if (hasDisabled) {
+                boolean disabled = body.get("disabled").getAsBoolean();
+                if (disabled != existing.disabled) {
+                    store.setDisabled(id, disabled);
+                    newlyDisabled = disabled;
+                    DashboardAudit.record(disabled ? "account_disabled" : "account_enabled",
+                            session, existing.username, null, ip);
+                }
+            }
+            if (roleChanged || newlyDisabled) {
+                DashboardAuthServices.sessions().revokeForAccount(id);
+            }
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            sendJson(ex, 200, out);
+        } catch (IllegalStateException e) {
+            sendJson(ex, 409, errorJson("last_owner", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            sendJson(ex, 400, errorJson("invalid_account", e.getMessage()));
+        }
+    }
+
+    public static void handleAccountResetPassword(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            sendText(ex, 405, "Method not allowed");
+            return;
+        }
+        SessionManager.SessionState session = sessionOf(ex);
+        if (!requireOwner(ex, session)) {
+            return;
+        }
+        JsonObject body = parseBody(ex);
+        String id = text(body, "id");
+        if (id.isBlank()) {
+            sendJson(ex, 400, errorJson("invalid_account", "Missing id"));
+            return;
+        }
+        boolean clear2fa = body.has("clear_2fa") && !body.get("clear_2fa").isJsonNull()
+                && body.get("clear_2fa").getAsBoolean();
+        try {
+            DashboardAuthRecord target = DashboardAuthServices.store().findById(id);
+            GeneratedCredentials creds = DashboardAuthServices.store().resetAccountPassword(id, clear2fa);
+            DashboardAuthServices.sessions().revokeForAccount(id);
+            DashboardAudit.record("account_password_reset", session,
+                    target != null ? target.username : id,
+                    clear2fa ? "clear_2fa=true" : null, clientIp(ex));
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            out.addProperty("temp_password", creds.password());
+            sendJson(ex, 200, out);
+        } catch (IllegalArgumentException e) {
+            sendJson(ex, 400, errorJson("invalid_account", e.getMessage()));
+        }
+    }
+
+    public static void handleAccountDelete(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            sendText(ex, 405, "Method not allowed");
+            return;
+        }
+        SessionManager.SessionState session = sessionOf(ex);
+        if (!requireOwner(ex, session)) {
+            return;
+        }
+        JsonObject body = parseBody(ex);
+        String id = text(body, "id");
+        if (id.isBlank()) {
+            sendJson(ex, 400, errorJson("invalid_account", "Missing id"));
+            return;
+        }
+        if (id.equals(session.accountId())) {
+            sendJson(ex, 400, errorJson("cannot_delete_self", "You cannot delete your own account"));
+            return;
+        }
+        try {
+            DashboardAuthRecord target = DashboardAuthServices.store().findById(id);
+            String username = target != null ? target.username : id;
+            DashboardAuthServices.store().deleteAccount(id);
+            DashboardAuthServices.sessions().revokeForAccount(id);
+            DashboardAudit.record("account_deleted", session, username, null, clientIp(ex));
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            sendJson(ex, 200, out);
+        } catch (IllegalStateException e) {
+            sendJson(ex, 409, errorJson("last_owner", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            sendJson(ex, 400, errorJson("invalid_account", e.getMessage()));
+        }
+    }
+
+    public static void handleAuditLog(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            sendText(ex, 405, "Method not allowed");
+            return;
+        }
+        SessionManager.SessionState session = sessionOf(ex);
+        if (session == null || !session.role().canWrite()) {
+            sendReadOnly(ex);
+            return;
+        }
+        int limit = clampInt(parseQueryLimit(ex), 200, 1, AuditLog.MAX_ENTRIES);
+        Path auditPath = DashboardAuthServices.auditPath();
+        List<AuditEvent> probe = AuditLog.read(auditPath, limit + 1);
+        boolean truncated = probe.size() > limit;
+        List<AuditEvent> entries = truncated ? probe.subList(0, limit) : probe;
+        JsonArray arr = new JsonArray();
+        for (AuditEvent row : entries) {
+            arr.add(GSON.toJsonTree(row));
+        }
+        JsonObject out = new JsonObject();
+        out.add("entries", arr);
+        out.addProperty("truncated", truncated);
+        out.addProperty("retention_days", AuditLog.RETENTION_DAYS);
+        out.addProperty("max_entries", AuditLog.MAX_ENTRIES);
+        sendJson(ex, 200, out);
+    }
+
+    private static int parseQueryLimit(HttpExchange ex) {
+        String query = ex.getRequestURI().getQuery();
+        if (query == null) {
+            return 200;
+        }
+        for (String part : query.split("&")) {
+            if (part.startsWith("limit=")) {
+                try {
+                    return Integer.parseInt(part.substring(6));
+                } catch (NumberFormatException ignored) {
+                    return 200;
+                }
+            }
+        }
+        return 200;
+    }
+
+    private static int clampInt(int value, int fallback, int min, int max) {
+        int v = value > 0 ? value : fallback;
+        if (v < min) {
+            return min;
+        }
+        if (v > max) {
+            return max;
+        }
+        return v;
     }
 
     public static SessionManager.SessionState requireFullSession(HttpExchange ex) throws IOException {

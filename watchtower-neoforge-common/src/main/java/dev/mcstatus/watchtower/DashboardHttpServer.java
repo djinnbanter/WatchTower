@@ -241,6 +241,11 @@ public final class DashboardHttpServer {
             server.createContext("/api/auth/totp/confirm", this::handleAuthTotpConfirm);
             server.createContext("/api/auth/totp/disable", this::handleAuthTotpDisable);
             server.createContext("/api/auth/recovery/regenerate", this::handleAuthRecoveryRegenerate);
+            server.createContext("/api/accounts", this::handleAccounts);
+            server.createContext("/api/accounts/update", this::handleAccountUpdate);
+            server.createContext("/api/accounts/reset-password", this::handleAccountResetPassword);
+            server.createContext("/api/accounts/delete", this::handleAccountDelete);
+            server.createContext("/api/audit-log", this::handleAuditLog);
             server.setExecutor(Executors.newCachedThreadPool(r -> {
                 Thread t = new Thread(r, "watchtower-http");
                 t.setDaemon(true);
@@ -392,6 +397,41 @@ public final class DashboardHttpServer {
 
     private void handleAuthRecoveryRegenerate(HttpExchange ex) throws IOException {
         DashboardAuthHttp.handleRecoveryRegenerate(ex);
+    }
+
+    private void handleAccounts(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        DashboardAuthHttp.handleAccounts(ex);
+    }
+
+    private void handleAccountUpdate(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        DashboardAuthHttp.handleAccountUpdate(ex);
+    }
+
+    private void handleAccountResetPassword(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        DashboardAuthHttp.handleAccountResetPassword(ex);
+    }
+
+    private void handleAccountDelete(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        DashboardAuthHttp.handleAccountDelete(ex);
+    }
+
+    private void handleAuditLog(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        DashboardAuthHttp.handleAuditLog(ex);
     }
 
     private boolean requireApiAuth(HttpExchange ex) throws IOException {
