@@ -11,7 +11,7 @@ import {
   type WtIcon,
 } from '@/ui/icons';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { GROUPS, getPages, type PageDef } from '@/app/registry';
 import { hrefFor, navigate, type RouteState } from '@/app/router';
 import { isFixturePreview } from '@/app/runtime';
@@ -21,6 +21,7 @@ import { isCaptureMode } from '@/app/capture-mode';
 import { SupportBuilderModal } from '@/features/support';
 import { StatusPill } from '@/ui/patterns';
 import '@/features/register';
+import './shell.css';
 
 type Props = {
   route: RouteState;
@@ -33,8 +34,6 @@ const THEME_CYCLE: Record<Theme, { icon: WtIcon; label: string }> = {
   dark: { icon: Eclipse, label: 'Black theme' },
   black: { icon: Sun, label: 'Light theme' },
 };
-
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 
 export function AppShell({ route, page, children }: Props) {
   const { theme, toggleTheme } = useTheme();
@@ -79,22 +78,33 @@ export function AppShell({ route, page, children }: Props) {
   }, []);
 
   const rail = (
-    <nav className="flex h-full w-[220px] flex-col border-r border-wt-line bg-wt-bg1" aria-label="Main navigation">
-      <div className="flex items-center gap-2 border-b border-wt-line px-4 py-3.5">
-        <img src="./assets/watchtower-icon-simple.png" alt="" width={28} height={28} className="rounded-[2px]" />
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold tracking-tight">WatchTower</div>
-          <div className="truncate text-xs text-wt-text-low">{hostname}</div>
+    <nav
+      className="sh-rail flex h-full w-[220px] flex-col border-r border-wt-line bg-wt-bg1"
+      aria-label="Main navigation"
+    >
+      <div className="sh-rail__brand flex items-center gap-2 border-b border-wt-line px-4 py-3.5">
+        <img
+          src="./assets/watchtower-icon-simple.png"
+          alt=""
+          width={28}
+          height={28}
+          className="sh-rail__brand-mark rounded-[2px]"
+        />
+        <div className="sh-rail__brand-text min-w-0">
+          <div className="sh-rail__brand-title truncate text-sm font-semibold tracking-tight">
+            WatchTower
+          </div>
+          <div className="sh-rail__brand-host truncate text-xs text-wt-text-low">{hostname}</div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1.5 py-2">
+      <div className="sh-rail__scroll flex-1 overflow-y-auto px-1.5 py-2">
         {GROUPS.map((group) => {
           const groupPages = pages.filter((p) => p.group === group.id && p.rail !== false);
           if (!groupPages.length) return null;
           return (
-            <div key={group.id} className="mb-3">
-              <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-wt-text-low">
+            <div key={group.id} className="sh-rail__group mb-3">
+              <div className="sh-rail__group-label px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-wt-text-low">
                 {group.label}
               </div>
               <div>
@@ -112,9 +122,9 @@ export function AppShell({ route, page, children }: Props) {
                         navigate({ tab: p.id, view: null, panel: null });
                       }}
                       className={cn(
-                        'flex items-center gap-2 border-l-2 px-2.5 py-1.5 text-sm transition-colors',
+                        'sh-rail__link flex items-center gap-2 border-l-2 px-2.5 py-1.5 text-sm transition-colors',
                         active
-                          ? 'border-wt-accent bg-wt-bg2 font-medium text-wt-text'
+                          ? 'is-active border-transparent bg-wt-accent font-medium text-wt-accent-ink'
                           : 'border-transparent text-wt-text-mid hover:bg-wt-bg2/60 hover:text-wt-text',
                       )}
                     >
@@ -122,15 +132,15 @@ export function AppShell({ route, page, children }: Props) {
                         <PageIcon
                           size={16}
                           className={cn(
-                            'shrink-0',
-                            active ? 'text-wt-accent' : 'text-wt-text-low',
+                            'sh-rail__link-icon shrink-0',
+                            active ? 'text-wt-accent-ink' : 'text-wt-text-low',
                           )}
                           aria-hidden
                         />
                       ) : null}
                       <span className="truncate">{p.title}</span>
                       {badge != null && badge !== 0 ? (
-                        <span className="ml-auto rounded-[2px] bg-wt-danger/15 px-1.5 text-[10px] font-semibold text-wt-danger">
+                        <span className="sh-rail__badge ml-auto rounded-[2px] bg-wt-danger/15 px-1.5 text-[10px] font-semibold text-wt-danger">
                           {badge}
                         </span>
                       ) : null}
@@ -143,13 +153,13 @@ export function AppShell({ route, page, children }: Props) {
         })}
       </div>
 
-      <div className="space-y-1.5 border-t border-wt-line p-2">
+      <div className="sh-rail__foot space-y-1.5 border-t border-wt-line p-2">
         <button
           type="button"
           disabled={!canWrite}
           title={canWrite ? undefined : VIEW_ONLY_TITLE}
           onClick={() => setSupportOpen(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-wt-sm)] border border-wt-line bg-wt-bg2 px-3 py-2 text-sm font-medium text-wt-text-mid hover:text-wt-text disabled:cursor-not-allowed disabled:opacity-50"
+          className="sh-rail__cta flex w-full items-center justify-center gap-2 rounded-[var(--radius-wt-sm)] border border-wt-line bg-wt-bg2 px-3 py-2 text-sm font-medium text-wt-text-mid hover:text-wt-text disabled:cursor-not-allowed disabled:opacity-50"
         >
           <LifeBuoy size={16} /> Build support pack
         </button>
@@ -157,7 +167,7 @@ export function AppShell({ route, page, children }: Props) {
           type="button"
           onClick={toggleTheme}
           aria-label="Cycle colour theme"
-          className="flex w-full items-center gap-2 rounded-[var(--radius-wt-sm)] border border-wt-line bg-wt-bg2 px-3 py-2 text-sm text-wt-text-mid hover:text-wt-text"
+          className="sh-rail__theme flex w-full items-center gap-2 rounded-[var(--radius-wt-sm)] border border-wt-line bg-wt-bg2 px-3 py-2 text-sm text-wt-text-mid hover:text-wt-text"
         >
           <ThemeIcon size={16} />
           {themeCycle.label}
