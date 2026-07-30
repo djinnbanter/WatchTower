@@ -342,6 +342,50 @@ class DashboardAuthStoreTest {
         assertTrue(store.verifyPassword(ownerId, "password".toCharArray()));
     }
 
+    @Test
+    void setMinecraftLinkStoresNormalizedUuidAndName() throws Exception {
+        DashboardAuthStore store = freshStoreWithOwner();
+        String ownerId = store.ownerAccount().id;
+
+        store.setMinecraftLink(ownerId, "069a79f444e94726a5befca90e38aaf5", "Notch");
+
+        DashboardAuthRecord owner = store.findById(ownerId);
+        assertEquals("069a79f4-44e9-4726-a5be-fca90e38aaf5", owner.minecraft_uuid);
+        assertEquals("Notch", owner.minecraft_name);
+    }
+
+    @Test
+    void clearMinecraftLinkRemovesFields() throws Exception {
+        DashboardAuthStore store = freshStoreWithOwner();
+        String ownerId = store.ownerAccount().id;
+        store.setMinecraftLink(ownerId, "069a79f4-44e9-4726-a5be-fca90e38aaf5", "Notch");
+
+        store.clearMinecraftLink(ownerId);
+
+        assertNull(store.findById(ownerId).minecraft_uuid);
+        assertNull(store.findById(ownerId).minecraft_name);
+    }
+
+    @Test
+    void setMinecraftLinkRejectsInvalidUuid() throws Exception {
+        DashboardAuthStore store = freshStoreWithOwner();
+        assertThrows(IllegalArgumentException.class,
+                () -> store.setMinecraftLink(store.ownerAccount().id, "not-a-uuid", "Steve"));
+    }
+
+    @Test
+    void setMinecraftLinkRejectsDuplicateOnEnabledAccount() throws Exception {
+        DashboardAuthStore store = freshStoreWithOwner();
+        String ownerId = store.ownerAccount().id;
+        store.createAccount("marco", AccountRole.ADMIN, ownerId);
+        String marcoId = store.findByUsername("marco").id;
+        String uuid = "069a79f4-44e9-4726-a5be-fca90e38aaf5";
+        store.setMinecraftLink(ownerId, uuid, "Notch");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> store.setMinecraftLink(marcoId, uuid, "Notch"));
+    }
+
     private DashboardAuthStore freshStoreWithOwner() throws Exception {
         Path authPath = tempDir.resolve("dashboard-auth.json");
         AuthKeyStore keys = new AuthKeyStore(tempDir.resolve(".auth-key"));

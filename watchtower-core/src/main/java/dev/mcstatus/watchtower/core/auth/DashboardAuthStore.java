@@ -194,6 +194,55 @@ public final class DashboardAuthStore {
         save();
     }
 
+    public void setMinecraftLink(String accountId, String uuid, String name) throws IOException {
+        DashboardAuthRecord r = requireAccount(accountId);
+        String normalizedUuid = normalizeMinecraftUuid(uuid);
+        String trimmedName = validateMinecraftName(name);
+        for (DashboardAuthRecord other : file.accounts) {
+            if (other.disabled || other.id.equals(accountId)) {
+                continue;
+            }
+            if (normalizedUuid.equalsIgnoreCase(nullToEmpty(other.minecraft_uuid))) {
+                throw new IllegalArgumentException("Minecraft player already linked to another account");
+            }
+        }
+        r.minecraft_uuid = normalizedUuid;
+        r.minecraft_name = trimmedName;
+        save();
+    }
+
+    public void clearMinecraftLink(String accountId) throws IOException {
+        DashboardAuthRecord r = requireAccount(accountId);
+        r.minecraft_uuid = null;
+        r.minecraft_name = null;
+        save();
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
+    }
+
+    /** Accepts dashed or undashed UUID; stores lowercase dashed form. */
+    static String normalizeMinecraftUuid(String uuid) {
+        if (uuid == null || uuid.isBlank()) {
+            throw new IllegalArgumentException("Minecraft UUID is required");
+        }
+        String raw = uuid.trim().replace("-", "").toLowerCase();
+        if (!raw.matches("[0-9a-f]{32}")) {
+            throw new IllegalArgumentException("Invalid Minecraft UUID");
+        }
+        return raw.substring(0, 8) + "-" + raw.substring(8, 12) + "-" + raw.substring(12, 16)
+                + "-" + raw.substring(16, 20) + "-" + raw.substring(20);
+    }
+
+    static String validateMinecraftName(String name) {
+        String trimmed = name != null ? name.trim() : "";
+        if (trimmed.isEmpty() || trimmed.length() > 16) {
+            throw new IllegalArgumentException("Minecraft name must be 1-16 characters");
+        }
+        return trimmed;
+    }
+
     public String beginTotpSetup(String accountId) throws IOException {
         DashboardAuthRecord r = requireAccount(accountId);
         String secret = totpService.generateSecret();

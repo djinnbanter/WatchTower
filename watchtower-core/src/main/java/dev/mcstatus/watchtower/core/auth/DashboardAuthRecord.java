@@ -25,6 +25,10 @@ public final class DashboardAuthRecord {
     public String password_changed_at;
     public String created_by;
     public String last_login_at;
+    /** Optional linked Minecraft player UUID (lowercase dashed). Empty/null = unlinked. */
+    public String minecraft_uuid;
+    /** Last known Minecraft name for display (max 16). */
+    public String minecraft_name;
 
     public DashboardAuthRecord() {
     }
