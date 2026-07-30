@@ -1,5 +1,8 @@
 import { useSessionStore } from '@/app/session-store';
 
+/** Tooltip when the signed-in role cannot mutate server settings. */
+export const VIEW_ONLY_TITLE = 'Your account can view WatchTower but not change it';
+
 export type Role = 'owner' | 'admin' | 'viewer';
 
 const ROLES: readonly Role[] = ['owner', 'admin', 'viewer'];
@@ -18,6 +21,21 @@ export function canWrite(role: Role): boolean {
 
 export function canManageAccounts(role: Role): boolean {
   return role === 'owner';
+}
+
+const ROLE_LABELS: Record<Role, string> = {
+  owner: 'Owner',
+  admin: 'Admin',
+  viewer: 'Viewer',
+};
+
+export function roleLabel(role: Role): string {
+  return ROLE_LABELS[role];
+}
+
+export function usernameFromSession(session: Record<string, unknown> | null | undefined): string {
+  const raw = session?.username;
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : 'Signed in';
 }
 
 export function useRole(): Role {

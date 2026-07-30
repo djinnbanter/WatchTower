@@ -174,3 +174,84 @@
   outline: 2px solid var(--wt-accent);
   outline-offset: 1px;
 }
+
+.sh-rail__account {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.45rem 0.55rem 0.55rem;
+  margin-bottom: 0.15rem;
+  border-bottom: 1px solid var(--wt-line);
+}
+
+.sh-rail__account-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.sh-rail__account-mark {
+  display: flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  background: var(--wt-accent-soft);
+  color: var(--wt-accent);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.sh-rail__account-name {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  color: var(--wt-text);
+}
+
+.sh-rail__account-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-left: 2rem; /* align under name, past the mark */
+}
+
+.sh-rail__account-role {
+  font-size: 11px;
+  color: var(--wt-text-low);
+}
+
+.sh-rail__sign-out {
+  border: 0;
+  background: transparent;
+  padding: 0.15rem 0.25rem;
+  border-radius: var(--radius-wt-sm);
+  font-size: 11px;
+  font-weight: 550;
+  color: var(--wt-text-mid);
+  cursor: pointer;
+}
+
+.sh-rail__sign-out:hover:not(:disabled) {
+  color: var(--wt-text);
+  background: color-mix(in srgb, var(--wt-bg2) 80%, transparent);
+}
+
+.sh-rail__sign-out:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sh-rail__sign-out:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 1px;
+}

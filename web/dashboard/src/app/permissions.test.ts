@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { canManageAccounts, canWrite, roleFromSession } from './permissions';
+import {
+  canManageAccounts,
+  canWrite,
+  roleFromSession,
+  roleLabel,
+  usernameFromSession,
+} from './permissions';
 
 describe('roleFromSession', () => {
   it('reads the role from the session payload', () => {
@@ -30,5 +36,23 @@ describe('capabilities', () => {
     assert.equal(canManageAccounts('owner'), true);
     assert.equal(canManageAccounts('admin'), false);
     assert.equal(canManageAccounts('viewer'), false);
+  });
+});
+
+describe('roleLabel', () => {
+  it('maps roles to display labels', () => {
+    assert.equal(roleLabel('owner'), 'Owner');
+    assert.equal(roleLabel('admin'), 'Admin');
+    assert.equal(roleLabel('viewer'), 'Viewer');
+  });
+});
+
+describe('usernameFromSession', () => {
+  it('reads a trimmed username or falls back', () => {
+    assert.equal(usernameFromSession({ username: 'ella' }), 'ella');
+    assert.equal(usernameFromSession({ username: '  ella  ' }), 'ella');
+    assert.equal(usernameFromSession({}), 'Signed in');
+    assert.equal(usernameFromSession({ username: '   ' }), 'Signed in');
+    assert.equal(usernameFromSession(null), 'Signed in');
   });
 });

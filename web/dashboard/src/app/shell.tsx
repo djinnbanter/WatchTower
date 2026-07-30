@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Eclipse,
   LifeBuoy,
@@ -11,10 +11,17 @@ import {
   type WtIcon,
 } from '@/ui/icons';
 import { api } from '@/api/client';
-import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
+import {
+  roleLabel,
+  useCanWrite,
+  useRole,
+  usernameFromSession,
+  VIEW_ONLY_TITLE,
+} from '@/app/permissions';
 import { GROUPS, getPages, type PageDef } from '@/app/registry';
 import { hrefFor, navigate, type RouteState } from '@/app/router';
 import { isFixturePreview } from '@/app/runtime';
+import { useSessionStore } from '@/app/session-store';
 import { useTheme, type Theme } from '@/app/theme';
 import { asRecord, cn, get, str } from '@/lib/utils';
 import { isCaptureMode } from '@/app/capture-mode';
@@ -38,6 +45,14 @@ const THEME_CYCLE: Record<Theme, { icon: WtIcon; label: string }> = {
 export function AppShell({ route, page, children }: Props) {
   const { theme, toggleTheme } = useTheme();
   const canWrite = useCanWrite();
+  const session = useSessionStore((s) => s.session);
+  const resetToLogin = useSessionStore((s) => s.resetToLogin);
+  const queryClient = useQueryClient();
+  const role = useRole();
+  const username = usernameFromSession(session);
+  const initial = username.slice(0, 1).toUpperCase();
+  const fixture = isFixturePreview();
+  const [signingOut, setSigningOut] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [capture, setCapture] = useState(isCaptureMode);
@@ -45,6 +60,19 @@ export function AppShell({ route, page, children }: Props) {
   const pages = getPages();
   const themeCycle = THEME_CYCLE[theme];
   const ThemeIcon = themeCycle.icon;
+
+  async function onSignOut() {
+    if (fixture || signingOut) return;
+    setSigningOut(true);
+    try {
+      await api.logout();
+    } catch {
+      // Cookie may already be gone; still clear local UI.
+    }
+    queryClient.clear();
+    resetToLogin();
+    setSigningOut(false);
+  }
 
   const liveQ = useQuery({ queryKey: ['live'], queryFn: api.live, staleTime: 30_000 });
   const factsQ = useQuery({ queryKey: ['facts'], queryFn: api.facts, staleTime: 60_000 });
@@ -133,6 +161,25 @@ export function AppShell({ route, page, children }: Props) {
       </div>
 
       <div className="sh-rail__foot">
+        <div className="sh-rail__account">
+          <div className="sh-rail__account-row">
+            <span className="sh-rail__account-mark" aria-hidden>{initial}</span>
+            <span className="sh-rail__account-name" title={username}>{username}</span>
+          </div>
+          <div className="sh-rail__account-meta">
+            <span className="sh-rail__account-role">{roleLabel(role)}</span>
+            <button
+              type="button"
+              className="sh-rail__sign-out"
+              disabled={fixture || signingOut}
+              title={fixture ? 'Not available in fixture preview' : undefined}
+              aria-label={signingOut ? 'Signing out' : 'Sign out'}
+              onClick={() => void onSignOut()}
+            >
+              {signingOut ? 'Signing out…' : 'Sign out'}
+            </button>
+          </div>
+        </div>
         <button
           type="button"
           disabled={!canWrite}
