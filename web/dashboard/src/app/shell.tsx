@@ -27,6 +27,7 @@ import { asRecord, cn, get, str } from '@/lib/utils';
 import { isCaptureMode } from '@/app/capture-mode';
 import { SupportBuilderModal } from '@/features/support';
 import { StatusPill } from '@/ui/patterns';
+import { PlayerAvatar } from '@/ui/player-avatar';
 import '@/features/register';
 import './shell.css';
 
@@ -50,7 +51,12 @@ export function AppShell({ route, page, children }: Props) {
   const queryClient = useQueryClient();
   const role = useRole();
   const username = usernameFromSession(session);
-  const initial = username.slice(0, 1).toUpperCase();
+  const mcUuid =
+    typeof session?.minecraft_uuid === 'string' ? session.minecraft_uuid : null;
+  const mcName =
+    typeof session?.minecraft_name === 'string' && session.minecraft_name.trim()
+      ? session.minecraft_name.trim()
+      : username;
   const fixture = isFixturePreview();
   const [signingOut, setSigningOut] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -163,7 +169,13 @@ export function AppShell({ route, page, children }: Props) {
       <div className="sh-rail__foot">
         <div className="sh-rail__account">
           <div className="sh-rail__account-row">
-            <span className="sh-rail__account-mark" aria-hidden>{initial}</span>
+            <PlayerAvatar
+              uuid={mcUuid}
+              name={mcName}
+              size={24}
+              eager
+              className="sh-rail__account-mark"
+            />
             <span className="sh-rail__account-name" title={username}>{username}</span>
           </div>
           <div className="sh-rail__account-meta">
