@@ -841,6 +841,8 @@ export function fixtureApiPlugin(): Plugin {
               preview: true,
               must_change_password: false,
               role,
+              minecraft_uuid: '069a79f4-44e9-4726-a5be-fca90e38aaf5',
+              minecraft_name: role === 'owner' ? 'Ella' : role === 'admin' ? 'Marco' : 'Sam',
             });
           }
 
@@ -929,9 +931,31 @@ export function fixtureApiPlugin(): Plugin {
               }
               row.disabled = disabled;
             }
+            if (body.clear_minecraft === true || body.minecraft_uuid === '') {
+              delete row.minecraft_uuid;
+              delete row.minecraft_name;
+            } else if (typeof body.minecraft_uuid === 'string' && body.minecraft_uuid.trim()) {
+              row.minecraft_uuid = String(body.minecraft_uuid).trim();
+              row.minecraft_name = String(body.minecraft_name || '').trim() || 'Player';
+            }
             accounts[idx] = row;
             session.accounts = accounts;
             return sendJson(res, 200, { ok: true });
+          }
+
+          if (method === 'POST' && pathOnly === '/api/accounts/me/minecraft') {
+            const raw = await readBody(req);
+            const body = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+            const role = previewRoleFromRequest(req, url);
+            const username = role === 'owner' ? 'ella' : role === 'admin' ? 'marco' : 'sam';
+            if (body.clear === true) {
+              return sendJson(res, 200, { ok: true });
+            }
+            return sendJson(res, 200, {
+              ok: true,
+              minecraft_uuid: String(body.uuid || '069a79f4-44e9-4726-a5be-fca90e38aaf5'),
+              minecraft_name: String(body.name || username),
+            });
           }
 
           if (method === 'POST' && pathOnly === '/api/accounts/reset-password') {

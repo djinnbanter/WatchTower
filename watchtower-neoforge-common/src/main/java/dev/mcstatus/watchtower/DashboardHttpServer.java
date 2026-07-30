@@ -245,6 +245,7 @@ public final class DashboardHttpServer {
             server.createContext("/api/accounts/update", this::handleAccountUpdate);
             server.createContext("/api/accounts/reset-password", this::handleAccountResetPassword);
             server.createContext("/api/accounts/delete", this::handleAccountDelete);
+            server.createContext("/api/accounts/me/minecraft", this::handleMyMinecraftLink);
             server.createContext("/api/audit-log", this::handleAuditLog);
             server.setExecutor(Executors.newCachedThreadPool(r -> {
                 Thread t = new Thread(r, "watchtower-http");
@@ -425,6 +426,11 @@ public final class DashboardHttpServer {
             return;
         }
         DashboardAuthHttp.handleAccountDelete(ex);
+    }
+
+    private void handleMyMinecraftLink(HttpExchange ex) throws IOException {
+        // Self-service: viewers may link their own skin (bypass write gate).
+        DashboardAuthHttp.handleMyMinecraftLink(ex);
     }
 
     private void handleAuditLog(HttpExchange ex) throws IOException {

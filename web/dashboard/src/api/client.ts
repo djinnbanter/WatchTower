@@ -258,10 +258,21 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ username, role }),
     }),
-  updateAccount: (id: string, patch: { role?: string; disabled?: boolean }) =>
+  updateAccount: (id: string, patch: {
+    role?: string;
+    disabled?: boolean;
+    minecraft_uuid?: string;
+    minecraft_name?: string;
+    clear_minecraft?: boolean;
+  }) =>
     apiFetch<Record<string, unknown>>('/api/accounts/update', {
       method: 'POST',
       body: JSON.stringify({ id, ...patch }),
+    }),
+  linkMyMinecraft: (body: { uuid: string; name: string } | { clear: true }) =>
+    apiFetch<Record<string, unknown>>('/api/accounts/me/minecraft', {
+      method: 'POST',
+      body: JSON.stringify(body),
     }),
   resetAccountPassword: (id: string, clear2fa = false) =>
     apiFetch<Record<string, unknown>>('/api/accounts/reset-password', {

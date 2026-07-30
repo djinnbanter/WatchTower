@@ -385,6 +385,7 @@ public final class DashboardAuthHttp {
                 row.addProperty("created_at", r.created_at);
                 row.addProperty("last_login_at", r.last_login_at);
                 row.addProperty("is_you", session != null && session.accountId().equals(r.id));
+                putMinecraftLink(row, r);
                 accounts.add(row);
             }
         }
@@ -445,6 +446,7 @@ public final class DashboardAuthHttp {
         }
         boolean hasRole = body.has("role") && !body.get("role").isJsonNull();
         boolean hasDisabled = body.has("disabled") && !body.get("disabled").isJsonNull();
+        boolean hasMinecraft = body.has("minecraft_uuid") || body.has("clear_minecraft");
         String ip = clientIp(ex);
         try {
             boolean roleChanged = false;
@@ -468,6 +470,21 @@ public final class DashboardAuthHttp {
                             session, existing.username, null, ip);
                 }
             }
+            if (hasMinecraft) {
+                boolean clear = body.has("clear_minecraft")
+                        && !body.get("clear_minecraft").isJsonNull()
+                        && body.get("clear_minecraft").getAsBoolean();
+                String uuid = text(body, "minecraft_uuid");
+                if (clear || uuid.isBlank()) {
+                    store.clearMinecraftLink(id);
+                    DashboardAudit.record("account_minecraft_unlink", session, existing.username, null, ip);
+                } else {
+                    String name = text(body, "minecraft_name");
+                    store.setMinecraftLink(id, uuid, name);
+                    DashboardAudit.record("account_minecraft_link", session, existing.username,
+                            name + " " + uuid, ip);
+                }
+            }
             if (roleChanged || newlyDisabled) {
                 DashboardAuthServices.sessions().revokeForAccount(id);
             }
@@ -478,6 +495,56 @@ public final class DashboardAuthHttp {
             sendJson(ex, 409, errorJson("last_owner", e.getMessage()));
         } catch (IllegalArgumentException e) {
             sendJson(ex, 400, errorJson("invalid_account", e.getMessage()));
+        }
+    }
+
+    /** Any fully authenticated user may link/unlink their own Minecraft player. */
+    public static void handleMyMinecraftLink(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            sendText(ex, 405, "Method not allowed");
+            return;
+        }
+        SessionManager.SessionState session = requireSession(ex, false, false);
+        if (session == null) {
+            return;
+        }
+        JsonObject body = parseBody(ex);
+        String ip = clientIp(ex);
+        DashboardAuthStore store = DashboardAuthServices.store();
+        if (store == null) {
+            sendJson(ex, 503, errorJson("auth_unavailable", "Accounts unavailable"));
+            return;
+        }
+        try {
+            boolean clear = body.has("clear") && !body.get("clear").isJsonNull()
+                    && body.get("clear").getAsBoolean();
+            if (clear) {
+                store.clearMinecraftLink(session.accountId());
+                DashboardAudit.record("account_minecraft_unlink", session, session.username(), null, ip);
+            } else {
+                String uuid = text(body, "uuid");
+                String name = text(body, "name");
+                store.setMinecraftLink(session.accountId(), uuid, name);
+                DashboardAudit.record("account_minecraft_link", session, session.username(),
+                        name + " " + uuid, ip);
+            }
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            putMinecraftLink(out, store.findById(session.accountId()));
+            sendJson(ex, 200, out);
+        } catch (IllegalArgumentException e) {
+            sendJson(ex, 400, errorJson("invalid_minecraft_link", e.getMessage()));
+        }
+    }
+
+    private static void putMinecraftLink(JsonObject out, DashboardAuthRecord account) {
+        if (account == null) {
+            return;
+        }
+        if (account.minecraft_uuid != null && !account.minecraft_uuid.isBlank()) {
+            out.addProperty("minecraft_uuid", account.minecraft_uuid);
+            out.addProperty("minecraft_name",
+                    account.minecraft_name != null ? account.minecraft_name : "");
         }
     }
 
@@ -696,6 +763,7 @@ public final class DashboardAuthHttp {
         out.addProperty("can_write", session.role().canWrite());
         out.addProperty("can_manage_accounts", session.role().canManageAccounts());
         out.addProperty("fully_authenticated", session.isFullyAuthenticated());
+        putMinecraftLink(out, account);
         if (hostname != null) {
             out.addProperty("hostname", hostname);
         }
