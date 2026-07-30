@@ -78,10 +78,7 @@ export function AppShell({ route, page, children }: Props) {
   }, []);
 
   const rail = (
-    <nav
-      className="sh-rail flex h-full w-[220px] flex-col border-r border-wt-line bg-wt-bg1"
-      aria-label="Main navigation"
-    >
+    <nav className="sh-rail" aria-label="Main navigation">
       <div className="sh-rail__brand">
         <img
           src="./assets/watchtower-icon-simple.png"
@@ -96,7 +93,7 @@ export function AppShell({ route, page, children }: Props) {
         </div>
       </div>
 
-      <div className="sh-rail__scroll flex-1 overflow-y-auto">
+      <div className="sh-rail__scroll">
         {GROUPS.map((group) => {
           const groupPages = pages.filter((p) => p.group === group.id && p.rail !== false);
           if (!groupPages.length) return null;
