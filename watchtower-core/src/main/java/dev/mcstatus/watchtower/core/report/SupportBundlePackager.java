@@ -45,7 +45,8 @@ public final class SupportBundlePackager {
             JsonObject environment,
             JsonArray evidenceFiles,
             JsonArray omissions,
-            String zipTimestamp
+            String zipTimestamp,
+            String opsCacheRedactedJson
     ) {
     }
 
@@ -89,7 +90,7 @@ public final class SupportBundlePackager {
     ) throws IOException {
         return packageSupportBundle(new PackageRequest(
                 outDir, factsPath, briefPath, opsCachePath, rollupsPath, extras, composed,
-                SupportComposeOptions.quickDefaults(), null, new JsonArray(), new JsonArray(), null));
+                SupportComposeOptions.quickDefaults(), null, new JsonArray(), new JsonArray(), null, null));
     }
 
     public static BundleResult packageSupportBundle(PackageRequest req) throws IOException {
@@ -138,7 +139,9 @@ public final class SupportBundlePackager {
                 ForensicsZipUtil.addFileEntry(zos, zipBrief, briefPath);
             }
             if (hasOpsCache) {
-                String opsJson = SupportRedactor.redactJsonText(Files.readString(req.opsCachePath()));
+                String opsJson = req.opsCacheRedactedJson() != null
+                        ? req.opsCacheRedactedJson()
+                        : SupportRedactor.redactJsonText(Files.readString(req.opsCachePath()));
                 ForensicsZipUtil.addTextEntry(zos, "watchtower/" + opsName, opsJson);
             }
             if (hasRollups && options.includeRollups()) {
@@ -226,7 +229,7 @@ public final class SupportBundlePackager {
         sb.append("Watchtower support bundle\n");
         sb.append("=========================\n\n");
         sb.append("Privacy: text artifacts are redacted (secrets, IPs, UUIDs). Spark profiles are binary and unredacted.\n");
-        sb.append("Never includes dashboard-auth, world/playerdata, backups, or mod jars.\n\n");
+        sb.append("Never includes dashboard-auth, the audit log, world/playerdata, backups, or mod jars.\n\n");
         if (composed) {
             sb.append("Composed from continuous Watching + Scanning data (ops-cache, rollups).\n");
             sb.append("Facts/brief in this zip are synthesized for support only — not BAU dashboard truth.\n\n");
