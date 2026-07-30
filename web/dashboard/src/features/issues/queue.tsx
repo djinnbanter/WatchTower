@@ -1,0 +1,409 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CheckCircle2, ChevronRight, Copy, X } from '@/ui/icons';
+import { useCanWrite } from '@/app/permissions';
+import { navigate } from '@/app/router';
+import { Button, EmptyState, StatusPill } from '@/ui/patterns';
+import { cn, num } from '@/lib/utils';
+import {
+  DETAIL_PANELS,
+  confidenceTone,
+  formatAge,
+  groupByBand,
+  severityTone,
+  sourceLabel,
+  type DetailPanel,
+  type IssueItem,
+  type PrimaryAction,
+} from './helpers';
+
+const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
+
+type SevFilter = 'all' | 'critical' | 'warning' | 'info';
+
+type QueueBand = {
+  key: string;
+  label: string;
+  tone: 'danger' | 'warn' | 'info' | 'neutral';
+  items: IssueItem[];
+};
+
+const SEV_PRIORITY = ['critical', 'warning', 'info'] as const;
+
+function defaultExpanded(bands: QueueBand[]): Set<string> {
+  const focus = SEV_PRIORITY.find((key) => bands.some((b) => b.key === key)) ?? bands[0]?.key ?? null;
+  return focus ? new Set([focus]) : new Set();
+}
+
+function runPrimaryAction(action: PrimaryAction | null) {
+  if (!action) return;
+  if (action.href) {
+    window.open(action.href, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  if (action.tab) {
+    navigate({ tab: action.tab, ...(action.params ?? {}) });
+  }
+}
+
+async function copySteps(item: IssueItem) {
+  const lines = (item.steps.length ? item.steps : item.hints).map((s, i) => `${i + 1}. ${s}`);
+  const textLines = [`${item.title}`, '', ...lines].join('\n');
+  try {
+    await navigator.clipboard.writeText(textLines);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function IssuesQueue({
+  mode,
+  items,
+  selectedKey,
+  onSelect,
+  onMarkReviewed,
+  onMoveToActive,
+  onSuppress,
+  marking,
+}: {
+  mode: 'active' | 'reviewed';
+  items: IssueItem[];
+  selectedKey: string | null;
+  onSelect: (key: string | null) => void;
+  onMarkReviewed: (item: IssueItem) => void;
+  onMoveToActive: (item: IssueItem) => void;
+  onSuppress: (item: IssueItem) => void;
+  marking: boolean;
+}) {
+  const canWrite = useCanWrite();
+  const [panel, setPanel] = useState<DetailPanel>('fix');
+  const [sevFilter, setSevFilter] = useState<SevFilter>('all');
+  const [expandedBands, setExpandedBands] = useState<Set<string>>(new Set());
+  const [bandExpanded, setBandExpanded] = useState<Record<string, boolean>>({});
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const allBands = useMemo(() => (mode === 'active' ? groupByBand(items) : null), [items, mode]);
+  const bands = useMemo(() => {
+    if (!allBands) return null;
+    if (sevFilter === 'all') return allBands;
+    return allBands.filter((b) => b.key === sevFilter);
+  }, [allBands, sevFilter]);
+  const selected = items.find((i) => i.key === selectedKey) ?? null;
+  const bandKeys = allBands?.map((b) => b.key).join('|') ?? '';
+
+  useEffect(() => {
+    setPanel('fix');
+  }, [selectedKey]);
+
+  useEffect(() => {
+    if (!allBands?.length) return;
+    setExpandedBands(defaultExpanded(allBands));
+    setBandExpanded({});
+    setSevFilter('all');
+  }, [bandKeys]); // reset when the set of bands changes
+
+  useEffect(() => {
+    if (!selected || !allBands) return;
+    const key = selected.severity === 'critical' || selected.severity === 'info' ? selected.severity : 'warning';
+    setExpandedBands((prev) => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }, [selectedKey, selected, allBands]);
+
+  const toggleBand = (key: string) => {
+    setExpandedBands((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const chipCounts = useMemo(() => {
+    const map: Record<string, number> = { all: items.length };
+    for (const b of allBands ?? []) map[b.key] = b.items.length;
+    return map;
+  }, [allBands, items.length]);
+
+  const renderRow = (item: IssueItem) => (
+    <button
+      key={item.key}
+      type="button"
+      className={`is-row${selectedKey === item.key ? ' is-selected' : ''}`}
+      onClick={() => onSelect(item.key)}
+    >
+      <div className="is-row__top">
+        <h4 className="is-row__title">{item.title}</h4>
+        <div className="is-row__meta">
+          <StatusPill tone={severityTone(item.severity)}>{item.severity}</StatusPill>
+          {formatAge(mode === 'reviewed' ? item.ackedAt : item.when) ? (
+            <span className="text-xs text-wt-text-low">
+              {formatAge(mode === 'reviewed' ? item.ackedAt : item.when)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+      {item.summary ? <p className="is-row__cause">{item.summary}</p> : null}
+    </button>
+  );
+
+  const filterChips: { value: SevFilter; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'critical', label: 'Critical' },
+    { value: 'warning', label: 'Warning' },
+    { value: 'info', label: 'Info' },
+  ];
+
+  return (
+    <div className="is-split">
+      <div className="is-list" ref={listRef}>
+        {mode === 'active' && allBands ? (
+          allBands.length ? (
+            <>
+              <div className="is-band-nav" role="tablist" aria-label="Filter by severity">
+                {filterChips.map((chip) => {
+                  const count = chipCounts[chip.value] ?? 0;
+                  if (chip.value !== 'all' && count === 0) return null;
+                  const active = sevFilter === chip.value;
+                  return (
+                    <button
+                      key={chip.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      className={cn('is-band-nav__chip', active && 'is-active')}
+                      onClick={() => setSevFilter(chip.value)}
+                    >
+                      <span className="is-band-nav__label">{chip.label}</span>
+                      <span className="is-band-nav__count">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {(bands ?? []).map((band) => {
+                const open = expandedBands.has(band.key);
+                return (
+                  <div
+                    key={band.key}
+                    data-band-key={band.key}
+                    className={`is-band is-band--${band.key}${open ? '' : ' is-collapsed'}`}
+                  >
+                    <button
+                      type="button"
+                      className="is-band__header"
+                      aria-expanded={open}
+                      onClick={() => toggleBand(band.key)}
+                    >
+                      <span className="is-band__lead">
+                        <ChevronRight
+                          size={14}
+                          className={cn('is-band__chevron', open && 'is-open')}
+                          aria-hidden
+                        />
+                        <span className="is-band__label">{band.label}</span>
+                      </span>
+                      <StatusPill tone={band.tone}>{band.items.length}</StatusPill>
+                    </button>
+                    {open ? (
+                      <div className="is-band__items">
+                        {(bandExpanded[band.key] ? band.items : band.items.slice(0, 8)).map(renderRow)}
+                        {band.items.length > 8 && !bandExpanded[band.key] ? (
+                          <button
+                            type="button"
+                            className="is-band__more"
+                            onClick={() => setBandExpanded((prev) => ({ ...prev, [band.key]: true }))}
+                          >
+                            Show more in this band ({band.items.length - 8} more)
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <EmptyState title="Queue is empty">No open issues. Check Live if the server feels off.</EmptyState>
+          )
+        ) : items.length ? (
+          <div className="is-band">
+            <div className="is-band__items">{items.map(renderRow)}</div>
+          </div>
+        ) : (
+          <EmptyState title="Nothing reviewed yet">Mark an active issue reviewed to see it here.</EmptyState>
+        )}
+      </div>
+
+      <div className="is-detail">
+        {selected ? (
+          <div className="is-detail__card">
+            <div className="is-detail__head">
+              <div className="is-detail__intro">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusPill tone={severityTone(selected.severity)}>{selected.severity}</StatusPill>
+                  {selected.confidence ? (
+                    <StatusPill tone={confidenceTone(selected.confidence)}>{selected.confidence}</StatusPill>
+                  ) : null}
+                </div>
+                <h3 className="is-detail__title">{selected.title}</h3>
+                {selected.summary ? <p className="is-detail__summary">{selected.summary}</p> : null}
+              </div>
+              <button
+                type="button"
+                className="is-detail__close rounded-lg p-1 text-wt-text-low hover:bg-wt-bg3"
+                aria-label="Close detail"
+                onClick={() => onSelect(null)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="is-panels" role="tablist">
+              {DETAIL_PANELS.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={panel === p.value}
+                  className={`is-panel-tab${panel === p.value ? ' is-active' : ''}`}
+                  onClick={() => setPanel(p.value)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {panel === 'fix' ? (
+              <>
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">
+                  {mode === 'reviewed' ? 'Reviewed' : 'Do this next'}
+                </div>
+                {selected.kind === 'crash' ? (
+                  <p className="is-crash-hint">
+                    Issues only tracks open crash review. Open Crashes for the numbered fix plan, evidence, and group
+                    actions.
+                  </p>
+                ) : null}
+                {(selected.steps.length ? selected.steps : selected.hints).length ? (
+                  <ol className="is-steps">
+                    {(selected.steps.length ? selected.steps : selected.hints).map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ol>
+                ) : selected.kind !== 'crash' ? (
+                  <p className="text-sm text-wt-text-low">No fix steps yet — use the primary link for context.</p>
+                ) : null}
+
+                <div className="is-actions">
+                  {selected.primaryAction ? (
+                    <Button kind="primary" onClick={() => runPrimaryAction(selected.primaryAction)}>
+                      {selected.primaryAction.label}
+                      <ChevronRight size={13} className="ml-1" />
+                    </Button>
+                  ) : null}
+                  {mode === 'active' ? (
+                    <Button
+                      kind="primary"
+                      disabled={!canWrite || marking}
+                      title={canWrite ? undefined : VIEW_ONLY_TITLE}
+                      onClick={() => onMarkReviewed(selected)}
+                    >
+                      <CheckCircle2 size={14} className="mr-1.5" /> Mark reviewed
+                    </Button>
+                  ) : (
+                    <Button
+                      kind="primary"
+                      disabled={!canWrite || marking}
+                      title={canWrite ? undefined : VIEW_ONLY_TITLE}
+                      onClick={() => onMoveToActive(selected)}
+                    >
+                      Move to Active
+                    </Button>
+                  )}
+                  {(selected.steps.length || selected.hints.length) && selected.kind !== 'crash' ? (
+                    <Button onClick={() => void copySteps(selected)}>
+                      <Copy size={14} className="mr-1.5" /> Copy steps
+                    </Button>
+                  ) : null}
+                  {mode === 'active' && selected.issueId ? (
+                    <Button
+                      disabled={!canWrite}
+                      title={canWrite ? undefined : VIEW_ONLY_TITLE}
+                      onClick={() => onSuppress(selected)}
+                    >
+                      Hide from Active
+                    </Button>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <>
+                <dl className="is-dl">
+                  <div>
+                    <dt>Key</dt>
+                    <dd>{selected.key}</dd>
+                  </div>
+                  <div>
+                    <dt>Source</dt>
+                    <dd>{sourceLabel(selected.source)}</dd>
+                  </div>
+                  <div>
+                    <dt>Kind</dt>
+                    <dd>{selected.kind}</dd>
+                  </div>
+                  <div>
+                    <dt>Severity</dt>
+                    <dd className="capitalize">{selected.severity}</dd>
+                  </div>
+                  <div>
+                    <dt>When</dt>
+                    <dd>{selected.when ? formatAge(selected.when) : '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Reviewed</dt>
+                    <dd>{selected.ackedAt ? formatAge(selected.ackedAt) : mode === 'reviewed' ? 'Yes' : '—'}</dd>
+                  </div>
+                  {selected.issueId ? (
+                    <div>
+                      <dt>Issue id</dt>
+                      <dd>{selected.issueId}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+                {selected.detail ? <p className="text-sm text-wt-text-mid">{selected.detail}</p> : null}
+                {selected.sample ? <pre className="is-sample">{selected.sample}</pre> : null}
+                {selected.metrics && Object.keys(selected.metrics).length ? (
+                  <div className="is-metrics">
+                    {selected.metrics.tps != null ? (
+                      <div className="is-metric">
+                        <div className="is-metric__label">TPS</div>
+                        <div className="is-metric__value">{num(selected.metrics.tps).toFixed(1)}</div>
+                      </div>
+                    ) : null}
+                    {selected.metrics.mspt != null ? (
+                      <div className="is-metric">
+                        <div className="is-metric__label">MSPT</div>
+                        <div className="is-metric__value">{num(selected.metrics.mspt).toFixed(1)}</div>
+                      </div>
+                    ) : null}
+                    {selected.metrics.players_online != null ? (
+                      <div className="is-metric">
+                        <div className="is-metric__label">Players</div>
+                        <div className="is-metric__value">{String(num(selected.metrics.players_online))}</div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </>
+            )}
+          </div>
+        ) : (
+          <EmptyState title="No issue selected">Pick an issue from the queue to see fix steps and details.</EmptyState>
+        )}
+      </div>
+    </div>
+  );
+}
