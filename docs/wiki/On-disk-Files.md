@@ -15,7 +15,8 @@
 | `watchtower/watchtower-brief-*.txt` | Human-readable report summary |
 | `watchtower/live-history.json` | Live chart history (seconds) |
 | `watchtower/performance-rollups.json` | Minute-by-minute history for **Insights** |
-| `watchtower/dashboard-auth.json` | Login accounts (hashed) — use **Settings → Security** |
+| `watchtower/dashboard-auth.json` | Named accounts (schema 2, hashed) — **Settings → Security** / **Accounts** |
+| `watchtower/audit-log.jsonl` | Settings / ack / account / sign-in ledger — **Settings → Audit log** |
 | `watchtower/DR-README.txt` | Emergency recovery command — updated each report |
 
 ---
@@ -24,14 +25,15 @@
 
 ```text
 watchtower/
-  dashboard-auth.json       # Login + 2FA (do not edit by hand)
+  dashboard-auth.json       # Schema 2 accounts + 2FA (do not edit by hand)
+  audit-log.jsonl           # Append-only audit ledger (2000 / 90 days)
   watchtower.conf           # Settings file
   snapshot.json             # Quick TPS/lag snapshot
   live-history.json         # Live chart data
   performance-rollups.json  # Insights history
   watchtower-brief-*.txt    # Report summaries
   watchtower-facts-*.json   # Report data for dashboard
-  ops-cache.json            # Background scan cache
+  ops-cache.json            # Background scan cache (incl. weekly_digest history, external_kill verdict)
   DR-README.txt             # Recovery instructions
   .watchtower-state.json    # Internal state (acks, cursors)
 ```
@@ -42,7 +44,8 @@ watchtower/
 
 | File | If deleted |
 |------|------------|
-| `dashboard-auth.json` | Default login recreated on next start |
+| `dashboard-auth.json` | Default owner login recreated on next start |
+| `audit-log.jsonl` | Audit history starts empty |
 | `.watchtower-state.json` | Loses crash review marks, incremental progress |
 | `live-history.json` | Live charts start empty (rebuild over time) |
 | `watchtower-facts-*.json` | That report disappears from dashboard history |
@@ -53,7 +56,11 @@ watchtower/
 
 ### `dashboard-auth.json`
 
-Username, bcrypt password hash, TOTP secrets (encrypted), recovery codes.
+Schema 2: `accounts[]` with per-person username, role (`owner` / `admin` / `viewer`), PBKDF2 password hash, optional encrypted TOTP secret, recovery codes. Top-level fields still mirror the owner so a rolled-back pre-1.1.18 jar can sign that person in. First upgrade also writes `dashboard-auth.json.pre-1.1.18.bak` once. See [[Accounts-And-Audit-Log]].
+
+### `audit-log.jsonl`
+
+Append-only JSON lines for settings changes, acknowledgements, suppressions, account management, and auth events. Pruned to newest 2000 entries and 90 days on append. Not included in support packs.
 
 ### `snapshot.json`
 
@@ -78,3 +85,4 @@ NeoForge mod config — restart required. See [[Configuration]].
 - [[Configuration]]
 - [[Health Reports]]
 - [[Security and Access]]
+- [[Accounts And Audit Log]]
