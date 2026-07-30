@@ -13,6 +13,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import dev.mcstatus.watchtower.core.WatchtowerFiles;
+import dev.mcstatus.watchtower.core.auth.SessionManager;
 import dev.mcstatus.watchtower.core.report.StateManager;
 import dev.mcstatus.watchtower.core.rules.CrashRuleModels;
 import dev.mcstatus.watchtower.core.rules.CrashRuleRegistry;
@@ -28,6 +29,7 @@ import dev.mcstatus.watchtower.core.analyze.PerformanceContext;
 import dev.mcstatus.watchtower.core.analyze.PerformanceInsightEngine;
 import dev.mcstatus.watchtower.core.analyze.RssHeapEvaluator;
 import dev.mcstatus.watchtower.core.analyze.ConfigLaunchAdvisor;
+import dev.mcstatus.watchtower.core.analyze.RestartHygieneAdvisor;
 import dev.mcstatus.watchtower.core.analyze.SafeRestartAdvisor;
 import dev.mcstatus.watchtower.core.collect.ServerPropertiesReader;
 import dev.mcstatus.watchtower.core.analyze.ScorecardBuilder;
@@ -99,6 +101,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -113,6 +116,19 @@ public final class DashboardHttpServer {
     private static final String FAVICON_RESOURCE = WEB_PREFIX + "assets/watchtower-icon-simple.png";
     private static final int FORENSICS_FIND_RATE_LIMIT = 10;
     private static final long FORENSICS_FIND_WINDOW_MS = 60_000L;
+    /** Endpoints that write their own detailed audit row; skip the generic api_write entry. */
+    private static final Set<String> SELF_AUDITED = Set.of(
+            "/api/settings",
+            "/api/issues/ack",
+            "/api/issues/acknowledge-all",
+            "/api/issues/suppress",
+            "/api/issues/unsuppress",
+            "/api/crashes/ack",
+            "/api/crashes/acknowledge-all",
+            "/api/accounts",
+            "/api/accounts/update",
+            "/api/accounts/delete",
+            "/api/accounts/reset-password");
 
     private HttpServer server;
     private ServerContext serverContext;
@@ -162,6 +178,7 @@ public final class DashboardHttpServer {
             server.createContext("/api/onboarding/discovery/start", this::handleDiscoveryStart);
             server.createContext("/api/onboarding/discovery/status", this::handleDiscoveryStatus);
             server.createContext("/api/config-audit", this::handleConfigAudit);
+            server.createContext("/api/weekly-digest", this::handleWeeklyDigest);
             server.createContext("/api/incidents", this::handleIncidents);
             server.createContext("/api/incidents/get", this::handleIncidentGet);
             server.createContext("/api/incidents/pin", this::handleIncidentPin);
@@ -224,6 +241,12 @@ public final class DashboardHttpServer {
             server.createContext("/api/auth/totp/confirm", this::handleAuthTotpConfirm);
             server.createContext("/api/auth/totp/disable", this::handleAuthTotpDisable);
             server.createContext("/api/auth/recovery/regenerate", this::handleAuthRecoveryRegenerate);
+            server.createContext("/api/accounts", this::handleAccounts);
+            server.createContext("/api/accounts/update", this::handleAccountUpdate);
+            server.createContext("/api/accounts/reset-password", this::handleAccountResetPassword);
+            server.createContext("/api/accounts/delete", this::handleAccountDelete);
+            server.createContext("/api/accounts/me/minecraft", this::handleMyMinecraftLink);
+            server.createContext("/api/audit-log", this::handleAuditLog);
             server.setExecutor(Executors.newCachedThreadPool(r -> {
                 Thread t = new Thread(r, "watchtower-http");
                 t.setDaemon(true);
@@ -377,12 +400,66 @@ public final class DashboardHttpServer {
         DashboardAuthHttp.handleRecoveryRegenerate(ex);
     }
 
-    private boolean requireApiAuth(HttpExchange ex) throws IOException {
-        if (DashboardAuthHttp.requireFullSession(ex) != null) {
-            OpsPollScheduler.get().refreshSchedule();
-            return true;
+    private void handleAccounts(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
         }
-        return false;
+        DashboardAuthHttp.handleAccounts(ex);
+    }
+
+    private void handleAccountUpdate(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        DashboardAuthHttp.handleAccountUpdate(ex);
+    }
+
+    private void handleAccountResetPassword(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        DashboardAuthHttp.handleAccountResetPassword(ex);
+    }
+
+    private void handleAccountDelete(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        DashboardAuthHttp.handleAccountDelete(ex);
+    }
+
+    private void handleMyMinecraftLink(HttpExchange ex) throws IOException {
+        // Self-service: viewers may link their own skin (bypass write gate).
+        DashboardAuthHttp.handleMyMinecraftLink(ex);
+    }
+
+    private void handleAuditLog(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        DashboardAuthHttp.handleAuditLog(ex);
+    }
+
+    private boolean requireApiAuth(HttpExchange ex) throws IOException {
+        SessionManager.SessionState session = DashboardAuthHttp.requireFullSession(ex);
+        if (session == null) {
+            return false;
+        }
+        String method = ex.getRequestMethod();
+        boolean write = !"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method);
+        if (write) {
+            String ip = DashboardAuthHttp.clientIp(ex);
+            if (!session.role().canWrite()) {
+                DashboardAudit.recordDenied(session, DashboardAuthHttp.requestTarget(ex), ip);
+                DashboardAuthHttp.sendReadOnly(ex);
+                return false;
+            }
+            if (!SELF_AUDITED.contains(ex.getRequestURI().getPath())) {
+                DashboardAudit.record("api_write", session, DashboardAuthHttp.requestTarget(ex), null, ip);
+            }
+        }
+        OpsPollScheduler.get().refreshSchedule();
+        return true;
     }
 
     private void handleLive(HttpExchange ex) throws IOException {
@@ -511,7 +588,7 @@ public final class DashboardHttpServer {
                     ? GSON.fromJson(body, JsonObject.class) : new JsonObject();
             try {
                 Path conf = WatchtowerPaths.confPath(serverContext);
-                Map<String, String> map = WatchtowerConfWriter.readMap(conf);
+                JsonObject previous = buildSettingsJson();
                 String text = Files.isRegularFile(conf) ? Files.readString(conf, StandardCharsets.UTF_8) : "";
 
                 if (json.has("reportScheduleMode") && !json.get("reportScheduleMode").isJsonNull()) {
@@ -658,9 +735,15 @@ public final class DashboardHttpServer {
                     Files.writeString(conf, text, StandardCharsets.UTF_8);
                 }
 
+                JsonObject applied = buildSettingsJson();
+                String changed = changedSettingKeys(previous, applied);
+                DashboardAudit.record("settings_changed", DashboardAuthHttp.sessionOf(ex),
+                        null, changed.isEmpty() ? "no effective change" : changed,
+                        DashboardAuthHttp.clientIp(ex));
+
                 JsonObject out = new JsonObject();
                 out.addProperty("ok", true);
-                out.add("settings", buildSettingsJson());
+                out.add("settings", applied);
                 sendJson(ex, 200, out);
             } catch (Exception e) {
                 ModRuntime.logger().warn("Settings save failed: {}", e.toString());
@@ -671,6 +754,50 @@ public final class DashboardHttpServer {
             return;
         }
         send(ex, 405, "text/plain", "Method not allowed");
+    }
+
+    /** Diff settings snapshots into `key old -> new` pairs; cap at 12 with a trailing (+N more). */
+    private static String changedSettingKeys(JsonObject previous, JsonObject applied) {
+        Set<String> keys = new HashSet<>();
+        if (previous != null) {
+            keys.addAll(previous.keySet());
+        }
+        if (applied != null) {
+            keys.addAll(applied.keySet());
+        }
+        List<String> pairs = new ArrayList<>();
+        int overflow = 0;
+        for (String key : keys.stream().sorted().toList()) {
+            String oldVal = settingDisplayValue(previous, key);
+            String newVal = settingDisplayValue(applied, key);
+            if (Objects.equals(oldVal, newVal)) {
+                continue;
+            }
+            if (pairs.size() < 12) {
+                pairs.add(key + " " + oldVal + " -> " + newVal);
+            } else {
+                overflow++;
+            }
+        }
+        if (pairs.isEmpty()) {
+            return "";
+        }
+        String joined = String.join(", ", pairs);
+        if (overflow > 0) {
+            joined += " (+" + overflow + " more)";
+        }
+        return joined;
+    }
+
+    private static String settingDisplayValue(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return "";
+        }
+        JsonElement el = obj.get(key);
+        if (el.isJsonPrimitive()) {
+            return el.getAsString();
+        }
+        return el.toString();
     }
 
     private JsonObject buildSettingsJson() throws IOException {
@@ -1262,6 +1389,63 @@ public final class DashboardHttpServer {
         }
 
         attachSafeRestart(meta, opsCache, optional, systemBasics, config);
+        attachRestartHygiene(meta, rollupsPath, systemBasics, config);
+    }
+
+    private void attachRestartHygiene(
+            JsonObject meta,
+            Path rollupsPath,
+            JsonObject systemBasics,
+            ReportConfig config) {
+        try {
+            JsonObject input = new JsonObject();
+            input.addProperty("enabled", config.restartHygieneEnabled());
+            Instant now = Instant.now();
+            input.addProperty("now", now.toString());
+
+            Double uptimeSec = null;
+            try {
+                JsonObject live = LiveMetricsService.get().getLiveResponse();
+                JsonObject latest = live.has("latest") && live.get("latest").isJsonObject()
+                        ? live.getAsJsonObject("latest") : live;
+                if (latest.has("java_uptime_sec") && !latest.get("java_uptime_sec").isJsonNull()) {
+                    uptimeSec = latest.get("java_uptime_sec").getAsDouble();
+                }
+            } catch (Exception ignored) {
+            }
+            if (uptimeSec == null && systemBasics != null
+                    && systemBasics.has("java_uptime_sec") && !systemBasics.get("java_uptime_sec").isJsonNull()) {
+                uptimeSec = systemBasics.get("java_uptime_sec").getAsDouble();
+            }
+            if (uptimeSec != null) {
+                input.addProperty("uptime_sec", uptimeSec);
+            }
+
+            if (config.l1RollupEnabled() && rollupsPath != null) {
+                int hours = PerformanceInsightEngine.windowToHours("7d");
+                List<JsonObject> rows = PerformanceRollupWriter.loadRowsFromFile(rollupsPath, hours);
+                long nowEpoch = now.getEpochSecond();
+                long currentStart = nowEpoch - 12L * 3600L;
+                long priorStart = nowEpoch - 24L * 3600L;
+                List<JsonObject> current = new ArrayList<>();
+                List<JsonObject> prior = new ArrayList<>();
+                for (JsonObject row : rows) {
+                    long epoch = PerformanceInsightEngine.rowEpochPublic(row);
+                    if (epoch >= currentStart) {
+                        current.add(row);
+                    } else if (epoch >= priorStart) {
+                        prior.add(row);
+                    }
+                }
+                input.add("current_stats", PerformanceInsightEngine.buildRamSizingStats(current));
+                input.add("prior_stats", PerformanceInsightEngine.buildRamSizingStats(prior));
+                input.add("hour_of_week", PerformanceInsightEngine.buildHourOfWeek(rows));
+            }
+
+            meta.add("restart_hygiene", RestartHygieneAdvisor.evaluate(input));
+        } catch (Exception ignored) {
+            // Non-fatal: Overview hides inactive/missing advice
+        }
     }
 
     private void attachSafeRestart(
@@ -2294,6 +2478,78 @@ public final class DashboardHttpServer {
         }
     }
 
+    private void handleWeeklyDigest(HttpExchange ex) throws IOException {
+        String method = ex.getRequestMethod();
+        if (!"GET".equalsIgnoreCase(method) && !"POST".equalsIgnoreCase(method)) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        if ("GET".equalsIgnoreCase(method)) {
+            try {
+                JsonObject opsCache = OpsCacheReader.load(WatchtowerPaths.opsCachePath(serverContext));
+                if (opsCache.has(OpsCacheSchema.WEEKLY_DIGEST)
+                        && opsCache.get(OpsCacheSchema.WEEKLY_DIGEST).isJsonObject()) {
+                    sendJson(ex, 200, opsCache.getAsJsonObject(OpsCacheSchema.WEEKLY_DIGEST).deepCopy());
+                } else {
+                    JsonObject empty = new JsonObject();
+                    empty.add("history", new JsonArray());
+                    sendJson(ex, 200, empty);
+                }
+            } catch (IOException e) {
+                JsonObject empty = new JsonObject();
+                empty.add("history", new JsonArray());
+                sendJson(ex, 200, empty);
+            }
+            return;
+        }
+        try {
+            String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject json = body != null && !body.isBlank()
+                    ? GSON.fromJson(body, JsonObject.class) : new JsonObject();
+            String action = json != null && json.has("action") ? json.get("action").getAsString() : "";
+            if (!"generate_now".equals(action)) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "unsupported action");
+                sendJson(ex, 400, err);
+                return;
+            }
+            ReportConfig config = ModReportConfig.forServer(serverContext);
+            if (!config.weeklyDigestEnabled()) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("reason", "disabled");
+                sendJson(ex, 409, err);
+                return;
+            }
+            JsonObject entry = OpsScanService.buildWeeklyDigest(serverContext, "manual");
+            if (entry == null) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("reason", "disabled");
+                sendJson(ex, 409, err);
+                return;
+            }
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            out.add("digest", entry);
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            ModRuntime.logger().warn("Weekly digest generate failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "digest failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
     private void handleOnboardingAudit(HttpExchange ex) throws IOException {
         if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
             send(ex, 405, "text/plain", "Method not allowed");
@@ -2567,10 +2823,12 @@ public final class DashboardHttpServer {
         boolean reviewed = !json.has("reviewed") || json.get("reviewed").getAsBoolean();
         Path statePath = WatchtowerPaths.statePath(serverContext);
         if (reviewed) {
-            StateManager.acknowledgeIssue(statePath, id, Instant.now(), "dashboard");
+            StateManager.acknowledgeIssue(statePath, id, Instant.now(), DashboardAuthHttp.actorOf(ex));
         } else {
             StateManager.unacknowledgeIssue(statePath, id);
         }
+        DashboardAudit.record(reviewed ? "issue_acked" : "issue_unacked",
+                DashboardAuthHttp.sessionOf(ex), id, null, DashboardAuthHttp.clientIp(ex));
         syncIssuesLiveAck(id, reviewed);
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
@@ -2659,7 +2917,10 @@ public final class DashboardHttpServer {
             }
         }
         Path statePath = WatchtowerPaths.statePath(serverContext);
-        int acknowledged = StateManager.acknowledgeAllIssues(statePath, ids, Instant.now(), "dashboard");
+        int acknowledged = StateManager.acknowledgeAllIssues(
+                statePath, ids, Instant.now(), DashboardAuthHttp.actorOf(ex));
+        DashboardAudit.record("issue_acked", DashboardAuthHttp.sessionOf(ex),
+                null, acknowledged + " issues", DashboardAuthHttp.clientIp(ex));
         for (String id : ids) {
             syncIssuesLiveAck(id, true);
         }
@@ -2726,7 +2987,9 @@ public final class DashboardHttpServer {
             Path statePath = WatchtowerPaths.statePath(serverContext);
             IssueSuppressionStore store = IssueSuppressionStore.load(
                     statePath, config.issueSuppressions(), config.issueSuppressionRegex());
-            store.suppress(issueId.trim(), "dashboard");
+            store.suppress(issueId.trim(), DashboardAuthHttp.actorOf(ex));
+            DashboardAudit.record("issue_suppressed", DashboardAuthHttp.sessionOf(ex),
+                    issueId.trim(), null, DashboardAuthHttp.clientIp(ex));
             store = IssueSuppressionStore.load(
                     statePath, config.issueSuppressions(), config.issueSuppressionRegex());
             JsonObject out = new JsonObject();
@@ -2771,6 +3034,8 @@ public final class DashboardHttpServer {
             IssueSuppressionStore store = IssueSuppressionStore.load(
                     statePath, config.issueSuppressions(), config.issueSuppressionRegex());
             boolean removed = store.unsuppress(issueId.trim());
+            DashboardAudit.record("issue_unsuppressed", DashboardAuthHttp.sessionOf(ex),
+                    issueId.trim(), null, DashboardAuthHttp.clientIp(ex));
             store = IssueSuppressionStore.load(
                     statePath, config.issueSuppressions(), config.issueSuppressionRegex());
             JsonObject out = new JsonObject();
@@ -3623,10 +3888,13 @@ public final class DashboardHttpServer {
                     ? json.get("category").getAsString() : null;
             String plainEnglish = json.has("plain_english") && !json.get("plain_english").isJsonNull()
                     ? json.get("plain_english").getAsString() : null;
-            StateManager.acknowledgeCrash(statePath, file, Instant.now(), "dashboard", category, plainEnglish);
+            StateManager.acknowledgeCrash(statePath, file, Instant.now(),
+                    DashboardAuthHttp.actorOf(ex), category, plainEnglish);
         } else {
             StateManager.unacknowledgeCrash(statePath, file);
         }
+        DashboardAudit.record(reviewed ? "crash_acked" : "crash_unacked",
+                DashboardAuthHttp.sessionOf(ex), file, null, DashboardAuthHttp.clientIp(ex));
         try {
             OpsCacheWriter.applyCrashAcks(
                     WatchtowerPaths.opsCachePath(serverContext), statePath);
@@ -3712,10 +3980,14 @@ public final class DashboardHttpServer {
         }
 
         Instant now = Instant.now();
-        int acknowledged = StateManager.acknowledgeAllCrashes(statePath, toAck, now, "dashboard");
+        int acknowledged = StateManager.acknowledgeAllCrashes(
+                statePath, toAck, now, DashboardAuthHttp.actorOf(ex));
         for (Map.Entry<String, Integer> e : groupMemberCounts.entrySet()) {
-            StateManager.recordAcknowledgedGroup(statePath, e.getKey(), now, "dashboard", e.getValue());
+            StateManager.recordAcknowledgedGroup(
+                    statePath, e.getKey(), now, DashboardAuthHttp.actorOf(ex), e.getValue());
         }
+        DashboardAudit.record("crash_acked", DashboardAuthHttp.sessionOf(ex),
+                null, acknowledged + " crash reports", DashboardAuthHttp.clientIp(ex));
         try {
             OpsCacheWriter.applyCrashAcks(
                     WatchtowerPaths.opsCachePath(serverContext), statePath);
@@ -3902,7 +4174,7 @@ public final class DashboardHttpServer {
             return;
         }
         StateManager.dismissInboxItem(
-                WatchtowerPaths.statePath(serverContext), id, Instant.now(), "dashboard");
+                WatchtowerPaths.statePath(serverContext), id, Instant.now(), DashboardAuthHttp.actorOf(ex));
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
         sendJson(ex, 200, out);
@@ -3927,6 +4199,7 @@ public final class DashboardHttpServer {
                     entries = crashes.getAsJsonArray(OpsCacheSchema.CRASHES_ENTRIES);
                 }
             }
+            appendExternalKillRows(opsCache, entries);
         } catch (IOException ignored) {
         }
 
@@ -3963,6 +4236,89 @@ public final class DashboardHttpServer {
             }
         }
         return out;
+    }
+
+    /**
+     * Append synthetic crash rows from the ops-cache {@code external_kill} block (and its recent history).
+     * Built per request so they survive ops polls that rebuild {@code crashes.entries} from files.
+     */
+    private static void appendExternalKillRows(JsonObject opsCache, JsonArray entries) {
+        if (opsCache == null || entries == null) {
+            return;
+        }
+        if (!opsCache.has(OpsCacheSchema.EXTERNAL_KILL)
+                || !opsCache.get(OpsCacheSchema.EXTERNAL_KILL).isJsonObject()) {
+            return;
+        }
+        JsonObject ek = opsCache.getAsJsonObject(OpsCacheSchema.EXTERNAL_KILL);
+        JsonObject row = externalKillToCrashRow(ek);
+        if (row != null) {
+            entries.add(row);
+        }
+        if (ek.has(OpsCacheSchema.EXTERNAL_KILL_RECENT)
+                && ek.get(OpsCacheSchema.EXTERNAL_KILL_RECENT).isJsonArray()) {
+            for (JsonElement el : ek.getAsJsonArray(OpsCacheSchema.EXTERNAL_KILL_RECENT)) {
+                if (!el.isJsonObject()) {
+                    continue;
+                }
+                JsonObject recentRow = externalKillToCrashRow(el.getAsJsonObject());
+                if (recentRow != null) {
+                    entries.add(recentRow);
+                }
+            }
+        }
+    }
+
+    private static JsonObject externalKillToCrashRow(JsonObject ek) {
+        if (ek == null || ek.size() == 0) {
+            return null;
+        }
+        String subtype = ek.has("subtype") && !ek.get("subtype").isJsonNull()
+                ? ek.get("subtype").getAsString() : "";
+        String killedAt = ek.has("killed_at") && !ek.get("killed_at").isJsonNull()
+                ? ek.get("killed_at").getAsString() : "";
+        if (killedAt.isBlank() && ek.has("detected_at") && !ek.get("detected_at").isJsonNull()) {
+            killedAt = ek.get("detected_at").getAsString();
+        }
+        if (killedAt.isBlank()) {
+            return null;
+        }
+        JsonObject row = new JsonObject();
+        row.addProperty("file", "external-kill-" + killedAt);
+        long mtime = 0L;
+        try {
+            mtime = Instant.parse(killedAt).getEpochSecond();
+        } catch (Exception ignored) {
+        }
+        row.addProperty("mtime", mtime);
+        row.addProperty("size", 0);
+        row.addProperty("source", "external_kill");
+        row.addProperty("failure_kind", "external_kill");
+        if (ek.has("display_label") && !ek.get("display_label").isJsonNull()) {
+            row.add("display_label", ek.get("display_label"));
+        }
+        if (ek.has("plain_english") && !ek.get("plain_english").isJsonNull()) {
+            row.add("plain_english", ek.get("plain_english"));
+        }
+        if (ek.has("likely_cause") && !ek.get("likely_cause").isJsonNull()) {
+            row.add("likely_cause", ek.get("likely_cause"));
+        }
+        if (ek.has("confidence") && !ek.get("confidence").isJsonNull()) {
+            row.add("confidence", ek.get("confidence"));
+        }
+        if (ek.has("fix_hints") && ek.get("fix_hints").isJsonArray()) {
+            row.add("fix_hints", ek.get("fix_hints").deepCopy());
+        }
+        JsonObject details = new JsonObject();
+        if (!subtype.isBlank()) {
+            details.addProperty("external_kill_subtype", subtype);
+            row.addProperty("subtype", subtype);
+        }
+        if (ek.has("kernel_log_readable") && !ek.get("kernel_log_readable").isJsonNull()) {
+            details.add("kernel_log_readable", ek.get("kernel_log_readable"));
+        }
+        row.add("details", details);
+        return row;
     }
 
     private static JsonArray mergeCrashRows(JsonArray summaries, JsonArray entries) {
@@ -4143,7 +4499,7 @@ public final class DashboardHttpServer {
         if (ignored) {
             String note = json.has("note") && !json.get("note").isJsonNull()
                     ? json.get("note").getAsString() : null;
-            StateManager.ignoreClientMod(statePath, modId, Instant.now(), "dashboard", note);
+            StateManager.ignoreClientMod(statePath, modId, Instant.now(), DashboardAuthHttp.actorOf(ex), note);
         } else {
             StateManager.unignoreClientMod(statePath, modId);
         }

@@ -16,8 +16,8 @@ Tabs are grouped as **Monitor**, **Triage**, **Ops**, and **System**. Theme, ski
 |--------------|------|
 | Health grade, attention queue, where to look next | [[Dashboard-Overview|Overview]] |
 | TPS / lag / host right now | [[Live-Charts|Live]] |
-| Patterns, config health, mod churn, storage trends | [[Insights]] |
-| Who is online, peaks, playtime directory | [[Session]] |
+| Patterns, weekly digest, world pressure, config health, mod churn, storage trends | [[Insights]] |
+| Who is online, peaks, playtime directory, session activity | [[Session]] · [[Join-Clinic]] |
 | Last boot verdict and phases | [[Startup]] |
 | Fix inbox | [[Issues]] |
 | Crash groups and next steps | [[Crashes]] |
@@ -28,7 +28,7 @@ Tabs are grouped as **Monitor**, **Triage**, **Ops**, and **System**. Theme, ski
 | Commands, joins, lag, jobs timeline | [[Activity]] |
 | Poller health / next data pull | [[Sources]] |
 | Guides and troubleshooting | **Help Center** (this wiki) |
-| Thresholds, retention, security | **Settings** |
+| Thresholds, retention, security, accounts | **Settings** |
 
 ---
 
@@ -38,8 +38,8 @@ Tabs are grouped as **Monitor**, **Triage**, **Ops**, and **System**. Theme, ski
 |-----|--------------|-------|
 | **Overview** | Mission control — grade, attention, teasers | [[Dashboard-Overview]] |
 | **Live** | Right-now ops console for tick and host signals | [[Live-Charts]] |
-| **Insights** | Patterns over a window — not the live second | [[Insights]] |
-| **Session** | Online roster, peaks, directory | [[Session]] |
+| **Insights** | Patterns over a window — not the live second. Sub-views include Patterns, Configs, Mod changes, **World** (entity/chunk pressure), Storage, Digest | [[Insights]] · [[World-Pressure]] |
+| **Session** | Online roster, peaks, directory, **Session activity** (joins / leaves / pack-sync rejects) | [[Session]] · [[Join-Clinic]] |
 | **Startup** | Last boot, phases, history | [[Startup]] |
 
 ---
@@ -73,12 +73,12 @@ Tabs are grouped as **Monitor**, **Triage**, **Ops**, and **System**. Theme, ski
 | Tab / tool | Job |
 |------------|-----|
 | **Help Center** | Guides, search, Support pack shortcut |
-| **Settings** | General, Monitoring, Backups, Alerts, Security, Integrations, About |
+| **Settings** | General, Monitoring, Backups, Alerts, Security, Accounts, Audit log, Integrations, About |
 | **Roadmap** | Works / coming / later / not our job |
 | **Welcome** | Skippable tour — not a daily tab |
 | Theme / Collapse | Appearance and rail width |
 
-**Settings panels:** General · Monitoring · Backups · Alerts · Security · Integrations · About (`?tab=settings&panel=<id>`).
+**Settings panels:** General · Monitoring · Backups · Alerts · Security · Accounts · Audit log · Integrations · About (`?tab=settings&panel=<id>`). Accounts is owner-only; Audit log is owner/admin. See [[Accounts-And-Audit-Log]].
 
 ---
 

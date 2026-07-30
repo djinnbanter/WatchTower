@@ -343,7 +343,12 @@ public final class WatchtowerCommands {
             return 0;
         }
         try {
-            GeneratedCredentials creds = store.resetPassword(clear2fa);
+            var owner = store.ownerAccount();
+            if (owner == null) {
+                ctx.getSource().sendFailure(Component.literal("[Watchtower] No owner account found."));
+                return 0;
+            }
+            GeneratedCredentials creds = store.resetAccountPassword(owner.id, clear2fa);
             DashboardAuthServices.invalidateAllSessions();
             WatchtowerMod.LOGGER.info(
                     "[Watchtower] Dashboard login — user: {} password: {} (change on first login)",
@@ -352,7 +357,8 @@ public final class WatchtowerCommands {
             );
             String extra = clear2fa ? " 2FA cleared." : "";
             ctx.getSource().sendSuccess(() -> Component.literal(
-                    "[Watchtower] Dashboard password reset. New credentials logged once to latest.log." + extra
+                    "[Watchtower] Dashboard password reset. New credentials logged once to latest.log."
+                            + extra + " (owner account)"
             ), false);
             return 1;
         } catch (Exception e) {

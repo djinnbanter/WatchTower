@@ -1,9 +1,7 @@
 package dev.mcstatus.watchtower.core.auth;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,9 +14,12 @@ public final class SessionManager {
 
     public record SessionState(
             String sessionId,
+            String accountId,
             String username,
+            AccountRole role,
             long issuedAtEpochSec,
             long expiresAtEpochSec,
+            boolean totpRequired,
             boolean totpVerified,
             boolean mustChangePassword
     ) {
@@ -26,11 +27,11 @@ public final class SessionManager {
             return nowEpochSec >= expiresAtEpochSec;
         }
 
-        public boolean isFullyAuthenticated(boolean totpEnabled) {
+        public boolean isFullyAuthenticated() {
             if (mustChangePassword) {
                 return false;
             }
-            if (totpEnabled && !totpVerified) {
+            if (totpRequired && !totpVerified) {
                 return false;
             }
             return true;
@@ -44,10 +45,12 @@ public final class SessionManager {
         this.keyStore = keyStore;
     }
 
-    public SessionState createSession(String username, boolean mustChangePassword, boolean totpVerified, long ttlSeconds) {
+    public SessionState createSession(String accountId, String username, AccountRole role,
+            boolean mustChangePassword, boolean totpRequired, boolean totpVerified, long ttlSeconds) {
         String id = UUID.randomUUID().toString();
         long now = Instant.now().getEpochSecond();
-        SessionState state = new SessionState(id, username, now, now + ttlSeconds, totpVerified, mustChangePassword);
+        SessionState state = new SessionState(
+                id, accountId, username, role, now, now + ttlSeconds, totpRequired, totpVerified, mustChangePassword);
         sessions.put(id, state);
         return state;
     }
@@ -83,9 +86,12 @@ public final class SessionManager {
         }
         SessionState updated = new SessionState(
                 current.sessionId(),
+                current.accountId(),
                 current.username(),
+                current.role(),
                 current.issuedAtEpochSec(),
                 current.expiresAtEpochSec(),
+                current.totpRequired(),
                 true,
                 current.mustChangePassword()
         );
@@ -106,12 +112,27 @@ public final class SessionManager {
         String nextUser = (username != null && !username.isBlank()) ? username.trim() : current.username();
         SessionState updated = new SessionState(
                 current.sessionId(),
+                current.accountId(),
                 nextUser,
+                current.role(),
                 current.issuedAtEpochSec(),
                 current.expiresAtEpochSec(),
+                current.totpRequired(),
                 current.totpVerified(),
                 false
         );
+        sessions.put(sessionId, updated);
+        return updated;
+    }
+
+    public SessionState markRole(String sessionId, AccountRole role) {
+        SessionState current = get(sessionId);
+        if (current == null) {
+            return null;
+        }
+        SessionState updated = new SessionState(current.sessionId(), current.accountId(), current.username(),
+                role, current.issuedAtEpochSec(), current.expiresAtEpochSec(),
+                current.totpRequired(), current.totpVerified(), current.mustChangePassword());
         sessions.put(sessionId, updated);
         return updated;
     }
@@ -126,14 +147,21 @@ public final class SessionManager {
         sessions.clear();
     }
 
-    public int fullyAuthenticatedCount(boolean totpEnabled) {
+    public void revokeForAccount(String accountId) {
+        if (accountId == null) {
+            return;
+        }
+        sessions.entrySet().removeIf(e -> accountId.equals(e.getValue().accountId()));
+    }
+
+    public int fullyAuthenticatedCount() {
         long now = Instant.now().getEpochSecond();
         int count = 0;
         for (Iterator<Map.Entry<String, SessionState>> it = sessions.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<String, SessionState> e = it.next();
             if (e.getValue().isExpired(now)) {
                 it.remove();
-            } else if (e.getValue().isFullyAuthenticated(totpEnabled)) {
+            } else if (e.getValue().isFullyAuthenticated()) {
                 count++;
             }
         }

@@ -12,50 +12,67 @@ import dev.mcstatus.watchtower.core.auth.LoginRateLimiter;
 import dev.mcstatus.watchtower.core.auth.SessionManager;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 /** Per-server dashboard auth services (initialized on server start). */
 public final class DashboardAuthServices {
+    private static Path auditPath;
     private static DashboardAuthStore authStore;
     private static AuthKeyStore keyStore;
     private static SessionManager sessionManager;
     private static LoginRateLimiter rateLimiter;
     private static boolean freshAccountCreated;
+    private static String unavailableReason;
 
     private DashboardAuthServices() {
     }
 
     public static void init(ServerContext server) throws IOException {
         freshAccountCreated = false;
-        keyStore = new AuthKeyStore(WatchtowerPaths.authKeyPath(server));
-        authStore = new DashboardAuthStore(WatchtowerPaths.dashboardAuthPath(server), keyStore);
-        sessionManager = new SessionManager(keyStore);
-        rateLimiter = new LoginRateLimiter();
+        unavailableReason = null;
+        auditPath = WatchtowerPaths.auditLogPath(server);
+        try {
+            keyStore = new AuthKeyStore(WatchtowerPaths.authKeyPath(server));
+            authStore = new DashboardAuthStore(WatchtowerPaths.dashboardAuthPath(server), keyStore);
+            sessionManager = new SessionManager(keyStore);
+            rateLimiter = new LoginRateLimiter();
 
-        if (authStore.alignPendingDefaultPassword()) {
-            ModRuntime.logger().info(
-                    "[Watchtower] Dashboard pending first-login account aligned to default password (user: {}, password: {})",
-                    authStore.username(),
-                    DashboardAuthRecord.DEFAULT_INITIAL_PASSWORD
-            );
-        }
-
-        if (!authStore.exists()) {
-            GeneratedCredentials creds = authStore.ensureDefaultAccount();
-            if (creds != null) {
-                freshAccountCreated = true;
-                ModRuntime.logger().info(
-                        "[Watchtower] Dashboard login — user: {} password: {} (change on first login)",
-                        creds.username(),
-                        creds.password()
+            if (authStore.migrationWriteFailure() != null) {
+                ModRuntime.logger().warn(
+                        "[Watchtower] Account file could not be saved — running from memory this boot; "
+                                + "fix disk permissions on watchtower/dashboard-auth.json"
                 );
             }
-        }
 
-        String legacyToken = ModRuntime.config().dashboardAuthToken();
-        if (legacyToken != null && !legacyToken.isBlank()) {
-            ModRuntime.logger().warn(
-                    "dashboardAuthToken is deprecated since 1.0.0 — use username/password login instead"
-            );
+            if (authStore.alignPendingDefaultPassword()) {
+                ModRuntime.logger().info(
+                        "[Watchtower] Dashboard pending first-login account aligned to default password (user: {}, password: {})",
+                        authStore.ownerAccount().username,
+                        DashboardAuthRecord.DEFAULT_INITIAL_PASSWORD
+                );
+            }
+
+            if (!authStore.exists()) {
+                GeneratedCredentials creds = authStore.ensureDefaultAccount();
+                if (creds != null) {
+                    freshAccountCreated = true;
+                    ModRuntime.logger().info(
+                            "[Watchtower] Dashboard login — user: {} password: {} (change on first login)",
+                            creds.username(),
+                            creds.password()
+                    );
+                }
+            }
+
+            String legacyToken = ModRuntime.config().dashboardAuthToken();
+            if (legacyToken != null && !legacyToken.isBlank()) {
+                ModRuntime.logger().warn(
+                        "dashboardAuthToken is deprecated since 1.0.0 — use username/password login instead"
+                );
+            }
+        } catch (IOException e) {
+            markUnavailable(e.toString());
+            throw e;
         }
     }
 
@@ -67,7 +84,25 @@ public final class DashboardAuthServices {
         keyStore = null;
         sessionManager = null;
         rateLimiter = null;
+        auditPath = null;
+        unavailableReason = null;
         freshAccountCreated = false;
+    }
+
+    public static Path auditPath() {
+        return auditPath;
+    }
+
+    public static void markUnavailable(String reason) {
+        unavailableReason = reason;
+    }
+
+    public static boolean isUnavailable() {
+        return unavailableReason != null || authStore == null || sessionManager == null;
+    }
+
+    public static String unavailableReason() {
+        return unavailableReason != null ? unavailableReason : "Dashboard auth is not initialized";
     }
 
     public static DashboardAuthStore store() {

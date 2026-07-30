@@ -1,10 +1,12 @@
 package dev.mcstatus.watchtower.neoforge;
 
+import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.AlwaysOnOpsLogScheduler;
 import dev.mcstatus.watchtower.BackupPollScheduler;
 import dev.mcstatus.watchtower.BootStartupProfileScheduler;
 import dev.mcstatus.watchtower.DashboardAuthServices;
 import dev.mcstatus.watchtower.ActivityGapBackfillScheduler;
+import dev.mcstatus.watchtower.ExternalKillPostmortemScheduler;
 import dev.mcstatus.watchtower.ModsDeepJobScheduler;
 import dev.mcstatus.watchtower.DashboardHttpServer;
 import dev.mcstatus.watchtower.HostCpuProbe;
@@ -31,6 +33,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 
 @EventBusSubscriber(modid = WatchtowerMod.MOD_ID)
 public final class WatchtowerBootstrap {
@@ -90,6 +93,7 @@ public final class WatchtowerBootstrap {
         BackupPollScheduler.get().bind(ctx);
         PlayerDirectoryPollScheduler.get().bind(ctx);
         BootStartupProfileScheduler.start(ctx);
+        ExternalKillPostmortemScheduler.start(ctx);
         ModsDeepJobScheduler.startBootSeed(ctx);
         ActivityGapBackfillScheduler.startBootCatchup(ctx);
         SCHEDULER.sampleNow(ctx);
@@ -99,6 +103,7 @@ public final class WatchtowerBootstrap {
             }
         } catch (IOException e) {
             WatchtowerMod.LOGGER.error("Dashboard auth init failed: {}", e.toString(), e);
+            DashboardAuthServices.markUnavailable(e.toString());
         }
         HTTP.start(ctx);
         if (WatchtowerSetup.isReady()) {
@@ -139,10 +144,18 @@ public final class WatchtowerBootstrap {
         BackupPollScheduler.get().unbind();
         PlayerDirectoryPollScheduler.get().unbind();
         BootStartupProfileScheduler.stop();
+        ExternalKillPostmortemScheduler.stop();
         ModsDeepJobScheduler.stop();
         ActivityGapBackfillScheduler.stop();
         DashboardAuthServices.shutdown();
         if (ctx != null) {
+            try {
+                JsonObject patch = new JsonObject();
+                patch.addProperty("clean_stop_at", Instant.now().toString());
+                StateManager.updateExternalKillSession(WatchtowerPaths.statePath(ctx), patch);
+            } catch (Exception e) {
+                WatchtowerMod.LOGGER.debug("External-kill clean-stop marker failed: {}", e.toString());
+            }
             SCHEDULER.sampleNow(ctx);
         }
         LiveMetricsService.get().unbindServer();

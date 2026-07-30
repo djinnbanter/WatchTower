@@ -56,6 +56,26 @@ class SupportRedactorTest {
         assertTrue(out.contains("[UUID_REDACTED]"));
         assertTrue(out.contains("[IP_REDACTED]"));
     }
+
+    @Test
+    void preservesTimestampsAndVersions() {
+        String in = "[28Jul2026 14:16:32.036] Time: 2026-06-29 09:56:04 "
+                + "last_seen 2026-07-14 21:52:13 +0100 Manifest: 3a:b1:c2:d4:e5:f6 v1.21.1-neoforge";
+        String out = SupportRedactor.redactLine(in);
+        assertFalse(out.contains("[IP_REDACTED]"), "timestamps/fingerprints must survive: " + out);
+        assertTrue(out.contains("14:16:32.036"));
+        assertTrue(out.contains("09:56:04"));
+        assertTrue(out.contains("v1.21.1-neoforge"));
+        assertTrue(out.contains("3a:b1:c2:d4:e5:f6"));
+    }
+
+    @Test
+    void redactsRealIpv6Forms() {
+        assertFalse(SupportRedactor.redactLine("peer ::1 connected").contains("::1"));
+        assertFalse(SupportRedactor.redactLine("peer fe80::1ff:fe23:4567:890a").contains("fe80::"));
+        assertFalse(SupportRedactor.redactLine("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+                .contains("2001:0db8"));
+    }
 }
 
 class SupportComposerV4Test {
@@ -99,7 +119,8 @@ class SupportComposerV4Test {
                         "test-host", "none", true, "Linux", "amd64"),
                 null,
                 "1.2.0",
-                "1.21.1"));
+                "1.21.1",
+                null));
 
         assertTrue(Files.isRegularFile(result.zipPath()));
         try (ZipFile zip = new ZipFile(result.zipPath().toFile())) {
@@ -159,6 +180,60 @@ class SupportComposerV4Test {
         assertFalse(SupportSafePaths.isSafeBasename("../x"));
         assertFalse(SupportSafePaths.isSafeBasename("a/b"));
         assertTrue(SupportSafePaths.isSafeBasename("latest.log"));
+    }
+
+    @Test
+    void bundleNeverContainsAuthOrAuditFiles() throws Exception {
+        Path serverDir = temp.resolve("server-auth-audit");
+        Path watchtower = serverDir.resolve("watchtower");
+        Files.createDirectories(watchtower);
+        Files.createDirectories(serverDir.resolve("logs"));
+        Files.writeString(watchtower.resolve("ops-cache.json"), """
+                {
+                  "schema_version": 3,
+                  "activity": { "events": [] },
+                  "issues_live": [],
+                  "crashes": { "entries": [], "unreviewed": 0 }
+                }
+                """, StandardCharsets.UTF_8);
+        Files.writeString(watchtower.resolve("performance-rollups.json"), "{}", StandardCharsets.UTF_8);
+        Files.writeString(serverDir.resolve("logs/latest.log"), "ok\n", StandardCharsets.UTF_8);
+        // Sensitive files that must never ship in a support zip.
+        Files.writeString(watchtower.resolve("dashboard-auth.json"),
+                "{\"schema\":2,\"accounts\":[]}", StandardCharsets.UTF_8);
+        Files.writeString(watchtower.resolve("audit-log.jsonl"),
+                "{\"action\":\"login_ok\"}\n", StandardCharsets.UTF_8);
+        Files.write(watchtower.resolve(".auth-key"), new byte[32]);
+
+        SupportComposer.ComposeResult result = SupportComposer.compose(new SupportComposer.ComposeRequest(
+                watchtower,
+                serverDir,
+                watchtower.resolve("ops-cache.json"),
+                watchtower.resolve("performance-rollups.json"),
+                "test-host",
+                "neoforge",
+                "none",
+                true,
+                15,
+                SupportComposeOptions.quickDefaults(),
+                new SupportEnvironmentBuilder.Context("1.2.0", "1.21.1", "neoforge", null,
+                        "test-host", "none", true, "Linux", "amd64"),
+                null,
+                "1.2.0",
+                "1.21.1",
+                null));
+
+        assertTrue(Files.isRegularFile(result.zipPath()));
+        try (ZipFile zip = new ZipFile(result.zipPath().toFile())) {
+            assertTrue(zip.stream().noneMatch(e -> e.getName().contains("audit-log")),
+                    "support zip must not contain audit-log");
+            assertTrue(zip.stream().noneMatch(e -> e.getName().contains("dashboard-auth")),
+                    "support zip must not contain dashboard-auth");
+            assertTrue(zip.stream().noneMatch(e -> e.getName().contains(".auth-key")),
+                    "support zip must not contain .auth-key");
+            String readme = readEntry(zip, "README.txt");
+            assertTrue(readme.contains("audit log"), "README should mention audit log exclusion");
+        }
     }
 
     private static void assertNotNullEntry(ZipFile zip, String name) {
