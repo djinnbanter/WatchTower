@@ -5,6 +5,7 @@ import { useIsOwner } from '@/app/permissions';
 import { FadeIn } from '@/ui/motion';
 import { Button, EmptyState, ErrorState, Section, StatusPill } from '@/ui/patterns';
 import { asArray, asRecord, bool, str, timeAgo } from '@/lib/utils';
+import { AccountMinecraftLink } from './minecraft-link';
 
 type AccountRow = {
   id: string;
@@ -15,6 +16,8 @@ type AccountRow = {
   created_at: string | null;
   last_login_at: string | null;
   is_you: boolean;
+  minecraft_uuid: string | null;
+  minecraft_name: string | null;
 };
 
 type ConfirmKind = 'disable' | 'enable' | 'remove' | 'reset';
@@ -41,6 +44,8 @@ function parseAccounts(payload: Record<string, unknown>): AccountRow[] {
         created_at: str(r.created_at) || null,
         last_login_at: str(r.last_login_at) || null,
         is_you: bool(r.is_you),
+        minecraft_uuid: str(r.minecraft_uuid) || null,
+        minecraft_name: str(r.minecraft_name) || null,
       } satisfies AccountRow;
     })
     .filter((row): row is AccountRow => row != null);
@@ -278,6 +283,14 @@ export function AccountsPanel() {
                           <span className="font-medium">{row.username}</span>
                           {row.is_you ? <StatusPill tone="info">you</StatusPill> : null}
                           {row.disabled ? <StatusPill tone="warn">disabled</StatusPill> : null}
+                        </div>
+                        <div className="mt-2">
+                          <AccountMinecraftLink
+                            accountId={row.id}
+                            uuid={row.minecraft_uuid}
+                            name={row.minecraft_name}
+                            disabled={busy || row.disabled}
+                          />
                         </div>
                         {rowErrors[row.id] ? (
                           <p className="st-accounts__row-error">{rowErrors[row.id]}</p>

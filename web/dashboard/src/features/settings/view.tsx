@@ -14,7 +14,7 @@ import {
   Wrench,
 } from '@/ui/icons';
 import { api } from '@/api/client';
-import { useCanWrite, useIsOwner } from '@/app/permissions';
+import { useCanWrite, useIsOwner, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { navigate, type RouteState } from '@/app/router';
 import { isFixturePreview } from '@/app/runtime';
 import { useSessionStore } from '@/app/session-store';
@@ -27,9 +27,8 @@ import { asRecord, bool, num, str, totpQrSrc } from '@/lib/utils';
 import { useDashboardTimezone } from '@/app/timezone';
 import { AccountsPanel } from './accounts-panel';
 import { AuditLogPanel } from './audit-log-panel';
+import { SelfMinecraftLink } from './minecraft-link';
 import './settings.css';
-
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 
 const PANELS = [
   { id: 'general', label: 'General', icon: ServerCog },
@@ -1062,6 +1061,10 @@ function SecurityPanel() {
           </div>
         ) : null}
         {totpError ? <p className="text-sm text-wt-danger">{totpError}</p> : null}
+      </div>
+
+      <div className="border-t border-wt-line pt-4">
+        <SelfMinecraftLink />
       </div>
     </div>
   );
