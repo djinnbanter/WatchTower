@@ -14,6 +14,7 @@ type SessionState = {
   setBootPhase: (phase: BootPhase) => void;
   setGate: (gate: AuthGate, session?: Record<string, unknown> | null) => void;
   applyAuthResult: (result: Record<string, unknown> | null | undefined) => AuthGate;
+  resetToLogin: () => void;
   bootstrap: () => Promise<void>;
   resumeAfterAuth: () => Promise<void>;
 };
@@ -49,6 +50,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({ gate: next, session: result ?? null });
     return next;
   },
+
+  resetToLogin: () =>
+    set({ bootPhase: 'auth', gate: 'login', session: null, bootError: null }),
 
   bootstrap: async () => {
     set({ bootPhase: 'boot', bootError: null });
