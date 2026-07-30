@@ -1,0 +1,162 @@
+/* Settings feature — ledger surfaces (audit log). Tokens mirror Session .ss-plate. */
+
+.st-ledger {
+  position: relative;
+  overflow: hidden;
+  padding: 0.85rem 0.15rem 0.35rem;
+  border-radius: var(--radius-wt);
+  border: 1px solid var(--wt-line);
+  background: color-mix(in srgb, var(--wt-bg1) 90%, transparent);
+  box-shadow: var(--wt-shadow);
+}
+
+.st-ledger__bands {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  margin: 0 0.85rem 0.85rem;
+  padding: 0.2rem;
+  border-radius: var(--radius-wt-lg);
+  border: 1px solid var(--wt-line);
+  background: color-mix(in srgb, var(--wt-bg2) 55%, transparent);
+}
+
+.st-ledger__band {
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-wt-sm);
+  padding: 0.32rem 0.7rem;
+  font-size: var(--wt-fs-xs, 0.72rem);
+  font-weight: 600;
+  color: var(--wt-text-mid);
+  cursor: pointer;
+}
+
+.st-ledger__band:hover {
+  background: color-mix(in srgb, var(--wt-bg3) 70%, transparent);
+}
+
+.st-ledger__band[aria-selected='true'] {
+  background: var(--wt-accent);
+  color: var(--wt-accent-ink, #fff);
+}
+
+.st-ledger__band:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 1px;
+}
+
+.st-ledger__day {
+  margin: 0 0 0.65rem;
+}
+
+.st-ledger__day + .st-ledger__day {
+  margin-top: 0.85rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--wt-line);
+}
+
+.st-ledger__day-label {
+  margin: 0 1rem 0.45rem;
+  font-size: var(--wt-fs-xs, 0.68rem);
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wt-text-low);
+}
+
+.st-ledger__row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3.4rem 1.65rem minmax(0, 1fr);
+  gap: 0.55rem 0.65rem;
+  align-items: start;
+  padding: 0.45rem 1rem 0.45rem 0.85rem;
+  margin: 0;
+}
+
+.st-ledger__row + .st-ledger__row {
+  border-top: 1px solid color-mix(in srgb, var(--wt-line) 70%, transparent);
+}
+
+.st-ledger__row::before {
+  content: '';
+  position: absolute;
+  left: calc(3.4rem + 0.65rem + 0.82rem);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--wt-line);
+  pointer-events: none;
+}
+
+.st-ledger__time {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: var(--wt-fs-xs, 0.72rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--wt-text-low);
+  padding-top: 0.28rem;
+  text-align: right;
+}
+
+.st-ledger__who {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: var(--radius-wt-sm);
+  border: 1px solid var(--wt-line);
+  background: color-mix(in srgb, var(--wt-bg2) 80%, transparent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--wt-text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.st-ledger__text {
+  min-width: 0;
+  font-size: var(--wt-fs-sm, 0.85rem);
+  line-height: 1.35;
+  color: var(--wt-text);
+}
+
+.st-ledger__sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+}
+
+.st-ledger__meta {
+  margin-top: 0.2rem;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: var(--wt-fs-xs, 0.68rem);
+  color: var(--wt-text-low);
+  line-height: 1.35;
+}
+
+.st-ledger__more {
+  margin: 0.55rem 1rem 0.65rem;
+}
+
+@media (max-width: 520px) {
+  .st-ledger__row {
+    grid-template-columns: 2.7rem 1.45rem minmax(0, 1fr);
+    gap: 0.4rem 0.5rem;
+    padding-left: 0.65rem;
+    padding-right: 0.75rem;
+  }
+
+  .st-ledger__row::before {
+    left: calc(2.7rem + 0.5rem + 0.72rem);
+  }
+
+  .st-ledger__who {
+    width: 1.45rem;
+    height: 1.45rem;
+  }
+}

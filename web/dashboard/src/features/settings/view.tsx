@@ -6,6 +6,7 @@ import {
   Info,
   Package,
   Save,
+  ScrollText,
   ServerCog,
   Shield,
   SlidersHorizontal,
@@ -23,6 +24,8 @@ import { PageEnter } from '@/ui/motion';
 import { Button, ErrorState, Section, StatusPill } from '@/ui/patterns';
 import { asRecord, bool, num, str, totpQrSrc } from '@/lib/utils';
 import { useDashboardTimezone } from '@/app/timezone';
+import { AuditLogPanel } from './audit-log-panel';
+import './settings.css';
 
 const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 
@@ -33,6 +36,7 @@ const PANELS = [
   { id: 'alerts', label: 'Alerts', icon: AlertTriangle },
   { id: 'security', label: 'Security', icon: Shield },
   { id: 'integrations', label: 'Integrations', icon: Package },
+  { id: 'audit', label: 'Audit log', icon: ScrollText },
   { id: 'about', label: 'About', icon: Info },
 ] as const;
 
@@ -67,9 +71,10 @@ const EDITABLE_KEYS = [
 
 type FormState = Record<string, unknown>;
 
-function resolvePanel(raw: string | undefined): PanelId {
+function resolvePanel(raw: string | undefined, canWrite: boolean): PanelId {
   if (raw === 'rules') return 'alerts';
   if (raw === 'advanced') return 'integrations';
+  if (raw === 'audit' && !canWrite) return 'general';
   if (PANELS.some((p) => p.id === raw)) return raw as PanelId;
   return 'general';
 }
@@ -332,8 +337,8 @@ function ReadOnlyField({ label, value, hint }: { label: string; value: string; h
 }
 
 export function PageView({ route }: { route: RouteState }) {
-  const panel = resolvePanel(route.panel);
   const canWrite = useCanWrite();
+  const panel = resolvePanel(route.panel, canWrite);
   const settingsQ = useQuery({ queryKey: ['settings'], queryFn: api.settings });
   const [form, setForm] = useState<FormState>({});
   const [baseline, setBaseline] = useState<FormState>({});
@@ -395,7 +400,7 @@ export function PageView({ route }: { route: RouteState }) {
     <PageEnter className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex flex-wrap gap-1">
-          {PANELS.map((p) => (
+          {PANELS.filter((p) => p.id !== 'audit' || canWrite).map((p) => (
             <button
               key={p.id}
               type="button"
@@ -748,6 +753,8 @@ export function PageView({ route }: { route: RouteState }) {
           </Section>
         </div>
       ) : null}
+
+      {panel === 'audit' ? <AuditLogPanel /> : null}
 
       {panel === 'about' ? (
         <Section title="About this install" hint="Quick facts for this Watchtower dashboard.">
