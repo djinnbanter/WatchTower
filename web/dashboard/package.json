@@ -17,7 +17,7 @@
     "test:storage": "tsx --test src/features/insights/panels/storage-treemap-tree.test.ts src/features/insights/panels/storage-treemap-format.test.ts",
     "test:issues": "tsx --test src/features/issues/helpers.test.ts",
     "test:session": "tsx --test src/features/session/*.test.ts",
-    "test:settings": "tsx --test src/app/permissions.test.ts src/app/session-store.test.ts src/features/settings/audit-log-helpers.test.ts",
+    "test:settings": "tsx --test src/app/permissions.test.ts src/app/session-store.test.ts src/features/wizard/persist.test.ts src/features/settings/audit-log-helpers.test.ts",
     "audit:packaging": "node ../../tools/audit-dashboard-packaging.mjs",
     "audit:parity": "node ../../tools/audit-dashboard-parity.mjs"
   },

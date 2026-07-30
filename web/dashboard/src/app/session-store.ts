@@ -1,10 +1,20 @@
 import { create } from 'zustand';
 import { api } from '@/api/client';
 import { isFixturePreview, requiresLiveAuth } from '@/app/runtime';
-import { shouldShowSetupWizard } from '@/features/wizard/persist';
+import { shouldEnterSetupWizard } from '@/features/wizard/persist';
 
 export type BootPhase = 'boot' | 'auth' | 'loading' | 'wizard' | 'ready';
 export type AuthGate = 'none' | 'login' | 'totp' | 'password-change';
+
+function roleFromBootSession(
+  session: Record<string, unknown> | null | undefined,
+): 'owner' | 'admin' | 'viewer' {
+  const raw = session?.role;
+  if (typeof raw !== 'string') return 'viewer';
+  const lowered = raw.trim().toLowerCase();
+  if (lowered === 'owner' || lowered === 'admin' || lowered === 'viewer') return lowered;
+  return 'viewer';
+}
 
 type SessionState = {
   bootPhase: BootPhase;
@@ -105,7 +115,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       set({ bootPhase: 'ready', gate: 'none' });
       return;
     }
-    if (forceSetup || shouldShowSetupWizard()) {
+    const role = roleFromBootSession(get().session);
+    if ((forceSetup && role === 'owner') || shouldEnterSetupWizard(role)) {
       set({ bootPhase: 'wizard', gate: 'none' });
       return;
     }

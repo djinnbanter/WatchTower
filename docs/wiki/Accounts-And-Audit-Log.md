@@ -14,6 +14,8 @@ Named logins for people who share a dashboard, plus a short ledger of who change
 
 Viewers do not see **Settings → Accounts** or **Settings → Audit log**. Admins see the audit log but not Accounts.
 
+Only the **owner** runs the full setup wizard. Other accounts sign in, change their temporary password, and go straight to the dashboard.
+
 The bottom of the side rail shows who is signed in. Use **Sign out** when you are done, especially on a shared PC.
 
 ---
