@@ -82,19 +82,17 @@ export function AppShell({ route, page, children }: Props) {
       className="sh-rail flex h-full w-[220px] flex-col border-r border-wt-line bg-wt-bg1"
       aria-label="Main navigation"
     >
-      <div className="sh-rail__brand flex items-center gap-2 border-b border-wt-line px-4 py-3.5">
+      <div className="sh-rail__brand">
         <img
           src="./assets/watchtower-icon-simple.png"
           alt=""
           width={28}
           height={28}
-          className="sh-rail__brand-mark rounded-[2px]"
+          className="sh-rail__brand-mark"
         />
         <div className="sh-rail__brand-text min-w-0">
-          <div className="sh-rail__brand-title truncate text-sm font-semibold tracking-tight">
-            WatchTower
-          </div>
-          <div className="sh-rail__brand-host truncate text-xs text-wt-text-low">{hostname}</div>
+          <div className="sh-rail__brand-title truncate">WatchTower</div>
+          <div className="sh-rail__brand-host truncate">{hostname}</div>
         </div>
       </div>
 
@@ -137,13 +135,13 @@ export function AppShell({ route, page, children }: Props) {
         })}
       </div>
 
-      <div className="sh-rail__foot space-y-1.5 border-t border-wt-line p-2">
+      <div className="sh-rail__foot">
         <button
           type="button"
           disabled={!canWrite}
           title={canWrite ? undefined : VIEW_ONLY_TITLE}
           onClick={() => setSupportOpen(true)}
-          className="sh-rail__cta flex w-full items-center justify-center gap-2 rounded-[var(--radius-wt-sm)] border border-wt-line bg-wt-bg2 px-3 py-2 text-sm font-medium text-wt-text-mid hover:text-wt-text disabled:cursor-not-allowed disabled:opacity-50"
+          className="sh-rail__cta"
         >
           <LifeBuoy size={16} /> Build support pack
         </button>
@@ -151,7 +149,7 @@ export function AppShell({ route, page, children }: Props) {
           type="button"
           onClick={toggleTheme}
           aria-label="Cycle colour theme"
-          className="sh-rail__theme flex w-full items-center gap-2 rounded-[var(--radius-wt-sm)] border border-wt-line bg-wt-bg2 px-3 py-2 text-sm text-wt-text-mid hover:text-wt-text"
+          className="sh-rail__theme"
         >
           <ThemeIcon size={16} />
           {themeCycle.label}
