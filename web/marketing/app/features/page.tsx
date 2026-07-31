@@ -7,10 +7,8 @@ import { DEMO_URL, LINKS } from '@/content/product';
 
 export const metadata: Metadata = { title: 'Features' };
 
-const SPAN: Record<(typeof FEATURE_CAPABILITIES)[number]['weight'], string> = {
-  lead: 'sm:col-span-2 lg:col-span-6',
-  standard: 'sm:col-span-1 lg:col-span-4',
-};
+const FEATURE_LEADS = FEATURE_CAPABILITIES.filter((f) => f.weight === 'lead');
+const FEATURE_STANDARDS = FEATURE_CAPABILITIES.filter((f) => f.weight === 'standard');
 
 export default function FeaturesPage() {
   return (
@@ -28,14 +26,14 @@ export default function FeaturesPage() {
         aria-label="Capability catalog"
         className="mx-auto w-full max-w-[84rem] px-5 pb-16 md:px-8 md:pb-20"
       >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12 lg:gap-5">
-          {FEATURE_CAPABILITIES.map((f, i) => (
-            <CapabilityTile
-              key={f.id}
-              feature={f}
-              className={SPAN[f.weight]}
-              delay={(i % 6) * 0.04}
-            />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-5">
+          {FEATURE_LEADS.map((f, i) => (
+            <CapabilityTile key={f.id} feature={f} delay={i * 0.04} />
+          ))}
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-5 lg:grid-cols-3 lg:gap-5">
+          {FEATURE_STANDARDS.map((f, i) => (
+            <CapabilityTile key={f.id} feature={f} delay={(i % 6) * 0.04} />
           ))}
         </div>
       </section>
