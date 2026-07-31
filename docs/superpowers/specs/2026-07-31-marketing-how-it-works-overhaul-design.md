@@ -42,6 +42,12 @@ will not boot. (Port / localhost safety: FAQ / Install; Desk room cut — see
 | Implementation | Sibling tour (approach 1). Do not generalize home into a multi-tour engine. |
 | Copy voice | Feature/mechanism-first, teen-readable; same house rules as home |
 
+**Supersession (2026-07-31):** Operating rooms no longer use the hybrid
+copy|plate split or left `TourBrings`. Unified stacked bands — see
+`docs/superpowers/specs/2026-07-31-marketing-how-unified-bands-design.md`.
+`layout: 'split'` on how-night meta may remain as a shell flag; the visible
+composition is single-column.
+
 ## 4. Design read
 
 Reading this as: **marketing mechanism page for Minecraft dedicated-server
