@@ -34,12 +34,13 @@ for (const f of files.filter((p) => /\/content\//.test(rel(p)))) {
   }
 }
 
-// Shift-log + entries + desk: no sub-12px font sizes
+// Shift-log + entries + desk + how plates: no sub-12px font sizes
 const sizeTargets = files.filter((p) => {
   const r = rel(p);
   return (
     r.startsWith('components/shift-log/') ||
     r.startsWith('components/entries/') ||
+    r.startsWith('components/how/') ||
     r.startsWith('components/type/') ||
     r.startsWith('components/motion/') ||
     r === 'components/evening-chart.tsx' ||
@@ -56,18 +57,20 @@ for (const f of sizeTargets) {
   }
 }
 
-// Home page tree must not reintroduce glow tokens or atmosphere radials in new code
-const homeNew = files.filter((p) => {
+// Home + how-it-works trees must not reintroduce glow tokens or atmosphere radials
+const tourNew = files.filter((p) => {
   const r = rel(p);
   return (
     r.startsWith('components/shift-log/') ||
     r.startsWith('components/entries/') ||
+    r.startsWith('components/how/') ||
     r === 'app/page.tsx' ||
+    r === 'app/how-it-works/page.tsx' ||
     r === 'styles/globals.css'
   );
 });
 
-for (const f of homeNew) {
+for (const f of tourNew) {
   const text = readFileSync(f, 'utf8');
   const r = rel(f);
   if (/--wt-glow-/.test(text)) fail.push(`${r}: --wt-glow-* token`);
@@ -77,9 +80,12 @@ for (const f of homeNew) {
       fail.push(`${r}: elevation box-shadow via --wt-shadow`);
     }
   }
-  // Atmospheric radial on home entries/page (allow SVG chart gradients later if needed via data URI)
+  // Atmospheric radial on tour entries/pages
   if (
-    (r.startsWith('components/entries/') || r === 'app/page.tsx') &&
+    (r.startsWith('components/entries/') ||
+      r.startsWith('components/how/') ||
+      r === 'app/page.tsx' ||
+      r === 'app/how-it-works/page.tsx') &&
     /radial-gradient\(/.test(text)
   ) {
     fail.push(`${r}: decorative radial-gradient`);
@@ -129,6 +135,43 @@ const entryBans = [
 for (const [relPath, re] of entryBans) {
   const text = readFileSync(join(ROOT, relPath), 'utf8');
   if (re.test(text)) fail.push(`${relPath}: left-column fixture / proof narrative still present`);
+}
+
+// How it works operating-model tour rail
+const EXPECTED_HOW_RAIL = [
+  ['drop', 'Drop'],
+  ['wizard', 'First run'],
+  ['loop', 'Loop'],
+  ['disk', 'On disk'],
+  ['desk', 'Desk'],
+  ['cli', 'CLI'],
+  ['close', 'End of shift'],
+];
+
+const howNightPath = join(ROOT, 'content/how-night.ts');
+const howNightText = readFileSync(howNightPath, 'utf8');
+for (const [id, label] of EXPECTED_HOW_RAIL) {
+  if (!new RegExp(`id:\\s*'${id}'`).test(howNightText)) {
+    fail.push(`how-night.ts: missing id '${id}'`);
+  }
+  if (
+    !howNightText.includes(`railLabel: '${label}'`) &&
+    !howNightText.includes(`railLabel: "${label}"`)
+  ) {
+    fail.push(`how-night.ts: missing railLabel '${label}'`);
+  }
+}
+if (/railLabel:\s*'[0-2]\d:[0-5]\d'/.test(howNightText)) {
+  fail.push('how-night.ts: clock-style railLabel still present');
+}
+
+// How it works must not relocate promises / not-our-job
+const howEntryFiles = files.filter((p) => rel(p).startsWith('components/entries/how/'));
+for (const f of howEntryFiles) {
+  const text = readFileSync(f, 'utf8');
+  if (/\bPROMISES\b|\bNOT_OUR_JOB\b/.test(text)) {
+    fail.push(`${rel(f)}: promises / not-our-job must stay off how-it-works`);
+  }
 }
 
 if (fail.length) {

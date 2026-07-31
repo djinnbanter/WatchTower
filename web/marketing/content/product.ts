@@ -41,146 +41,129 @@ export const FOOTER_BLURB =
 
 /**
  * Feature-tour capability + brings for Shift Log product beats.
- * Left columns teach features; desk mocks hold fixtures (no proof field).
+ * Left columns name what the surface shows; desk mocks hold fixtures (no proof field).
  */
 export const TOUR = {
   live: {
     capability:
-      'See how healthy the server is right now - ticks, lag, memory, players, and the host PC - without digging through log files.',
+      'Live charts for ticks, lag, memory, players, and host load - no need to open latest.log.',
     note: 'desk · Live',
     /** Source: docs/wiki/Live-Charts.md */
     brings: [
       {
         title: 'Game vitals',
-        detail:
-          'TPS (ticks per second), tick lag (MSPT), memory, and player count, colour-coded so problems stand out.',
+        detail: 'TPS (ticks per second), tick lag (MSPT), memory, and player count with health colours.',
       },
       {
         title: 'Host and storage',
-        detail:
-          'CPU, disk, and Java heap shown separately when free RAM on the host is messy.',
+        detail: 'CPU, disk, and Java heap as separate readouts.',
       },
       {
         title: 'Network, thermal, world jobs',
-        detail:
-          'Bandwidth, thermals, and background world work when those signals are available.',
+        detail: 'Bandwidth, thermals, and background world work when the server reports them.',
       },
       {
         title: 'Windows you pick',
-        detail:
-          'History from 5 minutes to 30 days. Hover or drag for the exact time and value.',
+        detail: 'Ranges from 5 minutes to 30 days. Hover or drag for the exact time and value.',
       },
     ],
   },
   issues: {
     capability:
-      'Your fix list: live finds, scan results, boot problems, and crash pointers in one place.',
+      'A ranked fix inbox for live finds, scan results, boot problems, and crash pointers.',
     note: 'desk · Issues',
     /** Source: docs/wiki/Issues.md */
     brings: [
       {
         title: 'Active / Reviewed',
         detail:
-          'Work the open list, then mark reviewed. That clears inbox state - it does not delete crash files or jars.',
+          'Open queue and a reviewed state. Reviewed clears the inbox; crash files and jars stay on disk.',
       },
       {
         title: 'Severity bands',
         detail:
-          'Critical, Warning, Info. Jar drift, world pressure, join clinic, and silent script fails land there by severity.',
+          'Critical, Warning, and Info. Covers jar drift, world pressure, join clinic, silent script fails, and more.',
       },
       {
         title: 'Fix and Details',
         detail:
-          'Fix is the next step. Details holds the evidence. Links jump into Crashes, Mods, Live, or Sources.',
+          'Fix tab for the next step. Details for the evidence. Links into Crashes, Mods, Live, and Sources.',
       },
       {
         title: 'Tools',
-        detail:
-          'Filters and inbox utilities. Boot filters help when Startup flagged config or launch problems.',
+        detail: 'Inbox filters, including boot filters from Startup.',
       },
     ],
   },
   crashes: {
-    capability:
-      'Crashes grouped by fingerprint, with Fix, Evidence, and Details side by side.',
+    capability: 'Fingerprint-grouped crashes with Fix, Evidence, and Details tabs.',
     note: 'desk · Crashes',
     /** Source: docs/wiki/Crashes.md + PRODUCT.md advisory */
     brings: [
       {
         title: 'Fingerprint groups',
-        detail:
-          'Same crash shape stacks together so you are not re-reading every identical report.',
+        detail: 'Matching crash shapes stacked in one group.',
       },
       {
         title: 'Fix / Evidence / Details',
-        detail:
-          'Next steps first, then stacks and linked files, then fingerprint metadata when you need it.',
+        detail: 'Next steps, linked stacks and files, then fingerprint metadata.',
       },
       {
         title: 'Odd shutdowns',
-        detail:
-          'External kill and OOM cases still show up when latest.log just stops and there is no crash dump.',
+        detail: 'External kill and OOM entries when latest.log stops with no crash dump.',
       },
       {
         title: 'Reviewed stays on disk',
-        detail:
-          'Mark reviewed clears the Review queue. Files stay under crash-reports/ until you remove them.',
+        detail: 'Mark reviewed clears the Review queue. Files stay under crash-reports/.',
       },
     ],
   },
   overview: {
     capability:
-      'Your home screen after login: a health grade, a short list of what needs attention, and links into the rest of the desk.',
+      'Home screen after login: health grade, needs-attention list, and jump links into the desk.',
     note: 'desk · Overview',
     /** Source: docs/wiki/Dashboard-Overview.md */
     brings: [
       {
         title: 'Health grade',
-        detail:
-          'A snapshot from WatchTower signals. Strong means keep the daily check short. Poor means treat it like an incident.',
+        detail: 'Letter grade from WatchTower signals, from Strong through Poor.',
       },
       {
         title: 'Needs attention',
-        detail:
-          'A queue of the next things to open - Issues, crashes, backups, and similar.',
+        detail: 'Short queue into Issues, crashes, backups, and related surfaces.',
       },
       {
         title: 'Restart advice',
         detail:
-          'Safe, Caution, or Wait. Informational only. WatchTower never restarts the server for you.',
+          'Safe, Caution, or Wait labels. Advisory only - WatchTower does not restart the server.',
       },
       {
         title: 'Jump cards',
-        detail:
-          'Performance insight, weekly digest, storage, Spark, and boot profile when those signals exist.',
+        detail: 'Cards into performance insight, weekly digest, storage, Spark, and boot profile.',
       },
     ],
   },
   insights: {
     capability:
-      'Patterns over days and weeks, not the live second. Busy hours, world pressure, storage, and a weekly digest.',
+      'Day-and-week views: busy hours, world pressure, storage trends, and a weekly digest.',
     note: 'desk · Insights',
     /** Source: docs/wiki/Insights.md */
     brings: [
       {
         title: 'Schedule',
-        detail:
-          'Busy hours and quieter windows so restart advice has a clock behind it. Suggests a window; your panel still runs the restart.',
+        detail: 'Busy-hour and quiet-hour chart, plus a suggested restart window.',
       },
       {
         title: 'World pressure',
-        detail:
-          'Live now vs busy-hours p95 and the peak minute in the 7d / 30d window.',
+        detail: 'Live vs busy-hours p95, and the peak minute over 7d or 30d.',
       },
       {
         title: 'Storage and digest',
-        detail:
-          'Disk trends on Storage. Weekly ops digest from data already on the host - no outbound mail.',
+        detail: 'Disk trends on Storage, and a weekly ops digest from data already on the host.',
       },
       {
         title: 'Vs Live',
-        detail:
-          'Live answers what is happening now. Insights answers what keeps repeating.',
+        detail: 'Live is the current second. Insights is the repeating pattern.',
       },
     ],
   },
@@ -256,6 +239,8 @@ export const LINKS = {
   releasesLatest: 'https://github.com/djinnbanter/WatchTower/releases/latest',
   wiki: 'https://github.com/djinnbanter/WatchTower/wiki',
   wikiInstall: 'https://github.com/djinnbanter/WatchTower/wiki/Installation',
+  wikiDisasterRecovery:
+    'https://github.com/djinnbanter/WatchTower/wiki/Disaster-Recovery',
   license: 'https://github.com/djinnbanter/WatchTower/blob/main/LICENSE',
 } as const;
 
