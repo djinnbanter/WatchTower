@@ -1,37 +1,67 @@
 'use client';
 
-import { InstrumentPlate } from '@/components/instrument-plate';
+import { HowDeskShell, HowPill } from '@/components/how/plate-shell';
 
 const RULES = [
-  'Prefer localhost or an SSH tunnel.',
-  'Do not expose 8787 to the open internet.',
-  'Change the default login (watchtower / password).',
+  {
+    title: 'Reach it safely',
+    detail: 'Prefer localhost or an SSH tunnel.',
+    tone: 'ok' as const,
+    pill: 'Preferred',
+  },
+  {
+    title: 'Do not publish',
+    detail: 'Do not expose 8787 to the open internet.',
+    tone: 'warn' as const,
+    pill: 'Hard rule',
+  },
+  {
+    title: 'Change the login',
+    detail: 'Default is watchtower / password. Change it on first run.',
+    tone: 'warn' as const,
+    pill: 'Required',
+  },
 ] as const;
 
-/** Port callout for the Desk room. */
+/** Settings-style read-only port callout for the Desk room. */
 export function PortCallout({ className = '' }: { className?: string }) {
   return (
-    <InstrumentPlate className={className} elevation="flat">
-      <div className="flex flex-col gap-5 p-5 sm:p-6">
-        <div>
+    <HowDeskShell
+      title="Server identity"
+      badge={<HowPill tone="info">Settings</HowPill>}
+      className={className}
+    >
+      <div className="flex flex-col gap-1 px-3 pb-2 pt-1">
+        <div
+          className="border border-[color:var(--wt-line)] bg-[color:var(--wt-bg2)]/40 px-3 py-3"
+          style={{ borderRadius: 'var(--wt-radius-sm)' }}
+        >
           <div className="font-mono text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--wt-text-low)]">
             Dashboard port
           </div>
-          <div className="mt-2 font-mono text-[1.75rem] font-semibold tracking-tight text-[color:var(--wt-accent)]">
-            :8787
+          <div className="mt-1.5 flex items-baseline justify-between gap-3">
+            <span className="font-mono text-[1.5rem] font-semibold tracking-tight text-[color:var(--wt-accent)]">
+              8787
+            </span>
+            <HowPill tone="neutral">Read-only</HowPill>
           </div>
+          <p className="mt-2 m-0 text-[0.8125rem] leading-relaxed text-[color:var(--wt-text-mid)]">
+            Change the bind port in NeoForge config, then restart. The UI shows the live value.
+          </p>
         </div>
-        <ul className="m-0 list-none space-y-0 border-t border-[color:var(--wt-line)] p-0">
-          {RULES.map((rule) => (
-            <li
-              key={rule}
-              className="border-b border-[color:var(--wt-line)] py-3 text-[0.9375rem] leading-relaxed text-[color:var(--wt-text-mid)] last:border-b-0 last:pb-0"
-            >
-              {rule}
-            </li>
-          ))}
-        </ul>
       </div>
-    </InstrumentPlate>
+
+      <ul className="desk-queue desk-queue--padded m-0">
+        {RULES.map((rule) => (
+          <li key={rule.title} className="desk-queue__row px-2">
+            <div className="min-w-0">
+              <div className="desk-queue__title">{rule.title}</div>
+              <div className="desk-queue__detail">{rule.detail}</div>
+            </div>
+            <HowPill tone={rule.tone}>{rule.pill}</HowPill>
+          </li>
+        ))}
+      </ul>
+    </HowDeskShell>
   );
 }

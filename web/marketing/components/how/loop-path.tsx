@@ -1,8 +1,10 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import { InstrumentPlate } from '@/components/instrument-plate';
+import { HowDeskShell, HowPill } from '@/components/how/plate-shell';
 import { READOUTS } from '@/content/product';
+
+const STAGE_TONE = ['ok', 'info', 'warn'] as const;
 
 /**
  * Signature mechanism: Watching → Scanning → Fix inbox.
@@ -12,15 +14,19 @@ export function LoopPath({ className = '' }: { className?: string }) {
   const reduce = useReducedMotion();
 
   return (
-    <InstrumentPlate className={className} elevation="flat">
-      <div className="flex flex-col gap-6 p-5 sm:p-6">
+    <HowDeskShell
+      title="Continuous loop"
+      badge={<HowPill tone="ok">Live</HowPill>}
+      className={className}
+    >
+      <div className="flex flex-col gap-4 px-3 pb-4 pt-1">
         <svg
-          viewBox="0 0 320 56"
-          className="h-auto w-full max-w-md"
+          viewBox="0 0 320 48"
+          className="h-auto w-full"
           aria-hidden
         >
           <motion.path
-            d="M16 28 H112 M112 28 H208 M208 28 H304"
+            d="M28 24 H120 M120 24 H200 M200 24 H292"
             fill="none"
             stroke="var(--wt-accent)"
             strokeWidth="2"
@@ -34,12 +40,13 @@ export function LoopPath({ className = '' }: { className?: string }) {
                 : { duration: 1.1, ease: [0.16, 1, 0.3, 1] }
             }
           />
-          {[16, 112, 208, 304].map((x, i) => (
-            <motion.circle
+          {[28, 120, 200, 292].map((x, i) => (
+            <motion.rect
               key={x}
-              cx={x}
-              cy={28}
-              r={i === 3 ? 5 : 4}
+              x={x - 4}
+              y={20}
+              width={8}
+              height={8}
               fill={i === 3 ? 'var(--wt-accent)' : 'var(--wt-bg1)'}
               stroke="var(--wt-accent)"
               strokeWidth="2"
@@ -59,19 +66,20 @@ export function LoopPath({ className = '' }: { className?: string }) {
           ))}
         </svg>
 
-        <div className="grid gap-5 sm:grid-cols-3">
-          {READOUTS.map((r) => (
-            <div key={r.label}>
-              <div className="font-mono text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--wt-text-low)]">
-                {r.label}
+        <ul className="desk-queue m-0">
+          {READOUTS.map((r, i) => (
+            <li key={r.label} className="desk-queue__row px-1">
+              <div className="min-w-0">
+                <div className="desk-queue__title">{r.label}</div>
+                <div className="desk-queue__detail">{r.value}</div>
               </div>
-              <div className="mt-2 font-mono text-[0.9375rem] font-medium text-[color:var(--wt-text)]">
-                {r.value}
-              </div>
-            </div>
+              <HowPill tone={STAGE_TONE[i] ?? 'neutral'}>
+                {i === 2 ? 'Inbox' : 'On'}
+              </HowPill>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
-    </InstrumentPlate>
+    </HowDeskShell>
   );
 }
