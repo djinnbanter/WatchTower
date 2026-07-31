@@ -2,7 +2,11 @@
 
 **Date:** 2026-07-31  
 **Surface:** `web/marketing` — `/how-it-works`  
-**Status:** Design approved in brainstorm (approach 1)  
+**Status:** SUPERSEDED — see
+`docs/superpowers/specs/2026-07-31-marketing-how-it-works-pipeline-rebuild-design.md`.
+The Shift Log room version of this page (this doc and the two specs below it)
+was replaced by a single continuous mechanism-pipeline page. Kept for history
+only.  
 **Related:**  
 `docs/superpowers/specs/2026-07-31-marketing-shift-log-design.md`,  
 `docs/superpowers/specs/2026-07-31-marketing-shift-log-feature-tour-design.md`,  

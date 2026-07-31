@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-31  
 **Surface:** `web/marketing` — `/how-it-works`  
-**Status:** Design approved in brainstorm (stacked mechanism-led rooms)  
+**Status:** SUPERSEDED — see
+`docs/superpowers/specs/2026-07-31-marketing-how-it-works-pipeline-rebuild-design.md`.
+Design approved in brainstorm (stacked mechanism-led rooms)  
 **Related:**  
 `docs/superpowers/specs/2026-07-31-marketing-how-it-works-overhaul-design.md`,  
 `docs/superpowers/specs/2026-07-31-marketing-how-drop-dashboard-room-design.md`

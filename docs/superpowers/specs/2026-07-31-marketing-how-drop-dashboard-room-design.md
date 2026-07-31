@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-31  
 **Surface:** `web/marketing` — `/how-it-works`  
-**Status:** Design approved in brainstorm (cut room; full remove; no First run copy add)  
+**Status:** SUPERSEDED — see
+`docs/superpowers/specs/2026-07-31-marketing-how-it-works-pipeline-rebuild-design.md`.
+Design approved in brainstorm (cut room; full remove; no First run copy add)  
 **Related:**  
 `docs/superpowers/specs/2026-07-31-marketing-how-it-works-overhaul-design.md`
 
