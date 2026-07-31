@@ -24,14 +24,30 @@ export default function FeaturesPage() {
 
       <section
         aria-label="Capability catalog"
-        className="mx-auto w-full max-w-[84rem] px-5 pb-16 md:px-8 md:pb-20"
+        className="relative mx-auto w-full max-w-[84rem] px-5 pb-16 md:px-8 md:pb-20"
       >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-5">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full opacity-40 md:opacity-60"
+          style={{
+            background:
+              'radial-gradient(circle, color-mix(in srgb, var(--wt-accent) 22%, transparent) 0%, transparent 70%)',
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-16 top-40 h-64 w-64 rounded-full opacity-35 md:opacity-50"
+          style={{
+            background:
+              'radial-gradient(circle, color-mix(in srgb, var(--wt-lantern) 18%, transparent) 0%, transparent 70%)',
+          }}
+        />
+        <div className="relative grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-5">
           {FEATURE_LEADS.map((f, i) => (
             <CapabilityTile key={f.id} feature={f} delay={i * 0.04} />
           ))}
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-5 lg:grid-cols-3 lg:gap-5">
+        <div className="relative mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-5 lg:grid-cols-3 lg:gap-5">
           {FEATURE_STANDARDS.map((f, i) => (
             <CapabilityTile key={f.id} feature={f} delay={(i % 6) * 0.04} />
           ))}
