@@ -17,6 +17,28 @@
 - Night Watch Desk craft: Geist + Mono, radii 2/4/6, hairlines, Signal Blue scarce, Lantern Amber for Alpha only
 - Do not modify home Shift Log or How it works
 - Prefer localhost demo links; do not invent product behavior
+- **Brief wins over generic design-skill defaults:** do not apply Ethereal Glass / purple SaaS / cream-serif / broadsheet looks from high-end-visual-design variance engine; do not rip InstrumentPlate for oversized squircles or glass blur
+- **Tag eyebrow is intentional:** capability \	ag\ (mono room label) is instrument chrome from the approved spec - keep it even if impeccable craft-floor bans marketing kickers
+
+---
+
+## Skills playbook (required while building)
+
+Use these skills at the moments below. Do not skip the craft pass.
+
+| When | Skill | How to use it |
+|---|---|---|
+| Session start / before UI edits | **impeccable** (\context.mjs --target web/marketing/app/features/page.tsx\) | Load PRODUCT.md + DESIGN.md. Mode = **Persuade**. Night Watch Desk world. |
+| Immediately before writing tile/page UI | **impeccable** eference/craft-floor.md\ | Contrast, spacing, type, motion, states. Refuse glass/glow orbs, icon+card SaaS grids, hero-metric templates. Exception: keep mono \	ag\ per Global Constraints. |
+| Tile + page visual identity | **anthropic-frontend-design** | Desk POV; signature = instrument plates + scarce Signal Blue hover. Copy is design material. |
+| Layout / motion polish judgment | **high-end-visual-design** | Borrow easing/nested-bezel discipline only. DESIGN.md overrides vibe variance (no purple glass). |
+| All user-facing blurbs / lede / CTA line | **human-writing** | Hyphens only; concrete; no inflated marketing. |
+| After UI is up in browser | **impeccable** \critique\ then \polish\ on \/features\ | One batched desktop+mobile inspect; fix in one pass; stop. |
+| Before claiming done | **verification-before-completion** | Audit + tsc + browser evidence. |
+| Per-task execution | **subagent-driven-development** | Fresh implementer per task; task review; final branch review. |
+| Optional a11y sweep | **web-design-guidelines** | Only if critique flags focus/contrast. |
+
+**Skill order for Tasks 2-3 and 5:** impeccable context → craft-floor → implement → humanize copy if needed → browser critique/polish → verification-before-completion.
 
 ---
 
@@ -32,6 +54,8 @@
 ---
 
 ### Task 1: Replace features content module
+
+**Skills for this task:** human-writing (sweep lede + blurbs for AI tells before commit); do not invent capabilities beyond the list below.
 
 **Files:**
 - Modify: `web/marketing/content/features.ts` (full rewrite)
@@ -256,12 +280,16 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
 ];
 ```
 
-- [ ] **Step 2: Confirm no em-dashes**
+- [ ] **Step 2: Humanize pass on lede + blurbs**
+
+Read human-writing skill. Fix any AI tells in FEATURE_LEDE and blurbs without changing factual claims. Keep hyphens.
+
+- [ ] **Step 3: Confirm no em-dashes**
 
 Run: `rg "[—–]" web/marketing/content/features.ts`  
 Expected: no matches
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add web/marketing/content/features.ts
@@ -272,6 +300,8 @@ git commit -m "content: Features capabilities catalog replaces room surfaces"
 
 ### Task 2: Capability tile component
 
+**Skills for this task:** impeccable context + craft-floor; anthropic-frontend-design (instrument plate signature); high-end-visual-design only for easing/hover discipline (not vibe swap).
+
 **Files:**
 - Create: `web/marketing/components/features/capability-tile.tsx`
 
@@ -279,7 +309,15 @@ git commit -m "content: Features capabilities catalog replaces room surfaces"
 - Consumes: `FeatureCapability` from `@/content/features`
 - Produces: `CapabilityTile({ feature, className?, delay? })`
 
-- [ ] **Step 1: Create the tile**
+- [ ] **Step 1: Run impeccable context**
+
+```bash
+node "$HOME/.cursor/skills/impeccable/scripts/context.mjs" --target web/marketing/app/features/page.tsx
+```
+
+On Windows use the skill path under the user profile. Follow PRODUCT.md / DESIGN.md; Mode Persuade; Night Watch Desk.
+
+- [ ] **Step 2: Create the tile**
 
 ```tsx
 'use client';
@@ -335,12 +373,12 @@ className="h-full border border-transparent transition-colors ..."
 
 and put hover on the InstrumentPlate outer by extending className only if InstrumentPlate forwards `className` to the outer border div (it does).
 
-- [ ] **Step 2: Typecheck the module**
+- [ ] **Step 3: Typecheck the module**
 
 Run: `cd web/marketing && npx tsc --noEmit`  
 Expected: PASS (or only unrelated errors)
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add web/marketing/components/features/capability-tile.tsx
@@ -350,6 +388,8 @@ git commit -m "feat(marketing): CapabilityTile instrument plate for Features gri
 ---
 
 ### Task 3: Rewrite Features page
+
+**Skills for this task:** impeccable craft-floor; anthropic-frontend-design (first viewport: title + lede only); human-writing on CTA line.
 
 **Files:**
 - Modify: `web/marketing/app/features/page.tsx` (full rewrite)
@@ -444,6 +484,8 @@ git commit -m "feat(marketing): Features page capability grid without room peeks
 
 ### Task 4: Audit guard + verify
 
+**Skills for this task:** verification-before-completion (evidence before any done claim).
+
 **Files:**
 - Modify: `web/marketing/scripts/audit-shift-log.mjs`
 
@@ -505,6 +547,42 @@ git commit -m "test(marketing): audit Features capability grid constraints"
 
 ---
 
+### Task 5: Craft polish pass (required)
+
+**Skills for this task (all required):** impeccable critique then polish; anthropic-frontend-design self-critique; high-end-visual-design only for motion/spacing; verification-before-completion; optional web-design-guidelines if focus/contrast fails.
+
+**Files:**
+- Modify as needed: `capability-tile.tsx`, `app/features/page.tsx`, possibly `content/features.ts` (copy only)
+
+- [ ] **Step 1: Browser inspect desktop + mobile together**
+
+Open `/features`. Screenshot desktop (~1280) and mobile (~390). Check:
+
+- First viewport: title + lede only (no stat strip)
+- Grid rhythm: lead tiles wider; standards 3-up on lg
+- Hover border uses Signal Blue mix, not glow orbs
+- Alpha chip lantern only on Spark
+- Reduced motion: Reveal static
+
+- [ ] **Step 2: Apply one fix batch from critique**
+
+Fix spacing, type, contrast, hover, and any AI-looking chrome in one pass. Do not add icon rows or ProductDesk.
+
+- [ ] **Step 3: Re-verify**
+
+```bash
+cd web/marketing && node scripts/audit-shift-log.mjs && npx tsc --noEmit
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add web/marketing/components/features/capability-tile.tsx web/marketing/app/features/page.tsx web/marketing/content/features.ts
+git commit -m "polish(marketing): Features capability grid craft pass"
+```
+
+---
+
 ## Spec coverage check
 
 | Spec requirement | Task |
@@ -517,14 +595,8 @@ git commit -m "test(marketing): audit Features capability grid constraints"
 | Alpha labeling | Task 1 + 2 |
 | Hyphens / no invented claims | Task 1 + Global |
 | Audit | Task 4 |
+| Craft quality / Night Watch Desk | Task 5 + Skills playbook |
 
-## Execution handoff
+## Execution
 
-Plan complete and saved to `docs/superpowers/plans/2026-07-31-marketing-features-capability-grid.md`.
-
-**Two execution options:**
-
-1. **Subagent-Driven (recommended)** — fresh subagent per task, review between tasks  
-2. **Inline Execution** — run tasks in this session with checkpoints  
-
-Which approach?
+Controllers: **subagent-driven-development**. Paste applicable Skills playbook rows into each implementer brief. **Task 5 must not be skipped.**
