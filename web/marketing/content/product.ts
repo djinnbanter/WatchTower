@@ -40,127 +40,147 @@ export const FOOTER_BLURB =
   'A local ops desk for Minecraft dedicated servers. It runs on the machine your server already runs on.';
 
 /**
- * Feature-tour capability / proof / margin notes for Shift Log product beats.
- * Sources: PRODUCT.md surfaces + DESK fixtures cited in entries.
+ * Feature-tour capability + brings for Shift Log product beats.
+ * Left columns teach features; desk mocks hold fixtures (no proof field).
  */
 export const TOUR = {
   live: {
-    capability: 'The right-now ops console: tick health and host load without opening latest.log.',
-    proof: 'Sampled while the game runs. Overview keeps a shorter vitals window; Live goes deeper.',
+    capability:
+      'See how healthy the server is right now - ticks, lag, memory, players, and the host PC - without digging through log files.',
     note: 'desk · Live',
     /** Source: docs/wiki/Live-Charts.md */
     brings: [
       {
         title: 'Game vitals',
-        detail: 'TPS, tick lag (MSPT), memory, players - with health colours on the readout.',
+        detail:
+          'TPS (ticks per second), tick lag (MSPT), memory, and player count, colour-coded so problems stand out.',
       },
       {
         title: 'Host and storage',
-        detail: 'CPU, disk, and Java heap called out separately when the host is messy about free RAM.',
+        detail:
+          'CPU, disk, and Java heap shown separately when free RAM on the host is messy.',
       },
       {
         title: 'Network, thermal, world jobs',
-        detail: 'Bandwidth, thermals, and background world work when those signals are available.',
+        detail:
+          'Bandwidth, thermals, and background world work when those signals are available.',
       },
       {
         title: 'Windows you pick',
-        detail: 'Live history from 5 minutes to 30 days. Hover (or drag) for the exact time and value.',
+        detail:
+          'History from 5 minutes to 30 days. Hover or drag for the exact time and value.',
       },
     ],
   },
   issues: {
-    capability: 'Your fix inbox: live peeks, scanning finds, boot problems, and crash pointers in one place.',
-    proof: 'Proof from one spike: MSPT 118ms, TPS 8.4, pregen still running.',
+    capability:
+      'Your fix list: live finds, scan results, boot problems, and crash pointers in one place.',
     note: 'desk · Issues',
     /** Source: docs/wiki/Issues.md */
     brings: [
       {
         title: 'Active / Reviewed',
-        detail: 'Work the open list, then mark reviewed. That clears inbox state - it does not delete crash files or jars.',
+        detail:
+          'Work the open list, then mark reviewed. That clears inbox state - it does not delete crash files or jars.',
       },
       {
         title: 'Severity bands',
-        detail: 'Critical, Warning, Info. Jar drift, world pressure, join clinic, and silent script fails land there by severity.',
+        detail:
+          'Critical, Warning, Info. Jar drift, world pressure, join clinic, and silent script fails land there by severity.',
       },
       {
         title: 'Fix and Details',
-        detail: 'Fix is the next step. Details holds the evidence. Links jump into Crashes, Mods, Live, or Sources.',
+        detail:
+          'Fix is the next step. Details holds the evidence. Links jump into Crashes, Mods, Live, or Sources.',
       },
       {
         title: 'Tools',
-        detail: 'Filters and inbox utilities. Boot filters help when Startup flagged config or launch problems.',
+        detail:
+          'Filters and inbox utilities. Boot filters help when Startup flagged config or launch problems.',
       },
     ],
   },
   crashes: {
-    capability: 'Crash groups by fingerprint, with Fix, Evidence, and Details beside each other.',
-    proof: 'Create contraption collision open on Fix - next steps beside the day-grouped list.',
+    capability:
+      'Crashes grouped by fingerprint, with Fix, Evidence, and Details side by side.',
     note: 'desk · Crashes',
     /** Source: docs/wiki/Crashes.md + PRODUCT.md advisory */
     brings: [
       {
         title: 'Fingerprint groups',
-        detail: 'Same crash shape stacks together so you are not re-reading every identical report.',
+        detail:
+          'Same crash shape stacks together so you are not re-reading every identical report.',
       },
       {
         title: 'Fix / Evidence / Details',
-        detail: 'Next steps first, then stacks and linked files, then fingerprint metadata when you need it.',
+        detail:
+          'Next steps first, then stacks and linked files, then fingerprint metadata when you need it.',
       },
       {
         title: 'Odd shutdowns',
-        detail: 'External kill and OOM cases still show up when latest.log just stops and there is no crash dump.',
+        detail:
+          'External kill and OOM cases still show up when latest.log just stops and there is no crash dump.',
       },
       {
         title: 'Reviewed stays on disk',
-        detail: 'Mark reviewed clears the Review queue. Files stay under crash-reports/ until you remove them.',
+        detail:
+          'Mark reviewed clears the Review queue. Files stay under crash-reports/ until you remove them.',
       },
     ],
   },
   overview: {
-    capability: 'First stop after login: health grade, what needs attention, and where to open next.',
-    proof: null,
+    capability:
+      'Your home screen after login: a health grade, a short list of what needs attention, and links into the rest of the desk.',
     note: 'desk · Overview',
     /** Source: docs/wiki/Dashboard-Overview.md */
     brings: [
       {
         title: 'Health grade',
-        detail: 'A snapshot from WatchTower signals. Strong means keep the daily check short; Poor means treat it like an incident.',
+        detail:
+          'A snapshot from WatchTower signals. Strong means keep the daily check short. Poor means treat it like an incident.',
       },
       {
         title: 'Needs attention',
-        detail: 'A queue of the next things to open - Issues, crashes, backups, and similar.',
+        detail:
+          'A queue of the next things to open - Issues, crashes, backups, and similar.',
       },
       {
         title: 'Restart advice',
-        detail: 'Safe, Caution, or Wait. Informational only. WatchTower never restarts the server for you.',
+        detail:
+          'Safe, Caution, or Wait. Informational only. WatchTower never restarts the server for you.',
       },
       {
         title: 'Jump cards',
-        detail: 'Performance insight, weekly digest, storage, Spark, and boot profile when those signals exist.',
+        detail:
+          'Performance insight, weekly digest, storage, Spark, and boot profile when those signals exist.',
       },
     ],
   },
   insights: {
-    capability: 'Patterns over a window - not the live second. Busy hours, pressure, storage, digest.',
-    proof: null,
+    capability:
+      'Patterns over days and weeks, not the live second. Busy hours, world pressure, storage, and a weekly digest.',
     note: 'desk · Insights',
     /** Source: docs/wiki/Insights.md */
     brings: [
       {
         title: 'Schedule',
-        detail: 'Busy hours and quieter windows so restart advice has a clock behind it. Suggests a window; your panel still runs the restart.',
+        detail:
+          'Busy hours and quieter windows so restart advice has a clock behind it. Suggests a window; your panel still runs the restart.',
       },
       {
         title: 'World pressure',
-        detail: 'Live now vs busy-hours p95 and the peak minute in the 7d / 30d window.',
+        detail:
+          'Live now vs busy-hours p95 and the peak minute in the 7d / 30d window.',
       },
       {
         title: 'Storage and digest',
-        detail: 'Disk trends on Storage. Weekly ops digest from data already on the host - no outbound mail.',
+        detail:
+          'Disk trends on Storage. Weekly ops digest from data already on the host - no outbound mail.',
       },
       {
         title: 'Vs Live',
-        detail: 'Live answers what is happening now. Insights answers what keeps repeating.',
+        detail:
+          'Live answers what is happening now. Insights answers what keeps repeating.',
       },
     ],
   },
