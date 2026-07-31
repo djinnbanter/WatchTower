@@ -16,7 +16,7 @@ export function HowDropEntry() {
     <ShiftEntry {...meta}>
       <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-12">
         <div className="min-w-0">
-          <h2 className="wt-entry text-[color:var(--wt-text)]">{HOW.drop.title}</h2>
+          <h1 className="wt-entry text-[color:var(--wt-text)]">{HOW.drop.title}</h1>
           <p className="mt-4 max-w-[48ch] text-[1.0625rem] leading-relaxed text-[color:var(--wt-text-mid)]">
             {HOW.drop.capability}
           </p>
