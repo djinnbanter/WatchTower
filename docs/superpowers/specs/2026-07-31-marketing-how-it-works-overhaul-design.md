@@ -22,12 +22,13 @@ the operating model with the same craft.
 
 Remake How it works as a **second Shift Log**: same shell as home, different
 job. Rooms walk **how WatchTower runs on the host** (drop → wizard → loop →
-disk → desk → CLI → close). Not a second Features page. Not a trust/promises
+disk → CLI → close). Not a second Features page. Not a trust/promises
 page.
 
 After the tour, a visitor can answer: where the jar goes, what first-run does,
-how watch → scan → fix works, where files live, how to open the desk safely,
-and what to use if Minecraft will not boot.
+how watch → scan → fix works, where files live, and what to use if Minecraft
+will not boot. (Port / localhost safety: FAQ / Install; Desk room cut — see
+`2026-07-31-marketing-how-drop-dashboard-room-design.md`.)
 
 ## 3. Decisions (locked)
 
@@ -62,10 +63,13 @@ Ordered entries:
 3. **Loop** — Watching → Scanning → Fix inbox as one room with three beats
 4. **On disk** — `watchtower/` stays on the host unless the operator opts into
    a network feature
-5. **Desk** — `:8787`, localhost / SSH, change default login; do not expose to
-   the open internet
-6. **CLI** — optional disaster-recovery when the game will not boot
-7. **Close** — demo + Modrinth CTAs (demo opens in a new tab)
+5. **CLI** — optional disaster-recovery when the game will not boot
+6. **Close** — demo + Modrinth CTAs (demo opens in a new tab)
+
+**Supersession (2026-07-31):** The former **Desk / Dashboard** room (`:8787`
+port callout) was cut. See
+`docs/superpowers/specs/2026-07-31-marketing-how-drop-dashboard-room-design.md`.
+Spine is now drop → wizard → loop → disk → CLI → close.
 
 ### Explicitly not rooms
 
