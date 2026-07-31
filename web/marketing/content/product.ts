@@ -215,11 +215,11 @@ export const READOUTS = [
 export const PROMISES = [
   {
     title: 'Your data stays yours',
-    body: 'Local-first. No telemetry and no log uploads by default. Anonymous diagnostics are opt-in. WatchTower Cloud sync is a separate paid opt-in.',
+    body: "Your files stay on your server. We don't upload logs by default. Anonymous diagnostics and Cloud sync are opt-in.",
   },
   {
     title: "You're in control",
-    body: 'Network features are opt-in. Risky actions get a preview and an undo. Nothing edits your mods or world quietly.',
+    body: 'Network features are opt-in. Risky actions show a preview and an undo. Nothing quietly edits your mods or world.',
   },
   {
     title: 'Ops, not surveillance',
@@ -227,7 +227,7 @@ export const PROMISES = [
   },
   {
     title: 'Drop-in beside your host',
-    body: "A jar in mods/. Not a second control panel you'd have to keep running.",
+    body: "A jar in mods/. Not a second control panel you have to keep running.",
   },
 ] as const;
 
