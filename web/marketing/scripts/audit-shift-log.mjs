@@ -40,6 +40,7 @@ const sizeTargets = files.filter((p) => {
   return (
     r.startsWith('components/shift-log/') ||
     r.startsWith('components/entries/') ||
+    r.startsWith('components/features/') ||
     r.startsWith('components/how/') ||
     r.startsWith('components/type/') ||
     r.startsWith('components/motion/') ||
@@ -100,7 +101,6 @@ const EXPECTED_RAIL = [
   ['crashes', 'Crashes'],
   ['overview', 'Overview'],
   ['insights', 'Insights'],
-  ['orders', 'Standing orders'],
   ['close', 'End of shift'],
 ];
 
@@ -137,41 +137,29 @@ for (const [relPath, re] of entryBans) {
   if (re.test(text)) fail.push(`${relPath}: left-column fixture / proof narrative still present`);
 }
 
-// How it works operating-model tour rail
-const EXPECTED_HOW_RAIL = [
-  ['drop', 'Drop'],
-  ['wizard', 'First run'],
-  ['loop', 'Loop'],
-  ['disk', 'On disk'],
-  ['desk', 'Desk'],
-  ['cli', 'CLI'],
-  ['close', 'End of shift'],
-];
-
-const howNightPath = join(ROOT, 'content/how-night.ts');
-const howNightText = readFileSync(howNightPath, 'utf8');
-for (const [id, label] of EXPECTED_HOW_RAIL) {
-  if (!new RegExp(`id:\\s*'${id}'`).test(howNightText)) {
-    fail.push(`how-night.ts: missing id '${id}'`);
-  }
-  if (
-    !howNightText.includes(`railLabel: '${label}'`) &&
-    !howNightText.includes(`railLabel: "${label}"`)
-  ) {
-    fail.push(`how-night.ts: missing railLabel '${label}'`);
-  }
-}
-if (/railLabel:\s*'[0-2]\d:[0-5]\d'/.test(howNightText)) {
-  fail.push('how-night.ts: clock-style railLabel still present');
+// How it works is a mechanism pipeline now, not a setup guide
+const howPagePath = join(ROOT, 'app/how-it-works/page.tsx');
+const howPageText = readFileSync(howPagePath, 'utf8');
+if (/wizard|mods\/|disaster-recovery CLI|watchtower-cli/i.test(howPageText)) {
+  fail.push('app/how-it-works/page.tsx: setup-guide vocabulary should live on Install, not here');
 }
 
-// How it works must not relocate promises / not-our-job
-const howEntryFiles = files.filter((p) => rel(p).startsWith('components/entries/how/'));
-for (const f of howEntryFiles) {
-  const text = readFileSync(f, 'utf8');
-  if (/\bPROMISES\b|\bNOT_OUR_JOB\b/.test(text)) {
-    fail.push(`${rel(f)}: promises / not-our-job must stay off how-it-works`);
-  }
+const featuresPagePath = join(ROOT, 'app/features/page.tsx');
+const featuresPage = readFileSync(featuresPagePath, 'utf8');
+if (/ProductDesk/.test(featuresPage)) {
+  fail.push('app/features/page.tsx: ProductDesk room peeks belong on home, not Features');
+}
+if (/FEATURE_SURFACES/.test(featuresPage)) {
+  fail.push('app/features/page.tsx: use FEATURE_CAPABILITIES, not FEATURE_SURFACES');
+}
+
+const featuresContentPath = join(ROOT, 'content/features.ts');
+const featuresContent = readFileSync(featuresContentPath, 'utf8');
+if (!/FEATURE_CAPABILITIES/.test(featuresContent)) {
+  fail.push('content/features.ts: missing FEATURE_CAPABILITIES');
+}
+if (/FEATURE_SURFACES/.test(featuresContent)) {
+  fail.push('content/features.ts: FEATURE_SURFACES should be removed');
 }
 
 if (fail.length) {
