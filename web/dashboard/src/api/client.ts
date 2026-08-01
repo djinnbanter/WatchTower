@@ -1,4 +1,78 @@
+import { canonicalKey } from './demo-key.mjs';
+import { isStaticDemo } from '@/app/runtime';
+
+let demoManifest: Record<string, string> | null | undefined;
+
+/**
+ * Directory that holds demo-api/. Frozen from the first page URL so a later
+ * router rewrite cannot break relative fetches when hosted under /demo-app/.
+ */
+function computeDemoApiBase(pathname: string): string {
+  const marker = '/demo-app';
+  const at = pathname.indexOf(marker);
+  if (at >= 0) return `${pathname.slice(0, at + marker.length)}/demo-api/`;
+  // Root-hosted static demo (Vercel): / or /index.html
+  if (pathname.endsWith('/')) return `${pathname}demo-api/`;
+  if (pathname.endsWith('.html')) return `${pathname.replace(/\/[^/]+$/, '/')}demo-api/`;
+  return '/demo-api/';
+}
+
+const DEMO_API_BASE =
+  typeof window !== 'undefined'
+    ? computeDemoApiBase(window.location.pathname)
+    : './demo-api/';
+
+function demoApiUrl(file: string): string {
+  return `${DEMO_API_BASE}${file}`;
+}
+
+async function loadDemoManifest(): Promise<Record<string, string>> {
+  if (demoManifest) return demoManifest;
+  const res = await fetch(demoApiUrl('manifest.json'));
+  if (!res.ok) throw new Error(`${res.status} ${demoApiUrl('manifest.json')}`);
+  demoManifest = (await res.json()) as Record<string, string>;
+  return demoManifest;
+}
+
+/** Map an /api/... path to a baked demo-api file URL (static demo only). */
+export async function resolveDemoAsset(path: string): Promise<string> {
+  if (!isStaticDemo()) return path;
+  const u = new URL(path, 'http://demo.local');
+  const key = canonicalKey('GET', u.pathname, u.search);
+  const manifest = await loadDemoManifest();
+  const file = manifest[key];
+  if (!file) throw new Error(`demo manifest miss for ${key}`);
+  return demoApiUrl(file);
+}
+
 export async function apiFetch<T = unknown>(path: string, init?: RequestInit): Promise<T> {
+  if (isStaticDemo()) {
+    const method = (init?.method || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') {
+      return { ok: true, preview: true } as T;
+    }
+    const u = new URL(path, 'http://demo.local');
+    const key = canonicalKey(method, u.pathname, u.search);
+    const manifest = await loadDemoManifest();
+    const file = manifest[key];
+    if (!file) {
+      // Soft empty stubs for optional GETs that are allowlisted but not baked
+      // (e.g. spark compare pairs, fs browse). Prefer empty over a hard crash.
+      if (u.pathname.startsWith('/api/spark/compare')) {
+        return { ok: true, preview: true, baseline: null, target: null, nodes: [] } as T;
+      }
+      if (u.pathname.startsWith('/api/fs/')) {
+        return { ok: true, preview: true, entries: [] } as T;
+      }
+      throw new Error(`404 ${path}: demo manifest miss for ${key}`);
+    }
+    const res = await fetch(demoApiUrl(file));
+    if (!res.ok) throw new Error(`${res.status} ${path}`);
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json') || file.endsWith('.json')) return res.json() as Promise<T>;
+    return res.text() as Promise<T>;
+  }
+
   const hasJsonBody = Boolean(init?.body) && !(init?.body instanceof FormData);
   const res = await fetch(path, {
     credentials: 'include',
@@ -164,6 +238,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ force }),
     }),
+  modsDisable: (payload: { jar: string; confirm_world_risk?: boolean }) =>
+    apiFetch<Record<string, unknown>>('/api/mods/disable', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  modsEnable: (payload: { jar: string }) =>
+    apiFetch<Record<string, unknown>>('/api/mods/enable', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
   /** Latest report facts (live: /api/reports/latest; fixture preview may alias /api/facts). */
   facts: async () => {
     try {
@@ -232,11 +316,33 @@ export const api = {
     }),
   backupsScan: () =>
     apiFetch<Record<string, unknown>>('/api/backups/scan', { method: 'POST', body: '{}' }),
+  backupsVerify: (path: string) =>
+    apiFetch<Record<string, unknown>>('/api/backups/verify', {
+      method: 'POST',
+      body: JSON.stringify({ path }),
+    }),
+  backupsTestRestore: (path: string) =>
+    apiFetch<Record<string, unknown>>('/api/backups/test-restore', {
+      method: 'POST',
+      body: JSON.stringify({ path }),
+    }),
+  backupsTestRestoreStatus: () =>
+    apiFetch<Record<string, unknown>>('/api/backups/test-restore/status'),
+  backupsTestRestoreCleanup: (id?: string) =>
+    apiFetch<Record<string, unknown>>('/api/backups/test-restore/cleanup', {
+      method: 'POST',
+      body: JSON.stringify(id ? { id } : {}),
+    }),
   fsRoots: () => apiFetch<Record<string, unknown>>('/api/fs/roots'),
   fsList: (path: string) =>
     apiFetch<Record<string, unknown>>(`/api/fs/list?path=${encodeURIComponent(path)}`),
 
   supportCatalog: () => apiFetch<Record<string, unknown>>('/api/support/catalog'),
+  supportQualityGate: (payload: Record<string, unknown>) =>
+    apiFetch<Record<string, unknown>>('/api/support/quality-gate', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
   supportCompose: (payload: Record<string, unknown>) =>
     apiFetch<Record<string, unknown>>('/api/support/compose', {
       method: 'POST',
@@ -244,6 +350,7 @@ export const api = {
     }),
   supportBundleUrl: () => '/api/support/bundle',
   supportBundleDownload: async () => {
+    if (isStaticDemo()) return new Blob(['demo'], { type: 'application/zip' });
     const res = await fetch('/api/support/bundle', { credentials: 'include' });
     if (!res.ok) {
       const text = await res.text().catch(() => '');

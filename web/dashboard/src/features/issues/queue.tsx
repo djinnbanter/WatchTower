@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, ChevronRight, Copy, X } from '@/ui/icons';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { navigate } from '@/app/router';
 import { Button, EmptyState, StatusPill } from '@/ui/patterns';
 import { cn, num } from '@/lib/utils';
@@ -15,10 +15,6 @@ import {
   type IssueItem,
   type PrimaryAction,
 } from './helpers';
-
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
-
-type SevFilter = 'all' | 'critical' | 'warning' | 'info';
 
 type QueueBand = {
   key: string;
@@ -38,6 +34,10 @@ function runPrimaryAction(action: PrimaryAction | null) {
   if (!action) return;
   if (action.href) {
     window.open(action.href, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  if (action.tab === 'support') {
+    window.dispatchEvent(new Event('wt:open-support'));
     return;
   }
   if (action.tab) {
@@ -76,33 +76,26 @@ export function IssuesQueue({
 }) {
   const canWrite = useCanWrite();
   const [panel, setPanel] = useState<DetailPanel>('fix');
-  const [sevFilter, setSevFilter] = useState<SevFilter>('all');
   const [expandedBands, setExpandedBands] = useState<Set<string>>(new Set());
   const [bandExpanded, setBandExpanded] = useState<Record<string, boolean>>({});
   const listRef = useRef<HTMLDivElement>(null);
 
-  const allBands = useMemo(() => (mode === 'active' ? groupByBand(items) : null), [items, mode]);
-  const bands = useMemo(() => {
-    if (!allBands) return null;
-    if (sevFilter === 'all') return allBands;
-    return allBands.filter((b) => b.key === sevFilter);
-  }, [allBands, sevFilter]);
+  const bands = useMemo(() => (mode === 'active' ? groupByBand(items) : null), [items, mode]);
   const selected = items.find((i) => i.key === selectedKey) ?? null;
-  const bandKeys = allBands?.map((b) => b.key).join('|') ?? '';
+  const bandKeys = bands?.map((b) => b.key).join('|') ?? '';
 
   useEffect(() => {
     setPanel('fix');
   }, [selectedKey]);
 
   useEffect(() => {
-    if (!allBands?.length) return;
-    setExpandedBands(defaultExpanded(allBands));
+    if (!bands?.length) return;
+    setExpandedBands(defaultExpanded(bands));
     setBandExpanded({});
-    setSevFilter('all');
   }, [bandKeys]); // reset when the set of bands changes
 
   useEffect(() => {
-    if (!selected || !allBands) return;
+    if (!selected || !bands) return;
     const key = selected.severity === 'critical' || selected.severity === 'info' ? selected.severity : 'warning';
     setExpandedBands((prev) => {
       if (prev.has(key)) return prev;
@@ -110,7 +103,7 @@ export function IssuesQueue({
       next.add(key);
       return next;
     });
-  }, [selectedKey, selected, allBands]);
+  }, [selectedKey, selected, bands]);
 
   const toggleBand = (key: string) => {
     setExpandedBands((prev) => {
@@ -120,12 +113,6 @@ export function IssuesQueue({
       return next;
     });
   };
-
-  const chipCounts = useMemo(() => {
-    const map: Record<string, number> = { all: items.length };
-    for (const b of allBands ?? []) map[b.key] = b.items.length;
-    return map;
-  }, [allBands, items.length]);
 
   const renderRow = (item: IssueItem) => (
     <button
@@ -149,41 +136,13 @@ export function IssuesQueue({
     </button>
   );
 
-  const filterChips: { value: SevFilter; label: string }[] = [
-    { value: 'all', label: 'All' },
-    { value: 'critical', label: 'Critical' },
-    { value: 'warning', label: 'Warning' },
-    { value: 'info', label: 'Info' },
-  ];
-
   return (
     <div className="is-split">
       <div className="is-list" ref={listRef}>
-        {mode === 'active' && allBands ? (
-          allBands.length ? (
+        {mode === 'active' && bands ? (
+          bands.length ? (
             <>
-              <div className="is-band-nav" role="tablist" aria-label="Filter by severity">
-                {filterChips.map((chip) => {
-                  const count = chipCounts[chip.value] ?? 0;
-                  if (chip.value !== 'all' && count === 0) return null;
-                  const active = sevFilter === chip.value;
-                  return (
-                    <button
-                      key={chip.value}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      className={cn('is-band-nav__chip', active && 'is-active')}
-                      onClick={() => setSevFilter(chip.value)}
-                    >
-                      <span className="is-band-nav__label">{chip.label}</span>
-                      <span className="is-band-nav__count">{count}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {(bands ?? []).map((band) => {
+              {bands.map((band) => {
                 const open = expandedBands.has(band.key);
                 return (
                   <div

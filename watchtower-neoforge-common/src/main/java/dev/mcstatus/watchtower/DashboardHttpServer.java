@@ -21,6 +21,9 @@ import dev.mcstatus.watchtower.core.rules.CrashRuleSchema;
 import dev.mcstatus.watchtower.core.rules.CrashRuleValidator;
 import dev.mcstatus.watchtower.core.rules.IssueSuppressionStore;
 import dev.mcstatus.watchtower.core.analyze.BackupStatusResolver;
+import dev.mcstatus.watchtower.core.analyze.BackupTestRestore;
+import dev.mcstatus.watchtower.core.analyze.BackupVerifier;
+import dev.mcstatus.watchtower.core.analyze.BackupVerifyPolicy;
 import dev.mcstatus.watchtower.core.analyze.CrashFingerprintGrouper;
 import dev.mcstatus.watchtower.core.analyze.PreCrashContextBuilder;
 import dev.mcstatus.watchtower.core.analyze.PerformanceDashboardBuilder;
@@ -31,6 +34,10 @@ import dev.mcstatus.watchtower.core.analyze.RssHeapEvaluator;
 import dev.mcstatus.watchtower.core.analyze.ConfigLaunchAdvisor;
 import dev.mcstatus.watchtower.core.analyze.RestartHygieneAdvisor;
 import dev.mcstatus.watchtower.core.analyze.SafeRestartAdvisor;
+import dev.mcstatus.watchtower.core.analyze.ModRestartNudge;
+import dev.mcstatus.watchtower.core.analyze.WorldRiskAnalyzer;
+import dev.mcstatus.watchtower.core.collect.ModJarDisable;
+import dev.mcstatus.watchtower.core.collect.ModsInventoryDiff;
 import dev.mcstatus.watchtower.core.collect.ServerPropertiesReader;
 import dev.mcstatus.watchtower.core.analyze.ScorecardBuilder;
 import dev.mcstatus.watchtower.core.live.PerformanceRollupWriter;
@@ -78,6 +85,7 @@ import dev.mcstatus.watchtower.core.report.ReportConfig;
 import dev.mcstatus.watchtower.core.report.ReportSchedule;
 import dev.mcstatus.watchtower.core.report.SupportBundleCatalog;
 import dev.mcstatus.watchtower.core.report.SupportComposeOptions;
+import dev.mcstatus.watchtower.core.report.SupportQualityGate;
 import dev.mcstatus.watchtower.core.report.SupportSafePaths;
 import dev.mcstatus.watchtower.core.update.ReleaseVersionChecker;
 import dev.mcstatus.watchtower.core.util.TimeParse;
@@ -128,7 +136,12 @@ public final class DashboardHttpServer {
             "/api/accounts",
             "/api/accounts/update",
             "/api/accounts/delete",
-            "/api/accounts/reset-password");
+            "/api/accounts/reset-password",
+            "/api/mods/disable",
+            "/api/mods/enable",
+            "/api/backups/verify",
+            "/api/backups/test-restore",
+            "/api/backups/test-restore/cleanup");
 
     private HttpServer server;
     private ServerContext serverContext;
@@ -168,6 +181,7 @@ public final class DashboardHttpServer {
             server.createContext("/api/support/bundle", this::handleSupportBundle);
             server.createContext("/api/support/catalog", this::handleSupportCatalog);
             server.createContext("/api/support/compose", this::handleSupportCompose);
+            server.createContext("/api/support/quality-gate", this::handleSupportQualityGate);
             server.createContext("/api/reports/latest", this::handleReportsLatest);
             server.createContext("/api/reports/index", this::handleReportsIndex);
             server.createContext("/api/reports/get", this::handleReportsGet);
@@ -209,6 +223,8 @@ public final class DashboardHttpServer {
             server.createContext("/api/logs/index", this::handleLogsList);
             server.createContext("/api/logs/content", this::handleLogsContent);
             server.createContext("/api/mods/scan", this::handleModsScan);
+            server.createContext("/api/mods/disable", this::handleModsDisable);
+            server.createContext("/api/mods/enable", this::handleModsEnable);
             server.createContext("/api/mods/tree", this::handleModsTree);
             server.createContext("/api/mods/forensics/status", this::handleModsForensicsStatus);
             server.createContext("/api/mods/forensics/find-class", this::handleModsForensicsFindClass);
@@ -219,6 +235,10 @@ public final class DashboardHttpServer {
             server.createContext("/api/client-mods/ignores", this::handleClientModIgnores);
             server.createContext("/api/client-mods/ignore", this::handleClientModIgnore);
             server.createContext("/api/backups/scan", this::handleBackupScan);
+            server.createContext("/api/backups/verify", this::handleBackupVerify);
+            server.createContext("/api/backups/test-restore", this::handleBackupTestRestore);
+            server.createContext("/api/backups/test-restore/status", this::handleBackupTestRestoreStatus);
+            server.createContext("/api/backups/test-restore/cleanup", this::handleBackupTestRestoreCleanup);
             server.createContext("/api/backups/dirs", this::handleBackupDirs);
             server.createContext("/api/backups/heartbeat", this::handleBackupHeartbeat);
             server.createContext("/api/backups/external", this::handleBackupExternal);
@@ -690,6 +710,10 @@ public final class DashboardHttpServer {
                     int fillDays = Math.max(1, Math.min(365, json.get("diskFillWarnDays").getAsInt()));
                     text = WatchtowerConfWriter.upsertLine(text, "DISK_FILL_WARN_DAYS", String.valueOf(fillDays));
                 }
+                if (json.has("backupStaleHours") && !json.get("backupStaleHours").isJsonNull()) {
+                    int staleHours = Math.max(1, Math.min(720, json.get("backupStaleHours").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "BACKUP_STALE_HOURS", String.valueOf(staleHours));
+                }
                 if (json.has("diskIoLatencyWarnMs") && !json.get("diskIoLatencyWarnMs").isJsonNull()) {
                     double latencyMs = Math.max(1.0, Math.min(5000.0, json.get("diskIoLatencyWarnMs").getAsDouble()));
                     text = WatchtowerConfWriter.upsertLine(text, "DISK_IO_LATENCY_WARN_MS",
@@ -726,6 +750,7 @@ public final class DashboardHttpServer {
                         || json.has("metricsContextBanner")
                         || json.has("diskWarnPct")
                         || json.has("diskFillWarnDays")
+                        || json.has("backupStaleHours")
                         || json.has("diskIoLatencyWarnMs")
                         || json.has("opsPollSec")
                         || json.has("opsLogScanSec")
@@ -875,6 +900,8 @@ public final class DashboardHttpServer {
         out.addProperty("disk_warn_pct", WatchtowerConfWriter.readInt(map, "DISK_WARN_PCT", config.diskWarnPct()));
         out.addProperty("disk_fill_warn_days",
                 WatchtowerConfWriter.readInt(map, "DISK_FILL_WARN_DAYS", config.diskFillWarnDays()));
+        out.addProperty("backup_stale_hours",
+                WatchtowerConfWriter.readInt(map, "BACKUP_STALE_HOURS", config.backupStaleHours()));
         out.addProperty("disk_io_latency_warn_ms",
                 WatchtowerConfWriter.readDouble(map, "DISK_IO_LATENCY_WARN_MS", config.diskIoLatencyWarnMs()));
         out.addProperty("metrics_context_banner",
@@ -1446,6 +1473,28 @@ public final class DashboardHttpServer {
         } catch (Exception ignored) {
             // Non-fatal: Overview hides inactive/missing advice
         }
+        attachModRestartNudge(meta);
+    }
+
+    private void attachModRestartNudge(JsonObject meta) {
+        try {
+            if (serverContext == null) {
+                meta.add("mod_restart_nudge", ModRestartNudge.inactive());
+                return;
+            }
+            Path statePath = WatchtowerPaths.statePath(serverContext);
+            JsonObject pending = StateManager.getModRestartPending(statePath);
+            long bootEpoch = java.lang.management.ManagementFactory.getRuntimeMXBean().getStartTime() / 1000L;
+            JsonObject nudge = ModRestartNudge.maybeClear(pending, bootEpoch);
+            if (!nudge.get("active").getAsBoolean()
+                    && pending.has("jars")
+                    && pending.getAsJsonArray("jars").size() > 0) {
+                StateManager.setModRestartPending(statePath, new JsonObject());
+            }
+            meta.add("mod_restart_nudge", nudge);
+        } catch (Exception ignored) {
+            meta.add("mod_restart_nudge", ModRestartNudge.inactive());
+        }
     }
 
     private void attachSafeRestart(
@@ -1957,6 +2006,50 @@ public final class DashboardHttpServer {
                 WatchtowerPaths.snapshotPath(serverContext),
                 sparkDir));
         sendJson(ex, 200, catalog);
+    }
+
+    private void handleSupportQualityGate(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        JsonObject json = body != null && !body.isBlank()
+                ? GSON.fromJson(body, JsonObject.class) : new JsonObject();
+        SupportComposeOptions options = SupportComposeOptions.fromJson(json != null ? json : new JsonObject());
+        ReportConfig config = ModReportConfig.forServer(serverContext);
+        Path serverDir = serverContext.serverDirectory();
+        Path sparkDir = SparkPaths.uploadDir(serverDir, config);
+        if (!SparkPaths.isUnderRoot(serverDir, sparkDir)) {
+            sparkDir = serverDir.resolve("watchtower").resolve("spark-upload");
+        }
+        Path opsCache = WatchtowerPaths.opsCachePath(serverContext);
+        JsonObject catalog;
+        try {
+            catalog = SupportBundleCatalog.build(new SupportBundleCatalog.Request(
+                    serverDir,
+                    opsCache,
+                    WatchtowerPaths.performanceRollupsPath(serverContext),
+                    WatchtowerPaths.liveHistoryPath(serverContext),
+                    WatchtowerPaths.snapshotPath(serverContext),
+                    sparkDir));
+        } catch (IOException e) {
+            JsonObject out = SupportQualityGate.failOpen("Could not fully check this pack.").toJson();
+            out.addProperty("ok", true);
+            sendJson(ex, 200, out);
+            return;
+        }
+        SupportQualityGate.Result result = SupportQualityGate.evaluate(serverDir, opsCache, catalog, options);
+        JsonObject out = result.toJson();
+        out.addProperty("ok", true);
+        sendJson(ex, 200, out);
     }
 
     private void handleSupportCompose(HttpExchange ex) throws IOException {
@@ -3243,6 +3336,141 @@ public final class DashboardHttpServer {
             err.addProperty("error", e.getMessage() != null ? e.getMessage() : "scan failed");
             sendJson(ex, 500, err);
         }
+    }
+
+    private void handleModsDisable(HttpExchange ex) throws IOException {
+        handleModsDisableEnable(ex, true);
+    }
+
+    private void handleModsEnable(HttpExchange ex) throws IOException {
+        handleModsDisableEnable(ex, false);
+    }
+
+    private void handleModsDisableEnable(HttpExchange ex, boolean disable) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        ReportConfig config = ModReportConfig.forServer(serverContext);
+        if (!config.modDisableEnabled()) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", "mod_disable_disabled");
+            sendJson(ex, 409, err);
+            return;
+        }
+        JsonObject body;
+        try {
+            body = GSON.fromJson(new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
+        } catch (Exception e) {
+            send(ex, 400, "text/plain", "Invalid JSON");
+            return;
+        }
+        if (body == null || !body.has("jar") || body.get("jar").isJsonNull()) {
+            send(ex, 400, "text/plain", "jar required");
+            return;
+        }
+        String jar = body.get("jar").getAsString().trim();
+        Path modsDir = serverContext.serverDirectory().resolve("mods");
+        Path jarPath = modsDir.resolve(Path.of(jar).getFileName().toString());
+        String modId = null;
+        try {
+            for (var entry : ModJarMetadataReader.readFromModsDir(serverContext.serverDirectory().toString())) {
+                if (jar.equals(entry.jarFile()) || jar.equalsIgnoreCase(entry.jarFile())) {
+                    modId = entry.id();
+                    break;
+                }
+            }
+        } catch (Exception ignored) {
+            // continue without mod id
+        }
+
+        JsonObject worldRisk = new JsonObject();
+        worldRisk.addProperty("level", "none");
+        worldRisk.add("reasons", new JsonArray());
+        if (disable && config.worldRiskEnabled() && modId != null) {
+            worldRisk = WorldRiskAnalyzer.evaluateMod(
+                    modId,
+                    serverContext.serverDirectory(),
+                    jarPath,
+                    OpsScanService.liveDimensionIds(serverContext));
+            boolean high = "high".equalsIgnoreCase(worldRisk.has("level") ? worldRisk.get("level").getAsString() : "");
+            boolean confirmed = body.has("confirm_world_risk") && body.get("confirm_world_risk").getAsBoolean();
+            if (high && !confirmed) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "world_risk_confirm_required");
+                err.add("world_risk", worldRisk);
+                sendJson(ex, 400, err);
+                return;
+            }
+        }
+
+        ModJarDisable.Result result = disable
+                ? ModJarDisable.disable(modsDir, jar)
+                : ModJarDisable.enable(modsDir, jar);
+        if (!result.ok()) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", result.errorCode() != null ? result.errorCode() : "failed");
+            err.addProperty("message", result.message());
+            int code = "not_found".equals(result.errorCode()) ? 404 : 400;
+            sendJson(ex, code, err);
+            return;
+        }
+
+        String event = disable ? "mod_disabled" : "mod_enabled";
+        String detail = result.jarBefore() + " → " + result.jarAfter();
+        DashboardAudit.record(event, DashboardAuthHttp.sessionOf(ex), result.jarAfter(), detail,
+                DashboardAuthHttp.clientIp(ex));
+
+        try {
+            JsonObject ev = new JsonObject();
+            ev.addProperty("time", java.time.ZonedDateTime.now(java.time.ZoneId.systemDefault())
+                    .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            ev.addProperty("type", event);
+            ev.addProperty("detail", detail);
+            ev.addProperty("source", "dashboard");
+            OpsCacheWriter.applyActivityBackfillChunk(
+                    WatchtowerPaths.opsCachePath(serverContext),
+                    WatchtowerPaths.statePath(serverContext),
+                    java.util.List.of(ev),
+                    1);
+        } catch (Exception ignored) {
+            // non-fatal
+        }
+
+        try {
+            Path statePath = WatchtowerPaths.statePath(serverContext);
+            JsonObject pending = StateManager.getModRestartPending(statePath);
+            pending = ModRestartNudge.recordChange(pending, result.jarAfter(), java.time.Instant.now());
+            StateManager.setModRestartPending(statePath, pending);
+        } catch (Exception ignored) {
+            // non-fatal
+        }
+
+        try {
+            JsonArray snap = ModsInventoryDiff.buildSnapshot(
+                    serverContext.serverDirectory().toString(), null, config.modJarDriftEnabled());
+            OpsScanService.applyModsLight(serverContext, snap);
+            OpsScanService.scanRunningMods(serverContext);
+        } catch (Exception e) {
+            ModRuntime.logger().debug("Post disable/enable rescan failed: {}", e.toString());
+        }
+
+        JsonObject out = new JsonObject();
+        out.addProperty("ok", true);
+        out.addProperty("jar_before", result.jarBefore());
+        out.addProperty("jar_after", result.jarAfter());
+        out.add("world_risk", worldRisk);
+        sendJson(ex, 200, out);
     }
 
     private void handleModsForensicsStatus(HttpExchange ex) throws IOException {
@@ -4546,11 +4774,279 @@ public final class DashboardHttpServer {
             if (inventory != null) {
                 out.add("backup_inventory", inventory);
             }
+            try {
+                BackupVerifyScheduler.get().enqueueAfterScan();
+            } catch (Exception ignored) {
+            }
             sendJson(ex, 200, out);
         } catch (Exception e) {
             ModRuntime.logger().warn("Backup scan failed: {}", e.toString());
             JsonObject err = new JsonObject();
             err.addProperty("error", e.getMessage() != null ? e.getMessage() : "scan failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleBackupVerify(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(serverContext);
+            if (!config.hasBackupDirs()) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "backups_unconfigured");
+                sendJson(ex, 409, err);
+                return;
+            }
+            JsonObject body = GSON.fromJson(
+                    new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
+            if (body == null) {
+                body = new JsonObject();
+            }
+            String pathStr = body.has("path") ? body.get("path").getAsString() : "";
+            if (pathStr == null || pathStr.isBlank()) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "missing_path");
+                sendJson(ex, 400, err);
+                return;
+            }
+            Path file = Path.of(pathStr.trim()).toAbsolutePath().normalize();
+            if (!BackupVerifyPolicy.isPathUnderBackupDirs(file, config, config.serverDir())) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "path_not_allowed");
+                sendJson(ex, 403, err);
+                return;
+            }
+            if (!Files.isRegularFile(file) && !Files.isDirectory(file)) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "not_found");
+                sendJson(ex, 404, err);
+                return;
+            }
+            JsonObject verify = BackupVerifier.lightVerify(file);
+            OpsCacheWriter.applyBackupVerify(
+                    WatchtowerPaths.opsCachePath(serverContext),
+                    WatchtowerPaths.statePath(serverContext),
+                    file.toString(),
+                    verify);
+            OpsScanService.refreshIssuesLive(serverContext);
+            DashboardAudit.record(
+                    "backup_verified",
+                    DashboardAuthHttp.sessionOf(ex),
+                    file.getFileName().toString(),
+                    verify.has("status") ? verify.get("status").getAsString() : null,
+                    DashboardAuthHttp.clientIp(ex));
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            out.addProperty("path", file.toString());
+            out.add("verify", verify);
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            ModRuntime.logger().warn("Backup verify failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "verify failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleBackupTestRestore(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(serverContext);
+            if (!config.backupTestRestoreEnabled()) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "test_restore_disabled");
+                sendJson(ex, 409, err);
+                return;
+            }
+            if (BackupVerifyScheduler.get().isRestoreBusy()) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "busy");
+                sendJson(ex, 409, err);
+                return;
+            }
+            JsonObject body = GSON.fromJson(
+                    new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
+            if (body == null) {
+                body = new JsonObject();
+            }
+            String pathStr = body.has("path") ? body.get("path").getAsString() : "";
+            if (pathStr == null || pathStr.isBlank()) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "missing_path");
+                sendJson(ex, 400, err);
+                return;
+            }
+            Path file = Path.of(pathStr.trim()).toAbsolutePath().normalize();
+            if (!BackupVerifyPolicy.isPathUnderBackupDirs(file, config, config.serverDir())) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "path_not_allowed");
+                sendJson(ex, 403, err);
+                return;
+            }
+            if (!Files.isRegularFile(file)) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "not_found");
+                sendJson(ex, 404, err);
+                return;
+            }
+            Path serverDir = Path.of(config.serverDir()).toAbsolutePath().normalize();
+            String id = BackupTestRestore.sanitizeId(
+                    java.time.Instant.now().getEpochSecond() + "-" + file.getFileName());
+            Path dest = BackupTestRestore.sandboxForId(serverDir, id);
+            JsonObject job = BackupTestRestore.newJob(id, file.toString(), dest.toString());
+            StateManager.setBackupTestRestore(WatchtowerPaths.statePath(serverContext), job);
+            Path statePath = WatchtowerPaths.statePath(serverContext);
+            var session = DashboardAuthHttp.sessionOf(ex);
+            String ip = DashboardAuthHttp.clientIp(ex);
+            BackupVerifyScheduler.get().submitRestore(() -> {
+                try {
+                    JsonObject verify = BackupTestRestore.extract(file, dest, pct -> {
+                        try {
+                            JsonObject cur = StateManager.getBackupTestRestore(statePath);
+                            cur.addProperty("progress_pct", pct);
+                            StateManager.setBackupTestRestore(statePath, cur);
+                        } catch (Exception ignored) {
+                        }
+                    });
+                    JsonObject done = StateManager.getBackupTestRestore(statePath);
+                    done.addProperty("status", "ok");
+                    done.addProperty("progress_pct", 100);
+                    done.addProperty("finished_at", java.time.Instant.now().toString());
+                    done.add("verify", verify);
+                    StateManager.setBackupTestRestore(statePath, done);
+                    DashboardAudit.record(
+                            "backup_test_restore_ok",
+                            session,
+                            file.getFileName().toString(),
+                            id,
+                            ip);
+                } catch (Exception e) {
+                    try {
+                        JsonObject fail = StateManager.getBackupTestRestore(statePath);
+                        fail.addProperty("status", "error");
+                        fail.addProperty("error", e.getMessage() != null ? e.getMessage() : "extract_failed");
+                        fail.addProperty("finished_at", java.time.Instant.now().toString());
+                        StateManager.setBackupTestRestore(statePath, fail);
+                    } catch (Exception ignored) {
+                    }
+                }
+            });
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            out.add("job", job);
+            sendJson(ex, 200, out);
+        } catch (IllegalStateException busy) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", "busy");
+            sendJson(ex, 409, err);
+        } catch (Exception e) {
+            ModRuntime.logger().warn("Backup test-restore start failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "start failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleBackupTestRestoreStatus(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        JsonObject job = StateManager.getBackupTestRestore(WatchtowerPaths.statePath(serverContext));
+        JsonObject out = new JsonObject();
+        out.addProperty("ok", true);
+        out.add("job", job);
+        sendJson(ex, 200, out);
+    }
+
+    private void handleBackupTestRestoreCleanup(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        try {
+            ReportConfig config = ModReportConfig.forServer(serverContext);
+            JsonObject body = GSON.fromJson(
+                    new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
+            if (body == null) {
+                body = new JsonObject();
+            }
+            String id = body.has("id") ? body.get("id").getAsString() : "";
+            if (id == null || id.isBlank()) {
+                JsonObject job = StateManager.getBackupTestRestore(WatchtowerPaths.statePath(serverContext));
+                if (job.has("id")) {
+                    id = job.get("id").getAsString();
+                }
+            }
+            if (id == null || id.isBlank()) {
+                JsonObject err = new JsonObject();
+                err.addProperty("ok", false);
+                err.addProperty("error", "missing_id");
+                sendJson(ex, 400, err);
+                return;
+            }
+            Path serverDir = Path.of(config.serverDir()).toAbsolutePath().normalize();
+            BackupTestRestore.deleteSandbox(serverDir, id);
+            StateManager.setBackupTestRestore(WatchtowerPaths.statePath(serverContext), new JsonObject());
+            DashboardAudit.record(
+                    "backup_test_restore_cleanup",
+                    DashboardAuthHttp.sessionOf(ex),
+                    id,
+                    null,
+                    DashboardAuthHttp.clientIp(ex));
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            sendJson(ex, 200, out);
+        } catch (Exception e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "cleanup failed");
             sendJson(ex, 500, err);
         }
     }
@@ -5567,10 +6063,13 @@ public final class DashboardHttpServer {
             }
         }
         try {
-            ReportConfig before = ModReportConfig.forServer(serverContext);
-            String merged = WatchtowerConfWriter.mergeBackupDirs(String.join(",", before.backupDirs()), dirs);
+            // Authoritative list from the dashboard — replace BACKUP_DIRS (do not merge leftovers).
+            String joined = String.join(",", dirs);
             Path conf = WatchtowerPaths.confPath(serverContext);
-            WatchtowerConfWriter.upsertKey(conf, "BACKUP_DIRS", merged);
+            WatchtowerConfWriter.upsertKey(conf, "BACKUP_DIRS", joined);
+            if (!dirs.isEmpty()) {
+                WatchtowerConfWriter.upsertKey(conf, "BACKUP_DIR", dirs.get(0));
+            }
 
             ReportConfig config = ModReportConfig.forServer(serverContext);
             double cutoff = Instant.now().getEpochSecond()
@@ -5592,7 +6091,12 @@ public final class DashboardHttpServer {
 
             JsonObject out = new JsonObject();
             out.addProperty("ok", true);
-            out.addProperty("saved_dirs", merged);
+            out.addProperty("backup_dirs", joined);
+            JsonArray savedArr = new JsonArray();
+            for (String d : dirs) {
+                savedArr.add(d);
+            }
+            out.add("saved_dirs", savedArr);
             if (optional.has("last_backup")) {
                 out.add("last_backup", optional.get("last_backup"));
             }
