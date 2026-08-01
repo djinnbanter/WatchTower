@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.mcstatus.watchtower.core.WatchtowerFiles;
+import dev.mcstatus.watchtower.core.analyze.HangDumpWriter;
 import dev.mcstatus.watchtower.core.analyze.ReportPipeline;
 import dev.mcstatus.watchtower.core.collect.HostMetricsCollector;
 import dev.mcstatus.watchtower.core.collect.JvmFlagsClassifier;
@@ -277,6 +278,47 @@ public final class SupportComposer {
                     recordEvidence(evidenceFiles, cf.zipName(), cf.bytes(), null);
                     extras.add(SupportBundlePackager.ExtraEntry.file(cf.zipName(), cf.path()));
                     budget = budget.withUsed(budget.usedBytes() + cf.bytes());
+                }
+            }
+        }
+
+        // Soft-hang dumps (SERVER_TRIAGE / FULL_EVIDENCE and whenever hangs exist for those presets)
+        if (options.preset() == SupportComposeOptions.Preset.SERVER_TRIAGE
+                || options.preset() == SupportComposeOptions.Preset.FULL_EVIDENCE
+                || options.preset() == SupportComposeOptions.Preset.CUSTOM) {
+            Path hangsDir = serverDir.resolve("watchtower").resolve("hangs");
+            if (Files.isDirectory(hangsDir)) {
+                List<Path> hangFiles = new ArrayList<>();
+                try (var stream = Files.list(hangsDir)) {
+                    stream.filter(p -> {
+                                String n = p.getFileName().toString();
+                                return Files.isRegularFile(p) && (n.endsWith(".txt") || n.endsWith(".log"));
+                            })
+                            .sorted((a, b) -> {
+                                try {
+                                    return Files.getLastModifiedTime(b).compareTo(Files.getLastModifiedTime(a));
+                                } catch (Exception e) {
+                                    return 0;
+                                }
+                            })
+                            .limit(3)
+                            .forEach(hangFiles::add);
+                }
+                for (Path hang : hangFiles) {
+                    long size = Files.size(hang);
+                    if (!budget.canFit(size) || budget.softExceeded()) {
+                        recordEvidence(evidenceFiles, "evidence/hangs/" + hang.getFileName(), 0, "budget");
+                        continue;
+                    }
+                    String zipName = "evidence/hangs/" + hang.getFileName();
+                    String text = Files.readString(hang, StandardCharsets.UTF_8);
+                    if (text.length() > HangDumpWriter.MAX_BYTES) {
+                        text = text.substring(0, (int) HangDumpWriter.MAX_BYTES);
+                    }
+                    long bytes = text.getBytes(StandardCharsets.UTF_8).length;
+                    extras.add(SupportBundlePackager.ExtraEntry.text(zipName, text));
+                    recordEvidence(evidenceFiles, zipName, bytes, null);
+                    budget = budget.withUsed(budget.usedBytes() + bytes);
                 }
             }
         }
