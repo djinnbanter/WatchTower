@@ -3,6 +3,7 @@ package dev.mcstatus.watchtower.neoforge;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.AlwaysOnOpsLogScheduler;
 import dev.mcstatus.watchtower.BackupPollScheduler;
+import dev.mcstatus.watchtower.BackupVerifyScheduler;
 import dev.mcstatus.watchtower.BootStartupProfileScheduler;
 import dev.mcstatus.watchtower.DashboardAuthServices;
 import dev.mcstatus.watchtower.ActivityGapBackfillScheduler;
@@ -84,6 +85,7 @@ public final class WatchtowerBootstrap {
             WatchtowerMod.LOGGER.error("Watchtower setup failed: {}", e.toString(), e);
         }
         TickMetrics.reset();
+        TickMetrics.setPhase("loading_world");
         HostCpuProbe.reset();
         applyReportScheduleFromConf(ctx);
         SCHEDULER.resetReportSchedule();
@@ -91,12 +93,15 @@ public final class WatchtowerBootstrap {
         OpsPollScheduler.get().bind(ctx);
         AlwaysOnOpsLogScheduler.get().bind(ctx);
         BackupPollScheduler.get().bind(ctx);
+        BackupVerifyScheduler.get().bind(ctx);
         PlayerDirectoryPollScheduler.get().bind(ctx);
         BootStartupProfileScheduler.start(ctx);
         ExternalKillPostmortemScheduler.start(ctx);
+        HangWatchdog.start(ctx);
         ModsDeepJobScheduler.startBootSeed(ctx);
         ActivityGapBackfillScheduler.startBootCatchup(ctx);
         SCHEDULER.sampleNow(ctx);
+        TickMetrics.setPhase("ticking");
         try {
             if (ModRuntime.config().dashboardEnabled()) {
                 DashboardAuthServices.init(ctx);
@@ -142,9 +147,11 @@ public final class WatchtowerBootstrap {
         OpsPollScheduler.get().unbind();
         AlwaysOnOpsLogScheduler.get().unbind();
         BackupPollScheduler.get().unbind();
+        BackupVerifyScheduler.get().unbind();
         PlayerDirectoryPollScheduler.get().unbind();
         BootStartupProfileScheduler.stop();
         ExternalKillPostmortemScheduler.stop();
+        HangWatchdog.stop();
         ModsDeepJobScheduler.stop();
         ActivityGapBackfillScheduler.stop();
         DashboardAuthServices.shutdown();
@@ -159,6 +166,7 @@ public final class WatchtowerBootstrap {
             SCHEDULER.sampleNow(ctx);
         }
         LiveMetricsService.get().unbindServer();
+        TickMetrics.setPhase("unknown");
         ModRuntime.clear();
     }
 }
