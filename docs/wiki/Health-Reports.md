@@ -34,6 +34,12 @@ Use these (Support lives on the rail — not under Settings → Integrations):
 
 > **Coming soon:** the in-app downloadable zip may still be finishing on some builds. Console compose and on-disk outputs remain the reliable path when the UI download is not ready yet.
 
+### Chooser (dashboard)
+
+Pick a **pack type** (Quick, Server issue, WatchTower bug, or Full evidence), add an optional note for whoever opens the zip, and download. **Customize files…** is optional if you need specific logs or crashes. There is no separate "what's going on?" step — the pack type is the decision.
+
+Before download, WatchTower checks for a log, mod list, and crash coverage when relevant. Yellow warnings don't block you; **Download anyway** notes them in the zip.
+
 ### What goes in a pack (intent)
 
 Environment, redacted ops/config, optional logs/crashes/Spark, synthesized support facts + brief **for the zip only**. Never includes dashboard auth, world data, backups, or mod jars. Spark profiles are binary and unredacted when included.
