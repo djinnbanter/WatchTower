@@ -46,8 +46,27 @@ public final class SupportBundlePackager {
             JsonArray evidenceFiles,
             JsonArray omissions,
             String zipTimestamp,
-            String opsCacheRedactedJson
+            String opsCacheRedactedJson,
+            JsonObject qualityGate
     ) {
+        public PackageRequest(
+                Path outDir,
+                Path factsPath,
+                Path briefPath,
+                Path opsCachePath,
+                Path rollupsPath,
+                List<ExtraEntry> extras,
+                boolean composed,
+                SupportComposeOptions options,
+                JsonObject environment,
+                JsonArray evidenceFiles,
+                JsonArray omissions,
+                String zipTimestamp,
+                String opsCacheRedactedJson
+        ) {
+            this(outDir, factsPath, briefPath, opsCachePath, rollupsPath, extras, composed, options,
+                    environment, evidenceFiles, omissions, zipTimestamp, opsCacheRedactedJson, null);
+        }
     }
 
     private SupportBundlePackager() {
@@ -118,7 +137,7 @@ public final class SupportBundlePackager {
 
         JsonObject manifest = buildManifest(
                 factsName, briefName, opsName, rollupsName, req.composed(), options,
-                req.evidenceFiles(), req.omissions());
+                req.evidenceFiles(), req.omissions(), req.qualityGate());
 
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath))) {
             ForensicsZipUtil.addTextEntry(zos, "manifest.json", GSON.toJson(manifest));
@@ -187,7 +206,8 @@ public final class SupportBundlePackager {
             boolean composed,
             SupportComposeOptions options,
             JsonArray evidenceFiles,
-            JsonArray omissions
+            JsonArray omissions,
+            JsonObject qualityGate
     ) {
         JsonObject manifest = new JsonObject();
         manifest.addProperty("bundle_version", BUNDLE_VERSION);
@@ -221,6 +241,9 @@ public final class SupportBundlePackager {
         }
         manifest.add("evidence", evidenceFiles != null ? evidenceFiles : new JsonArray());
         manifest.add("omissions", omissions != null ? omissions : new JsonArray());
+        if (qualityGate != null) {
+            manifest.add("quality_gate", qualityGate);
+        }
         return manifest;
     }
 
