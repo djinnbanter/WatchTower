@@ -144,7 +144,7 @@ class SupportQualityGateTest {
     }
 
     @Test
-    void hangDumpAlwaysSkipped() throws Exception {
+    void hangDumpSkipsWithoutContext() throws Exception {
         Path serverDir = temp.resolve("server");
         Files.createDirectories(serverDir);
         Path ops = temp.resolve("ops-cache.json");
@@ -153,6 +153,36 @@ class SupportQualityGateTest {
         SupportQualityGate.Result r = SupportQualityGate.evaluate(
                 serverDir, ops, new JsonObject(), SupportComposeOptions.quickDefaults());
         assertEquals(SupportQualityGate.Status.SKIP, find(r, "hang_dump").status());
+    }
+
+    @Test
+    void hangDumpWarnsWhenSoftHangWithoutDump() throws Exception {
+        Path serverDir = temp.resolve("server");
+        Files.createDirectories(serverDir);
+        Path ops = temp.resolve("ops-cache.json");
+        Files.writeString(ops, """
+                {"soft_hang":{"active":true,"stall_seconds":48,"phase":"ticking"}}
+                """, StandardCharsets.UTF_8);
+
+        SupportQualityGate.Result r = SupportQualityGate.evaluate(
+                serverDir, ops, new JsonObject(), SupportComposeOptions.quickDefaults());
+        assertEquals(SupportQualityGate.Status.WARN, find(r, "hang_dump").status());
+    }
+
+    @Test
+    void hangDumpPassesWhenFilePresent() throws Exception {
+        Path serverDir = temp.resolve("server");
+        Path hangs = serverDir.resolve("watchtower/hangs");
+        Files.createDirectories(hangs);
+        Files.writeString(hangs.resolve("hang-test.txt"), "dump\n", StandardCharsets.UTF_8);
+        Path ops = temp.resolve("ops-cache.json");
+        Files.writeString(ops, """
+                {"soft_hang":{"active":true,"stall_seconds":48}}
+                """, StandardCharsets.UTF_8);
+
+        SupportQualityGate.Result r = SupportQualityGate.evaluate(
+                serverDir, ops, new JsonObject(), SupportComposeOptions.quickDefaults());
+        assertEquals(SupportQualityGate.Status.PASS, find(r, "hang_dump").status());
     }
 
     @Test

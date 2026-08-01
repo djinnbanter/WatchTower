@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.ops.OpsCacheReader;
+import dev.mcstatus.watchtower.core.ops.OpsCacheSchema;
 import dev.mcstatus.watchtower.core.ops.OpsModsTreeSource;
 
 import java.nio.file.Files;
@@ -110,11 +111,7 @@ public final class SupportQualityGate {
                 false));
         checks.add(checkCrashIfRelevant(opts, cat));
         checks.add(checkIncidentWindow(opts, cat));
-        checks.add(new Check(
-                "hang_dump",
-                Status.SKIP,
-                "Hang dumps come in a later WatchTower update.",
-                false));
+        checks.add(checkHangDump(serverDir, ops));
 
         int pass = 0;
         int warn = 0;
@@ -282,6 +279,68 @@ public final class SupportQualityGate {
                 Status.WARN,
                 "Selected log may not cover the crash time — check you picked the right log.",
                 false);
+    }
+
+    private static Check checkHangDump(Path serverDir, JsonObject ops) {
+        boolean dumpPresent = hangDumpPresent(serverDir);
+        boolean softHangContext = softHangContext(ops);
+        if (dumpPresent) {
+            return new Check(
+                    "hang_dump",
+                    Status.PASS,
+                    "Hang dump included under watchtower/hangs.",
+                    false);
+        }
+        if (softHangContext) {
+            return new Check(
+                    "hang_dump",
+                    Status.WARN,
+                    "No hang dump on disk — enable SOFT_HANG_THREAD_DUMP or attach stacks another way.",
+                    false);
+        }
+        return new Check(
+                "hang_dump",
+                Status.SKIP,
+                "No soft-hang context for this pack.",
+                false);
+    }
+
+    private static boolean hangDumpPresent(Path serverDir) {
+        if (serverDir == null) {
+            return false;
+        }
+        Path dir = serverDir.resolve("watchtower").resolve("hangs");
+        if (!Files.isDirectory(dir)) {
+            return false;
+        }
+        try (var stream = Files.list(dir)) {
+            return stream.anyMatch(p -> {
+                String n = p.getFileName().toString();
+                return Files.isRegularFile(p) && (n.endsWith(".txt") || n.endsWith(".log"));
+            });
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static boolean softHangContext(JsonObject ops) {
+        if (ops == null || !ops.has(OpsCacheSchema.SOFT_HANG) || !ops.get(OpsCacheSchema.SOFT_HANG).isJsonObject()) {
+            return false;
+        }
+        JsonObject soft = ops.getAsJsonObject(OpsCacheSchema.SOFT_HANG);
+        if (soft.has(OpsCacheSchema.SOFT_HANG_ACTIVE)
+                && soft.get(OpsCacheSchema.SOFT_HANG_ACTIVE).isJsonPrimitive()
+                && soft.get(OpsCacheSchema.SOFT_HANG_ACTIVE).getAsBoolean()) {
+            return true;
+        }
+        if (soft.has(OpsCacheSchema.SOFT_HANG_STALL_SECONDS)
+                && soft.get(OpsCacheSchema.SOFT_HANG_STALL_SECONDS).isJsonPrimitive()
+                && soft.get(OpsCacheSchema.SOFT_HANG_STALL_SECONDS).getAsLong() > 0) {
+            return true;
+        }
+        return soft.has(OpsCacheSchema.SOFT_HANG_RECOVERED_AT)
+                && soft.get(OpsCacheSchema.SOFT_HANG_RECOVERED_AT).isJsonPrimitive()
+                && !soft.get(OpsCacheSchema.SOFT_HANG_RECOVERED_AT).getAsString().isBlank();
     }
 
     private static Long maxCrashMtime(JsonObject catalog, List<String> selected) {
