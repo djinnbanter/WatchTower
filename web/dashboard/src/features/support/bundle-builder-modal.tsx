@@ -1,46 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { isFixturePreview, requiresLiveAuth } from '@/app/runtime';
 import { Button } from '@/ui/patterns';
 import { asArray, asRecord, num, str } from '@/lib/utils';
+import './support.css';
 
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
-
-const CATEGORIES = [
-  { id: 'server_lag', label: 'Lag' },
-  { id: 'crash', label: 'Crash' },
-  { id: 'wont_start', label: "Won't start" },
-  { id: 'join', label: "Can't join" },
-  { id: 'watchtower_bug', label: 'Watchtower bug' },
-  { id: 'other', label: 'Other' },
-] as const;
-
+/** Primary chooser only — CUSTOM is set when the operator edits file picks. */
 export const SUPPORT_PRESETS = [
   {
     id: 'QUICK',
     label: 'Quick',
-    hint: 'Small redacted pack — versions, ops snapshot, recent log tail. Best for Discord.',
+    hint: 'Small pack: versions, ops snapshot, recent log tail.',
   },
   {
     id: 'SERVER_TRIAGE',
     label: 'Server issue',
-    hint: 'Logs, last crashes, Spark if present. Use for lag, crashes, join problems.',
+    hint: 'Logs, last crashes, Spark if present.',
   },
   {
     id: 'WATCHTOWER_BUG',
-    label: 'Watchtower bug',
-    hint: 'Config + state + light evidence so we can reproduce a Watchtower problem.',
+    label: 'WatchTower bug',
+    hint: 'Config, state, light evidence for a WatchTower issue.',
   },
   {
     id: 'FULL_EVIDENCE',
     label: 'Full evidence',
-    hint: 'Everything, at full detail — complete metric history. Often tens of MB.',
-  },
-  {
-    id: 'CUSTOM',
-    label: 'Custom',
-    hint: 'Pick files yourself. Starts from Quick, then edit below.',
+    hint: 'Everything at full detail. Often large.',
   },
 ] as const;
 
@@ -76,10 +62,16 @@ const DISCORD_LIMIT = 10 * 1024 * 1024;
 const EMAIL_LIMIT = 25 * 1024 * 1024;
 
 function formatBytes(n: number) {
-  if (!Number.isFinite(n) || n < 0) return '—';
+  if (!Number.isFinite(n) || n < 0) return '-';
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function categoryForPreset(preset: string): string {
+  if (preset === 'WATCHTOWER_BUG') return 'watchtower_bug';
+  if (preset === 'SERVER_TRIAGE' || preset === 'FULL_EVIDENCE') return 'server_lag';
+  return 'other';
 }
 
 function defaultOptionsForPreset(preset: string, catalog: Record<string, unknown> | null) {
@@ -88,7 +80,7 @@ function defaultOptionsForPreset(preset: string, catalog: Record<string, unknown
   const spark = asArray<Record<string, unknown>>(catalog?.spark);
   const base = {
     preset,
-    category: '',
+    category: categoryForPreset(preset),
     note: '',
     include_ops: true,
     include_settings: true,
@@ -118,14 +110,6 @@ function defaultOptionsForPreset(preset: string, catalog: Record<string, unknown
   return base;
 }
 
-function categorySuggestsPreset(category: string): string | null {
-  if (category === 'watchtower_bug') return 'WATCHTOWER_BUG';
-  if (category === 'server_lag' || category === 'crash' || category === 'join' || category === 'wont_start') {
-    return 'SERVER_TRIAGE';
-  }
-  return null;
-}
-
 export function SupportBuilderModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const canWrite = useCanWrite();
   const [catalog, setCatalog] = useState<Record<string, unknown> | null>(null);
@@ -134,10 +118,16 @@ export function SupportBuilderModal({ open, onClose }: { open: boolean; onClose:
   const [error, setError] = useState('');
   const [result, setResult] = useState<string | null>(null);
   const [preset, setPreset] = useState('QUICK');
-  const [category, setCategory] = useState('');
   const [note, setNote] = useState('');
   const [opts, setOpts] = useState(() => defaultOptionsForPreset('QUICK', null));
   const [showCustomize, setShowCustomize] = useState(false);
+  const [gate, setGate] = useState<Record<string, unknown> | null>(null);
+  const [awaitingOverride, setAwaitingOverride] = useState(false);
+
+  function clearGate() {
+    setGate(null);
+    setAwaitingOverride(false);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -146,6 +136,9 @@ export function SupportBuilderModal({ open, onClose }: { open: boolean; onClose:
       setLoading(true);
       setError('');
       setResult(null);
+      setShowCustomize(false);
+      setNote('');
+      clearGate();
       try {
         const data = isFixturePreview()
           ? FIXTURE_CATALOG
@@ -171,7 +164,8 @@ export function SupportBuilderModal({ open, onClose }: { open: boolean; onClose:
 
   const presetOptions = useMemo(() => {
     const rows = asArray<Record<string, unknown>>(catalog?.presets);
-    return asRecord(rows.find((r) => str(r.id) === preset)?.options);
+    const lookupId = preset === 'CUSTOM' ? 'QUICK' : preset;
+    return asRecord(rows.find((r) => str(r.id) === lookupId)?.options);
   }, [catalog, preset]);
 
   const estimate = useMemo(() => {
@@ -200,19 +194,12 @@ export function SupportBuilderModal({ open, onClose }: { open: boolean; onClose:
   }, [catalog, opts, presetOptions]);
 
   function applyPreset(id: string) {
+    clearGate();
     setPreset(id);
     setOpts((prev) => ({
       ...defaultOptionsForPreset(id, catalog),
-      category: prev.category,
       note: prev.note,
     }));
-  }
-
-  function applyCategory(id: string) {
-    setCategory(id);
-    const suggested = categorySuggestsPreset(id);
-    if (suggested && preset === 'QUICK') applyPreset(suggested);
-    setOpts((o) => ({ ...o, category: id }));
   }
 
   async function waitForZipReady(timeoutMs = 120_000) {
@@ -228,7 +215,7 @@ export function SupportBuilderModal({ open, onClose }: { open: boolean; onClose:
     throw new Error('Timed out waiting for support bundle');
   }
 
-  async function handleBuild() {
+  async function handleBuild(optsExtra?: { quality_gate_override?: boolean }) {
     setBuilding(true);
     setError('');
     setResult(null);
@@ -236,9 +223,24 @@ export function SupportBuilderModal({ open, onClose }: { open: boolean; onClose:
       const payload = {
         ...opts,
         preset,
-        category,
+        category: categoryForPreset(preset),
         note,
+        ...optsExtra,
       };
+      if (!optsExtra?.quality_gate_override) {
+        const gateRes = asRecord(await api.supportQualityGate(payload));
+        const checks = asArray(gateRes.checks);
+        const warned = checks.some(
+          (c) => str(asRecord(c).status).toLowerCase() === 'warn',
+        );
+        if (warned) {
+          setGate(gateRes);
+          setAwaitingOverride(true);
+          setBuilding(false);
+          return;
+        }
+      }
+      clearGate();
       const res = asRecord(await api.supportCompose(payload));
       if (isFixturePreview() || !requiresLiveAuth()) {
         setResult(str(res.message, 'Support compose simulated (no zip in preview)'));
@@ -267,191 +269,222 @@ export function SupportBuilderModal({ open, onClose }: { open: boolean; onClose:
     str(c.file || c.name),
   );
 
+  const sizeHint =
+    estimate > EMAIL_LIMIT
+      ? 'Too big for Discord or email. Upload somewhere and share a link.'
+      : estimate > DISCORD_LIMIT
+        ? "Over Discord's 10 MB limit. Fine for email or a file host."
+        : "Fits Discord's 10 MB attach limit.";
+
+  const sizeWarn = estimate > DISCORD_LIMIT;
+
+  /** Which primary card looks selected when Custom is active (last known base). */
+  const selectedCardId =
+    preset === 'CUSTOM'
+      ? null
+      : SUPPORT_PRESETS.some((p) => p.id === preset)
+        ? preset
+        : 'QUICK';
+
+  const gateChecks = asArray<Record<string, unknown>>(gate?.checks);
+
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Build support pack"
-    >
-      <button type="button" className="absolute inset-0 bg-black/60" aria-label="Close dialog" onClick={onClose} />
-      <div className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 shadow-[var(--wt-shadow)]">
-        <div className="border-b border-wt-line px-5 py-4">
-          <h2 className="text-lg font-semibold">Build support pack</h2>
-          <p className="mt-1 text-sm text-wt-text-mid">
+    <div className="sp-modal-root" role="dialog" aria-modal="true" aria-label="Build support pack">
+      <button type="button" className="sp-modal-backdrop" aria-label="Close dialog" onClick={onClose} />
+      <div className="sp-modal">
+        <div className="sp-modal__head">
+          <h2 className="sp-modal__title">Build support pack</h2>
+          <p className="sp-modal__sub">
             {isFixturePreview()
-              ? 'Preview mode — sample catalog; compose is simulated (no zip file).'
-              : 'Redacted zip for Discord or bug reports.'}
+              ? 'Fixture preview - compose is simulated; no zip.'
+              : 'Redacted zip for Discord or a bug report.'}
           </p>
         </div>
-        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
-          {loading ? <p className="text-sm text-wt-text-low">Loading catalog…</p> : null}
+
+        <div className="sp-modal__body">
+          {loading ? <p className="sp-modal__status sp-modal__status--low">Loading catalog…</p> : null}
           {error ? (
-            <p className="text-sm text-wt-danger" role="alert">
+            <p className="sp-modal__status sp-modal__status--err" role="alert">
               {error}
             </p>
           ) : null}
-          {result ? <p className="text-sm text-wt-ok">{result}</p> : null}
+          {result ? <p className="sp-modal__status sp-modal__status--ok">{result}</p> : null}
           {building ? (
-            <p className="text-sm text-wt-text-mid" role="status">
-              Building… stay on this page — download starts when ready.
+            <p className="sp-modal__status sp-modal__status--mid" role="status">
+              Building… stay on this page. Download starts when ready.
             </p>
           ) : null}
 
-          <section>
-            <h3 className="mb-2 text-sm font-semibold">1. What&apos;s going on?</h3>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`rounded-[var(--radius-wt-sm)] border px-2.5 py-1 text-xs font-semibold ${
-                    category === c.id
-                      ? 'border-wt-accent bg-wt-accent-soft text-wt-accent'
-                      : 'border-wt-line text-wt-text-mid'
-                  }`}
-                  onClick={() => applyCategory(c.id)}
-                  disabled={building}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-            <label className="mt-3 block text-sm">
-              Short note (optional)
-              <input
-                className="mt-1 w-full rounded-xl border border-wt-line bg-wt-bg2 px-3 py-2"
-                name="note"
-                autoComplete="off"
-                value={note}
-                onChange={(e) => {
-                  setNote(e.target.value);
-                  setOpts((o) => ({ ...o, note: e.target.value }));
-                }}
-                placeholder="e.g. TPS drops when exploring new chunks"
-                disabled={building}
-              />
-            </label>
-          </section>
+          {awaitingOverride && gate ? (
+            <section className="sp-gate" aria-label="Pack checklist">
+              <h3 className="sp-section-label">Before you download</h3>
+              <ul className="sp-gate__list">
+                {gateChecks.map((check) => {
+                  const status = str(check.status).toLowerCase();
+                  const rowClass =
+                    status === 'warn'
+                      ? 'sp-gate__row--warn'
+                      : status === 'skip'
+                        ? 'sp-gate__row--skip'
+                        : 'sp-gate__row--pass';
+                  return (
+                    <li key={str(check.id)} className={`sp-gate__row ${rowClass}`}>
+                      <span className="sp-gate__status">{status || 'pass'}</span>
+                      <span className="sp-gate__msg">{str(check.message)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="sp-gate__hint">
+                You can still download. Warnings are stored in the zip manifest.
+              </p>
+            </section>
+          ) : (
+            <>
+              <section>
+                <h3 className="sp-section-label">Pack type</h3>
+                <div className="sp-presets" role="radiogroup" aria-label="Pack type">
+                  {SUPPORT_PRESETS.map((card) => {
+                    const on = selectedCardId === card.id;
+                    return (
+                      <button
+                        key={card.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        disabled={building}
+                        onClick={() => applyPreset(card.id)}
+                        className={`sp-preset${on ? ' sp-preset--on' : ''}`}
+                      >
+                        <span className="sp-preset__label">{card.label}</span>
+                        <span className="sp-preset__hint">{card.hint}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {preset === 'CUSTOM' ? <p className="sp-custom-flag">Custom file list</p> : null}
+              </section>
 
-          <section>
-            <h3 className="mb-2 text-sm font-semibold">2. Pack type</h3>
-            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Pack type">
-              {SUPPORT_PRESETS.map((card) => (
-                <button
-                  key={card.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={preset === card.id}
+              <label className="sp-note">
+                <span className="sp-note__label">Note for whoever opens the zip (optional)</span>
+                <input
+                  className="sp-note__input"
+                  name="note"
+                  autoComplete="off"
+                  value={note}
+                  onChange={(e) => {
+                    setNote(e.target.value);
+                    setOpts((o) => ({ ...o, note: e.target.value }));
+                  }}
+                  placeholder="e.g. TPS drops when exploring new chunks"
                   disabled={building}
-                  onClick={() => applyPreset(card.id)}
-                  className={`rounded-xl border p-3 text-left ${
-                    preset === card.id
-                      ? 'border-wt-accent bg-wt-accent-soft/40'
-                      : 'border-wt-line bg-wt-bg2/40'
-                  }`}
-                >
-                  <strong className="text-sm">{card.label}</strong>
-                  <span className="mt-1 block text-xs text-wt-text-low">{card.hint}</span>
-                </button>
-              ))}
-            </div>
-          </section>
+                />
+              </label>
 
-          <section>
-            <h3 className="mb-2 text-sm font-semibold">3. What will be included</h3>
-            <div className="rounded-xl border border-wt-line bg-wt-bg2/40 p-3 text-sm">
-              <div>
-                <strong>{formatBytes(estimate)}</strong> estimated
-              </div>
-              <div className="text-xs text-wt-text-low">Secrets, IPs and UUIDs stripped</div>
-              {estimate > EMAIL_LIMIT ? (
-                <div className="mt-1 text-xs text-wt-warn">
-                  Large pack — too big for Discord or email. Nothing is trimmed; upload it somewhere
-                  with a link instead.
+              <button
+                type="button"
+                className="sp-customize-toggle"
+                disabled={building || loading}
+                onClick={() => setShowCustomize((v) => !v)}
+                aria-expanded={showCustomize}
+              >
+                {showCustomize ? 'Hide file choices' : 'Customize files…'}
+              </button>
+
+              {showCustomize ? (
+                <div className="sp-customize">
+                  <div className="sp-customize__col">
+                    <p className="sp-customize__head">Logs</p>
+                    {logNames.map((name) => (
+                      <label key={name} className="sp-customize__row">
+                        <input
+                          type="checkbox"
+                          checked={(opts.logs || []).includes(name)}
+                          onChange={(e) => {
+                            clearGate();
+                            setOpts((o) => ({
+                              ...o,
+                              logs: e.target.checked
+                                ? [...(o.logs || []), name]
+                                : (o.logs || []).filter((x) => x !== name),
+                            }));
+                            setPreset('CUSTOM');
+                          }}
+                        />
+                        {name}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="sp-customize__col">
+                    <p className="sp-customize__head">Crashes</p>
+                    {crashNames.length === 0 ? (
+                      <span className="sp-modal__status sp-modal__status--low">None on disk</span>
+                    ) : (
+                      crashNames.map((name) => (
+                        <label key={name} className="sp-customize__row">
+                          <input
+                            type="checkbox"
+                            checked={(opts.crash_files || []).includes(name)}
+                            onChange={(e) => {
+                              clearGate();
+                              setOpts((o) => ({
+                                ...o,
+                                include_crashes: true,
+                                crash_files: e.target.checked
+                                  ? [...(o.crash_files || []), name]
+                                  : (o.crash_files || []).filter((x) => x !== name),
+                              }));
+                              setPreset('CUSTOM');
+                            }}
+                          />
+                          {name}
+                        </label>
+                      ))
+                    )}
+                  </div>
                 </div>
-              ) : estimate > DISCORD_LIMIT ? (
-                <div className="mt-1 text-xs text-wt-warn">
-                  Over Discord&apos;s 10 MB limit — fine for email or a file host.
-                </div>
-              ) : (
-                <div className="mt-1 text-xs text-wt-text-low">Small enough to attach in Discord.</div>
-              )}
-            </div>
-            <button
-              type="button"
-              className="mt-2 text-sm text-wt-accent hover:underline"
-              disabled={building || loading}
-              onClick={() => setShowCustomize((v) => !v)}
-              aria-expanded={showCustomize}
-            >
-              {showCustomize ? 'Hide file choices' : 'Customize files…'}
-            </button>
-            {showCustomize ? (
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-wt-text-low">
-                    Logs
-                  </p>
-                  {logNames.map((name) => (
-                    <label key={name} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={(opts.logs || []).includes(name)}
-                        onChange={(e) => {
-                          setOpts((o) => ({
-                            ...o,
-                            logs: e.target.checked
-                              ? [...(o.logs || []), name]
-                              : (o.logs || []).filter((x) => x !== name),
-                          }));
-                          setPreset('CUSTOM');
-                        }}
-                      />
-                      {name}
-                    </label>
-                  ))}
-                </div>
-                <div>
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-wt-text-low">
-                    Crashes
-                  </p>
-                  {crashNames.map((name) => (
-                    <label key={name} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={(opts.crash_files || []).includes(name)}
-                        onChange={(e) => {
-                          setOpts((o) => ({
-                            ...o,
-                            include_crashes: true,
-                            crash_files: e.target.checked
-                              ? [...(o.crash_files || []), name]
-                              : (o.crash_files || []).filter((x) => x !== name),
-                          }));
-                          setPreset('CUSTOM');
-                        }}
-                      />
-                      {name}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </section>
+              ) : null}
+            </>
+          )}
         </div>
-        <div className="flex justify-end gap-2 border-t border-wt-line px-5 py-3">
-          <Button kind="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            kind="primary"
-            disabled={!canWrite || building || loading}
-            title={canWrite ? undefined : VIEW_ONLY_TITLE}
-            onClick={() => void handleBuild()}
-          >
-            {building ? 'Building…' : 'Build & download'}
-          </Button>
+
+        <div className="sp-modal__foot">
+          <div className="sp-size">
+            <div className="sp-size__main">
+              <strong>{formatBytes(estimate)}</strong> estimated
+            </div>
+            <div className="sp-size__meta">Secrets, IPs, and UUIDs stripped</div>
+            <div className={sizeWarn ? 'sp-size__warn' : 'sp-size__meta'}>{sizeHint}</div>
+          </div>
+          <div className="sp-modal__actions">
+            <Button kind="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+            {awaitingOverride ? (
+              <>
+                <Button kind="ghost" disabled={building} onClick={() => clearGate()}>
+                  Back
+                </Button>
+                <Button
+                  kind="primary"
+                  disabled={!canWrite || building || loading}
+                  title={canWrite ? undefined : VIEW_ONLY_TITLE}
+                  onClick={() => void handleBuild({ quality_gate_override: true })}
+                >
+                  {building ? 'Building…' : 'Download anyway'}
+                </Button>
+              </>
+            ) : (
+              <Button
+                kind="primary"
+                disabled={!canWrite || building || loading}
+                title={canWrite ? undefined : VIEW_ONLY_TITLE}
+                onClick={() => void handleBuild()}
+              >
+                {building ? 'Building…' : 'Build and download'}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
