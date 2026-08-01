@@ -59,6 +59,7 @@ In [[Issues]] and `/watchtower issues` (examples):
 | `CRASH_REPORT` | Crash files on disk |
 | `DISK_HIGH` | Disk almost full |
 | `TICK_LAG` / `MSPT_HIGH` / `TPS_LOW` | Server struggling |
+| `SOFT_HANG` | Process up but ticks frozen |
 | `BACKUP_*` | Backup not configured / missing / stale |
 | `MOD_UPDATE_CONFLICT` | Mod version problems |
 
