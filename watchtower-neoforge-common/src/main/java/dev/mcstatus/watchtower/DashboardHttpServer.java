@@ -197,6 +197,7 @@ public final class DashboardHttpServer {
             server.createContext("/api/incidents/get", this::handleIncidentGet);
             server.createContext("/api/incidents/pin", this::handleIncidentPin);
             server.createContext("/api/issues/peek", this::handleIssuesPeek);
+            server.createContext("/api/soft-hang/dump", this::handleSoftHangDump);
             server.createContext("/api/issues/acks", this::handleIssueAcks);
             server.createContext("/api/issues/ack", this::handleIssueAck);
             server.createContext("/api/issues/acknowledge-all", this::handleIssueAckAll);
@@ -6518,6 +6519,77 @@ public final class DashboardHttpServer {
         out.addProperty("truncated", truncated);
         out.addProperty("size", size);
         out.addProperty("lines", emitted);
+        sendJson(ex, 200, out);
+    }
+
+    private void handleSoftHangDump(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String file = null;
+        String q = ex.getRequestURI().getQuery();
+        if (q != null) {
+            for (String part : q.split("&")) {
+                if (part.startsWith("file=")) {
+                    file = URLDecoder.decode(part.substring(5), StandardCharsets.UTF_8);
+                }
+            }
+        }
+        Path hangsDir = serverContext.serverDirectory().resolve("watchtower").resolve("hangs");
+        Path target = null;
+        if (file != null && !file.isBlank()) {
+            String bare = Path.of(file).getFileName().toString();
+            if (bare.contains("..") || bare.contains("/") || bare.contains("\\")) {
+                send(ex, 400, "text/plain", "Invalid file");
+                return;
+            }
+            if (!(bare.endsWith(".txt") || bare.endsWith(".log"))) {
+                send(ex, 400, "text/plain", "Invalid file type");
+                return;
+            }
+            target = hangsDir.resolve(bare);
+        } else if (Files.isDirectory(hangsDir)) {
+            try (var stream = Files.list(hangsDir)) {
+                target = stream
+                        .filter(p -> {
+                            String n = p.getFileName().toString();
+                            return Files.isRegularFile(p) && (n.endsWith(".txt") || n.endsWith(".log"));
+                        })
+                        .max((a, b) -> {
+                            try {
+                                return Files.getLastModifiedTime(a).compareTo(Files.getLastModifiedTime(b));
+                            } catch (Exception e) {
+                                return 0;
+                            }
+                        })
+                        .orElse(null);
+            }
+        }
+        if (target == null || !Files.isRegularFile(target)) {
+            send(ex, 404, "text/plain", "Hang dump not found");
+            return;
+        }
+        final int maxChars = 256 * 1024;
+        String raw = Files.readString(target, StandardCharsets.UTF_8);
+        boolean truncated = raw.length() > maxChars;
+        if (truncated) {
+            raw = raw.substring(0, maxChars);
+        }
+        JsonObject out = new JsonObject();
+        out.addProperty("ok", true);
+        out.addProperty("file", target.getFileName().toString());
+        out.addProperty("path", "watchtower/hangs/" + target.getFileName());
+        out.addProperty("content", raw);
+        out.addProperty("truncated", truncated);
+        out.addProperty("size", Files.size(target));
         sendJson(ex, 200, out);
     }
 

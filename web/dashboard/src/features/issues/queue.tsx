@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, ChevronRight, Copy, X } from '@/ui/icons';
 import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { navigate } from '@/app/router';
+import { api } from '@/api/client';
 import { Button, EmptyState, StatusPill } from '@/ui/patterns';
-import { cn, num } from '@/lib/utils';
+import { asRecord, cn, num, str } from '@/lib/utils';
 import {
   DETAIL_PANELS,
   confidenceTone,
@@ -28,6 +29,59 @@ const SEV_PRIORITY = ['critical', 'warning', 'info'] as const;
 function defaultExpanded(bands: QueueBand[]): Set<string> {
   const focus = SEV_PRIORITY.find((key) => bands.some((b) => b.key === key)) ?? bands[0]?.key ?? null;
   return focus ? new Set([focus]) : new Set();
+}
+
+function hangDumpBasename(path: string): string {
+  const norm = path.replace(/\\/g, '/');
+  const parts = norm.split('/');
+  return parts[parts.length - 1] || '';
+}
+
+function SoftHangDumpPreview({ dumpPath }: { dumpPath: string }) {
+  const [text, setText] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const name = hangDumpBasename(dumpPath);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setLoading(true);
+      setError('');
+      setText('');
+      try {
+        const res = asRecord(await api.softHangDump(name || undefined));
+        if (cancelled) return;
+        setText(str(res.content, str(res.text)));
+        if (!str(res.content, str(res.text))) {
+          setError(str(res.message, 'Hang dump is empty or missing.'));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Could not load hang dump');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [name]);
+
+  return (
+    <div className="is-hang-dump">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">Hang dump</div>
+      <p className="is-hang-dump__path">{dumpPath}</p>
+      {loading ? <p className="text-sm text-wt-text-low">Loading dump…</p> : null}
+      {error ? (
+        <p className="text-sm text-wt-warn" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {text ? <pre className="is-sample is-sample--hang">{text}</pre> : null}
+    </div>
+  );
 }
 
 function runPrimaryAction(action: PrimaryAction | null) {
@@ -336,6 +390,20 @@ export function IssuesQueue({
                 {selected.sample ? <pre className="is-sample">{selected.sample}</pre> : null}
                 {selected.metrics && Object.keys(selected.metrics).length ? (
                   <div className="is-metrics">
+                    {selected.metrics.soft_hang_stall_seconds != null ? (
+                      <div className="is-metric">
+                        <div className="is-metric__label">Stall</div>
+                        <div className="is-metric__value">
+                          {String(num(selected.metrics.soft_hang_stall_seconds))}s
+                        </div>
+                      </div>
+                    ) : null}
+                    {selected.metrics.soft_hang_phase != null ? (
+                      <div className="is-metric">
+                        <div className="is-metric__label">Phase</div>
+                        <div className="is-metric__value">{str(selected.metrics.soft_hang_phase)}</div>
+                      </div>
+                    ) : null}
                     {selected.metrics.tps != null ? (
                       <div className="is-metric">
                         <div className="is-metric__label">TPS</div>
@@ -355,6 +423,14 @@ export function IssuesQueue({
                       </div>
                     ) : null}
                   </div>
+                ) : null}
+                {str(selected.metrics?.soft_hang_dump_path) ? (
+                  <SoftHangDumpPreview dumpPath={str(selected.metrics?.soft_hang_dump_path)} />
+                ) : selected.issueId === 'SOFT_HANG' ? (
+                  <p className="text-sm text-wt-text-low">
+                    No hang dump yet. Set SOFT_HANG_THREAD_DUMP=true in watchtower.conf to capture one on the next
+                    freeze.
+                  </p>
                 ) : null}
               </>
             )}

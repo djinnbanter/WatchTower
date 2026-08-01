@@ -1260,6 +1260,34 @@ export async function handleFixtureRequest(
             }
           }
 
+          if (method === 'GET' && pathOnly === '/api/soft-hang/dump') {
+            const u = new URL(url, 'http://127.0.0.1');
+            const file = u.searchParams.get('file') || 'hang-preview.txt';
+            const content = [
+              'WatchTower hang dump',
+              'phase=ticking',
+              'stall_seconds=48',
+              'captured_at=2026-08-02T00:00:45Z',
+              '',
+              '"Server thread" #29 prio=5 Id=29 RUNNABLE',
+              '  at net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:0)',
+              '  at net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:0)',
+              '  ... fixture preview stacks ...',
+              '',
+              '"watchtower-soft-hang" #88 prio=5 Id=88 TIMED_WAITING',
+              '  at java.base@21/java.lang.Thread.sleep(Native Method)',
+            ].join('\n');
+            return jsonRes(200, {
+              ok: true,
+              file,
+              path: `watchtower/hangs/${file}`,
+              content,
+              truncated: false,
+              size: content.length,
+              preview: true,
+            });
+          }
+
           if (method === 'GET' && pathOnly === '/api/logs/content') {
             const u = new URL(url, 'http://127.0.0.1');
             const file = u.searchParams.get('file') || '';

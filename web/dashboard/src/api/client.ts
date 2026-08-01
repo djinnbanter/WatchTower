@@ -202,6 +202,10 @@ export const api = {
     apiFetch<Record<string, unknown>>(
       `/api/logs/content?file=${encodeURIComponent(file)}&tail=${encodeURIComponent(String(tail))}`,
     ),
+  softHangDump: (file?: string) => {
+    const q = file ? `?file=${encodeURIComponent(file)}` : '';
+    return apiFetch<Record<string, unknown>>(`/api/soft-hang/dump${q}`);
+  },
   crashContexts: () => apiFetch<Record<string, unknown>>('/api/crash-contexts'),
   crashesGrouped: () => apiFetch<Record<string, unknown>>('/api/crashes'),
   crashesAcks: () => apiFetch<Record<string, unknown>>('/api/crashes/acks'),

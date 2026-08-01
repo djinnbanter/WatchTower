@@ -272,6 +272,33 @@ export function fromLedgerRow(
   };
 }
 
+/** Attach soft_hang peek fields (phase, stall, dump path) onto SOFT_HANG ledger rows. */
+export function enrichSoftHangFromOps(item: IssueItem, ops: Record<string, unknown>): IssueItem {
+  if (item.issueId !== 'SOFT_HANG' && !item.key.includes('SOFT_HANG')) return item;
+  const soft = asRecord(ops.soft_hang);
+  if (!Object.keys(soft).length) return item;
+  const dumpPath = str(soft.dump_path);
+  const phase = str(soft.phase, 'unknown');
+  const stall = num(soft.stall_seconds, 0);
+  const metrics: Record<string, unknown> = {
+    ...(item.metrics || {}),
+    soft_hang_phase: phase,
+    soft_hang_stall_seconds: stall,
+    soft_hang_dump_path: dumpPath || null,
+    soft_hang_active: soft.active === true,
+  };
+  const detailBits = [
+    stall > 0 ? `Stalled about ${stall}s` : null,
+    phase ? `Phase: ${phase}` : null,
+    dumpPath ? `Hang dump: ${dumpPath}` : 'No hang dump on disk (enable SOFT_HANG_THREAD_DUMP to capture one).',
+  ].filter(Boolean);
+  return {
+    ...item,
+    metrics,
+    detail: detailBits.join(' · ') || item.detail,
+  };
+}
+
 export function bootIssuesFromStartup(ops: Record<string, unknown>): IssueItem[] {
   const startup = asRecord(ops.startup_profile);
   const doneAt = str(startup.done_at, str(ops.updated_at)) || null;
@@ -433,7 +460,7 @@ export function buildActiveItems(input: {
   for (const row of asArray<Record<string, unknown>>(ops.issues_live)) {
     const status = str(row.status, 'open').toLowerCase();
     if (status === 'resolved' || status === 'reviewed' || status === 'suppressed') continue;
-    push(fromLedgerRow(row));
+    push(enrichSoftHangFromOps(fromLedgerRow(row), ops));
   }
 
   for (const b of bootIssuesFromStartup(ops)) push(b);
@@ -501,7 +528,7 @@ export function buildReviewedItems(input: {
 
   const byKey = new Map<string, IssueItem>();
   for (const row of asArray<Record<string, unknown>>(ops.issues_live)) {
-    const item = fromLedgerRow(row);
+    const item = enrichSoftHangFromOps(fromLedgerRow(row), ops);
     byKey.set(item.key, item);
   }
   for (const b of bootIssuesFromStartup(ops)) byKey.set(b.key, b);

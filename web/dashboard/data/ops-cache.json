@@ -1776,7 +1776,7 @@
     "started_at": "2026-08-02T00:00:00Z",
     "last_tick_at": "2026-08-02T00:00:00Z",
     "tick_count": 1200,
-    "dump_path": null,
+    "dump_path": "watchtower/hangs/hang-preview.txt",
     "recovered_at": null
   }
 }
