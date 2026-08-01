@@ -1,0 +1,14 @@
+{
+  "soft_hang": {
+    "active": true,
+    "phase": "ticking",
+    "stall_seconds": 48,
+    "effective_threshold_seconds": 45,
+    "max_tick_time_ms": 60000,
+    "started_at": "2026-08-02T00:00:00Z",
+    "last_tick_at": "2026-08-02T00:00:00Z",
+    "tick_count": 1200,
+    "dump_path": null,
+    "recovered_at": null
+  }
+}
