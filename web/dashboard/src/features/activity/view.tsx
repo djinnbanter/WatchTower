@@ -19,7 +19,7 @@ import {
 import { api } from '@/api/client';
 import { navigate, type RouteState } from '@/app/router';
 import { FadeIn, HeroWatermark, PageEnter, Stagger, useCountUp } from '@/ui/motion';
-import { Button, EmptyState, ErrorState, StatusPill } from '@/ui/patterns';
+import { Button, EmptyState, ErrorState, HeroCard, StatusPill } from '@/ui/patterns';
 import { asArray, asRecord, num, str, timeAgo } from '@/lib/utils';
 import './activity.css';
 
@@ -302,7 +302,10 @@ export function PageView({ route: _route }: { route: RouteState }) {
   return (
     <PageEnter className="ac-stack">
       <FadeIn>
-        <div className={`ac-hero ac-hero--${heroTone}`}>
+        <HeroCard
+          tone={heroTone === 'ok' || heroTone === 'warn' || heroTone === 'danger' || heroTone === 'info' ? heroTone : 'info'}
+          className={`ac-hero ac-hero--${heroTone}`}
+        >
           <div className="ac-hero__body wt-hero-shell">
             <HeroWatermark icon={Activity} tone={heroTone} />
             <div className="ac-hero__main">
@@ -351,7 +354,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
               />
             </div>
           </div>
-        </div>
+        </HeroCard>
       </FadeIn>
 
       <FadeIn>
