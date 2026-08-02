@@ -791,7 +791,7 @@ a {
   box-shadow: var(--wt-shadow);
 }
 
-/* Shared settings/wizard form row — tight plate, not rounded-xl SaaS */
+/* Shared settings/wizard form row — tight plate, not rounded-[var(--radius-wt)] SaaS */
 .wt-form-row {
   border: 1px solid var(--wt-line);
   border-radius: var(--radius-wt);

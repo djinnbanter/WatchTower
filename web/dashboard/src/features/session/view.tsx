@@ -586,7 +586,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
               </div>
             </div>
             {samplesQ.isLoading ? (
-              <div className="h-40 animate-pulse rounded-xl bg-wt-bg2" />
+              <div className="h-40 animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
             ) : (
               <EmptyState title="No daily history yet">
                 Player averages appear once concurrent-player samples have been collected.
@@ -620,7 +620,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
                 ? 'Server looks idle — known players are offline.'
                 : 'Search and filter the roster. Online players sort first.'
             }
-            icon={<GlareIcon icon={UsersIcon} tone="accent" size={15} className="h-8 w-8 rounded-xl" />}
+            icon={<GlareIcon icon={UsersIcon} tone="accent" size={15} className="h-8 w-8 rounded-[var(--radius-wt)]" />}
           >
             <div className="ss-toolbar">
               <label className="ss-search-wrap">

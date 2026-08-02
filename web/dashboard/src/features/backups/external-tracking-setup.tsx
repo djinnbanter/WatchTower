@@ -3,13 +3,11 @@
  */
 import { useEffect, useState } from 'react';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { FolderBrowseModal } from '@/features/backups/folder-browse';
 import { parseBackupDirs } from '@/features/backups/local-folder-setup';
 import { Button } from '@/ui/patterns';
 import { asRecord, bool, str } from '@/lib/utils';
-
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 
 export const TRACKING_OPTS = [
   { value: 'folder', label: 'Folder on this server' },
@@ -183,7 +181,7 @@ export function ExternalTrackingSetup({
       </div>
 
       {showExternal ? (
-        <div className="space-y-3 rounded-xl border border-wt-line bg-wt-bg2/40 p-4">
+        <div className="space-y-3 rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg2/40 p-4">
           <ol className="list-decimal space-y-1 pl-4 text-xs text-wt-text-low">
             <li>Save below to generate a webhook token (if you do not have one yet).</li>
             <li>Copy the webhook URL into your panel’s “after backup” task or cron script.</li>
@@ -201,7 +199,7 @@ export function ExternalTrackingSetup({
                 value={markerPath}
                 placeholder="watchtower/backup-heartbeat.json"
                 onChange={(e) => setMarkerPath(e.target.value)}
-                className="min-w-0 flex-1 rounded-xl border border-wt-line bg-wt-bg1 px-3 py-2 font-mono text-sm outline-none focus:border-wt-accent"
+                className="min-w-0 flex-1 rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 px-3 py-2 font-mono text-sm outline-none focus:border-wt-accent"
               />
               <Button
                 kind="default"

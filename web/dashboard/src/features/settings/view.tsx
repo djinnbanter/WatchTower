@@ -157,7 +157,7 @@ function ToggleField({
 }) {
   return (
     <div
-      className={`flex items-center justify-between gap-4 rounded-xl border border-wt-line bg-wt-bg2/50 px-4 py-3 ${
+      className={`flex items-center justify-between gap-4 wt-form-row px-4 py-3 ${
         disabled ? 'opacity-60' : ''
       }`}
     >
@@ -195,7 +195,7 @@ function TimezonePreferenceField() {
   const zoneValue = preference.mode === 'iana' ? preference.zone || resolvedZone : resolvedZone;
 
   return (
-    <div className="mt-3 rounded-xl border border-wt-line bg-wt-bg2/50 px-4 py-3">
+    <div className="mt-3 wt-form-row px-4 py-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-sm font-medium">Timezone</div>
@@ -291,7 +291,7 @@ function NumberField({
 }) {
   return (
     <label
-      className={`block rounded-xl border border-wt-line bg-wt-bg2/50 px-4 py-3 ${
+      className={`block wt-form-row px-4 py-3 ${
         disabled ? 'opacity-60' : ''
       }`}
     >
@@ -327,7 +327,7 @@ function TextField({
   autoComplete?: string;
 }) {
   return (
-    <label className="block rounded-xl border border-wt-line bg-wt-bg2/50 px-4 py-3">
+    <label className="block wt-form-row px-4 py-3">
       <div className="text-sm font-medium">{label}</div>
       {hint ? <div className="mb-1.5 mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
       <input
@@ -343,7 +343,7 @@ function TextField({
 
 function ReadOnlyField({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-xl border border-wt-line bg-wt-bg2/40 px-4 py-3">
+    <div className="wt-form-row px-4 py-3">
       <div className="text-sm font-medium">{label}</div>
       {hint ? <div className="mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
       <div className="mt-1.5 font-mono text-sm text-wt-text">{value || '—'}</div>
@@ -403,7 +403,7 @@ export function PageView({ route }: { route: RouteState }) {
   if (settingsQ.isLoading) {
     return (
       <PageEnter className="grid gap-4">
-        <div className="h-10 w-96 animate-pulse rounded-xl bg-wt-bg2" />
+        <div className="h-10 w-96 animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
         <div className="h-96 animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
       </PageEnter>
     );
@@ -544,7 +544,7 @@ export function PageView({ route }: { route: RouteState }) {
             hint="Optional: on critical sustained lag, run a short Spark profile and attach it to the lag Issue. Profiles stay on disk."
           >
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-xl border border-wt-line bg-wt-bg2/40 px-4 py-3">
+              <div className="wt-form-row px-4 py-3">
                 <div className="text-sm font-medium">Spark mod</div>
                 <div className="mt-1.5">
                   <StatusPill tone={sparkLoaded ? 'ok' : 'warn'}>
@@ -772,7 +772,7 @@ export function PageView({ route }: { route: RouteState }) {
           </Section>
           <Section title="Spark" hint="Profiler integration. Auto-capture timing lives under Monitoring → Spark on lag.">
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-xl border border-wt-line bg-wt-bg2/40 px-4 py-3">
+              <div className="wt-form-row px-4 py-3">
                 <div className="text-sm font-medium">Spark mod</div>
                 <div className="mt-1.5">
                   <StatusPill tone={sparkLoaded ? 'ok' : 'warn'}>
@@ -959,7 +959,7 @@ function SecurityPanel() {
 
   return (
     <div className="grid gap-6">
-      <div className="space-y-3 rounded-xl border border-wt-line bg-wt-bg2/40 p-4">
+      <div className="space-y-3 wt-form-row p-4">
         <h3 className="text-sm font-semibold">Change password</h3>
         <TextField
           label="Current password"
@@ -987,7 +987,7 @@ function SecurityPanel() {
         </Button>
       </div>
 
-      <div className="space-y-3 rounded-xl border border-wt-line bg-wt-bg2/40 p-4">
+      <div className="space-y-3 wt-form-row p-4">
         <h3 className="text-sm font-semibold">Change username</h3>
         <TextField label="New username" value={newUsername} onChange={setNewUsername} />
         {unMsg ? (
@@ -1002,7 +1002,7 @@ function SecurityPanel() {
         </Button>
       </div>
 
-      <div className="space-y-3 rounded-xl border border-wt-line bg-wt-bg2/40 p-4">
+      <div className="space-y-3 wt-form-row p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold">Two-factor authentication</h3>
           <StatusPill tone={localTotpOn ? 'ok' : 'neutral'}>

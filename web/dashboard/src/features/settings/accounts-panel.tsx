@@ -5,7 +5,8 @@ import { useIsOwner } from '@/app/permissions';
 import { FadeIn } from '@/ui/motion';
 import { Button, EmptyState, ErrorState, Section, StatusPill } from '@/ui/patterns';
 import { asArray, asRecord, bool, str, timeAgo } from '@/lib/utils';
-import { AccountMinecraftLink } from './minecraft-link';
+import { PlayerAvatar } from '@/ui/player-avatar';
+import { AccountMinecraftLink, parsePlayerDirectory, type MinecraftPlayerOption } from './minecraft-link';
 
 type AccountRow = {
   id: string;
@@ -113,9 +114,22 @@ export function AccountsPanel() {
     enabled: isOwner,
   });
 
+  const playersQ = useQuery({
+    queryKey: ['players'],
+    queryFn: api.players,
+    staleTime: 30_000,
+    enabled: isOwner,
+  });
+
   const accounts = useMemo(
     () => (q.data ? parseAccounts(asRecord(q.data)) : []),
     [q.data],
+  );
+
+  const playerOptions = useMemo(
+    (): MinecraftPlayerOption[] =>
+      playersQ.data ? parsePlayerDirectory(asRecord(playersQ.data)) : [],
+    [playersQ.data],
   );
 
   const invalidate = () => void qc.invalidateQueries({ queryKey: ['accounts'] });
@@ -206,7 +220,7 @@ export function AccountsPanel() {
   if (q.isLoading) {
     return (
       <div className="grid gap-3">
-        <div className="h-8 w-64 animate-pulse rounded-xl bg-wt-bg2" />
+        <div className="h-8 w-64 animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
         <div className="h-72 animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
       </div>
     );
@@ -267,6 +281,7 @@ export function AccountsPanel() {
               <thead>
                 <tr>
                   <th scope="col">Person</th>
+                  <th scope="col">Minecraft</th>
                   <th scope="col">Role</th>
                   <th scope="col">Two-factor</th>
                   <th scope="col">Last seen</th>
@@ -276,29 +291,40 @@ export function AccountsPanel() {
               <tbody>
                 {accounts.map((row) => {
                   const pending = confirm?.id === row.id ? confirm.kind : null;
+                  const avatarName = row.minecraft_name || row.username;
                   return (
                     <tr key={row.id} className={row.disabled ? 'st-accounts__row--disabled' : undefined}>
                       <td>
                         <div className="st-accounts__person">
-                          <span className="font-medium">{row.username}</span>
-                          {row.is_you ? <StatusPill tone="info">you</StatusPill> : null}
-                          {row.disabled ? <StatusPill tone="warn">disabled</StatusPill> : null}
-                        </div>
-                        <div className="mt-2">
-                          <AccountMinecraftLink
-                            accountId={row.id}
+                          <PlayerAvatar
                             uuid={row.minecraft_uuid}
-                            name={row.minecraft_name}
-                            disabled={busy || row.disabled}
+                            name={avatarName}
+                            size={24}
+                            className="st-accounts__avatar"
                           />
+                          <div className="st-accounts__person-meta">
+                            <span className="font-medium">{row.username}</span>
+                            {row.is_you ? <StatusPill tone="info">you</StatusPill> : null}
+                            {row.disabled ? <StatusPill tone="warn">disabled</StatusPill> : null}
+                          </div>
                         </div>
                         {rowErrors[row.id] ? (
                           <p className="st-accounts__row-error">{rowErrors[row.id]}</p>
                         ) : null}
                       </td>
                       <td>
+                        <AccountMinecraftLink
+                          accountId={row.id}
+                          uuid={row.minecraft_uuid}
+                          name={row.minecraft_name}
+                          disabled={busy || row.disabled}
+                          options={playerOptions}
+                          compact
+                        />
+                      </td>
+                      <td>
                         {row.is_you ? (
-                          <span className="text-sm text-wt-text-mid">{roleLabel(row.role)}</span>
+                          <span className="st-accounts__role-static">{roleLabel(row.role)}</span>
                         ) : (
                           <select
                             className="st-accounts__select"
@@ -332,7 +358,7 @@ export function AccountsPanel() {
                       </td>
                       <td>
                         {row.is_you ? (
-                          <span className="text-xs text-wt-text-low">—</span>
+                          <span className="text-xs text-wt-text-low">Self</span>
                         ) : pending ? (
                           <ConfirmInline
                             busy={busy}

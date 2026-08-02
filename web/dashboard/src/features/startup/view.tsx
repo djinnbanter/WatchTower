@@ -486,7 +486,7 @@ function ConfigAuditCta({ audit }: { audit: Audit | null }) {
       onClick={() => navigate({ tab: 'insights', view: 'configs' })}
     >
       <div className="su-audit-cta__icon">
-        <GlareIcon icon={SettingsIcon} tone="warn" size={15} className="h-8 w-8 rounded-xl" />
+        <GlareIcon icon={SettingsIcon} tone="warn" size={15} className="h-8 w-8 rounded-[var(--radius-wt)]" />
       </div>
       <div className="su-audit-cta__copy">
         <div className="su-audit-cta__title">
@@ -635,7 +635,7 @@ function IssueOverviewCard({
           icon={Icon}
           tone={kind === 'warn' ? 'warn' : 'danger'}
           size={15}
-          className="h-8 w-8 rounded-xl"
+          className="h-8 w-8 rounded-[var(--radius-wt)]"
         />
         <div className="su-issue-overview__copy">
           <div className="su-issue-overview__title">
@@ -797,7 +797,7 @@ export function PageView({ route: _route }: { route: RouteState }) {
       <Plate
         title="Boot phases"
         hint="Share of this boot with ranked slowest markers."
-        icon={<GlareIcon icon={RocketIcon} tone="info" size={15} className="h-8 w-8 rounded-xl" />}
+        icon={<GlareIcon icon={RocketIcon} tone="info" size={15} className="h-8 w-8 rounded-[var(--radius-wt)]" />}
       >
         {profile.phases.length ? (
           <div className="su-phases" role="list">
