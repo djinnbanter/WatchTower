@@ -28,6 +28,7 @@ import dev.mcstatus.watchtower.core.incident.IncidentWriter;
 import dev.mcstatus.watchtower.core.live.PerformanceRollupWriter;
 import dev.mcstatus.watchtower.core.ops.ActivityLedgerScanner;
 import dev.mcstatus.watchtower.core.ops.IncidentStoryBuilder;
+import dev.mcstatus.watchtower.core.ops.PackChangeActivityScanner;
 import dev.mcstatus.watchtower.core.ops.LagIssueBuilder;
 import dev.mcstatus.watchtower.core.ops.LogStaleEvaluator;
 import dev.mcstatus.watchtower.core.ops.OpsCacheSchema;
@@ -76,6 +77,7 @@ public final class OpsScanService {
         JsonObject pregenHint = buildPregenHint(server);
         OpsCacheWriter.applyOpsLogScanResult(opsCachePath, statePath, rollupsPath, scan, pregenHint, null, logStale);
         ActivityGapBackfillScheduler.maybeEnqueue(server, config);
+        scanPackChanges(server);
         scanDiskJump(server);
         scanDiskProjection(server);
         scanWorldPressure(server);
@@ -83,6 +85,20 @@ public final class OpsScanService {
         rebuildIncidentStories(server);
         refreshIssuesLive(server);
         return scan;
+    }
+
+    /** Snapshot-poll mods/ + config/ into activity ledger (1.1.24 server diary). */
+    public static void scanPackChanges(ServerContext server) throws IOException {
+        Path statePath = WatchtowerPaths.statePath(server);
+        Path opsCachePath = WatchtowerPaths.opsCachePath(server);
+        Path serverDir = server.serverDirectory().toAbsolutePath();
+        JsonObject prev = StateManager.getPackChangeSnapshot(statePath);
+        long now = Instant.now().getEpochSecond();
+        PackChangeActivityScanner.Result r = PackChangeActivityScanner.scan(serverDir, prev, now);
+        StateManager.setPackChangeSnapshot(statePath, r.nextSnapshot());
+        if (!r.events().isEmpty()) {
+            OpsCacheWriter.applyActivityBackfillChunk(opsCachePath, statePath, r.events(), r.events().size());
+        }
     }
 
     /** Cheap continuous issue ledger refresh from ops-cache peeks (no StagingBuilder). */
@@ -199,7 +215,13 @@ public final class OpsScanService {
                 }
             }
             signals.add("census", census.deepCopy());
-            ChunkWritePressureAnalyzer.enrich(block, signals, prev, config.diskIoLatencyWarnMs());
+            ChunkWritePressureAnalyzer.enrich(
+                    block,
+                    signals,
+                    prev,
+                    config.diskIoLatencyWarnMs(),
+                    config.chunkWriteGrowthChunks(),
+                    config.chunkWriteSustainedScans());
         }
         block.addProperty("scanned_at", ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
         OpsCacheWriter.applyWorldPressure(
