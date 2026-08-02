@@ -54,7 +54,8 @@
       "files": ["create-npe.txt", "create-npe-paired-watchdog.txt"],
       "expected": {
         "same_incident_id": true,
-        "followup_failure_kind": "watchdog_followup"
+        "followup_failure_kind": "watchdog_followup",
+        "followup_primary_mod_id": "create"
       }
     },
     "opac-nsm-command": {
@@ -87,6 +88,22 @@
         "failure_kind": "mod_runtime",
         "primary_mod_id": "sable_rapier",
         "category": "mod"
+      }
+    },
+    "opac-watchdog-2043-pair": {
+      "files": ["opac-nsm-listener.txt", "watchdog-opac-followup-2043.txt"],
+      "expected": {
+        "same_incident_id": true,
+        "followup_failure_kind": "watchdog_followup",
+        "followup_primary_mod_id": "opac_better_commands"
+      }
+    },
+    "sable-watchdog-2150-pair": {
+      "files": ["sable-body-removed-save.txt", "watchdog-sable-followup-2150.txt"],
+      "expected": {
+        "same_incident_id": true,
+        "followup_failure_kind": "watchdog_followup",
+        "followup_primary_mod_id": "sable_rapier"
       }
     }
   }

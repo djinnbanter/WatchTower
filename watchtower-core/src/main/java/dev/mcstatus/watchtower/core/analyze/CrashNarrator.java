@@ -362,6 +362,47 @@ public final class CrashNarrator {
     }
 
     /**
+     * Rewrite follow-up watchdog rows after {@link IncidentChainBuilder#link} so Fix text
+     * points at the prior crash / inherited primary instead of c2me / Chunky-only advice.
+     */
+    public static void enrichAfterChain(JsonArray summaries) {
+        if (summaries == null) {
+            return;
+        }
+        for (JsonElement el : summaries) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            if (!CrashClassifier.FK_WATCHDOG_FOLLOWUP.equals(str(row, "failure_kind"))) {
+                continue;
+            }
+            String paired = str(row, "paired_primary_file");
+            String mod = str(row, "primary_mod_id");
+            StringBuilder plain = new StringBuilder("Watchdog follow-up after the prior crash");
+            if (mod != null && !mod.isBlank()) {
+                plain.append(" (").append(mod).append(")");
+            }
+            if (paired != null && !paired.isBlank()) {
+                plain.append(" — see ").append(paired);
+            }
+            plain.append(". Fix the earlier crash first; this hang is aftermath, not a separate root cause.");
+            row.addProperty("plain_english", plain.toString());
+            row.addProperty("likely_cause", "Watchdog follow-up");
+            row.addProperty("confidence", "high");
+            row.addProperty("manual_review", false);
+            JsonArray hints = new JsonArray();
+            hints.add("Open the paired crash report and fix that mod first");
+            if (row.has("missing_server_thread")
+                    && !row.get("missing_server_thread").isJsonNull()
+                    && row.get("missing_server_thread").getAsBoolean()) {
+                hints.add("Thread dump has no Server thread — tick loop already dead after the prior crash");
+            }
+            row.add("fix_hints", hints);
+        }
+    }
+
+    /**
      * Sable body-removed during sublevel save (FB-04). Keep primary on sable_rapier —
      * Create carriage is context only.
      */
