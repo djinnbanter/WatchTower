@@ -3,6 +3,7 @@ package dev.mcstatus.watchtower.core.collect;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.analyze.DbAddonSignatures;
+import dev.mcstatus.watchtower.core.analyze.GriefLoggerCreateCompatSignatures;
 import dev.mcstatus.watchtower.core.analyze.JadeSidecarAnalyzer;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
 import dev.mcstatus.watchtower.core.report.ReportProgress;
@@ -209,6 +210,7 @@ public final class LogScanner {
             staging.getAsJsonObject("optional").add("mod_log_errors", modLogErrors);
         }
         emitDbAddonFail(staging, state);
+        emitGlCreateNpe(staging, state);
         JsonArray clientWarnings = state.clientLogAttributor.toJsonArray();
         if (!clientWarnings.isEmpty()) {
             staging.getAsJsonObject("optional").add("client_class_warnings_by_mod", clientWarnings);
@@ -336,6 +338,7 @@ public final class LogScanner {
         state.clientLogAttributor.processLine(stripped);
         accumulateFml(stripped, state);
         maybeRecordDbAddon(stripped, rel, lineNo, ts, state);
+        maybeRecordGlCreateNpe(stripped, rel, lineNo, ts, state);
 
         if (ts != null && CollectSupport.epochSeconds(ts) >= cutoff) {
             mc.addProperty("log_had_activity_in_window", true);
@@ -679,6 +682,9 @@ public final class LogScanner {
         final List<JsonObject> loginDisconnectEvidence = new ArrayList<>();
         DbAddonSignatures.Hit dbAddonBest;
         final List<JsonObject> dbAddonEvidence = new ArrayList<>();
+        GriefLoggerCreateCompatSignatures.Hit glCreateHit;
+        final List<String> glCreateWindow = new ArrayList<>();
+        final List<JsonObject> glCreateEvidence = new ArrayList<>();
 
         ScanState(ZonedDateTime now, List<Pattern> errorIgnore, Set<String> knownModIds) {
             this.now = now;
@@ -695,6 +701,7 @@ public final class LogScanner {
             this.successfulJoins = 0;
             this.loginStormEmitted = false;
             this.dbAddonBest = null;
+            this.glCreateHit = null;
         }
     }
 
@@ -762,6 +769,74 @@ public final class LogScanner {
             summary.addProperty("detail", detail);
             summary.add("evidence", evArr.deepCopy());
             optional.add("db_addon_fail", summary);
+        }
+    }
+
+    private static final int GL_CREATE_WINDOW = 80;
+
+    private static void maybeRecordGlCreateNpe(
+            String stripped, String rel, int lineNo, ZonedDateTime ts, ScanState state) {
+        if (state.glCreateWindow.size() >= GL_CREATE_WINDOW) {
+            state.glCreateWindow.remove(0);
+        }
+        state.glCreateWindow.add(stripped);
+        if (state.glCreateHit != null) {
+            return;
+        }
+        String low = stripped.toLowerCase(java.util.Locale.ROOT);
+        if (!(low.contains("containerhandler")
+                || low.contains("menuprovider")
+                || low.contains("contraption_interact")
+                || low.contains("mounteditemstorage")
+                || low.contains("mountedstoragemanager"))) {
+            return;
+        }
+        GriefLoggerCreateCompatSignatures.Hit hit =
+                GriefLoggerCreateCompatSignatures.match(String.join("\n", state.glCreateWindow));
+        if (hit == null) {
+            return;
+        }
+        state.glCreateHit = hit;
+        if (state.glCreateEvidence.size() < 5) {
+            state.glCreateEvidence.add(
+                    CollectSupport.evidence(rel, lineNo, stripped, ts != null ? CollectSupport.iso(ts) : null));
+        }
+    }
+
+    private static void emitGlCreateNpe(JsonObject staging, ScanState state) {
+        if (state.glCreateHit == null) {
+            return;
+        }
+        GriefLoggerCreateCompatSignatures.Hit hit = state.glCreateHit;
+        String detail = "GriefLogger × Create mounted-storage NPE (menuProvider null / contraption_interact) — FATAL task, no crash-report";
+        JsonObject ev = new JsonObject();
+        ev.addProperty("time", CollectSupport.iso(state.now));
+        ev.addProperty("type", "gl_create_npe");
+        ev.addProperty("source", "log");
+        ev.addProperty("detail", detail);
+        ev.addProperty("importance", 7);
+        ev.addProperty("kind", hit.kind());
+        ev.addProperty("primary_mod", hit.modId());
+        JsonArray evArr = new JsonArray();
+        for (JsonObject evidence : state.glCreateEvidence) {
+            evArr.add(evidence.deepCopy());
+        }
+        ev.add("evidence", evArr);
+        CollectSupport.appendEvent(staging, ev);
+
+        JsonObject optional = staging.getAsJsonObject("optional");
+        if (optional != null) {
+            JsonObject summary = new JsonObject();
+            summary.addProperty("active", true);
+            summary.addProperty("issue_id", GriefLoggerCreateCompatSignatures.ISSUE_ID);
+            summary.addProperty("kind", hit.kind());
+            summary.addProperty("primary_mod", hit.modId());
+            summary.addProperty("detail", detail);
+            summary.addProperty("tag_contraption_interact", true);
+            summary.addProperty("tag_menu_provider", true);
+            summary.addProperty("tag_mounted_storage", true);
+            summary.add("evidence", evArr.deepCopy());
+            optional.add("gl_create_npe", summary);
         }
     }
 

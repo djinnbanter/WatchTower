@@ -8,6 +8,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class IssuesLiveEvaluatorsTest {
@@ -538,6 +539,44 @@ class IssuesLiveEvaluatorsTest {
         List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
         assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
                 after.stream().filter(r -> "SIGNAL_DB_ADDON_FAIL".equals(r.normalizedKey()))
+                        .findFirst().orElseThrow().status());
+    }
+
+    @Test
+    void fromGlCreateNpeProducesDistinctSignal() {
+        JsonObject cache = new JsonObject();
+        JsonObject optional = new JsonObject();
+        JsonObject block = new JsonObject();
+        block.addProperty("active", true);
+        block.addProperty("issue_id", "signal_gl_create_npe");
+        block.addProperty("kind", "grieflogger_create_compat");
+        block.addProperty("primary_mod", "grieflogger");
+        block.addProperty("detail",
+                "GriefLogger × Create mounted-storage NPE (menuProvider null) — FATAL task without crash-report");
+        optional.add("gl_create_npe", block);
+        cache.add("optional", optional);
+
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromGlCreateNpe(cache);
+        assertEquals(1, rows.size());
+        assertEquals("SIGNAL_GL_CREATE_NPE", rows.get(0).normalizedKey());
+        assertNotEquals("SIGNAL_DB_ADDON_FAIL", rows.get(0).normalizedKey());
+        assertEquals("warning", rows.get(0).severity());
+        assertFalse(rows.get(0).fixSteps().isEmpty());
+        String joined = String.join(" ", rows.get(0).fixSteps()).toLowerCase();
+        assertTrue(joined.contains("menuprovider") || joined.contains("mounted")
+                || joined.contains("contraption") || joined.contains("create"));
+        assertTrue(joined.contains("fatal") || joined.contains("crash"));
+    }
+
+    @Test
+    void clearingGlCreateNpeResolvesSignal() {
+        String t0 = "2026-08-02T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("signal_gl_create_npe").message("compat").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> "SIGNAL_GL_CREATE_NPE".equals(r.normalizedKey()))
                         .findFirst().orElseThrow().status());
     }
 
