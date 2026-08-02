@@ -45,10 +45,10 @@ export default function DemoPage() {
             </a>{' '}
             or{' '}
             <a
-              href={LINKS.releasesLatest}
+              href={LINKS.github}
               className="text-[color:var(--wt-text)] underline-offset-2 hover:underline"
             >
-              GitHub Releases
+              GitHub
             </a>
             , or run the local dashboard preview.
           </p>

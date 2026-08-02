@@ -15,7 +15,13 @@ export const metadata: Metadata = {
   },
   description: `${TAGLINE} ${HERO_OVERVIEW}`,
   icons: {
-    icon: '/brand/watchtower-favicon.png',
+    // Same mark as the static demo (watchtower-icon-simple → favicon.ico).
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/brand/watchtower-icon-simple.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/brand/watchtower-icon-simple.png',
   },
 };
 

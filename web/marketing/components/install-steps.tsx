@@ -29,9 +29,8 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
               <div className="p-5 md:p-6">
                 <h2 className="install-step__title">Get the jar</h2>
                 <p className="install-step__copy">
-                  Download the {release.label} release from Modrinth or GitHub. Use{' '}
-                  <a href={LINKS.releasesLatest}>releases/latest</a> so you don&apos;t copy a version
-                  number by hand.
+                  Download the {release.label} release from Modrinth or GitHub. Prefer Modrinth, or
+                  open the repo and grab the jar from Releases.
                 </p>
                 {release.tag !== 'latest' ? (
                   <p className="install-meta">
@@ -47,11 +46,11 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
                     Get it on Modrinth
                   </Cta>
                   <Cta
-                    href={LINKS.releasesLatest}
+                    href={LINKS.github}
                     variant="ghost"
                     leading={<GithubMark className="h-3.5 w-3.5" />}
                   >
-                    GitHub Releases
+                    GitHub
                   </Cta>
                 </div>
               </div>

@@ -66,4 +66,15 @@ if (!existsSync(brandSrc)) {
   }
 }
 
+// Root favicon matches the static demo (copy of watchtower-icon-simple).
+const faviconSrc = join(REPO, 'web', 'dashboard', 'favicon.ico');
+const faviconDest = join(ROOT, 'public', 'favicon.ico');
+if (existsSync(faviconSrc)) {
+  cpSync(faviconSrc, faviconDest);
+} else if (existsSync(join(brandDest, 'watchtower-icon-simple.png'))) {
+  cpSync(join(brandDest, 'watchtower-icon-simple.png'), faviconDest);
+} else if (existsSync(join(brandDest, 'favicon.png'))) {
+  cpSync(join(brandDest, 'favicon.png'), faviconDest);
+}
+
 console.log('sync-brand-assets: ok → public/screenshots + public/brand');
