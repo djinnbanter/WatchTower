@@ -10,10 +10,10 @@
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-  --wt-bg0: #14171e;
-  --wt-bg1: #222833;
-  --wt-bg2: #2e3543;
-  --wt-bg3: #3b4354;
+  --wt-bg0: #12151c;
+  --wt-bg1: #1e2430;
+  --wt-bg2: #2a3140;
+  --wt-bg3: #373f50;
   --wt-bg-hot: #171519;
   --wt-line: rgba(232, 237, 246, 0.14);
   --wt-line-strong: rgba(232, 237, 246, 0.22);
@@ -28,9 +28,13 @@
   --wt-warn: #f5a524;
   --wt-danger: #f87171;
   --wt-info: #9db2ce;
+  --wt-grass: #34d399;
+  --wt-zenith: rgba(76, 141, 255, 0.08);
+  --wt-glow-lantern: color-mix(in srgb, var(--wt-lantern) 22%, transparent);
+  --wt-glow-accent: color-mix(in srgb, var(--wt-accent) 18%, transparent);
   --wt-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 18px 48px rgba(0, 0, 0, 0.45);
   --wt-plate-outer: rgba(255, 255, 255, 0.04);
-  --wt-grat: rgba(232, 237, 246, 0.035);
+  --wt-grat: rgba(232, 237, 246, 0.05);
   --wt-nav-bg: rgba(20, 23, 30, 0.72);
   --wt-ch-tps: #4fb286;
   --wt-ch-mspt: #e0a458;
@@ -42,10 +46,10 @@
 
 [data-theme='light'] {
   color-scheme: light;
-  --wt-bg0: #f4f2ee;
-  --wt-bg1: #fbfaf8;
-  --wt-bg2: #eae7e1;
-  --wt-bg3: #ddd9d1;
+  --wt-bg0: #f2f3f5;
+  --wt-bg1: #ffffff;
+  --wt-bg2: #e8eaee;
+  --wt-bg3: #dcdfe5;
   --wt-bg-hot: #f1ece5;
   --wt-line: rgba(22, 24, 29, 0.14);
   --wt-line-strong: rgba(22, 24, 29, 0.2);
@@ -60,9 +64,13 @@
   --wt-warn: #b4690e;
   --wt-danger: #d14343;
   --wt-info: #48607f;
+  --wt-grass: #1f9d63;
+  --wt-zenith: rgba(27, 79, 224, 0.06);
+  --wt-glow-lantern: color-mix(in srgb, var(--wt-lantern) 22%, transparent);
+  --wt-glow-accent: color-mix(in srgb, var(--wt-accent) 18%, transparent);
   --wt-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 18px 44px rgba(23, 26, 32, 0.1);
   --wt-plate-outer: rgba(22, 24, 29, 0.04);
-  --wt-grat: rgba(22, 24, 29, 0.05);
+  --wt-grat: rgba(22, 24, 29, 0.06);
   --wt-nav-bg: rgba(251, 250, 248, 0.86);
   --wt-ch-tps: #2f8f66;
   --wt-ch-mspt: #b4690e;
@@ -170,6 +178,60 @@ body {
   background-image:
     repeating-linear-gradient(to right, var(--wt-grat) 0 1px, transparent 1px 88px),
     repeating-linear-gradient(to bottom, var(--wt-grat) 0 1px, transparent 1px 88px);
+}
+
+.wt-block-grid {
+  background-image:
+    repeating-linear-gradient(to right, var(--wt-grat) 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(to bottom, var(--wt-grat) 0 1px, transparent 1px 16px);
+}
+
+.wt-plate-stone {
+  border-color: var(--wt-line-strong);
+  background: color-mix(in srgb, var(--wt-bg2) 55%, var(--wt-plate-outer));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--wt-text) 5%, transparent);
+}
+
+.wt-grass-strip {
+  height: 3px;
+  width: 4.5rem;
+  margin-inline: auto;
+  background: var(--wt-grass);
+  border-radius: 0;
+}
+
+.wt-hero-night {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(42rem 28rem at 50% -8%, var(--wt-zenith), transparent 55%),
+    radial-gradient(48rem 32rem at 12% 18%, var(--wt-glow-lantern), transparent 62%),
+    radial-gradient(40rem 28rem at 88% 8%, var(--wt-glow-accent), transparent 58%);
+}
+
+.wt-hero-stars {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, color-mix(in srgb, var(--wt-text) 55%, transparent) 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 42%, color-mix(in srgb, var(--wt-text) 40%, transparent) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 61% 14%, color-mix(in srgb, var(--wt-text) 50%, transparent) 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 36%, color-mix(in srgb, var(--wt-text) 35%, transparent) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 22%, color-mix(in srgb, var(--wt-text) 45%, transparent) 50%, transparent 51%);
+  background-repeat: no-repeat;
+}
+
+[data-theme='light'] .wt-hero-stars {
+  opacity: 0.28;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wt-hero-stars {
+    opacity: 0.4;
+  }
 }
 
 .wt-display {
