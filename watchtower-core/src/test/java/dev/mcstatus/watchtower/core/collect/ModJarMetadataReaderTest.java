@@ -217,6 +217,38 @@ class ModJarMetadataReaderTest {
                 json.getAsJsonArray("jar_in_jar").get(0).getAsJsonObject().get("id").getAsString());
     }
 
+    @Test
+    void listModsFromDirIncludesDisabledJar(@TempDir Path server) throws IOException {
+        Path mods = server.resolve("mods");
+        Files.createDirectories(mods);
+        writeJar(mods.resolve("appleskin-3.0.9.jar.disabled"), """
+                [[mods]]
+                modId="appleskin"
+                version="3.0.9"
+                displayName="AppleSkin"
+                """);
+        JsonArray arr = ModJarMetadataReader.listModsFromDir(server.toString());
+        assertEquals(1, arr.size());
+        JsonObject mod = arr.get(0).getAsJsonObject();
+        assertEquals("appleskin", mod.get("id").getAsString());
+        assertEquals("appleskin-3.0.9.jar.disabled", mod.get("jar_file").getAsString());
+        assertTrue(mod.get("disabled").getAsBoolean());
+    }
+
+    @Test
+    void listModsFromDirEnabledHasDisabledFalse(@TempDir Path server) throws IOException {
+        Path mods = server.resolve("mods");
+        Files.createDirectories(mods);
+        writeJar(mods.resolve("appleskin-3.0.9.jar"), """
+                [[mods]]
+                modId="appleskin"
+                version="3.0.9"
+                displayName="AppleSkin"
+                """);
+        JsonObject mod = ModJarMetadataReader.listModsFromDir(server.toString()).get(0).getAsJsonObject();
+        assertFalse(mod.get("disabled").getAsBoolean());
+    }
+
     private static void writeJar(Path jar, String toml) throws IOException {
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(jar))) {
             zos.putNextEntry(new ZipEntry("META-INF/neoforge.mods.toml"));

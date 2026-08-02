@@ -1,0 +1,8 @@
+"Server thread" #1 prio=5 tid=0x1 nid=0x1 runnable
+   java.lang.Thread.State: RUNNABLE
+	at com.example.laggy.ModTick.tick(ModTick.java:42)
+	at net.minecraft.world.entity.Entity.tick(Entity.java:100)
+	at net.minecraft.world.level.entity.EntityTickList.forEach(EntityTickList.java:50)
+	at net.minecraft.server.level.ServerLevel.tick(ServerLevel.java:200)
+	at net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:850)
+	at java.lang.Thread.run(Thread.java:840)

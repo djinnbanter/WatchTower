@@ -3,8 +3,9 @@ package dev.mcstatus.watchtower.core.analyze;
 import com.google.gson.JsonObject;
 
 /**
- * Conservative RAM / {@code -Xmx} right-sizing advisor (1.1.2).
- * Wallet-framed; never raises RAM when the window GC verdict says tick/GC-bound.
+ * Conservative RAM / {@code -Xmx} right-sizing advisor (1.1.2 + 1.1.26 envelope).
+ * Wallet-framed; never raises RAM when the window GC verdict says tick/GC-bound,
+ * and never pushes {@code -Xmx} past host/container headroom.
  */
 public final class RamSizingAdvisor {
 
@@ -12,6 +13,12 @@ public final class RamSizingAdvisor {
     public static final String VERDICT_OVER = "over_provisioned";
     public static final String VERDICT_UNDER = "under_provisioned";
     public static final String VERDICT_RIGHT = "right_sized";
+    public static final String VERDICT_ENVELOPE_TIGHT = "envelope_tight";
+
+    public static final String ENVELOPE_OK = "ok";
+    public static final String ENVELOPE_LOW = "low";
+    public static final String ENVELOPE_CRITICAL = "critical";
+    public static final String ENVELOPE_UNKNOWN = "unknown";
 
     /** Conservative: peak must be at or below this fraction of Xmx. */
     public static final double OVER_PEAK_FRAC = 0.50;
@@ -22,7 +29,55 @@ public final class RamSizingAdvisor {
     public static final double MIN_SPAN_DAYS = 7.0;
     public static final double MIN_XMX_FLOOR_GB = 6.0;
 
+    public static final double ENVELOPE_CRITICAL_FRAC = 0.85;
+    public static final double ENVELOPE_LOW_FRAC = 0.70;
+    public static final double ENVELOPE_CRITICAL_OUTSIDE_GB = 1.0;
+    public static final double ENVELOPE_LOW_OUTSIDE_GB = 1.5;
+    public static final double ENVELOPE_SAFE_XMX_FRAC = 0.65;
+    public static final double ENVELOPE_SAFE_XMX_FLOOR_GB = 2.0;
+
     private RamSizingAdvisor() {
+    }
+
+    public static String classifyEnvelope(double hostMemGb, double xmxGb) {
+        if (Double.isNaN(hostMemGb) || hostMemGb <= 0 || Double.isNaN(xmxGb) || xmxGb <= 0) {
+            return ENVELOPE_UNKNOWN;
+        }
+        double outside = hostMemGb - xmxGb;
+        double frac = xmxGb / hostMemGb;
+        if (frac >= ENVELOPE_CRITICAL_FRAC || outside < ENVELOPE_CRITICAL_OUTSIDE_GB) {
+            return ENVELOPE_CRITICAL;
+        }
+        if (frac >= ENVELOPE_LOW_FRAC || outside < ENVELOPE_LOW_OUTSIDE_GB) {
+            return ENVELOPE_LOW;
+        }
+        return ENVELOPE_OK;
+    }
+
+    public static double safeXmxMaxGb(double hostMemGb) {
+        if (Double.isNaN(hostMemGb) || hostMemGb <= 0) {
+            return Double.NaN;
+        }
+        return Math.max(ENVELOPE_SAFE_XMX_FLOOR_GB, Math.floor(hostMemGb * ENVELOPE_SAFE_XMX_FRAC));
+    }
+
+    /**
+     * Compact live/Overview snapshot. When envelope is {@link #ENVELOPE_UNKNOWN}, only
+     * {@code envelope} is set.
+     */
+    public static JsonObject envelopeSnapshot(double hostMemGb, double xmxGb, String ramSource) {
+        JsonObject o = new JsonObject();
+        String env = classifyEnvelope(hostMemGb, xmxGb);
+        o.addProperty("envelope", env);
+        if (!ENVELOPE_UNKNOWN.equals(env)) {
+            o.addProperty("host_mem_gb", round2(hostMemGb));
+            o.addProperty("xmx_gb", round2(xmxGb));
+            o.addProperty("outside_headroom_gb", round2(hostMemGb - xmxGb));
+            if (ramSource != null && !ramSource.isBlank()) {
+                o.addProperty("ram_source", ramSource);
+            }
+        }
+        return o;
     }
 
     /**
@@ -38,6 +93,22 @@ public final class RamSizingAdvisor {
             double xmxGb,
             String xmxSource,
             String gcVerdict
+    ) {
+        return evaluate(window, stats, xmxGb, xmxSource, gcVerdict, Double.NaN, null);
+    }
+
+    /**
+     * @param hostMemGb host/container memory total (NaN if unknown)
+     * @param ramSource {@code cgroup_v2} / {@code cgroup_v1} / {@code proc} / etc.
+     */
+    public static JsonObject evaluate(
+            String window,
+            JsonObject stats,
+            double xmxGb,
+            String xmxSource,
+            String gcVerdict,
+            double hostMemGb,
+            String ramSource
     ) {
         JsonObject out = new JsonObject();
         String win = window != null && !window.isBlank() ? window : "7d";
@@ -64,11 +135,25 @@ public final class RamSizingAdvisor {
         String gc = gcVerdict != null && !gcVerdict.isBlank() ? gcVerdict : GcAdvisor.VERDICT_HEALTHY;
         out.addProperty("gc_verdict", gc);
 
+        String envelope = classifyEnvelope(hostMemGb, xmxGb);
+        out.addProperty("envelope", envelope);
+        if (!ENVELOPE_UNKNOWN.equals(envelope)) {
+            out.addProperty("host_mem_gb", round2(hostMemGb));
+            out.addProperty("outside_headroom_gb", round2(hostMemGb - xmxGb));
+            out.addProperty("ram_source", ramSource != null && !ramSource.isBlank() ? ramSource : "unknown");
+        }
+
+        // Envelope does not need 7d heap history — tight host wins immediately.
+        if (ENVELOPE_LOW.equals(envelope) || ENVELOPE_CRITICAL.equals(envelope)) {
+            applyEnvelopeTight(out, hostMemGb, xmxGb, ramSource, envelope);
+            return out;
+        }
+
         if (!sufficient) {
             out.addProperty("verdict", VERDICT_INSUFFICIENT);
             out.addProperty("ram_upgrade_blocked", false);
             out.addProperty("advice",
-                    "Need at least 7 days of live heap history before Watchtower can right-size -Xmx.");
+                    "Need at least 7 days of live heap history before WatchTower can right-size -Xmx.");
             return out;
         }
 
@@ -104,10 +189,24 @@ public final class RamSizingAdvisor {
         boolean under = GcAdvisor.VERDICT_HEAP_BOUND.equals(gc)
                 || (!Double.isNaN(pressureP95) && pressureP95 >= UNDER_PRESSURE_P95_MIN);
         if (under) {
-            out.addProperty("verdict", VERDICT_UNDER);
             if (!Double.isNaN(xmxGb) && xmxGb > 0 && !Double.isNaN(peak)) {
                 long min = Math.max(Math.round(Math.ceil(peak * 1.25)), Math.round(Math.ceil(xmxGb)));
                 long max = Math.max(min + 1, Math.round(Math.ceil(peak * 1.5)));
+                double safeMax = safeXmxMaxGb(hostMemGb);
+                if (!Double.isNaN(safeMax)) {
+                    long safe = Math.round(safeMax);
+                    if (safe < Math.round(xmxGb)) {
+                        // Would need more heap than the host can spare — treat as envelope story.
+                        applyEnvelopeTight(out, hostMemGb, xmxGb, ramSource, ENVELOPE_LOW);
+                        return out;
+                    }
+                    min = Math.min(min, safe);
+                    max = Math.min(max, safe);
+                    if (max < min) {
+                        max = min;
+                    }
+                }
+                out.addProperty("verdict", VERDICT_UNDER);
                 out.addProperty("suggested_xmx_gb_min", min);
                 out.addProperty("suggested_xmx_gb_max", max);
                 out.addProperty("advice", String.format(
@@ -115,6 +214,7 @@ public final class RamSizingAdvisor {
                                 + "Raising -Xmx toward %d–%d GB may help — leave OS/container headroom.",
                         peak, xmxGb, min, max));
             } else {
+                out.addProperty("verdict", VERDICT_UNDER);
                 out.addProperty("advice",
                         "Heap pressure stayed high over this window — more -Xmx (with OS headroom) may help.");
             }
@@ -160,6 +260,49 @@ public final class RamSizingAdvisor {
             out.addProperty("advice", "Heap sizing looks about right for this window.");
         }
         return out;
+    }
+
+    private static void applyEnvelopeTight(
+            JsonObject out,
+            double hostMemGb,
+            double xmxGb,
+            String ramSource,
+            String envelope
+    ) {
+        out.addProperty("verdict", VERDICT_ENVELOPE_TIGHT);
+        out.addProperty("ram_upgrade_blocked", true);
+        out.addProperty("envelope", envelope);
+        out.addProperty("host_mem_gb", round2(hostMemGb));
+        out.addProperty("outside_headroom_gb", round2(hostMemGb - xmxGb));
+        out.addProperty("ram_source", ramSource != null && !ramSource.isBlank() ? ramSource : "unknown");
+
+        long safe = Math.round(safeXmxMaxGb(hostMemGb));
+        long suggestMin = Math.max(Math.round(ENVELOPE_SAFE_XMX_FLOOR_GB), safe - 1);
+        long suggestMax = safe;
+        if (suggestMin > suggestMax) {
+            suggestMin = suggestMax;
+        }
+        out.addProperty("suggested_xmx_gb_min", suggestMin);
+        out.addProperty("suggested_xmx_gb_max", suggestMax);
+
+        String sourceLabel = ramSourceLabel(ramSource);
+        out.addProperty("advice", String.format(
+                "Host memory ~%.0f GB (%s). Java heap (-Xmx) %.0f GB leaves little room outside Java — "
+                        + "risk of an external OOM kill. Try -Xmx%dG–%dG on this host, or a larger plan.",
+                hostMemGb, sourceLabel, xmxGb, suggestMin, suggestMax));
+    }
+
+    private static String ramSourceLabel(String ramSource) {
+        if (ramSource == null || ramSource.isBlank()) {
+            return "host";
+        }
+        if (ramSource.startsWith("cgroup")) {
+            return "cgroup";
+        }
+        if ("proc".equals(ramSource)) {
+            return "host";
+        }
+        return ramSource;
     }
 
     private static void copyNum(JsonObject out, JsonObject stats, String key) {

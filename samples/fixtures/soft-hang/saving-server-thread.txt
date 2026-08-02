@@ -1,0 +1,8 @@
+"Server thread" #1 prio=5 tid=0x1 nid=0x1 runnable
+   java.lang.Thread.State: RUNNABLE
+	at sun.nio.ch.FileDispatcherImpl.write0(Native Method)
+	at net.minecraft.world.level.chunk.storage.ChunkSerializer.write(ChunkSerializer.java:120)
+	at net.minecraft.server.level.ChunkMap.save(ChunkMap.java:400)
+	at net.minecraft.server.MinecraftServer.saveEverything(MinecraftServer.java:500)
+	at net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:80)
+	at java.lang.Thread.run(Thread.java:840)

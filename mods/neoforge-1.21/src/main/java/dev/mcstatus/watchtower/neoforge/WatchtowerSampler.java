@@ -1,9 +1,13 @@
 package dev.mcstatus.watchtower.neoforge;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.neoforged.neoforgespi.language.IModInfo;
@@ -14,8 +18,10 @@ import dev.mcstatus.watchtower.runtime.WatchtowerSample;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -27,6 +33,7 @@ public final class WatchtowerSampler {
             "minecraft:the_nether",
             "minecraft:the_end"
     );
+    private static final int MAX_CENSUS_DIMENSIONS = 24;
 
     private WatchtowerSampler() {
     }
@@ -79,6 +86,62 @@ public final class WatchtowerSampler {
                 playerSamples,
                 mods
         );
+    }
+
+    /**
+     * Per-dimension world census for pressure analysis. Walks all loaded levels (including
+     * mod dimensions). Must run on the server tick thread.
+     */
+    public static WatchtowerSample.WorldCensus collectWorldCensus(MinecraftServer server) {
+        if (!ModRuntime.config().countEntities()) {
+            return WatchtowerSample.WorldCensus.empty();
+        }
+        List<WatchtowerSample.DimensionCensus> rows = new ArrayList<>();
+        for (ServerLevel level : server.getAllLevels()) {
+            String dimId = level.dimension().location().toString();
+            long entities = 0;
+            long items = 0;
+            long living = 0;
+            Map<String, Long> byType = new HashMap<>();
+            for (Entity e : level.getAllEntities()) {
+                entities++;
+                if (e instanceof ItemEntity) {
+                    items++;
+                } else if (e instanceof LivingEntity) {
+                    living++;
+                }
+                ResourceLocation rl = BuiltInRegistries.ENTITY_TYPE.getKey(e.getType());
+                String typeKey = rl != null ? rl.toString() : "unknown";
+                byType.merge(typeKey, 1L, Long::sum);
+            }
+            long loadedChunks = level.getChunkSource().getLoadedChunksCount();
+            ChunkLoadBreakdown.Counts load = ChunkLoadBreakdown.collect(level);
+            int players = level.players().size();
+            rows.add(new WatchtowerSample.DimensionCensus(
+                    dimId,
+                    entities,
+                    items,
+                    living,
+                    loadedChunks,
+                    load.vanillaForced(),
+                    load.spawnChunks(),
+                    load.modForced(),
+                    players,
+                    topN(byType, 8)));
+        }
+        rows.sort(Comparator.comparingLong(WatchtowerSample.DimensionCensus::entities).reversed());
+        if (rows.size() > MAX_CENSUS_DIMENSIONS) {
+            rows = new ArrayList<>(rows.subList(0, MAX_CENSUS_DIMENSIONS));
+        }
+        return new WatchtowerSample.WorldCensus(Instant.now(), List.copyOf(rows));
+    }
+
+    private static List<WatchtowerSample.TypeCount> topN(Map<String, Long> byType, int n) {
+        return byType.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(n)
+                .map(e -> new WatchtowerSample.TypeCount(e.getKey(), e.getValue()))
+                .toList();
     }
 
     public static WatchtowerSample.HeapMb sampleHeapOnly() {

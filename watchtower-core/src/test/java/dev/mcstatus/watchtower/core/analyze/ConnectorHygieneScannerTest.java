@@ -13,21 +13,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class ConnectorHygieneScannerTest {
 
     @Test
-    void warnsWhenConnectorPlusSodium() throws Exception {
+    void warnsWhenConnectorPresent() throws Exception {
         JsonArray mods = JsonParser.parseString(Files.readString(fixture("connector-sodium.json")))
                 .getAsJsonObject().getAsJsonArray("mods");
         JsonArray warnings = ConnectorHygieneScanner.scan(mods);
-        assertFalse(warnings.isEmpty());
-        boolean hasSodium = false;
-        for (var el : warnings) {
-            if ("sodium".equals(el.getAsJsonObject().get("mod_id").getAsString())) {
-                hasSodium = true;
-            }
-        }
-        assertTrue(hasSodium);
-        assertEquals("embeddium", warnings.get(0).getAsJsonObject().get("analogue_id").getAsString());
-        assertEquals("Embeddium", warnings.get(0).getAsJsonObject().get("analogue_name").getAsString());
-        assertTrue(warnings.get(0).getAsJsonObject().get("boot_only").getAsBoolean());
+        assertEquals(1, warnings.size());
+        JsonObject row = warnings.get(0).getAsJsonObject();
+        assertEquals("connector", row.get("mod_id").getAsString());
+        assertEquals("connector_present", row.get("kind").getAsString());
+        assertTrue(row.get("boot_only").getAsBoolean());
+        assertFalse(row.get("blocking").getAsBoolean());
+        assertTrue(row.get("message").getAsString().toLowerCase().contains("unstable"));
+        assertFalse(row.has("analogue_name"));
     }
 
     @Test

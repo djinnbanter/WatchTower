@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+/**
+ * Sync brand assets and screenshots into public/ for the marketing site.
+ * Output dirs (generated — do not commit):
+ *   public/screenshots/  ← docs/assets/screenshots/
+ *   public/brand/        ← web/dashboard/assets/ (or dist/assets/ fallback)
+ */
+import { cpSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const REPO = join(ROOT, '..', '..');
+const shotsSrc = join(REPO, 'docs', 'assets', 'screenshots');
+const assetsDir = join(REPO, 'web', 'dashboard', 'assets');
+const distAssetsDir = join(REPO, 'web', 'dashboard', 'dist', 'assets');
+const brandSrc = existsSync(assetsDir) ? assetsDir : distAssetsDir;
+const shotsDest = join(ROOT, 'public', 'screenshots');
+const brandDest = join(ROOT, 'public', 'brand');
+
+mkdirSync(shotsDest, { recursive: true });
+mkdirSync(brandDest, { recursive: true });
+
+if (!existsSync(shotsSrc)) {
+  console.error('sync-brand-assets: missing', shotsSrc);
+  process.exit(1);
+}
+
+for (const name of readdirSync(shotsSrc)) {
+  if (!/\.(png|webp|jpg|jpeg|svg)$/i.test(name)) continue;
+  cpSync(join(shotsSrc, name), join(shotsDest, name));
+}
+
+if (!existsSync(brandSrc)) {
+  console.error('sync-brand-assets: missing brand source', brandSrc);
+  process.exit(1);
+}
+
+const brandFiles = [
+  'watchtower-logo.png',
+  'watchtower-logo-light.png',
+  'watchtower-wordmark.png',
+  'watchtower-icon.png',
+  'watchtower-favicon.png',
+  'watchtower-icon-simple.png',
+  'favicon.png',
+];
+for (const name of brandFiles) {
+  const src = join(brandSrc, name);
+  if (!existsSync(src)) {
+    console.warn('sync-brand-assets: skip missing', name);
+    continue;
+  }
+  cpSync(src, join(brandDest, name));
+}
+
+console.log('sync-brand-assets: ok → public/screenshots + public/brand');

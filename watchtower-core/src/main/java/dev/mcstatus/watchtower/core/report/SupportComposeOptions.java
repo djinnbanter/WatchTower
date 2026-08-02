@@ -18,6 +18,8 @@ public final class SupportComposeOptions {
 
     public static final long SOFT_BUDGET_BYTES = 25L * 1024 * 1024;
     public static final long HARD_BUDGET_BYTES = 100L * 1024 * 1024;
+    /** Full evidence keeps complete history on purpose; the UI warns about size instead of trimming. */
+    public static final long FULL_EVIDENCE_MAX_BYTES = 512L * 1024 * 1024;
     public static final long DEFAULT_MAX_SPARK_BYTES = 8L * 1024 * 1024;
     public static final long DEFAULT_MAX_CRASH_BYTES = 2L * 1024 * 1024;
     public static final long DEFAULT_MAX_LOG_BYTES_TOTAL = 50L * 1024 * 1024;
@@ -96,6 +98,7 @@ public final class SupportComposeOptions {
     private final List<String> crashFiles;
     private final List<String> sparkPaths;
     private final int crashLastN;
+    private final boolean qualityGateOverride;
 
     private SupportComposeOptions(Builder b) {
         this.preset = b.preset != null ? b.preset : Preset.QUICK;
@@ -126,6 +129,7 @@ public final class SupportComposeOptions {
         this.crashFiles = List.copyOf(b.crashFiles);
         this.sparkPaths = List.copyOf(b.sparkPaths);
         this.crashLastN = Math.max(0, b.crashLastN);
+        this.qualityGateOverride = b.qualityGateOverride;
     }
 
     /** Phase-0 / CLI / schedule: match pre-builder behavior (500-line latest tail + one Spark). */
@@ -206,7 +210,8 @@ public final class SupportComposeOptions {
                     .includeSnapshot(true)
                     .includeRollups(true)
                     .includeLiveHistory(true)
-                    .liveHistoryMinutes(60)
+                    .liveHistoryMinutes(0)
+                    .maxZipEvidenceBytes(FULL_EVIDENCE_MAX_BYTES)
                     .rollupsHours(24 * 7)
                     .logs(List.of(new LogSelection("latest.log", LogMode.TAIL, 5000)))
                     .build();
@@ -301,6 +306,7 @@ public final class SupportComposeOptions {
             }
             b.sparkPaths(paths);
         }
+        applyBool(json, "quality_gate_override", b::qualityGateOverride);
         return b.build();
     }
 
@@ -346,6 +352,7 @@ public final class SupportComposeOptions {
         JsonArray sparkArr = new JsonArray();
         sparkPaths.forEach(sparkArr::add);
         o.add("spark_paths", sparkArr);
+        o.addProperty("quality_gate_override", qualityGateOverride);
         return o;
     }
 
@@ -382,7 +389,8 @@ public final class SupportComposeOptions {
                 .logs(logs)
                 .crashFiles(crashFiles)
                 .sparkPaths(sparkPaths)
-                .crashLastN(crashLastN);
+                .crashLastN(crashLastN)
+                .qualityGateOverride(qualityGateOverride);
     }
 
     public Preset preset() { return preset; }
@@ -413,6 +421,7 @@ public final class SupportComposeOptions {
     public List<String> crashFiles() { return crashFiles; }
     public List<String> sparkPaths() { return sparkPaths; }
     public int crashLastN() { return crashLastN; }
+    public boolean qualityGateOverride() { return qualityGateOverride; }
 
     private static String str(JsonObject o, String key) {
         return o.has(key) && o.get(key).isJsonPrimitive() ? o.get(key).getAsString() : "";
@@ -453,6 +462,7 @@ public final class SupportComposeOptions {
         private List<String> crashFiles = new ArrayList<>();
         private List<String> sparkPaths = new ArrayList<>();
         private int crashLastN;
+        private boolean qualityGateOverride;
 
         public Builder preset(Preset v) { this.preset = v; return this; }
         public Builder category(String v) { this.category = v; return this; }
@@ -491,6 +501,7 @@ public final class SupportComposeOptions {
             return this;
         }
         public Builder crashLastN(int v) { this.crashLastN = v; return this; }
+        public Builder qualityGateOverride(boolean v) { this.qualityGateOverride = v; return this; }
 
         public SupportComposeOptions build() {
             return new SupportComposeOptions(this);

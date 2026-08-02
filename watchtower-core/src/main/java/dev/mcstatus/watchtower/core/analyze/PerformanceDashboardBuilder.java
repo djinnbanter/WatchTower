@@ -78,13 +78,20 @@ public final class PerformanceDashboardBuilder {
             xmxGb = context.xmxGb();
             xmxSource = context.xmxSource() != null ? context.xmxSource() : "live";
         }
+        double hostMemGb = Double.NaN;
+        String ramSource = null;
+        if (context != null && context.hostMemGb() != null && context.hostMemGb() > 0) {
+            hostMemGb = context.hostMemGb();
+            ramSource = context.ramSource();
+        }
         JsonObject gcIn = PerformanceInsightEngine.buildWindowGcAdvisorInput(ramStats, msptWarn);
         if (!Double.isNaN(xmxGb)) {
             gcIn.addProperty("xmx_gb", xmxGb);
         }
         JsonObject gcOut = GcAdvisor.evaluate(gcIn);
         String gcVerdict = gcOut.has("verdict") ? gcOut.get("verdict").getAsString() : GcAdvisor.VERDICT_HEALTHY;
-        JsonObject ramSizing = RamSizingAdvisor.evaluate(win, ramStats, xmxGb, xmxSource, gcVerdict);
+        JsonObject ramSizing = RamSizingAdvisor.evaluate(
+                win, ramStats, xmxGb, xmxSource, gcVerdict, hostMemGb, ramSource);
         out.add("ram_sizing", ramSizing);
         attachAlignedJvmRecommendedFlags(out, ramSizing, xmxGb);
 
@@ -133,6 +140,8 @@ public final class PerformanceDashboardBuilder {
             }
             out.add("correlations", corr);
         }
+
+        out.add("world_pressure_compare", WorldPressureAnalyzer.compareBaselines(current, win));
 
         return out;
     }

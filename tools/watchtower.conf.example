@@ -36,6 +36,35 @@ PANEL=auto
 # SPARK_AUTO_CAPTURE_COOLDOWN_SEC=900
 # SPARK_AUTO_CAPTURE_COPY_TO_UPLOAD=true
 
+# --- Weekly ops digest (Insights → Digest + Overview teaser) ---
+# WEEKLY_DIGEST_ENABLED=true
+# WEEKLY_DIGEST_INTERVAL_DAYS=7
+# WEEKLY_DIGEST_HISTORY_MAX=8
+
+# --- Pack drift lock + client-only Issues ---
+# MOD_JAR_DRIFT_ENABLED=true
+# CLIENT_ON_SERVER_ISSUES_ENABLED=true
+# EXTERNAL_KILL_DETECT_ENABLED=true
+# RESTART_HYGIENE_ENABLED=true
+# Advisory only — never starts or schedules a restart.
+# SILENT_FAIL_DETECT_ENABLED=true
+# WORLD_PRESSURE_ENABLED=true
+# CHUNK_WRITE_PRESSURE_ENABLED=true
+# JOIN_CLINIC_ENABLED=true
+# Soft jar disable/enable + world-risk badges (1.1.19)
+# MOD_DISABLE_ENABLED=true
+# MOD_CONFIG_EDIT_ENABLED=true
+# WORLD_RISK_ENABLED=true
+# Per-dimension entity/chunk census + farm/chunk-loader advice (read-only; never kills entities)
+# Surfaces KubeJS / CraftTweaker / datapack /reload silent fails as Issues (no auto-edit).
+# Surfaces Forge/NeoForge/Fabric join rejections as a Session clinic + Issues (read-only).
+# Soft-disable renames mods/*.jar ↔ *.jar.disabled (admin+); world-risk badge/confirm when dims look tied to a mod.
+# Backup integrity verify (1.1.20) — light zip/tar.gz checks; test restore under watchtower/restore-verify/
+# BACKUP_VERIFY_AUTO=true
+# BACKUP_VERIFY_DEFER_WHEN_PLAYERS=true
+# BACKUP_VERIFY_MAX_MSPT=40
+# BACKUP_TEST_RESTORE_ENABLED=true
+
 # --- Java process detection (extended regex, case-insensitive) ---
 JAVA_PATTERN=forge|neoforge|fabric|minecraft.*jar|unix_args
 
@@ -46,6 +75,11 @@ JAVA_PATTERN=forge|neoforge|fabric|minecraft.*jar|unix_args
 DISK_WARN_PCT=85
 MEM_WARN_AVAIL_GB=2
 LOG_STALE_MINUTES=15
+# Soft hang / freeze Issues (1.1.22)
+# SOFT_HANG_ENABLED=true
+# SOFT_HANG_SECONDS=90
+# SOFT_HANG_THREAD_DUMP=false
+# SOFT_HANG_COOLDOWN_MIN=15
 CANT_KEEP_UP_WARN=5
 MSPT_WARN=50
 TPS_WARN=19.5
@@ -60,6 +94,9 @@ LOG_TAIL_LINES=80
 LOG_GZIP_COUNT=5
 
 # --- Backups ---
+# Age (hours) before newest backup is Stale / BACKUP_STALE Issue (default 24).
+# Fresh ≈ this/4, Aging ≤ this. Separate from BACKUP_WARN_DAYS (longer Crafty/nudge window).
+# BACKUP_STALE_HOURS=24
 # BACKUP_DIR=/var/opt/minecraft/crafty/crafty-4/backups
 
 # --- Incremental collection (since last successful run) ---

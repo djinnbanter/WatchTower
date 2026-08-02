@@ -5,8 +5,22 @@
   "ops_cache_seq": 3,
   "activity": {
     "scanned_at": "2026-06-22T14:05:00+00:00",
-    "new_count": 4,
+    "new_count": 7,
     "events": [
+      {
+        "time": "2026-06-22T14:06:00+00:00",
+        "type": "mod_jar_added",
+        "detail": "create-1.21.1-6.0.0.jar",
+        "source": "scan",
+        "path": "create-1.21.1-6.0.0.jar"
+      },
+      {
+        "time": "2026-06-22T14:05:30+00:00",
+        "type": "config_changed",
+        "detail": "config/create-common.toml",
+        "source": "scan",
+        "path": "config/create-common.toml"
+      },
       {
         "time": "2026-06-22T14:05:00+00:00",
         "type": "tick_lag",
@@ -33,6 +47,13 @@
         "detail": "Lag spike captured",
         "source": "scan",
         "incident_id": "2026-06-22T14-03-12Z"
+      },
+      {
+        "time": "2026-06-22T14:02:00+00:00",
+        "type": "mod_disabled",
+        "detail": "dimdoors-1.21.jar → dimdoors-1.21.jar.disabled",
+        "source": "dashboard",
+        "path": "dimdoors-1.21.jar.disabled"
       }
     ]
   },

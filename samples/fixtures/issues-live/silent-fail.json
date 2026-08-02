@@ -1,0 +1,32 @@
+{
+  "silent_fails": {
+    "scanned_at": "2026-07-28T20:00:00Z",
+    "new_count": 2,
+    "entries": [
+      {
+        "key": "kubejs|kubejs/server_scripts/machines.js:42",
+        "kind": "kubejs",
+        "severity": "warning",
+        "title": "KubeJS script error",
+        "path": "kubejs/server_scripts/machines.js",
+        "line": 42,
+        "sample_line": "[Server thread/ERROR] [KubeJS Server/]: Error running event handler (kubejs/server_scripts/machines.js:42): thermal:machine_furnace is not a valid recipe",
+        "first_seen": "2026-07-28T19:40:00Z",
+        "first_seen_epoch": 1753734000,
+        "last_seen": "2026-07-28T20:00:00Z",
+        "last_seen_epoch": 1753735200
+      },
+      {
+        "key": "reload_failed|abcdef01",
+        "kind": "reload_failed",
+        "severity": "info",
+        "title": "/reload command failed",
+        "sample_line": "[Server thread/ERROR]: Failed to execute reload",
+        "first_seen": "2026-07-28T19:50:00Z",
+        "first_seen_epoch": 1753734600,
+        "last_seen": "2026-07-28T20:00:00Z",
+        "last_seen_epoch": 1753735200
+      }
+    ]
+  }
+}

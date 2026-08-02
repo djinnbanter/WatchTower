@@ -1,0 +1,29 @@
+{
+  "raw": {
+    "kind": "mismatched_channel",
+    "platform": "neoforge",
+    "player": "FriendName",
+    "mod_ids": ["modmenu"],
+    "reason": "mismatched channels",
+    "confidence": "high",
+    "time": "2026-07-29T20:15:01Z",
+    "sample_line": "FriendName lost connection: mismatched channels: [modmenu:main]"
+  },
+  "cache": {
+    "running_mods": {
+      "mods": [
+        {"id": "create", "version": "6.0.0", "display_name": "Create"}
+      ]
+    },
+    "mods_light": {
+      "client_only_mods": [
+        {
+          "mod_id": "modmenu",
+          "bucket": "likely_removable",
+          "confidence": "high",
+          "reason": "Client UI mod"
+        }
+      ]
+    }
+  }
+}

@@ -6,6 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.mcstatus.watchtower.core.analyze.BackupVerifyAttacher;
+import dev.mcstatus.watchtower.core.analyze.JoinClinicAnalyzer;
 import dev.mcstatus.watchtower.core.collect.CrashMtimeScanner;
 import dev.mcstatus.watchtower.core.collect.RunningModsCollector;
 import dev.mcstatus.watchtower.core.incident.IncidentReader;
@@ -82,6 +84,8 @@ public final class OpsCacheWriter {
                 scan.newCount(),
                 scan.events(),
                 new JsonArray(),
+                List.of(),
+                List.of(),
                 List.of(),
                 List.of(),
                 scan.updatedOffset(),
@@ -188,6 +192,19 @@ public final class OpsCacheWriter {
             modIssues.add(OpsCacheSchema.MOD_ISSUES_ENTRIES, modPeek);
             cache.add(OpsCacheSchema.MOD_ISSUES, modIssues);
 
+            JsonArray mergedSilentFails = mergeSilentFails(cache, scan.silentFails());
+            JsonObject silentFailBlock = new JsonObject();
+            silentFailBlock.addProperty(OpsCacheSchema.SILENT_FAILS_SCANNED_AT, now.format(ISO));
+            silentFailBlock.addProperty(OpsCacheSchema.SILENT_FAILS_NEW_COUNT, scan.silentFails().size());
+            silentFailBlock.add(OpsCacheSchema.SILENT_FAILS_ENTRIES, mergedSilentFails);
+            cache.add(OpsCacheSchema.SILENT_FAILS, silentFailBlock);
+
+            JsonObject prevClinic = cache.has(OpsCacheSchema.JOIN_CLINIC)
+                    && cache.get(OpsCacheSchema.JOIN_CLINIC).isJsonObject()
+                    ? cache.getAsJsonObject(OpsCacheSchema.JOIN_CLINIC) : null;
+            JsonObject clinic = JoinClinicAnalyzer.analyze(scan.joinRejections(), cache, prevClinic);
+            cache.add(OpsCacheSchema.JOIN_CLINIC, clinic);
+
             if (logStale != null) {
                 cache.add(OpsCacheSchema.LOG_STALE, logStale.deepCopy());
             }
@@ -273,7 +290,7 @@ public final class OpsCacheWriter {
     ) throws IOException {
         return refreshIssuesLive(
                 opsCachePath, statePath, backupTrackingEnabled,
-                IssuesLiveEvaluators.DEFAULT_DISK_FILL_WARN_DAYS);
+                IssuesLiveEvaluators.DEFAULT_DISK_FILL_WARN_DAYS, true, true, true, true, true);
     }
 
     public static JsonObject refreshIssuesLive(
@@ -282,12 +299,120 @@ public final class OpsCacheWriter {
             boolean backupTrackingEnabled,
             double diskFillWarnDays
     ) throws IOException {
+        return refreshIssuesLive(
+                opsCachePath, statePath, backupTrackingEnabled, diskFillWarnDays, true, true, true, true, true);
+    }
+
+    public static JsonObject refreshIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            boolean backupTrackingEnabled,
+            double diskFillWarnDays,
+            boolean clientOnServerIssuesEnabled
+    ) throws IOException {
+        return refreshIssuesLive(
+                opsCachePath, statePath, backupTrackingEnabled, diskFillWarnDays,
+                clientOnServerIssuesEnabled, true, true, true, true);
+    }
+
+    public static JsonObject refreshIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            boolean backupTrackingEnabled,
+            double diskFillWarnDays,
+            boolean clientOnServerIssuesEnabled,
+            boolean externalKillDetectEnabled
+    ) throws IOException {
+        return refreshIssuesLive(
+                opsCachePath, statePath, backupTrackingEnabled, diskFillWarnDays,
+                clientOnServerIssuesEnabled, externalKillDetectEnabled, true, true, true);
+    }
+
+    public static JsonObject refreshIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            boolean backupTrackingEnabled,
+            double diskFillWarnDays,
+            boolean clientOnServerIssuesEnabled,
+            boolean externalKillDetectEnabled,
+            boolean silentFailDetectEnabled
+    ) throws IOException {
+        return refreshIssuesLive(
+                opsCachePath, statePath, backupTrackingEnabled, diskFillWarnDays,
+                clientOnServerIssuesEnabled, externalKillDetectEnabled, silentFailDetectEnabled, true, true);
+    }
+
+    public static JsonObject refreshIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            boolean backupTrackingEnabled,
+            double diskFillWarnDays,
+            boolean clientOnServerIssuesEnabled,
+            boolean externalKillDetectEnabled,
+            boolean silentFailDetectEnabled,
+            boolean worldPressureEnabled
+    ) throws IOException {
+        return refreshIssuesLive(
+                opsCachePath, statePath, backupTrackingEnabled, diskFillWarnDays,
+                clientOnServerIssuesEnabled, externalKillDetectEnabled, silentFailDetectEnabled,
+                worldPressureEnabled, true);
+    }
+
+    public static JsonObject refreshIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            boolean backupTrackingEnabled,
+            double diskFillWarnDays,
+            boolean clientOnServerIssuesEnabled,
+            boolean externalKillDetectEnabled,
+            boolean silentFailDetectEnabled,
+            boolean worldPressureEnabled,
+            boolean joinClinicEnabled
+    ) throws IOException {
+        return refreshIssuesLive(opsCachePath, statePath, backupTrackingEnabled, diskFillWarnDays,
+                clientOnServerIssuesEnabled, externalKillDetectEnabled, silentFailDetectEnabled,
+                worldPressureEnabled, joinClinicEnabled, true);
+    }
+
+    public static JsonObject refreshIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            boolean backupTrackingEnabled,
+            double diskFillWarnDays,
+            boolean clientOnServerIssuesEnabled,
+            boolean externalKillDetectEnabled,
+            boolean silentFailDetectEnabled,
+            boolean worldPressureEnabled,
+            boolean joinClinicEnabled,
+            boolean worldRiskEnabled
+    ) throws IOException {
+        return refreshIssuesLive(opsCachePath, statePath, backupTrackingEnabled, diskFillWarnDays,
+                clientOnServerIssuesEnabled, externalKillDetectEnabled, silentFailDetectEnabled,
+                worldPressureEnabled, joinClinicEnabled, worldRiskEnabled,
+                IssuesLiveEvaluators.BACKUP_FRESH_HOURS);
+    }
+
+    public static JsonObject refreshIssuesLive(
+            Path opsCachePath,
+            Path statePath,
+            boolean backupTrackingEnabled,
+            double diskFillWarnDays,
+            boolean clientOnServerIssuesEnabled,
+            boolean externalKillDetectEnabled,
+            boolean silentFailDetectEnabled,
+            boolean worldPressureEnabled,
+            boolean joinClinicEnabled,
+            boolean worldRiskEnabled,
+            double backupStaleHours
+    ) throws IOException {
         synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
             JsonObject cache = OpsCacheReader.load(opsCachePath);
             String now = ZonedDateTime.now(ZoneId.systemDefault()).format(ISO);
             List<IssuesLiveRecord> existing = IssuesLiveStore.readAll(cache);
             List<IssuesLiveRecord> merged = IssuesLiveEvaluators.evaluateAndMerge(
-                    cache, existing, backupTrackingEnabled, now, diskFillWarnDays);
+                    cache, existing, backupTrackingEnabled, now, diskFillWarnDays,
+                    clientOnServerIssuesEnabled, externalKillDetectEnabled, silentFailDetectEnabled,
+                    worldPressureEnabled, joinClinicEnabled, worldRiskEnabled, backupStaleHours);
             IssuesLiveStore.writeAll(cache, merged, now);
             cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
             cache.addProperty(OpsCacheSchema.UPDATED_AT, now);
@@ -419,6 +544,153 @@ public final class OpsCacheWriter {
         }
     }
 
+    /**
+     * Persist world-pressure analysis, carrying forward streaks and classifier first_seen.
+     */
+    public static JsonObject applyWorldPressure(
+            Path opsCachePath,
+            Path statePath,
+            JsonObject block
+    ) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            String now = ZonedDateTime.now(ZoneId.systemDefault()).format(ISO);
+            JsonObject prev = cache.has(OpsCacheSchema.WORLD_PRESSURE)
+                    && cache.get(OpsCacheSchema.WORLD_PRESSURE).isJsonObject()
+                    ? cache.getAsJsonObject(OpsCacheSchema.WORLD_PRESSURE) : null;
+
+            JsonObject next = block != null ? block.deepCopy() : new JsonObject();
+            if (!next.has(OpsCacheSchema.WORLD_PRESSURE_SCANNED_AT)) {
+                next.addProperty(OpsCacheSchema.WORLD_PRESSURE_SCANNED_AT, now);
+            }
+
+            // Carry first_seen from previous classifiers of the same kind:dimension
+            Map<String, String> prevFirstSeen = new LinkedHashMap<>();
+            if (prev != null && prev.has(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS)
+                    && prev.get(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS).isJsonArray()) {
+                for (JsonElement el : prev.getAsJsonArray(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS)) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject c = el.getAsJsonObject();
+                    String kind = c.has("kind") ? c.get("kind").getAsString() : "";
+                    String dim = c.has("dimension") ? c.get("dimension").getAsString() : "";
+                    if (kind.isBlank() || dim.isBlank()) {
+                        continue;
+                    }
+                    if (c.has("first_seen") && !c.get("first_seen").isJsonNull()) {
+                        prevFirstSeen.put(kind + ":" + dim, c.get("first_seen").getAsString());
+                    }
+                }
+            }
+            if (next.has(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS)
+                    && next.get(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS).isJsonArray()) {
+                for (JsonElement el : next.getAsJsonArray(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS)) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject c = el.getAsJsonObject();
+                    String kind = c.has("kind") ? c.get("kind").getAsString() : "";
+                    String dim = c.has("dimension") ? c.get("dimension").getAsString() : "";
+                    String key = kind + ":" + dim;
+                    String first = prevFirstSeen.getOrDefault(key, now);
+                    c.addProperty("first_seen", first);
+                    c.addProperty("last_seen", now);
+                }
+            }
+
+            // Prefer analyzer streaks; fall back to previous if missing
+            if (!next.has(OpsCacheSchema.WORLD_PRESSURE_STREAKS)
+                    || !next.get(OpsCacheSchema.WORLD_PRESSURE_STREAKS).isJsonObject()) {
+                if (prev != null && prev.has(OpsCacheSchema.WORLD_PRESSURE_STREAKS)
+                        && prev.get(OpsCacheSchema.WORLD_PRESSURE_STREAKS).isJsonObject()) {
+                    next.add(OpsCacheSchema.WORLD_PRESSURE_STREAKS,
+                            prev.getAsJsonObject(OpsCacheSchema.WORLD_PRESSURE_STREAKS).deepCopy());
+                } else {
+                    next.add(OpsCacheSchema.WORLD_PRESSURE_STREAKS, new JsonObject());
+                }
+            }
+
+            cache.add(OpsCacheSchema.WORLD_PRESSURE, next);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now);
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /**
+     * Persist soft-hang / freeze peek for Issues live.
+     */
+    public static JsonObject applySoftHang(Path opsCachePath, JsonObject softHang) throws IOException {
+        return applySoftHang(opsCachePath, null, softHang);
+    }
+
+    public static JsonObject applySoftHang(Path opsCachePath, Path statePath, JsonObject softHang) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            String now = ZonedDateTime.now(ZoneId.systemDefault()).format(ISO);
+            if (softHang != null) {
+                cache.add(OpsCacheSchema.SOFT_HANG, softHang.deepCopy());
+            } else {
+                cache.remove(OpsCacheSchema.SOFT_HANG);
+            }
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now);
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /**
+     * Prepend a weekly digest entry and cap history to {@code historyMax} (newest-first).
+     */
+    public static JsonObject applyWeeklyDigest(
+            Path opsCachePath,
+            Path statePath,
+            JsonObject entry,
+            int historyMax
+    ) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            JsonObject block = cache.has(OpsCacheSchema.WEEKLY_DIGEST)
+                    && cache.get(OpsCacheSchema.WEEKLY_DIGEST).isJsonObject()
+                    ? cache.getAsJsonObject(OpsCacheSchema.WEEKLY_DIGEST)
+                    : new JsonObject();
+            JsonArray history = block.has(OpsCacheSchema.WEEKLY_DIGEST_HISTORY)
+                    && block.get(OpsCacheSchema.WEEKLY_DIGEST_HISTORY).isJsonArray()
+                    ? block.getAsJsonArray(OpsCacheSchema.WEEKLY_DIGEST_HISTORY)
+                    : new JsonArray();
+            JsonArray next = new JsonArray();
+            if (entry != null) {
+                next.add(entry);
+            }
+            for (JsonElement el : history) {
+                next.add(el);
+            }
+            int cap = Math.max(1, historyMax);
+            while (next.size() > cap) {
+                next.remove(next.size() - 1);
+            }
+            block.add(OpsCacheSchema.WEEKLY_DIGEST_HISTORY, next);
+            block.addProperty(OpsCacheSchema.UPDATED_AT, ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
+            cache.add(OpsCacheSchema.WEEKLY_DIGEST, block);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, ZonedDateTime.now(ZoneId.systemDefault()).format(ISO));
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
     public static JsonObject applyBackupsLive(
             Path opsCachePath,
             Path statePath,
@@ -446,8 +718,13 @@ public final class OpsCacheWriter {
                 }
             }
             if (backupInventory != null && backupInventory.isJsonArray()) {
-                JsonArray inv = backupInventory.getAsJsonArray();
-                block.add("inventory", inv.deepCopy());
+                JsonObject previous = cache.has(OpsCacheSchema.BACKUPS_LIVE)
+                        && cache.get(OpsCacheSchema.BACKUPS_LIVE).isJsonObject()
+                        ? cache.getAsJsonObject(OpsCacheSchema.BACKUPS_LIVE)
+                        : null;
+                JsonArray inv = BackupVerifyAttacher.mergePreserving(
+                        backupInventory.getAsJsonArray(), previous);
+                block.add("inventory", inv);
                 double totalGb = 0;
                 for (JsonElement el : inv) {
                     if (el.isJsonObject() && el.getAsJsonObject().has("size_gb")
@@ -462,6 +739,43 @@ public final class OpsCacheWriter {
             } else if (backupInventory != null) {
                 block.add("inventory_summary", backupInventory.deepCopy());
             }
+            cache.add(OpsCacheSchema.BACKUPS_LIVE, block);
+            cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
+            cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
+            if (statePath != null) {
+                cache.addProperty(OpsCacheSchema.OPS_CACHE_SEQ, StateManager.incrementOpsCacheSeq(statePath));
+            }
+            writeAtomicUnlocked(opsCachePath, cache);
+            return cache;
+        }
+    }
+
+    /** Update {@code verify} on a single inventory row by absolute path. */
+    public static JsonObject applyBackupVerify(
+            Path opsCachePath,
+            Path statePath,
+            String backupPath,
+            JsonObject verify
+    ) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(opsCachePath)) {
+            JsonObject cache = OpsCacheReader.load(opsCachePath);
+            if (!cache.has(OpsCacheSchema.BACKUPS_LIVE) || !cache.get(OpsCacheSchema.BACKUPS_LIVE).isJsonObject()) {
+                return cache;
+            }
+            JsonObject block = cache.getAsJsonObject(OpsCacheSchema.BACKUPS_LIVE).deepCopy();
+            if (block.has("inventory") && block.get("inventory").isJsonArray() && verify != null) {
+                String key = BackupVerifyAttacher.normalizePath(backupPath);
+                for (JsonElement el : block.getAsJsonArray("inventory")) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject item = el.getAsJsonObject();
+                    if (key.equals(BackupVerifyAttacher.pathKey(item))) {
+                        item.add("verify", verify.deepCopy());
+                    }
+                }
+            }
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
             cache.add(OpsCacheSchema.BACKUPS_LIVE, block);
             cache.addProperty(OpsCacheSchema.SCHEMA_VERSION_KEY, OpsCacheSchema.SCHEMA_VERSION);
             cache.addProperty(OpsCacheSchema.UPDATED_AT, now.format(ISO));
@@ -648,6 +962,99 @@ public final class OpsCacheWriter {
         String cat = row.has("top_category") ? row.get("top_category").getAsString()
                 : (row.has("by_category") ? firstCategory(row) : "logger_error");
         return modId + "|" + cat;
+    }
+
+    private static JsonArray mergeSilentFails(JsonObject cache, List<JsonObject> incoming) {
+        Map<String, JsonObject> merged = new LinkedHashMap<>();
+        long cutoff = Instant.now().getEpochSecond()
+                - (long) OpsCacheSchema.SILENT_FAIL_RETENTION_DAYS * 86400L;
+        String nowIso = ZonedDateTime.now(ZoneId.systemDefault()).format(ISO);
+        long nowEpoch = Instant.now().getEpochSecond();
+
+        if (cache.has(OpsCacheSchema.SILENT_FAILS)
+                && cache.get(OpsCacheSchema.SILENT_FAILS).isJsonObject()) {
+            JsonObject block = cache.getAsJsonObject(OpsCacheSchema.SILENT_FAILS);
+            if (block.has(OpsCacheSchema.SILENT_FAILS_ENTRIES)
+                    && block.get(OpsCacheSchema.SILENT_FAILS_ENTRIES).isJsonArray()) {
+                for (JsonElement el : block.getAsJsonArray(OpsCacheSchema.SILENT_FAILS_ENTRIES)) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject row = el.getAsJsonObject();
+                    if (row.has("last_seen_epoch") && row.get("last_seen_epoch").getAsLong() < cutoff) {
+                        continue;
+                    }
+                    String key = silentFailKey(row);
+                    JsonObject copy = row.deepCopy();
+                    if (!copy.has("key") || copy.get("key").getAsString().isBlank()) {
+                        copy.addProperty("key", key);
+                    }
+                    merged.put(key, copy);
+                }
+            }
+        }
+
+        if (incoming != null) {
+            for (JsonObject in : incoming) {
+                if (in == null) {
+                    continue;
+                }
+                JsonObject row = in.deepCopy();
+                String key = silentFailKey(row);
+                row.addProperty("key", key);
+                row.addProperty("last_seen", nowIso);
+                row.addProperty("last_seen_epoch", nowEpoch);
+                if (merged.containsKey(key)) {
+                    JsonObject existing = merged.get(key);
+                    if (existing.has("first_seen")) {
+                        row.addProperty("first_seen", existing.get("first_seen").getAsString());
+                    }
+                    if (existing.has("first_seen_epoch")) {
+                        row.addProperty("first_seen_epoch", existing.get("first_seen_epoch").getAsLong());
+                    }
+                } else {
+                    row.addProperty("first_seen", nowIso);
+                    row.addProperty("first_seen_epoch", nowEpoch);
+                }
+                merged.put(key, row);
+            }
+        }
+
+        JsonArray arr = new JsonArray();
+        merged.values().stream()
+                .sorted((a, b) -> Long.compare(
+                        b.has("last_seen_epoch") ? b.get("last_seen_epoch").getAsLong() : 0L,
+                        a.has("last_seen_epoch") ? a.get("last_seen_epoch").getAsLong() : 0L))
+                .limit(100)
+                .forEach(arr::add);
+        return arr;
+    }
+
+    private static String silentFailKey(JsonObject row) {
+        if (row.has("key") && !row.get("key").isJsonNull()) {
+            String existing = row.get("key").getAsString();
+            if (existing != null && !existing.isBlank()) {
+                return existing;
+            }
+        }
+        String kind = row.has("kind") && !row.get("kind").isJsonNull()
+                ? row.get("kind").getAsString() : "unknown";
+        String path = row.has("path") && !row.get("path").isJsonNull()
+                ? row.get("path").getAsString() : "";
+        if (path != null && !path.isBlank()) {
+            String line = "";
+            if (row.has("line") && !row.get("line").isJsonNull()) {
+                try {
+                    line = String.valueOf(row.get("line").getAsInt());
+                } catch (Exception ignored) {
+                    line = "";
+                }
+            }
+            return kind + "|" + path + (line.isBlank() ? "" : ":" + line);
+        }
+        String sample = row.has("sample_line") && !row.get("sample_line").isJsonNull()
+                ? row.get("sample_line").getAsString() : "";
+        return kind + "|" + Integer.toHexString(sample != null ? sample.hashCode() : 0);
     }
 
     private static String firstCategory(JsonObject row) {

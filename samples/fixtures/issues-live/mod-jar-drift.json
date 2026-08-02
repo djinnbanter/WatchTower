@@ -1,0 +1,17 @@
+{
+  "mods_inventory": {
+    "diff": {
+      "drift": [
+        {
+          "jar": "swap.jar",
+          "mod_id": "swapmod",
+          "version": "1.0.0",
+          "prev_sha512": "oldhash",
+          "sha512": "newhash",
+          "change": "drift"
+        }
+      ],
+      "drift_count": 1
+    }
+  }
+}

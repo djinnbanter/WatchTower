@@ -123,6 +123,50 @@ public final class CgroupProbe {
         return mem.ramSource() != null && mem.ramSource().startsWith("cgroup");
     }
 
+    /**
+     * Reads the cgroup OOM-kill counter for the current process.
+     * Returns {@code -1} when the counter is unreadable (Windows, no cgroup, permission).
+     */
+    public static long oomKillCount() {
+        return oomKillCount(DEFAULT_SELF_CGROUP, DEFAULT_CGROUP_ROOT);
+    }
+
+    static long oomKillCount(Path selfCgroup, Path cgroupRoot) {
+        CgroupPath path = resolveCgroupPath(selfCgroup, cgroupRoot);
+        if (path == null) {
+            return -1L;
+        }
+        if ("v2".equals(path.version())) {
+            Long count = readKeyValueLong(path.dir().resolve("memory.events"), "oom_kill");
+            return count != null ? count : -1L;
+        }
+        if ("v1".equals(path.version())) {
+            Long count = readKeyValueLong(path.dir().resolve("memory.oom_control"), "oom_kill");
+            return count != null ? count : -1L;
+        }
+        return -1L;
+    }
+
+    private static Long readKeyValueLong(Path path, String key) {
+        if (!Files.isRegularFile(path) || key == null || key.isBlank()) {
+            return null;
+        }
+        try {
+            for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
+                String stripped = line.strip();
+                if (stripped.startsWith(key)) {
+                    String[] parts = stripped.split("\\s+");
+                    if (parts.length >= 2) {
+                        return Long.parseLong(parts[1]);
+                    }
+                }
+            }
+        } catch (IOException | NumberFormatException ignored) {
+            // unreadable
+        }
+        return null;
+    }
+
     private record CgroupPath(Path dir, String version) {
     }
 

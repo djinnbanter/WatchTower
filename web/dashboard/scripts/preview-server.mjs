@@ -1,16 +1,17 @@
 /**
- * Static preview server for the Watchtower dashboard (no MC server required).
- * Regenerates mock metrics, then serves web/dashboard on port 8080.
+ * Static preview server for Watchtower Dashboard Alpha (no MC server required).
+ * Serves this tree on port 8081 with its own fixtures.
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const port = Number(process.env.PORT || 8080);
+const port = Number(process.env.PORT || 8081);
 const faviconPath = join(root, 'assets', 'watchtower-icon-simple.png');
+const previewProfile = (process.argv[2] || process.env.PREVIEW_PROFILE || 'normal').trim().toLowerCase();
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -42,11 +43,14 @@ const EMBEDDED_CSP = {
 
 const usePreviewCsp = process.env.PREVIEW_CSP === '1';
 
-try {
-  await import('./generate-mock-data.mjs');
-} catch (err) {
-  console.warn('Mock regenerate skipped:', err.message || err);
-  console.warn('Serving existing data/ fixtures.');
+const fixtures = spawnSync(process.execPath, ['scripts/apply-preview-profile.mjs', previewProfile], {
+  cwd: root,
+  env: { ...process.env, PREVIEW_PROFILE: previewProfile },
+  stdio: 'inherit',
+});
+if (fixtures.status !== 0) {
+  console.error(`Could not prepare PREVIEW_PROFILE=${previewProfile}; preview server not started.`);
+  process.exit(fixtures.status ?? 1);
 }
 
 const server = createServer(async (req, res) => {
@@ -81,9 +85,10 @@ const server = createServer(async (req, res) => {
 
 server.listen(port, () => {
   const url = `http://127.0.0.1:${port}/`;
-  console.log(`Watchtower static preview: ${url}`);
-  console.log('Favicon: /favicon.ico -> assets/watchtower-icon-simple.png');
-  console.log('Mock metrics refresh on each server start. Press Ctrl+C to stop.');
+  console.log(`Watchtower ALPHA preview: ${url}`);
+  console.log(`Fixture profile: ${previewProfile}`);
+  console.log('Full fixture-backed clone with Bklit/React-Bits visual polish.');
+  console.log('Press Ctrl+C to stop.');
   if (process.env.OPEN_BROWSER !== '0') {
     const open = process.platform === 'win32'
       ? () => spawn('cmd', ['/c', 'start', '', url], { detached: true, stdio: 'ignore' })

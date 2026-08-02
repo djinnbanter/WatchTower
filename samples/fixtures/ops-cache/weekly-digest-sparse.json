@@ -1,0 +1,55 @@
+{
+  "schema_version": 3,
+  "updated_at": "2026-07-28T15:00:00Z",
+  "crashes": {
+    "scanned_at": "2026-07-28T15:00:00Z",
+    "count": 0,
+    "unreviewed": 0,
+    "entries": []
+  },
+  "mods_inventory": {
+    "scanned_at": "2026-07-28T15:00:00Z",
+    "jar_count": 10,
+    "diff": {
+      "has_changes": false,
+      "added_count": 0,
+      "removed_count": 0,
+      "changed_count": 0,
+      "added": [],
+      "removed": [],
+      "changed": []
+    }
+  },
+  "issues_live": [],
+  "scorecard": {
+    "grade": "healthy",
+    "grade_word": "Healthy"
+  },
+  "rollup_rows": [
+    {
+      "ts": "2026-07-28T14:00:00Z",
+      "tps_avg": 20,
+      "mspt_avg": 10
+    },
+    {
+      "ts": "2026-07-28T14:01:00Z",
+      "tps_avg": 20,
+      "mspt_avg": 10
+    }
+  ],
+  "expected": {
+    "grade": "healthy",
+    "grade_trend": "unknown",
+    "performance_trend": "insufficient",
+    "crash_count": 0,
+    "top_action_null": true,
+    "summary_contains": [
+      "grade Healthy",
+      "0 crashes"
+    ],
+    "summary_excludes": [
+      "MSPT",
+      "disk"
+    ]
+  }
+}

@@ -6,7 +6,7 @@
 
 Watchtower is ops software for modded Minecraft servers. It runs **on your machine** — a jar in `mods/`, dashboard on your server. No cloud account. Nothing leaves your host unless you choose to share it.
 
-**Today:** NeoForge **1.21.x** (**1.1.2**) · **Coming later:** Fabric and NeoForge **1.20.x**  
+**Today:** NeoForge **1.21.x** (**1.1.9**) · **Coming later:** Fabric and NeoForge **1.20.x**  
 [Modrinth](https://modrinth.com/mod/watchtower) · [Changelog](../CHANGELOG.md) · [Install guide](https://github.com/djinnbanter/WatchTower/wiki/Installation)
 
 Releases ship when they’re ready — no fake dates. When something lands, it shows up in the [Changelog](../CHANGELOG.md).
@@ -40,6 +40,13 @@ If you install Watchtower now, you already get:
 - **GC / JVM + RAM advice** — Live GC pause % of wall, flags profile, and a conservative “do I need more RAM?” card
 - **Config audit** — read-only keep / tweak / why for `server.properties` and startup flags
 - **Safe to restart? + incident stories** — Overview checklist before `/stop`; Activity stitches lag → crash → missed backup
+- **Pack drift lock + client-only Issues** — checksum drift + high-confidence client-only jars on Issues
+- **Weekly ops digest** — Insights → Digest + Overview teaser — grade, crashes, disk, MSPT trend, one next action (local only)
+- **External kill detection** — OS OOM-killer vs panel force-kill when there is no crash report (Crashes **Killed** chip + correct fix)
+- **Silent script / datapack failures** — KubeJS / CraftTweaker / datapack /reload errors that never crash become Issues
+- **World pressure / farm storytelling** — continuous entity & chunk census; item storms, mob spikes, unattended loaders on Insights → World + Issues
+- **Join & pack sync clinic** — failed join → named mod diffs on Session → Join clinic + Issues; player-safe Copy fix (read-only)
+- **Named admin accounts + audit log** — owner / admin / viewer logins; Settings → Accounts and Audit log (`watchtower/audit-log.jsonl`)
 - **Disk runway** — roughly how many days left, not just “82% full”
 - **Sources** — poller freshness and next data pulls
 - **Ops extras** — backups (local + Alpha panel/cloud), sessions, activity, logs, startup, Settings, and Help Center
@@ -55,57 +62,53 @@ Grouped by situations every modded-server admin hits. Each line is one planned c
 
 ### When the server lags
 
-- **Spot farms and chunk loaders** — show world pressure (entities, loaded chunks) separately from “a bad mod”
-
-### When you’re unsure about RAM or settings
-
-- **Safe guided fixes** — apply vetted settings from the dashboard with preview and undo
+*(Spot farms / chunk loaders via world pressure shipped in 1.1.9 — see Works today.)*
 
 ### When you need to trust a restart or understand an outage
 
-- **Why it really died** — tell a mod crash apart from OOM or a panel/watchdog kill
-- **Weekly digest** — grade, crashes, disk trend, and one useful next action
 - **Smarter restart advice** — suggest a maintenance window from uptime and GC trends (your panel still does the restart)
 
-### When mods need care
+### When players can't join or the pack drifts
 
-- **Jar quarantine** — move a bad or client-only jar aside (not delete), with Undo and a restart reminder
-- **Assisted Safe updates** — for pack-impact **Safe** updates: download, verify, back up the old jar, swap. Risky updates stay manual
-- **Did that update help?** — before/after performance after a mod change
-- **Tamper & secrets warnings** — jar changed without a version bump, or a config that looks like it contains a webhook/token
-- **CurseForge lookups** — richer coverage alongside Modrinth
-- **Shareable crash rules** — export fixes you’ve proven and share them with other admins on the same pack
+*(Join clinic shipped in 1.1.10 — see Works today.)*
 
-### When players can’t join or the pack drifts
-
-- **Join clinic** — failed join → exact mismatched jars → a short, redacted “copy for Discord” fix
 - **Pin a known-good pack** — freeze a good modlist; get a banner and named diff when jars drift
-- **First-hour sanity check** — after install, green/amber/red on Java, loader, client-only jars on the server, and missing deps
 
 ### When the world itself is the problem
 
-- **Farm / item-storm storytelling** — “thousands of item entities near forced chunks” instead of “buy more RAM”
 - **Corrupt chunk playbook** — crash points at a likely region; guided stop → backup → repair path (no silent world wipes)
-- **Silent script failures** — KubeJS / datapack errors that never crash but break recipes, raised as Issues
+
+*(Farm / item-storm storytelling and silent script failures shipped in 1.1.9 / 1.1.7 — see Works today.)*
+
+### For teams and checking in on the go
+
+*(Named accounts + audit log shipped in 1.1.18 — see Works today.)*
+
+- **Public status page** — "are we up?" for Discord, without exposing the dashboard
+- **Maintenance windows** — scheduled restarts stop looking like mystery outages
+- **Mobile glance** — a fast phone-friendly health check you can pin to your home screen
 
 ### When you need to act or ask for help
 
 - **Live command bridge** — preview and run safe triage commands (e.g. pause Chunky) from the dashboard; confirm first
-- **Player-safe explain** — short blurb for players vs full detail for admins
-- **Player-safe ops context** — lag vs timeout hints and richer restart roster (not player analytics)
 - **Optional anonymous diagnostics** — after a report (with a daily cooldown), opt-in operators can send a redacted package of that report plus the full crash/log files it used — so Watchtower can learn real failures. Off by default; previewable; no continuous log streaming
-
-### For teams and checking in on the go
-
-- **Named admin accounts** — per-person logins and a log of who changed what
-- **Public status page** — “are we up?” for Discord, without exposing the dashboard
-- **Richer Copy for Discord** — auto-redacted channel summaries beyond the Support pack blurb
-- **Maintenance windows** — scheduled restarts stop looking like mystery outages
-- **Mobile glance** — a fast phone-friendly health check you can pin to your home screen
 
 ---
 
 ## Later (bigger bets)
+
+Parked apply / onboarding polish (still wanted, not scheduled):
+
+- **First-hour sanity check** — green/amber/red on Java, loader, client-only jars, missing deps
+- **Safe guided fixes** — apply vetted `server.properties` changes with preview and undo
+- **Jar quarantine** — move a bad or client-only jar aside (not delete), with Undo
+- **Assisted Safe updates** — Modrinth Safe path: download, verify, back up old jar, swap
+- **Player-safe ops context** — lag vs timeout hints and richer restart roster
+- **Player-safe explain / richer Discord paste** — short player blurb vs admin detail beyond today's support pack
+- **Config secret sniff** — catch webhooks/tokens in known config paths
+- **Did that update help?** — before/after performance after a mod change
+
+Bigger bets:
 
 - **Insights schedule intelligence** — 7d vs 30d habit trends on Patterns → Schedule (`3 (−2)` style), local-time calendars, restart/event window tips, and drift teasers when the week stops matching the month (local data only)
 - **Fleet view** — TPS, crashes, and backups across many servers (proxy-aware for Velocity/Bungee); local hub first, optional **Watchtower Cloud** later for remote fleet + history when nodes go dark

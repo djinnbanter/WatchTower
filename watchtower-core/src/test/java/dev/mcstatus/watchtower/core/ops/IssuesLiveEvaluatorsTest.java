@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class IssuesLiveEvaluatorsTest {
@@ -126,6 +127,29 @@ class IssuesLiveEvaluatorsTest {
     }
 
     @Test
+    void fromBackupsVerifyFailedOnNewestBroken() {
+        JsonObject cache = new JsonObject();
+        JsonObject backups = new JsonObject();
+        JsonObject last = new JsonObject();
+        last.addProperty("status", "success");
+        last.addProperty("age_hours", 1.0);
+        backups.add("last_backup", last);
+        JsonArray inv = new JsonArray();
+        JsonObject row = new JsonObject();
+        row.addProperty("path", "/b/newest.zip");
+        row.addProperty("filename", "newest.zip");
+        JsonObject verify = new JsonObject();
+        verify.addProperty("status", "broken");
+        row.add("verify", verify);
+        inv.add(row);
+        backups.add("inventory", inv);
+        cache.add(OpsCacheSchema.BACKUPS_LIVE, backups);
+
+        List<IssuesLiveRecord> out = IssuesLiveEvaluators.fromBackups(cache, true);
+        assertTrue(out.stream().anyMatch(r -> "BACKUP_VERIFY_FAILED".equals(r.normalizedKey())));
+    }
+
+    @Test
     void backupFingerprintStableAcrossAgeHours() {
         JsonObject cacheA = backupCacheWithAge(48.0);
         JsonObject cacheB = backupCacheWithAge(49.5);
@@ -159,6 +183,65 @@ class IssuesLiveEvaluatorsTest {
         inactive.addProperty("active", false);
         cache.add(OpsCacheSchema.LOG_STALE, inactive);
         assertTrue(IssuesLiveEvaluators.fromLogStale(cache).isEmpty());
+    }
+
+    @Test
+    void fromSoftHangActiveEmitsSoftHang() {
+        JsonObject cache = new JsonObject();
+        JsonObject soft = new JsonObject();
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_ACTIVE, true);
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_PHASE, "ticking");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_STALL_SECONDS, 48);
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_STARTED_AT, "2026-08-02T00:00:00Z");
+        cache.add(OpsCacheSchema.SOFT_HANG, soft);
+        List<IssuesLiveRecord> out = IssuesLiveEvaluators.fromSoftHang(cache);
+        assertEquals(1, out.size());
+        assertEquals("SOFT_HANG", out.getFirst().normalizedKey());
+        assertEquals("critical", out.getFirst().severity());
+        assertTrue(out.getFirst().message().contains("Server tick frozen"));
+    }
+
+    @Test
+    void fromSoftHangIncludesLikelyCauseInMessageAndSteps() {
+        JsonObject cache = new JsonObject();
+        JsonObject soft = new JsonObject();
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_ACTIVE, true);
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_PHASE, "ticking");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_STALL_SECONDS, 48);
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_STARTED_AT, "2026-08-02T00:00:00Z");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE, "entity_tick");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE_SUMMARY, "Looks stuck while ticking entities");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE_CONFIDENCE, "medium");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_SUSPECT_MOD, "example");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_DUMP_PATH, "watchtower/hangs/hang-x.txt");
+        cache.add(OpsCacheSchema.SOFT_HANG, soft);
+        IssuesLiveRecord r = IssuesLiveEvaluators.fromSoftHang(cache).getFirst();
+        assertTrue(r.message().contains("Looks stuck while ticking entities"));
+        assertFalse(r.message().contains("example"));
+        assertTrue(r.fixSteps().stream().anyMatch(s ->
+                s.contains("entity") || s.contains("farm") || s.contains("mob")));
+        assertTrue(r.fixSteps().stream().anyMatch(s -> s.contains("example") && s.contains("lead")));
+    }
+
+    @Test
+    void evaluateAndMergeResolvesSoftHangWhenInactive() {
+        String t0 = "2026-08-02T00:00:00Z";
+        IssuesLiveRecord open = IssuesLiveRecord.builder()
+                .id("SOFT_HANG")
+                .key("SOFT_HANG")
+                .severity("critical")
+                .message("Server tick frozen")
+                .source(IssuesLiveSchema.SOURCE_OPS)
+                .build();
+        JsonObject cache = new JsonObject();
+        JsonObject soft = new JsonObject();
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_ACTIVE, false);
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_RECOVERED_AT, t0);
+        cache.add(OpsCacheSchema.SOFT_HANG, soft);
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(cache, List.of(open), true, t0);
+        assertTrue(after.stream().noneMatch(r ->
+                "SOFT_HANG".equals(r.normalizedKey())
+                        && IssuesLiveSchema.STATUS_OPEN.equals(r.status())));
     }
 
     @Test
@@ -236,6 +319,24 @@ class IssuesLiveEvaluatorsTest {
     }
 
     @Test
+    void fromBackupsCustomStaleHoursGate() {
+        JsonObject cache = new JsonObject();
+        JsonObject backups = new JsonObject();
+        JsonObject last = new JsonObject();
+        last.addProperty("status", "success");
+        last.addProperty("stale", false);
+        last.addProperty("age_hours", 30.0);
+        backups.add("last_backup", last);
+        cache.add(OpsCacheSchema.BACKUPS_LIVE, backups);
+
+        assertTrue(IssuesLiveEvaluators.fromBackups(cache, true, 48).isEmpty());
+        List<IssuesLiveRecord> stale = IssuesLiveEvaluators.fromBackups(cache, true, 24);
+        assertEquals(1, stale.size());
+        assertEquals("BACKUP_STALE", stale.getFirst().key());
+        assertEquals("No backup in the last 24 hours.", stale.getFirst().message());
+    }
+
+    @Test
     void fromBackupsMissingLastBackupObjectYieldsNoIssue() {
         JsonObject cache = new JsonObject();
         cache.add(OpsCacheSchema.BACKUPS_LIVE, new JsonObject());
@@ -253,6 +354,181 @@ class IssuesLiveEvaluatorsTest {
         assertTrue(IssuesLiveEvaluators.fromBackups(cache, false).isEmpty());
     }
 
+    @Test
+    void fromModJarDriftProducesWarningKey() throws Exception {
+        JsonObject cache = loadFixture("samples/fixtures/issues-live/mod-jar-drift.json");
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromModJarDrift(cache);
+        assertEquals(1, rows.size());
+        assertEquals("MOD_JAR_DRIFT:SWAP.JAR", rows.get(0).normalizedKey());
+        assertEquals("warning", rows.get(0).severity());
+        assertTrue(rows.get(0).message().contains("verify this was intentional"));
+    }
+
+    @Test
+    void fromClientOnServerOnlyHighConfidenceLikelyRemovable() throws Exception {
+        JsonObject cache = loadFixture("samples/fixtures/issues-live/client-on-server-band.json");
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromClientOnServer(cache, true);
+        assertEquals(1, rows.size());
+        assertEquals("CLIENT_ON_SERVER:IRIS", rows.get(0).normalizedKey());
+        assertEquals("info", rows.get(0).severity());
+        assertTrue(IssuesLiveEvaluators.fromClientOnServer(cache, false).isEmpty());
+    }
+
+    @Test
+    void fromSilentFailsProducesKeyWithPath() throws Exception {
+        JsonObject cache = loadFixture("samples/fixtures/issues-live/silent-fail.json");
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromSilentFails(cache, true);
+        assertEquals(2, rows.size());
+        IssuesLiveRecord kube = rows.stream()
+                .filter(r -> r.normalizedKey().startsWith("SILENT_FAIL:KUBEJS"))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("warning", kube.severity());
+        assertTrue(kube.message().contains("kubejs/server_scripts/machines.js:42"));
+        assertTrue(IssuesLiveEvaluators.fromSilentFails(cache, false).isEmpty());
+
+        IssuesLiveRecord reload = rows.stream()
+                .filter(r -> r.normalizedKey().startsWith("SILENT_FAIL:RELOAD_FAILED"))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("info", reload.severity());
+        assertEquals("/reload command failed", reload.message());
+    }
+
+    @Test
+    void fromWorldPressureProducesKeyWithDimension() {
+        JsonObject cache = new JsonObject();
+        JsonObject wp = new JsonObject();
+        JsonArray classifiers = new JsonArray();
+        JsonObject c = new JsonObject();
+        c.addProperty("kind", "item_storm");
+        c.addProperty("dimension", "minecraft:overworld");
+        c.addProperty("severity", "warning");
+        c.addProperty("headline", "Item storm in Overworld");
+        c.addProperty("detail", "1,840 item entities in Overworld.");
+        JsonArray steps = new JsonArray();
+        steps.add("Check hoppers on item farms");
+        c.add("next_steps", steps);
+        classifiers.add(c);
+        wp.add(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS, classifiers);
+        cache.add(OpsCacheSchema.WORLD_PRESSURE, wp);
+
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromWorldPressure(cache, true);
+        assertEquals(1, rows.size());
+        assertEquals("WORLD_PRESSURE:ITEM_STORM:MINECRAFT:OVERWORLD", rows.get(0).normalizedKey());
+        assertEquals("warning", rows.get(0).severity());
+        assertTrue(rows.get(0).message().contains("Item storm"));
+        assertTrue(IssuesLiveEvaluators.fromWorldPressure(cache, false).isEmpty());
+    }
+
+    @Test
+    void fromWorldPressureMapsPregenOutrunningDisk() {
+        JsonObject cache = new JsonObject();
+        JsonObject wp = new JsonObject();
+        JsonArray classifiers = new JsonArray();
+        JsonObject c = new JsonObject();
+        c.addProperty("kind", "pregen_outrunning_disk");
+        c.addProperty("dimension", "minecraft:overworld");
+        c.addProperty("severity", "warning");
+        c.addProperty("headline", "Pregen is outrunning the disk");
+        c.addProperty("detail", "Chunky active with high write latency");
+        JsonArray steps = new JsonArray();
+        steps.add("Pause pregen and wait for the disk to catch up.");
+        c.add("next_steps", steps);
+        classifiers.add(c);
+        wp.add(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS, classifiers);
+        cache.add(OpsCacheSchema.WORLD_PRESSURE, wp);
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromWorldPressure(cache, true);
+        assertEquals(1, rows.size());
+        assertEquals("WORLD_PRESSURE:PREGEN_OUTRUNNING_DISK:MINECRAFT:OVERWORLD", rows.get(0).normalizedKey());
+        assertTrue(rows.get(0).fixSteps().get(0).toLowerCase().contains("pregen"));
+    }
+
+    @Test
+    void fromJoinClinicProducesJoinSyncKey() throws Exception {
+        JsonObject cache = loadFixture("samples/fixtures/issues-live/join-sync-positive.json");
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromJoinClinic(cache, true);
+        assertFalse(rows.isEmpty());
+        assertTrue(rows.get(0).normalizedKey().startsWith("JOIN_SYNC"));
+        assertEquals("warning", rows.get(0).severity());
+    }
+
+    @Test
+    void fromJoinClinicDisabledReturnsEmpty() throws Exception {
+        JsonObject cache = loadFixture("samples/fixtures/issues-live/join-sync-positive.json");
+        assertTrue(IssuesLiveEvaluators.fromJoinClinic(cache, false).isEmpty());
+    }
+
+    @Test
+    void clearingJoinClinicResolvesKeys() {
+        String t0 = "2026-07-28T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("JOIN_SYNC:mismatched_channel|Friend|create")
+                        .message("join").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> r.normalizedKey().startsWith("JOIN_SYNC"))
+                        .findFirst().orElseThrow().status());
+    }
+
+    @Test
+    void clearingWorldPressureResolvesKeys() {
+        String t0 = "2026-07-28T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("WORLD_PRESSURE:item_storm:minecraft:overworld")
+                        .message("storm").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> r.normalizedKey().startsWith("WORLD_PRESSURE"))
+                        .findFirst().orElseThrow().status());
+    }
+
+    @Test
+    void evaluateAndMergeUpsertsDriftFromOpsCacheFixture() throws Exception {
+        JsonObject cache = loadFixture("samples/fixtures/ops-cache/mod-jar-drift-positive.json");
+        List<IssuesLiveRecord> merged = IssuesLiveEvaluators.evaluateAndMerge(
+                cache, List.of(), true, "2026-07-28T12:00:00Z");
+        assertTrue(merged.stream().anyMatch(r -> "MOD_JAR_DRIFT:CREATE-6.0.0.JAR".equals(r.normalizedKey())));
+    }
+
+    @Test
+    void clearingDriftResolvesModJarDriftKeys() {
+        String t0 = "2026-07-28T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("MOD_JAR_DRIFT:swap.jar").message("drift").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> r.normalizedKey().startsWith("MOD_JAR_DRIFT"))
+                        .findFirst().orElseThrow().status());
+    }
+
+    @Test
+    void clearingClientOnlyResolvesClientOnServerKeys() {
+        String t0 = "2026-07-28T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("CLIENT_ON_SERVER:iris").message("client").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> r.normalizedKey().startsWith("CLIENT_ON_SERVER"))
+                        .findFirst().orElseThrow().status());
+    }
+
+    private static JsonObject loadFixture(String relative) throws Exception {
+        java.nio.file.Path path = java.nio.file.Path.of(relative);
+        if (!java.nio.file.Files.isRegularFile(path)) {
+            path = java.nio.file.Path.of("..").resolve(relative);
+        }
+        if (!java.nio.file.Files.isRegularFile(path)) {
+            path = java.nio.file.Path.of("../..").resolve(relative);
+        }
+        String text = java.nio.file.Files.readString(path.toAbsolutePath().normalize());
+        return com.google.gson.JsonParser.parseString(text).getAsJsonObject();
+    }
+
     private static JsonObject backupCacheWithAge(double ageHours) {
         JsonObject cache = new JsonObject();
         JsonObject backups = new JsonObject();
@@ -262,6 +538,31 @@ class IssuesLiveEvaluatorsTest {
         backups.add("last_backup", last);
         cache.add(OpsCacheSchema.BACKUPS_LIVE, backups);
         return cache;
+    }
+
+    @Test
+    void worldRiskDisabledProducesIssue() {
+        JsonObject cache = new JsonObject();
+        JsonObject light = new JsonObject();
+        JsonArray mods = new JsonArray();
+        JsonObject mod = new JsonObject();
+        mod.addProperty("id", "dimmod");
+        mod.addProperty("jar_file", "dimmod-1.0.jar.disabled");
+        mod.addProperty("disabled", true);
+        JsonObject risk = new JsonObject();
+        risk.addProperty("level", "high");
+        JsonArray reasons = new JsonArray();
+        reasons.add("world_dimension_folders:dimmod");
+        risk.add("reasons", reasons);
+        mod.add("world_risk", risk);
+        mods.add(mod);
+        light.add("mods", mods);
+        cache.add("mods_light", light);
+
+        List<IssuesLiveRecord> found = IssuesLiveEvaluators.fromWorldRiskDisabled(cache, true);
+        assertEquals(1, found.size());
+        assertTrue(found.get(0).normalizedKey().startsWith("WORLD_RISK_DISABLED"));
+        assertTrue(IssuesLiveEvaluators.fromWorldRiskDisabled(cache, false).isEmpty());
     }
 
     private static JsonObject diskProjCache(double daysUntilFull) {

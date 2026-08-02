@@ -1,0 +1,249 @@
+{
+  "entries": [
+    {
+      "at": "2026-07-30T09:15:00Z",
+      "event": "settings_changed",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": null,
+      "detail": "tps_warn 19.5 -> 18.5",
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-30T08:44:00Z",
+      "event": "login_ok",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": null,
+      "detail": null,
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-30T08:02:00Z",
+      "event": "write_denied",
+      "actor": "sam",
+      "actorId": "acc_view01",
+      "role": "viewer",
+      "target": "POST /api/settings",
+      "detail": null,
+      "ip": "10.0.0.7",
+      "result": "denied"
+    },
+    {
+      "at": "2026-07-30T07:41:00Z",
+      "event": "issue_acked",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": "mspt_elevated",
+      "detail": null,
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-30T06:18:00Z",
+      "event": "api_write",
+      "actor": "marco",
+      "actorId": "acc_admin01",
+      "role": "admin",
+      "target": "POST /api/crashes/ack",
+      "detail": null,
+      "ip": "10.0.0.5",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-30T05:55:00Z",
+      "event": "login_failed",
+      "actor": "unknown",
+      "actorId": null,
+      "role": null,
+      "target": null,
+      "detail": "bad password",
+      "ip": "203.0.113.9",
+      "result": "failed"
+    },
+    {
+      "at": "2026-07-29T22:15:00Z",
+      "event": "login_ok",
+      "actor": "marco",
+      "actorId": "acc_admin01",
+      "role": "admin",
+      "target": null,
+      "detail": null,
+      "ip": "10.0.0.5",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-29T21:40:00Z",
+      "event": "login_failed",
+      "actor": "unknown",
+      "actorId": null,
+      "role": null,
+      "target": null,
+      "detail": null,
+      "ip": "203.0.113.9",
+      "result": "failed"
+    },
+    {
+      "at": "2026-07-29T20:05:00Z",
+      "event": "crash_acked",
+      "actor": "marco",
+      "actorId": "acc_admin01",
+      "role": "admin",
+      "target": "crash-2026-07-29_19.58.12.txt",
+      "detail": null,
+      "ip": "10.0.0.5",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-29T18:32:00Z",
+      "event": "issue_suppressed",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": "disk_fill_warn",
+      "detail": "until next week",
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-29T16:11:00Z",
+      "event": "account_role_changed",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": "sam",
+      "detail": "admin -> viewer",
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-29T14:48:00Z",
+      "event": "settings_changed",
+      "actor": "marco",
+      "actorId": "acc_admin01",
+      "role": "admin",
+      "target": null,
+      "detail": "ops_poll_sec 60 -> 45",
+      "ip": "10.0.0.5",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-29T12:03:00Z",
+      "event": "write_denied",
+      "actor": "sam",
+      "actorId": "acc_view01",
+      "role": "viewer",
+      "target": "POST /api/issues/ack",
+      "detail": null,
+      "ip": "10.0.0.7",
+      "result": "denied"
+    },
+    {
+      "at": "2026-07-29T09:27:00Z",
+      "event": "api_write",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": "POST /api/performance/baseline",
+      "detail": null,
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-28T23:50:00Z",
+      "event": "login_ok",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": null,
+      "detail": null,
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-28T21:14:00Z",
+      "event": "issue_acked",
+      "actor": "marco",
+      "actorId": "acc_admin01",
+      "role": "admin",
+      "target": "chunk_pressure",
+      "detail": null,
+      "ip": "10.0.0.5",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-28T19:02:00Z",
+      "event": "account_created",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": "sam",
+      "detail": "role=viewer",
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-28T17:36:00Z",
+      "event": "crash_acked",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": "crash-2026-07-28_16.44.01.txt",
+      "detail": null,
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-28T15:08:00Z",
+      "event": "issue_suppressed",
+      "actor": "marco",
+      "actorId": "acc_admin01",
+      "role": "admin",
+      "target": "mod_update_available",
+      "detail": null,
+      "ip": "10.0.0.5",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-28T13:22:00Z",
+      "event": "settings_changed",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": null,
+      "detail": "disk_warn_pct 85 -> 80",
+      "ip": "10.0.0.4",
+      "result": "ok"
+    },
+    {
+      "at": "2026-07-28T11:45:00Z",
+      "event": "login_failed",
+      "actor": "marco",
+      "actorId": null,
+      "role": null,
+      "target": null,
+      "detail": "bad password",
+      "ip": "10.0.0.5",
+      "result": "failed"
+    },
+    {
+      "at": "2026-07-28T10:01:00Z",
+      "event": "account_role_changed",
+      "actor": "ella",
+      "actorId": "acc_owner01",
+      "role": "owner",
+      "target": "marco",
+      "detail": "viewer -> admin",
+      "ip": "10.0.0.4",
+      "result": "ok"
+    }
+  ],
+  "truncated": false,
+  "retention_days": 90,
+  "max_entries": 2000
+}

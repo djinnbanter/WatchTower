@@ -82,4 +82,53 @@ class OpsLogTailScannerTest {
         assertTrue(scan.activityEvents().stream().anyMatch(e -> "backup_job".equals(e.get("type").getAsString())));
         assertTrue(scan.activityEvents().stream().anyMatch(e -> "restart_scheduled".equals(e.get("type").getAsString())));
     }
+
+    @Test
+    void scanTailDetectsSilentFailsAndDedupes() throws Exception {
+        Path serverDir = temp.resolve("server3");
+        Path logs = serverDir.resolve("logs");
+        Files.createDirectories(logs);
+        Path log = logs.resolve("latest.log");
+
+        String kube = "[12Jun2024 10:00:01] [Server thread/ERROR] [KubeJS Server/]: Error running event handler "
+                + "(kubejs/server_scripts/machines.js:42): thermal:machine_furnace is not a valid recipe\n";
+        String datapack = "[12Jun2024 10:00:02] [Server thread/ERROR] [minecraft/SimpleJsonResourceReloadListener]: "
+                + "Couldn't parse data file 'create:machine_furnace' from data pack 'file/create'\n";
+        Files.writeString(log, kube + datapack + kube, StandardCharsets.UTF_8);
+
+        OpsLogTailScanner.ScanResult scan = OpsLogTailScanner.scanTail(serverDir.toString(), 200, 100);
+        assertEquals(2, scan.silentFails().size());
+        assertTrue(scan.silentFails().stream().anyMatch(r ->
+                "kubejs".equals(r.get("kind").getAsString())
+                        && "kubejs/server_scripts/machines.js".equals(r.get("path").getAsString())
+                        && r.get("line").getAsInt() == 42));
+        assertTrue(scan.silentFails().stream().anyMatch(r ->
+                "datapack_json".equals(r.get("kind").getAsString())
+                        && "create:machine_furnace".equals(r.get("path").getAsString())));
+        assertTrue(scan.hadNewData());
+    }
+
+    @Test
+    void scanTailCapturesJoinRejection() throws Exception {
+        Path server = temp.resolve("server-join");
+        Files.createDirectories(server.resolve("logs"));
+        Files.writeString(server.resolve("logs/latest.log"),
+                "[29Jul2026 20:15:01] [Server thread/INFO]: FriendName lost connection: "
+                        + "Failed to connect to server: Incompatible mod set: mismatched channels: [create:main]\n",
+                StandardCharsets.UTF_8);
+        OpsLogTailScanner.ScanResult r = OpsLogTailScanner.scanTail(server.toString(), 50, 0);
+        assertEquals(1, r.joinRejections().size());
+        assertEquals("mismatched_channel", r.joinRejections().get(0).get("kind").getAsString());
+    }
+
+    @Test
+    void scanTailIgnoresOrdinaryTimeout() throws Exception {
+        Path server = temp.resolve("server-timeout");
+        Files.createDirectories(server.resolve("logs"));
+        Files.writeString(server.resolve("logs/latest.log"),
+                "[29Jul2026 20:18:04] [Server thread/INFO]: IdlePlayer lost connection: Timed out\n",
+                StandardCharsets.UTF_8);
+        OpsLogTailScanner.ScanResult r = OpsLogTailScanner.scanTail(server.toString(), 50, 0);
+        assertTrue(r.joinRejections().isEmpty());
+    }
 }

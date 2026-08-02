@@ -127,7 +127,7 @@ public final class ModJarMetadataReader {
             return List.of();
         }
         List<Path> jars = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, ModJarMetadataReader::isModJarFile)) {
             for (Path jar : stream) {
                 jars.add(jar);
             }
@@ -185,7 +185,25 @@ public final class ModJarMetadataReader {
         }
     }
 
+    /** Top-level {@code *.jar} and soft-disabled {@code *.jar.disabled} (Modrinth-style). */
+    public static boolean isModJarFile(Path path) {
+        if (path == null || !Files.isRegularFile(path)) {
+            return false;
+        }
+        String name = path.getFileName().toString();
+        String lower = name.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".jar") || lower.endsWith(ModJarDisable.DISABLED_SUFFIX);
+    }
+
     private static ModEntry preferEntry(ModEntry existing, ModEntry incoming) {
+        boolean existingDisabled = ModJarDisable.isDisabledName(existing.jarFile());
+        boolean incomingDisabled = ModJarDisable.isDisabledName(incoming.jarFile());
+        if (existingDisabled && !incomingDisabled) {
+            return incoming;
+        }
+        if (!existingDisabled && incomingDisabled) {
+            return existing;
+        }
         if (existing.version() != null && !"?".equals(existing.version()) && !existing.version().isBlank()) {
             return existing;
         }
@@ -210,8 +228,9 @@ public final class ModJarMetadataReader {
         if (!mod.has("dependencies") && !jarMeta.dependencies().isEmpty()) {
             mod.add("dependencies", dependenciesToJson(jarMeta.dependencies()));
         }
-        if (!mod.has("jar_file") && jarMeta.jarFile() != null && !jarMeta.jarFile().isBlank()) {
+        if (jarMeta.jarFile() != null && !jarMeta.jarFile().isBlank()) {
             mod.addProperty("jar_file", jarMeta.jarFile());
+            mod.addProperty("disabled", ModJarDisable.isDisabledName(jarMeta.jarFile()));
         }
         if (jarMeta.mcreator() && (!mod.has("is_mcreator") || !mod.get("is_mcreator").getAsBoolean())) {
             mod.addProperty("is_mcreator", true);
@@ -293,6 +312,7 @@ public final class ModJarMetadataReader {
         }
         if (entry.jarFile() != null && !entry.jarFile().isBlank()) {
             mod.addProperty("jar_file", entry.jarFile());
+            mod.addProperty("disabled", ModJarDisable.isDisabledName(entry.jarFile()));
         }
         if (entry.mcreator()) {
             mod.addProperty("is_mcreator", true);

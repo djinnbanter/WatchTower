@@ -30,6 +30,25 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 | `/api/auth/totp/disable` | POST | `{ password, code }` |
 | `/api/auth/recovery/regenerate` | POST | `{ password, code }` — new recovery codes |
 
+Session JSON (`GET /api/auth/session` and login responses) includes `role` (`owner` / `admin` / `viewer`) when authenticated. When a Minecraft player is linked, it also includes `minecraft_uuid` and `minecraft_name`. Appearance prefs (`ui_theme`, `ui_accent`) are included when set on the account. Viewers get 403 `read_only_account` on every non-GET `/api/*` write except self-service routes such as `/api/accounts/me/minecraft` and `/api/accounts/me/appearance`. Account-management routes need `owner` or return 403 `owner_required`. If auth failed to initialize, protected routes return 503 `auth_unavailable` (recovery: `/watchtower dashboard reset-password`).
+
+---
+
+## Accounts & audit log (1.1.18)
+
+| Endpoint | Method | Who | Purpose |
+|----------|--------|-----|---------|
+| `/api/accounts` | GET | owner | `{ accounts: [{ id, username, role, disabled, totp_enabled, created_at, last_login_at, is_you, minecraft_uuid?, minecraft_name? }] }` |
+| `/api/accounts` | POST | owner | `{ username, role }` → `{ ok, id, username, role, temp_password }` (temp password shown once) |
+| `/api/accounts/update` | POST | owner | `{ id, role?, disabled?, minecraft_uuid?, minecraft_name?, clear_minecraft? }` — role/disable ends sessions; Minecraft fields are optional |
+| `/api/accounts/me/minecraft` | POST | any signed-in | `{ uuid, name }` or `{ clear: true }` — link/unlink self only (viewers allowed) |
+| `/api/accounts/me/appearance` | PUT | any signed-in | `{ theme, accent }` — `theme`: `light`\|`dark`\|`black`\|`system`; `accent`: `signal`\|`amber`\|`teal`\|`violet`\|`rose`\|`green`\|`coral`\|`slate` (viewers allowed) |
+| `/api/accounts/reset-password` | POST | owner | `{ id, clear_2fa? }` → `{ ok, temp_password }`; ends that account’s sessions |
+| `/api/accounts/delete` | POST | owner | `{ id }` — refuses self-delete and last owner |
+| `/api/audit-log` | GET | owner or admin | `?limit=` (default 200, max 2000) → `{ entries, truncated, retention_days: 90, max_entries: 2000 }` |
+
+See [[Accounts-And-Audit-Log]].
+
 ---
 
 ## Config & settings
@@ -52,6 +71,8 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 | `/api/onboarding/discovery/status` | GET | Discovery progress: `stage`, `stage_label`, `stage_detail`, `progress`, `counts`, `running`, `success`. |
 | `/api/onboarding/audit` | POST | Alias that starts Initial discovery (prefer `/discovery/*` for progress). |
 | `/api/config-audit` | GET | Read-only launch & config audit (`server.properties` verdicts + JVM summary from live/report). Same shape as facts `optional.config_launch_audit`. Kill-switch: `CONFIG_AUDIT_ENABLED=false` → `status: disabled`. |
+| `/api/weekly-digest` | GET | Bounded weekly ops digest history from `ops-cache.json` → `weekly_digest` (`history[]` newest-first, capped by `WEEKLY_DIGEST_HISTORY_MAX`). Empty `{ "history": [] }` when none yet. |
+| `/api/weekly-digest` | POST | Body `{ "action": "generate_now" }` — build and persist a digest now (`trigger: "manual"`). Returns `{ "ok": true, "digest": … }` or `409` with `{ "ok": false, "reason": "disabled" }` when `WEEKLY_DIGEST_ENABLED=false`. |
 
 ---
 
@@ -65,7 +86,7 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 
 Default `max_points` is 2000 (clamped 100–5000). Client typically requests ~500 for charts.
 
-`/api/samples` includes `mem_used_gb` series (host RAM used, not free) where host metrics exist. RAM charts plot **used** GB on Overview and Live. When thermal sensors are available, samples also include `thermal_package` and `thermal_ambient` (°C) for Live System dials. Live snapshots may include `jvm_gc` (pause % of wall), `heap_mb.pressure_pct`, `gc_pause_pct` series, and `jvm_health_live` (flags profile, verdict, advice, optional `recommended_flags`). L1 rollup rows may include `heap_pressure_pct_avg`, `heap_pressure_pct_max`, `heap_used_gb_max`, `gc_pause_pct_avg`, and disk fields `disk_use_pct_avg`, `disk_free_gb_avg`, `disk_write_mb_s_avg`, `disk_write_await_ms_avg`. Live `disk_io` may include `write_await_ms` and `latency_source` (`diskstats` | `fsync_probe` | `unavailable`). Report facts expose `optional.jvm_health`, `optional.disk_projection`, and may raise issues `GC_PRESSURE` and `DISK_FILL_PROJECTED`. `GET /api/performance/dashboard` includes `ram_sizing`, `baseline_regression`, and `disk_projection` plus optional `disk_io_lag_align` insight.
+`/api/samples` includes `mem_used_gb` series (host RAM used, not free) where host metrics exist. RAM charts plot **used** GB on Overview and Live. When thermal sensors are available, samples also include `thermal_package` and `thermal_ambient` (°C) for Live System dials. Live snapshots may include `jvm_gc` (pause % of wall), `heap_mb.pressure_pct`, `gc_pause_pct` series, and `jvm_health_live` (flags profile, verdict, advice, optional `recommended_flags`). Live may also include root-level `ram_envelope` (`envelope` = `ok|low|critical`, plus `host_mem_gb`, `xmx_gb`, `outside_headroom_gb`, `ram_source`) when host memory and `-Xmx` are known — Overview teasers use `critical` only. L1 rollup rows may include `heap_pressure_pct_avg`, `heap_pressure_pct_max`, `heap_used_gb_max`, `gc_pause_pct_avg`, and disk fields `disk_use_pct_avg`, `disk_free_gb_avg`, `disk_write_mb_s_avg`, `disk_write_await_ms_avg`. Live `disk_io` may include `write_await_ms` and `latency_source` (`diskstats` | `fsync_probe` | `unavailable`). Report facts expose `optional.jvm_health`, `optional.disk_projection`, and may raise issues `GC_PRESSURE` and `DISK_FILL_PROJECTED`. `GET /api/performance/dashboard` includes `ram_sizing` (heap window + host envelope fields: `envelope`, `host_mem_gb`, `outside_headroom_gb`, `ram_source`; verdict may be `envelope_tight`), `baseline_regression`, and `disk_projection` plus optional `disk_io_lag_align` insight.
 
 ---
 
@@ -84,9 +105,11 @@ Response shape:
   "enabled": true,
   "hours": 24,
   "summary": { "tps_avg": 18.4, "mspt_avg": 41.0, "low_tps_minutes": 3, "sample_minutes": 1440 },
-  "rows": [ { "ts": "…", "tps_avg": 19.2, "mspt_avg": 8.1, "low_tps_flag": false } ]
+  "rows": [ { "ts": "…", "tps_avg": 19.2, "mspt_avg": 8.1, "entities_max": 4210, "chunks_max": 1180, "unattended_chunks_max": 800, "low_tps_flag": false } ]
 }
 ```
+
+Minute rows may also include `entities_max`, `chunks_max`, and `unattended_chunks_max` when the world-pressure census has run (see [[World-Pressure]]). Ops-cache `world_pressure` (same `/api/ops-cache` payload) holds the latest census dimensions, quiet-hours baseline (classifier-only), MSPT correlation, and sustained classifiers. `GET /api/performance/dashboard` also includes `world_pressure_compare` (`busy` p95 + window `peak`) for the selected `7d`/`30d` Insights window.
 
 Reads **L1 local JSON only** — not health-report facts. Also serves `/api/performance/insights`, CSV export, and the **Insights** tab dashboard.
 
@@ -97,7 +120,7 @@ Reads **L1 local JSON only** — not health-report facts. Also serves `/api/perf
 | Endpoint | Method | Query | Purpose |
 |----------|--------|-------|---------|
 | `/api/performance/insights` | GET | `window=7d\|30d` | Busy/quiet hours, player bins, outlier minutes, sticky lag episodes, ranked insights (Overview poll) |
-| `/api/performance/dashboard` | GET | `window=7d\|30d` | Full **Insights** tab payload: insights + `hour_of_week`, `daily_series`, `period_compare`, `correlations`, `related_events`, `scorecard_perf`, `ram_sizing`, `baseline_regression`, `disk_projection` |
+| `/api/performance/dashboard` | GET | `window=7d\|30d` | Full **Insights** tab payload: insights + `hour_of_week`, `daily_series`, `period_compare`, `correlations`, `related_events`, `scorecard_perf`, `ram_sizing`, `baseline_regression`, `disk_projection`, `world_pressure_compare` |
 | `/api/performance/baseline` | POST | `{ "action": "set_now" }` | Freeze a new performance baseline from recent L1 history; returns `baseline` + fresh `baseline_regression` |
 | `/api/performance/export` | GET | `window=7d`, `format=csv` | Download minute rollup rows as CSV |
 
@@ -156,7 +179,9 @@ Report JSON (`/api/reports/latest`, `/api/reports/get`) may include these blocks
 }
 ```
 
-Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load_script`, `mod_load_mixin`, `mod_load_mixin_conflict`, `mod_load_duplicate`, `mod_load_config`, `mod_load_asset`, `mod_load_worldgen`, `mod_load_compat`, `mod_load_ecosystem`, `platform_mismatch`, `env_lock`, `world_nbt_corrupt`, `watchdog`, `watchdog_followup`, `watchdog_pregen`, `host_resource`, `loader`, `unknown`.
+Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load_script`, `mod_load_mixin`, `mod_load_mixin_conflict`, `mod_load_duplicate`, `mod_load_config`, `mod_load_asset`, `mod_load_worldgen`, `mod_load_compat`, `mod_load_ecosystem`, `platform_mismatch`, `env_lock`, `world_nbt_corrupt`, `watchdog`, `watchdog_followup`, `watchdog_pregen`, `host_resource`, `external_kill`, `loader`, `unknown`.
+
+`external_kill` rows may include `details.external_kill_subtype` of `oom` or `panel_watchdog` (no crash report on disk — synthetic Crashes entry).
 
 **`optional.startup_profile`** — last boot window (Startup tab / Overview boot card):
 
@@ -208,6 +233,11 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | `/api/rules/get` | GET | `?id=` rule id or `packId/ruleId` (sanitized detail) |
 | `/api/rules/validate` | POST | Body YAML or `{ yaml }` → `{ valid, errors[] }` |
 | `/api/mods/scan` | POST | Force unified log scan + running mods → updates ops-cache; returns `{ scanned_at, mod_error_count, running_mod_count, mod_log_errors[], running_mods[], kubejs_failures[] }` |
+| `/api/mods/disable` | POST | Soft-disable top-level jar under `mods/` — `{ jar, confirm_world_risk? }` → rename to `*.jar.disabled` (admin+; `MOD_DISABLE_ENABLED`; 400 `world_risk_confirm_required` when high risk and confirm missing) |
+| `/api/mods/enable` | POST | Re-enable — `{ jar }` basename of `*.jar.disabled` (or `*.disabled`) → rename back to `*.jar` |
+| `/api/mods/configs` | GET | List files under `config/` (`files[]`: `path`, `size`, `mtime`, `has_backup`, `secret_hint`). With `?path=` — read one file (`content`, `mtime`, `parse_warnings[]`, `editor`: `form`\|`raw`, and `fields[]` when `editor=form`). Requires `MOD_CONFIG_EDIT_ENABLED` (default true); otherwise 403 |
+| `/api/mods/configs` | PUT | Save — `{ path, expected_mtime, content? }` or `{ path, expected_mtime, fields? }` → backup then write (admin+). Prefer `fields` for TOML form saves (server serializes). `409` on mtime conflict; max 512 KiB. Audit `config_saved` (path only) |
+| `/api/mods/configs/undo` | POST | `{ path }` — restore newest backup (admin+). Audit `config_undone` |
 | `/api/mods/tree` | GET | `?mod_id=` — nested dependency tree from latest report (`dependents` + `dependencies`, max depth 6) |
 | `/api/mods/forensics/status` | GET | Mod forensics index/status (`index.state`: `ready`\|`idle`\|`skipped`\|`error`; `config.mod_forensics_scan` / `corrupt_jar_walk`; stale cache reported without jar walk) |
 | `/api/mods/forensics/find-class` | POST | `{ class, include_nested? }` → owning jar matches (rate limit 10/min); builds cache on demand |
@@ -229,7 +259,7 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | `/api/logs/list` | GET | List `logs/latest.log`, `debug.log`, and `*.log.gz` (`{ files:[{ name, size, mtime, gz }] }`) |
 | `/api/logs/index` | GET | Alias of `/api/logs/list` (older dashboard builds) |
 | `/api/logs/content` | GET | `?file=&tail=` — tail of a log file (plain or gzip); returns `{ file, content, truncated, size, lines }` |
-| `/api/ops-cache` | GET | L2.5 ops cache (`crashes`, `scorecard`, `activity`, `lag_issues`, `incident_stories`, `mod_log_errors`, `running_mods`, `mod_issues`, `right_now`, `log_stale`, `backups_live`, `issues_live[]` continuous issue ledger, `startup_profile`, `mods_light`, `player_directory`, reconcile timestamps) |
+| `/api/ops-cache` | GET | L2.5 ops cache (`crashes`, `scorecard`, `activity`, `lag_issues`, `incident_stories`, `mod_log_errors`, `running_mods`, `mod_issues`, `silent_fails`, `join_clinic`, `world_pressure`, `right_now`, `log_stale`, `backups_live`, `issues_live[]` continuous issue ledger, `startup_profile`, `mods_light`, `player_directory`, reconcile timestamps) |
 | `/api/client-mods/ignores` | GET | Ignored client-only mods |
 | `/api/client-mods/ignore` | POST | Ignore/unignore client mod |
 
@@ -240,6 +270,10 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/backups/scan` | POST | Rescan backup inventory; persists `backups_live` in ops-cache |
+| `/api/backups/verify` | POST | Light integrity verify — `{ path }` under configured backup dirs; updates inventory `verify` (admin+) |
+| `/api/backups/test-restore` | POST | Start async extract under `watchtower/restore-verify/<id>/` — `{ path }` (`BACKUP_TEST_RESTORE_ENABLED`) |
+| `/api/backups/test-restore/status` | GET | Current test-restore job |
+| `/api/backups/test-restore/cleanup` | POST | Delete sandbox — `{ id? }` |
 | `/api/backups/dirs` | POST | `{ dirs: ["path"] }` — save paths + scan + `backups_live` |
 | `/api/backups/heartbeat` | POST | External backup webhook — requires `BACKUP_WEBHOOK_TOKEN`; Bearer or `X-Watchtower-Backup-Token` |
 | `/api/backups/external` | POST | External backup setup — session auth; `{ trackingEnabled?, trackingMode?, generateWebhookToken?, backupExternalMarker?, backupSuppressLocalMissing? }`. `trackingEnabled: false` writes `BACKUP_TRACKING_ENABLED=false`, clears external signals, and silences backup Issues/alerts (dirs kept). |
@@ -255,7 +289,42 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 - **Backup slow poll** — `BACKUP_POLL_MIN` rescans backup folders → `backups_live`
 - **Session-gated (optional)** — `OPS_POLL_SEC` runs extra crash folder refreshes while ≥1 dashboard session is open
 
-`GET /api/overview/meta` adds `mod_tldr`, `right_now`, `performance_insights_tldr`, `baseline_regression_tldr` (when active; also prefers into `performance_insights_tldr`), `safe_restart`, `log_stale_tldr`, `mods_changed_tldr`, `disk_jump_tldr`, `disk_projection` / `disk_projection_tldr`, `backup_mode`, `backup_external_tldr`, `backup_poll_active`, `backups_scanned_at`, and related ops fields.
+`GET /api/overview/meta` adds `mod_tldr`, `right_now`, `performance_insights_tldr`, `baseline_regression_tldr` (when active; also prefers into `performance_insights_tldr`), `safe_restart`, `restart_hygiene`, `log_stale_tldr`, `mods_changed_tldr`, `disk_jump_tldr`, `disk_projection` / `disk_projection_tldr`, `backup_mode`, `backup_external_tldr`, `backup_poll_active`, `backups_scanned_at`, and related ops fields.
+
+### `restart_hygiene` (1.1.6)
+
+Advisory payload on overview meta. Never mutates the server.
+
+When suppressed:
+
+```json
+{ "active": false, "suppressed_reason": "disabled|low_uptime|healthy_metrics|insufficient_metrics", "checked_at": "2026-07-28T19:00:00Z" }
+```
+
+When active:
+
+```json
+{
+  "active": true,
+  "severity": "info",
+  "headline": "Consider a maintenance restart",
+  "uptime_sec": 136800,
+  "signals": [
+    { "id": "gc_rising", "current": 4.2, "prior": 2.8, "delta_pct": 50.0 },
+    { "id": "heap_stable", "current": 71.0 }
+  ],
+  "quiet_window": {
+    "next_start_at": "2026-07-29T03:00:00Z",
+    "next_end_at": "2026-07-29T05:00:00Z",
+    "avg_players": 0.2,
+    "avg_mspt": 24.0,
+    "sample_minutes": 42
+  },
+  "checked_at": "2026-07-28T19:00:00Z"
+}
+```
+
+`quiet_window.next_start_at` / `next_end_at` are UTC ISO-8601 instants (no local-time formatting from the API). Dashboard Settings timezone preference converts them for display. Kill-switch: `RESTART_HYGIENE_ENABLED`.
 
 ---
 
@@ -263,11 +332,20 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 
 Responses include `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and Content-Security-Policy restricting scripts to same origin.
 
+### Common auth error codes
+
+| HTTP | `error` code | Meaning |
+|------|--------------|---------|
+| 403 | `read_only_account` | Viewer tried a write |
+| 403 | `owner_required` | Non-owner hit an `/api/accounts*` route |
+| 503 | `auth_unavailable` | Auth store did not initialize — use `/watchtower dashboard reset-password` |
+
 ---
 
 ## See also
 
 - [[Dashboard Overview]]
 - [[Security and Access]]
+- [[Accounts And Audit Log]]
 - [[Live Charts]]
 - [[Using-Spark-with-Watchtower]]

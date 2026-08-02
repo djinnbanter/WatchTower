@@ -34,6 +34,7 @@
 | **Incident story** | Recent narrative of what happened — deeper on [[Activity]] |
 | **Lag incidents** | Detected lag windows |
 | **Performance insight** | Teaser into [[Insights]] |
+| **Weekly ops digest** | Dismissible week summary (grade, crashes, disk, next action) — full history on [[Insights]] → Digest |
 | **Spark** | Short summary + Open Spark when a fresh profile exists |
 | **Boot profile** | Teaser into [[Startup]] |
 | **Restart** | Safe / Caution / Wait — informational only |

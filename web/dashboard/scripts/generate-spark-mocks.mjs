@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Build spark-profile-mocks.json and spark-profiles.json from parser golden files.
+ * Also copies full call trees (*.tree.json.gz) for preview /api/spark/tree.
  * Run: ./gradlew :watchtower-core:sparkAuditFixtures && node web/dashboard/scripts/generate-spark-mocks.mjs
  */
 import fs from 'node:fs';
@@ -11,6 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../..');
 const dataDir = path.resolve(__dirname, '../data');
 const fixtureDir = path.join(repoRoot, 'samples/fixtures/spark');
+const treeDir = path.join(dataDir, 'spark-trees');
 
 const FIXTURE_MAP = [
   { key: 'h5bvv4annz', file: 'H5BVV4Annz.sparkprofile' },
@@ -58,8 +60,11 @@ function fixtureStats(fileName) {
   };
 }
 
+fs.mkdirSync(treeDir, { recursive: true });
+
 const profiles = {};
 const listEntries = [];
+const treeIndex = {};
 
 for (const { key, file } of FIXTURE_MAP) {
   const golden = loadGolden(key);
@@ -77,18 +82,42 @@ for (const { key, file } of FIXTURE_MAP) {
     size_bytes: stats.size_bytes || 0,
     fresh: normalized.fresh !== false,
   });
+
+  const treeSrc = path.join(fixtureDir, `expected-${key}.tree.json.gz`);
+  if (fs.existsSync(treeSrc)) {
+    const treeDestName = `${key}.tree.json.gz`;
+    fs.copyFileSync(treeSrc, path.join(treeDir, treeDestName));
+    treeIndex[sourcePath] = treeDestName;
+    const mb = (fs.statSync(treeSrc).size / (1024 * 1024)).toFixed(2);
+    console.log(`Full tree ${key}: ${mb} MB gz -> data/spark-trees/${treeDestName}`);
+  } else {
+    console.warn(`Missing full tree for ${key}: ${treeSrc}`);
+  }
 }
 
 listEntries.sort((a, b) => Date.parse(b.captured_at || 0) - Date.parse(a.captured_at || 0));
+listEntries.forEach((entry, index) => {
+  entry.auto_captured = index === 0;
+});
 
 const mocksOut = { profiles };
 fs.writeFileSync(path.join(dataDir, 'spark-profile-mocks.json'), `${JSON.stringify(mocksOut)}\n`);
+fs.writeFileSync(path.join(dataDir, 'spark-tree-index.json'), `${JSON.stringify(treeIndex, null, 2)}\n`);
 
 const defaultPath = listEntries[0]?.source_path || mockSourcePath('H5BVV4Annz.sparkprofile');
 const listOut = {
   spark_enabled: true,
+  enabled: true,
   search_dirs: ['watchtower/spark-upload/', 'config/spark/'],
   report_profile_path: defaultPath,
+  auto_profile_path: defaultPath,
+  auto_capture: {
+    enabled: true,
+    reason: 'tick_lag',
+    captured_at: listEntries[0]?.captured_at || null,
+    source_path: defaultPath,
+    in_flight: false,
+  },
   profiles: listEntries,
 };
 fs.writeFileSync(path.join(dataDir, 'spark-profiles.json'), `${JSON.stringify(listOut, null, 2)}\n`);
@@ -104,6 +133,7 @@ if (h5) {
 
 console.log(`Wrote ${Object.keys(profiles).length} spark profile mocks to data/spark-profile-mocks.json`);
 console.log(`Wrote spark-profiles.json (${listEntries.length} entries)`);
+console.log(`Wrote spark-tree-index.json (${Object.keys(treeIndex).length} full trees)`);
 if (h5) console.log('Updated facts.json optional.spark_profile from parser golden');
 
 let invalid = 0;
@@ -117,6 +147,10 @@ for (const { file } of FIXTURE_MAP) {
   }
   if (!p.top_methods?.length || p.top_methods.length < 3) {
     console.error(`Expected >= 3 top_methods for ${file}, got ${p.top_methods?.length ?? 0}`);
+    invalid += 1;
+  }
+  if (p.analysis_version !== 2 || !p.call_tree?.threads?.length || !p.source_rollups?.length) {
+    console.error(`Expected additive Spark v2 contract for ${file}`);
     invalid += 1;
   }
 }

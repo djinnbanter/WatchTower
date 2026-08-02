@@ -108,6 +108,22 @@ public final class WatchtowerPaths {
         return dashboardAuthPath(ctx.serverDirectory());
     }
 
+    public static Path auditLogPath(Path serverDir) {
+        return watchtowerRoot(serverDir).resolve("audit-log.jsonl");
+    }
+
+    public static Path auditLogPath(ServerContext ctx) {
+        return auditLogPath(ctx.serverDirectory());
+    }
+
+    public static Path configBackupsDir(Path serverDir) {
+        return watchtowerRoot(serverDir).resolve(WatchtowerFiles.CONFIG_BACKUPS_DIR).normalize();
+    }
+
+    public static Path configBackupsDir(ServerContext ctx) {
+        return configBackupsDir(ctx.serverDirectory());
+    }
+
     public static Path authKeyPath(Path serverDir) {
         return watchtowerRoot(serverDir).resolve(".auth-key");
     }

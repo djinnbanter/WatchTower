@@ -124,6 +124,15 @@ public final class NeoForgeModRuntimeConfig implements ModRuntimeConfig {
     }
 
     @Override
+    public int liveWorldCensusIntervalSeconds() {
+        try {
+            return WatchtowerConfig.LIVE_WORLD_CENSUS_INTERVAL_SECONDS.get();
+        } catch (IllegalStateException e) {
+            return 60;
+        }
+    }
+
+    @Override
     public int liveStorageIntervalSeconds() {
         try {
             return WatchtowerConfig.LIVE_STORAGE_INTERVAL_SECONDS.get();

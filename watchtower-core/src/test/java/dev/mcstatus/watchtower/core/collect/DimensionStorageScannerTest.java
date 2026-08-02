@@ -45,4 +45,24 @@ class DimensionStorageScannerTest {
         JsonObject storage = DimensionStorageScanner.scan(temp.toString(), false);
         assertFalse(storage.has("by_dimension"));
     }
+
+    @Test
+    void attachCategoryBreakdowns_listsModJarSizes() throws Exception {
+        Path mods = temp.resolve("mods");
+        Files.createDirectories(mods);
+        Files.write(mods.resolve("create-6.0.1.jar"), new byte[2_000_000]);
+        Files.write(mods.resolve("jei-19.jar"), new byte[500_000]);
+        Files.write(mods.resolve("readme.txt"), "not a jar".getBytes());
+
+        JsonObject result = new JsonObject();
+        DimensionStorageScanner.attachCategoryBreakdowns(temp, result);
+
+        assertTrue(result.has("by_mods"), "by_mods should list jar sizes without requiring du");
+        assertTrue(result.has("mods_gb") || result.has("mods_bytes"));
+        JsonArray byMods = result.getAsJsonArray("by_mods");
+        assertEquals(2, byMods.size());
+        assertEquals("create-6.0.1.jar", byMods.get(0).getAsJsonObject().get("label").getAsString());
+        assertTrue(byMods.get(0).getAsJsonObject().get("gb").getAsDouble()
+                >= byMods.get(1).getAsJsonObject().get("gb").getAsDouble());
+    }
 }

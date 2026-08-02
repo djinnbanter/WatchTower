@@ -1,0 +1,21 @@
+{
+  "signals": {
+    "chunky_pregen": {
+      "pregen_active": false
+    },
+    "dh_pregen": {
+      "pregen_active": false
+    },
+    "write_await_ms": 100,
+    "write_mb_s": 8.0,
+    "census": {
+      "dimensions": [
+        {
+          "id": "minecraft:overworld",
+          "loaded_chunks": 600,
+          "players": 2
+        }
+      ]
+    }
+  }
+}
