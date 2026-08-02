@@ -121,8 +121,40 @@ public final class ModConfigService {
         out.addProperty("mtime", Files.getLastModifiedTime(file).toInstant().getEpochSecond());
         out.addProperty("size", size);
         out.addProperty("secret_hint", secretHint(content));
-        out.add("parse_warnings", parseWarnings(pathKey, content));
+        JsonArray warnings = parseWarnings(pathKey, content);
+        String lower = pathKey.toLowerCase(Locale.ROOT);
+        if (lower.endsWith(".toml")) {
+            TomlFormModel.ParseResult pr = TomlFormModel.parse(content);
+            for (String w : pr.warnings()) {
+                warnings.add(w);
+            }
+            if (pr.formOk()) {
+                out.addProperty("editor", "form");
+                out.add("fields", pr.fields());
+            } else {
+                out.addProperty("editor", "raw");
+            }
+        } else {
+            out.addProperty("editor", "raw");
+        }
+        out.add("parse_warnings", warnings);
         return out;
+    }
+
+    /**
+     * Serialize form fields to TOML, then delegate to {@link #save}.
+     *
+     * @throws IllegalArgumentException if the field tree is invalid
+     */
+    public static JsonObject saveFields(
+            Path serverDir,
+            Path watchtowerDir,
+            String relativePath,
+            JsonArray fields,
+            long expectedMtimeEpochSec
+    ) throws IOException {
+        String content = TomlFormModel.serialize(fields);
+        return save(serverDir, watchtowerDir, relativePath, content, expectedMtimeEpochSec);
     }
 
     public static JsonObject save(

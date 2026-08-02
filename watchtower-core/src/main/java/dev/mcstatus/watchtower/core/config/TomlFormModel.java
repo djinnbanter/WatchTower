@@ -273,6 +273,16 @@ public final class TomlFormModel {
     }
 
     private static void writeLeaf(StringBuilder sb, JsonObject leaf, int indent) {
+        if (!leaf.has("kind") || !leaf.has("key") || !leaf.has("value")) {
+            throw new IllegalArgumentException("invalid field");
+        }
+        String kind = leaf.get("kind").getAsString();
+        switch (kind) {
+            case "bool", "integer", "number", "string", "array" -> {
+                // ok
+            }
+            default -> throw new IllegalArgumentException("invalid field kind: " + kind);
+        }
         String key = leaf.get("key").getAsString();
         sb.append("  ".repeat(Math.max(0, indent)));
         sb.append(key).append(" = ");

@@ -1,5 +1,6 @@
 package dev.mcstatus.watchtower.core.config;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -97,5 +98,73 @@ class ModConfigServiceTest {
         String huge = "a".repeat(ModConfigService.MAX_CONTENT_BYTES + 1);
         assertThrows(ModConfigService.OversizeException.class,
                 () -> ModConfigService.save(server, wt, "config/a.toml", huge, mtime));
+    }
+
+    @Test
+    void readTomlOffersFormEditor() throws Exception {
+        Path server = serverWithConfig("config/a.toml", "[recipes]\nbulkPressing = false\n");
+        JsonObject r = ModConfigService.read(server, "config/a.toml");
+        assertEquals("form", r.get("editor").getAsString());
+        assertTrue(r.has("fields"));
+        assertTrue(r.getAsJsonArray("fields").size() >= 1);
+        assertTrue(r.has("content"));
+    }
+
+    @Test
+    void readJsonStaysRawWithoutFields() throws Exception {
+        Path server = serverWithConfig("config/a.json", "{\"x\":1}\n");
+        JsonObject r = ModConfigService.read(server, "config/a.json");
+        assertEquals("raw", r.get("editor").getAsString());
+        assertFalse(r.has("fields"));
+    }
+
+    @Test
+    void readBadTomlFallsBackToRaw() throws Exception {
+        Path server = serverWithConfig("config/bad.toml", "not = = toml\n");
+        JsonObject r = ModConfigService.read(server, "config/bad.toml");
+        assertEquals("raw", r.get("editor").getAsString());
+        assertFalse(r.has("fields"));
+    }
+
+    @Test
+    void saveFieldsWritesAndBacksUp() throws Exception {
+        Path server = serverWithConfig("config/a.toml", "x = 1\n");
+        Path wt = temp.resolve("watchtower");
+        Files.createDirectories(wt);
+        JsonObject before = ModConfigService.read(server, "config/a.toml");
+        long mtime = before.get("mtime").getAsLong();
+        JsonArray fields = before.getAsJsonArray("fields");
+
+        // Flip the root integer
+        for (int i = 0; i < fields.size(); i++) {
+            JsonObject f = fields.get(i).getAsJsonObject();
+            if ("x".equals(f.get("key").getAsString()) && "integer".equals(f.get("kind").getAsString())) {
+                f.addProperty("value", 99);
+            }
+        }
+
+        JsonObject saved = ModConfigService.saveFields(server, wt, "config/a.toml", fields, mtime);
+        assertTrue(saved.has("backup_path"));
+        String written = Files.readString(server.resolve("config/a.toml"));
+        assertTrue(written.contains("x = 99") || written.contains("x=99"));
+        assertTrue(TomlFormModel.parse(written).formOk());
+    }
+
+    @Test
+    void saveFieldsRejectsInvalidTree() throws Exception {
+        Path server = serverWithConfig("config/a.toml", "x = 1\n");
+        Path wt = temp.resolve("watchtower");
+        Files.createDirectories(wt);
+        long mtime = Files.getLastModifiedTime(server.resolve("config/a.toml")).toInstant().getEpochSecond();
+        JsonArray bad = new JsonArray();
+        JsonObject leaf = new JsonObject();
+        leaf.addProperty("kind", "nope");
+        leaf.addProperty("key", "x");
+        leaf.addProperty("path", "x");
+        leaf.addProperty("section", "");
+        leaf.addProperty("value", 1);
+        bad.add(leaf);
+        assertThrows(IllegalArgumentException.class,
+                () -> ModConfigService.saveFields(server, wt, "config/a.toml", bad, mtime));
     }
 }
