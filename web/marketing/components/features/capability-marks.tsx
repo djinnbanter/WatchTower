@@ -114,6 +114,22 @@ function paths(id: string, size: 'md' | 'lg'): ReactNode {
           <path {...stroke} d="M12 10v4M10 12h4" />
         </>,
       );
+    case 'jar-disable':
+      return m(
+        <>
+          <path {...stroke} d="M8 5h8v14H8z" />
+          <path {...stroke} d="M11 5V3.5h2V5" />
+          <path {...stroke} d="M7 17l10-10" />
+        </>,
+      );
+    case 'mod-configs':
+      return m(
+        <>
+          <path {...stroke} d="M6 5h12v14H6z" />
+          <path {...stroke} d="M9 9h6M9 12h4M9 15h5" />
+          <circle {...stroke} cx="17" cy="12" r="1.5" />
+        </>,
+      );
     case 'schedule-load':
       return m(
         <>
@@ -126,6 +142,15 @@ function paths(id: string, size: 'md' | 'lg'): ReactNode {
         <>
           <path {...stroke} d="M4 16h16M6 16V9l6-4 6 4v7" />
           <path {...stroke} d="M9 16v-3h6v3" />
+        </>,
+      );
+    case 'storage-space-map':
+      return m(
+        <>
+          <path {...stroke} d="M4 5h10v8H4z" />
+          <path {...stroke} d="M14 5h6v5h-6z" />
+          <path {...stroke} d="M14 10h6v9h-6z" />
+          <path {...stroke} d="M4 13h10v6H4z" />
         </>,
       );
     case 'weekly-digest':
@@ -147,6 +172,13 @@ function paths(id: string, size: 'md' | 'lg'): ReactNode {
       );
     case 'spark':
       return m(<path {...stroke} d="M13 3L6 13h5l-1 8 8-12h-5l0-6z" />);
+    case 'spark-map':
+      return m(
+        <>
+          <path {...stroke} d="M5 5h14v14H5z" />
+          <path {...stroke} d="M5 10h14M5 15h14M10 5v14M15 5v14" />
+        </>,
+      );
     case 'backups':
       return m(
         <path
@@ -188,6 +220,13 @@ function paths(id: string, size: 'md' | 'lg'): ReactNode {
         <>
           <circle {...stroke} cx="12" cy="9" r="3" />
           <path {...stroke} d="M6 19c1.5-3 3.5-4.5 6-4.5S16.5 16 18 19" />
+        </>,
+      );
+    case 'theme-accent':
+      return m(
+        <>
+          <path {...stroke} d="M12 4a8 8 0 0 0 0 16 8 8 0 0 1 0-16z" />
+          <circle {...stroke} cx="17" cy="7" r="2" fill="currentColor" stroke="none" />
         </>,
       );
     case 'auth':

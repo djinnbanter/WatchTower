@@ -1480,6 +1480,244 @@ function PeekCli() {
   );
 }
 
+function PeekJarDisable() {
+  return (
+    <div className="bento-peek bento-peek--drift" aria-hidden>
+      <Plate className="bento-peek__drift-panel">
+        <div className="bento-peek__drift-head">
+          <div className="bento-peek__drift-side">
+            <span className="bento-peek__kicker">Jar</span>
+            <code className="bento-peek__hash">create-6.0.0.jar</code>
+          </div>
+          <span className="bento-peek__drift-arrow" aria-hidden>
+            →
+          </span>
+          <div className="bento-peek__drift-side">
+            <span className="bento-peek__kicker">Next boot</span>
+            <code className="bento-peek__hash is-warn">create-6.0.0.jar.disabled</code>
+          </div>
+          <span className="desk-pill desk-pill--warn">Disabled</span>
+        </div>
+        <div className="bento-peek__pills bento-peek__pills--gap">
+          <span className="desk-pill desk-pill--info">All</span>
+          <span className="desk-pill desk-pill--ok">Enabled</span>
+          <span className="desk-pill desk-pill--warn">Disabled</span>
+        </div>
+        <span className="bento-peek__sub">High world risk asks you to confirm first · Admins only</span>
+      </Plate>
+    </div>
+  );
+}
+
+function PeekModConfigs() {
+  const rows = [
+    { label: 'enableHopper', kind: 'bool', value: 'true' },
+    { label: 'tickRate', kind: 'num', value: '20' },
+    { label: 'maxDepth', kind: 'num', value: '8' },
+  ];
+  return (
+    <div className="bento-peek bento-peek--config" aria-hidden>
+      <Plate className="bento-peek__config-panel">
+        <div className="bento-peek__config-head">
+          <span className="bento-peek__kicker">config/</span>
+          <span className="bento-peek__readout">TOML form</span>
+        </div>
+        <ul className="bento-peek__config">
+          {rows.map((r) => (
+            <li key={r.label} className="bento-peek__config-row">
+              <span className={`desk-pill desk-pill--${r.kind === 'bool' ? 'ok' : 'info'}`}>
+                {r.kind === 'bool' ? 'bool' : 'num'}
+              </span>
+              <span className="bento-peek__config-body">
+                <code>
+                  {r.label}
+                  <span className="bento-peek__config-eq">=</span>
+                  <span className="bento-peek__config-val">{r.value}</span>
+                </code>
+                <span className="bento-peek__sub">Save makes a backup · undo available</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Plate>
+    </div>
+  );
+}
+
+function PeekStorageSpaceMap() {
+  const cells = [
+    { label: 'World', flex: 2.4, tone: 'var(--wt-ch-disk)' },
+    { label: 'Mods', flex: 1.2, tone: 'var(--wt-accent)' },
+    { label: 'Logs', flex: 0.8, tone: 'var(--wt-warn)' },
+    { label: 'Backups', flex: 1.6, tone: 'var(--wt-ok)' },
+  ];
+  return (
+    <div className="bento-peek bento-peek--storage" aria-hidden>
+      <Plate className="bento-peek__storage-panel">
+        <div className="bento-peek__config-head">
+          <span className="bento-peek__kicker">Space map</span>
+          <span className="bento-peek__readout">244 GB</span>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '2.4fr 1.2fr',
+            gridTemplateRows: '1.2fr 0.8fr',
+            gap: '0.35rem',
+            minHeight: '7.5rem',
+          }}
+        >
+          <div
+            style={{
+              gridRow: '1 / 3',
+              borderRadius: 4,
+              border: '1px solid color-mix(in srgb, var(--wt-ch-disk) 35%, var(--wt-line))',
+              background: 'color-mix(in srgb, var(--wt-ch-disk) 18%, var(--wt-bg2))',
+              padding: '0.45rem 0.55rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span className="bento-peek__kicker">World</span>
+            <span className="bento-peek__readout">184 GB</span>
+          </div>
+          {cells.slice(1).map((c) => (
+            <div
+              key={c.label}
+              style={{
+                borderRadius: 4,
+                border: `1px solid color-mix(in srgb, ${c.tone} 35%, var(--wt-line))`,
+                background: `color-mix(in srgb, ${c.tone} 16%, var(--wt-bg2))`,
+                padding: '0.35rem 0.45rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span className="bento-peek__kicker">{c.label}</span>
+              <span className="bento-peek__sub">drill in</span>
+            </div>
+          ))}
+        </div>
+      </Plate>
+    </div>
+  );
+}
+
+function PeekSparkMap() {
+  const heat = [
+    18, 22, 40, 55, 48, 30, 24, 20, 28, 62, 78, 70, 44, 32, 26, 34, 58, 88, 72, 50, 36, 30, 42, 66,
+    80, 60, 38, 28,
+  ];
+  return (
+    <div className="bento-peek bento-peek--schedule" aria-hidden>
+      <Plate className="bento-peek__schedule-panel">
+        <div className="bento-peek__schedule-head">
+          <div>
+            <span className="bento-peek__kicker">Chunk heat</span>
+            <span className="bento-peek__schedule-peak">chunk 3, -12</span>
+          </div>
+          <div className="bento-peek__pills">
+            <span className="desk-pill desk-pill--warn">Hot</span>
+            <span className="desk-pill desk-pill--info">Quiet</span>
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: '0.2rem',
+            minHeight: '5.5rem',
+          }}
+        >
+          {heat.map((v, i) => (
+            <span
+              key={i}
+              className="bento-peek__heatmap-cell"
+              style={{
+                display: 'block',
+                minHeight: '0.85rem',
+                borderRadius: 2,
+                background: `color-mix(in srgb, var(--wt-lantern) ${Math.round(10 + v * 0.9)}%, var(--wt-bg2))`,
+                outline: i === 17 ? '1px solid var(--wt-lantern)' : undefined,
+              }}
+            />
+          ))}
+        </div>
+        <div className="bento-peek__schedule-foot">
+          <span>
+            Selected <strong>3, -12</strong> · entity hotspot
+          </span>
+        </div>
+      </Plate>
+    </div>
+  );
+}
+
+function PeekThemeAccent() {
+  const themes = [
+    { label: 'Light', bg: '#f4f2ec', fg: '#1a1a18' },
+    { label: 'Dark', bg: '#16181d', fg: '#e8e6e0' },
+    { label: 'Black', bg: '#0a0a0b', fg: '#e8e6e0' },
+    { label: 'System', bg: '#2a2d34', fg: '#e8e6e0' },
+  ];
+  const accents = ['#4C8DFF', '#E8A54B', '#3DCF8E', '#F07178'];
+  return (
+    <div className="bento-peek bento-peek--accounts" aria-hidden>
+      <Plate className="bento-peek__accounts-panel">
+        <div className="bento-peek__config-head">
+          <span className="bento-peek__kicker">Appearance</span>
+          <span className="desk-pill desk-pill--info">Per account</span>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '0.35rem',
+            marginBottom: '0.55rem',
+          }}
+        >
+          {themes.map((t) => (
+            <div
+              key={t.label}
+              style={{
+                borderRadius: 4,
+                border: '1px solid var(--wt-line)',
+                background: t.bg,
+                color: t.fg,
+                padding: '0.45rem 0.35rem',
+                textAlign: 'center',
+                fontSize: '0.75rem',
+                fontFamily: 'var(--wt-font-mono)',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t.label}
+            </div>
+          ))}
+        </div>
+        <div className="bento-peek__pills bento-peek__pills--gap">
+          {accents.map((c) => (
+            <span
+              key={c}
+              style={{
+                width: '1.1rem',
+                height: '1.1rem',
+                borderRadius: 999,
+                background: c,
+                border: c === '#4C8DFF' ? '2px solid var(--wt-text)' : '1px solid var(--wt-line)',
+                display: 'inline-block',
+              }}
+            />
+          ))}
+        </div>
+      </Plate>
+    </div>
+  );
+}
+
 export function featurePeek(id: string): ReactNode {
   switch (id) {
     case 'health-grade':
@@ -1496,6 +1734,8 @@ export function featurePeek(id: string): ReactNode {
       return <PeekSupportPack />;
     case 'spark':
       return <PeekSparkStamp />;
+    case 'spark-map':
+      return <PeekSparkMap />;
     case 'gc-ram':
       return <PeekGcRam />;
     case 'crash-fingerprints':
@@ -1508,10 +1748,16 @@ export function featurePeek(id: string): ReactNode {
       return <PeekMods />;
     case 'jar-drift':
       return <PeekJarDrift />;
+    case 'jar-disable':
+      return <PeekJarDisable />;
+    case 'mod-configs':
+      return <PeekModConfigs />;
     case 'schedule-load':
       return <PeekSchedule />;
     case 'storage-runway':
       return <PeekStorage />;
+    case 'storage-space-map':
+      return <PeekStorageSpaceMap />;
     case 'weekly-digest':
       return <PeekDigest />;
     case 'config-audit':
@@ -1528,6 +1774,8 @@ export function featurePeek(id: string): ReactNode {
       return <PeekSources />;
     case 'accounts':
       return <PeekAccounts />;
+    case 'theme-accent':
+      return <PeekThemeAccent />;
     case 'auth':
       return <PeekAuth />;
     case 'help':
@@ -1538,6 +1786,7 @@ export function featurePeek(id: string): ReactNode {
       throw new Error(`Missing feature peek: ${id}`);
   }
 }
+
 
 // Keep helper exported for potential reuse / tree-shake friendliness
 export { PeekInstrumentGrid };
