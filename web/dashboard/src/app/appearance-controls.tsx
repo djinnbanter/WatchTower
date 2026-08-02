@@ -14,14 +14,22 @@ const THEME_OPTIONS: { id: ThemeMode; label: string; icon: WtIcon }[] = [
 export function AppearanceControls({
   idPrefix = 'wt-appearance',
   compact = false,
+  embedded = false,
 }: {
   idPrefix?: string;
   compact?: boolean;
+  embedded?: boolean;
 }) {
   const { themeMode, accent, setThemeMode, setAccent } = useTheme();
 
   return (
-    <div className={cn('wt-appearance', compact && 'wt-appearance--compact')}>
+    <div
+      className={cn(
+        'wt-appearance',
+        compact && 'wt-appearance--compact',
+        embedded && 'wt-appearance--embedded',
+      )}
+    >
       <div
         className="wt-appearance__themes"
         role="radiogroup"

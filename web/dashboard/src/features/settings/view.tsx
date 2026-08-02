@@ -29,7 +29,14 @@ import { asRecord, bool, num, str, totpQrSrc } from '@/lib/utils';
 import { useDashboardTimezone } from '@/app/timezone';
 import { AccountsPanel } from './accounts-panel';
 import { AuditLogPanel } from './audit-log-panel';
-import { NumberField, ReadOnlyField, TextField, ToggleField } from './fields';
+import {
+  NumberField,
+  ReadOnlyField,
+  SettingsPair,
+  SettingsStack,
+  TextField,
+  ToggleField,
+} from './fields';
 import { SelfMinecraftLink } from './minecraft-link';
 import './settings.css';
 
@@ -150,11 +157,11 @@ function TimezonePreferenceField() {
   const zoneValue = preference.mode === 'iana' ? preference.zone || resolvedZone : resolvedZone;
 
   return (
-    <div className="mt-3 wt-form-row px-4 py-3">
+    <div className="st-row">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-sm font-medium">Timezone</div>
-          <div className="mt-0.5 text-xs text-wt-text-low">
+          <div className="st-row__label">Timezone</div>
+          <div className="st-row__hint">
             Browser-local only — Schedule and restart advice times. Backend data stays UTC. Resolved:{' '}
             <span className="font-medium text-wt-text-mid">{resolvedZone}</span>
           </div>
@@ -337,46 +344,57 @@ export function PageView({ route }: { route: RouteState }) {
       {panel === 'general' ? (
         <div className="space-y-6">
           <Section title="Server identity" hint="Detected for this install — not edited here.">
-            <div className="grid gap-3 md:grid-cols-2">
-              <ReadOnlyField
-                label="Hostname"
-                value={str(form.hostname)}
-                hint="Resolved from the server environment"
-              />
-              <ReadOnlyField
-                label="Hosting panel"
-                value={str(form.panel_display_name) || str(form.panel, 'none')}
-                hint="Auto-detected panel / host type"
-              />
+            <SettingsStack>
+              <SettingsPair>
+                <ReadOnlyField
+                  label="Hostname"
+                  value={str(form.hostname)}
+                  hint="From the server environment"
+                />
+                <ReadOnlyField
+                  label="Hosting panel"
+                  value={str(form.panel_display_name) || str(form.panel, 'none')}
+                  hint="Auto-detected panel / host type"
+                />
+              </SettingsPair>
               <ReadOnlyField
                 label="Dashboard port"
                 value={String(num(form.dashboard_port) || '—')}
-                hint="Change in NeoForge mod config (watchtower-common.toml), then restart"
+                hint="Change in watchtower-common.toml, then restart"
               />
-            </div>
+            </SettingsStack>
           </Section>
           <Section
             title="Appearance"
-            hint="Theme and accent sync to your signed-in account. Status colours (ok / warn / danger) stay the same."
+            hint="Theme and accent sync to your account. Status colours stay the same."
           >
-            <AppearanceControls idPrefix="settings-appearance" />
+            <SettingsStack>
+              <div className="st-row">
+                <AppearanceControls idPrefix="settings-appearance" embedded />
+              </div>
+            </SettingsStack>
           </Section>
-          <Section title="Dashboard preferences" hint="Applies after Save — next page load for banners. Timezone applies immediately in this browser.">
-            <div className="grid gap-3 md:grid-cols-2">
-              <ToggleField
-                label="Check for updates"
-                hint="Show when a newer Watchtower release is available"
-                value={bool(form.update_check)}
-                onChange={(v) => set('update_check', v)}
-              />
-              <ToggleField
-                label="Metrics context banner"
-                hint="Show the short explainer above Live / chart pages"
-                value={bool(form.metrics_context_banner)}
-                onChange={(v) => set('metrics_context_banner', v)}
-              />
-            </div>
-            <TimezonePreferenceField />
+          <Section
+            title="Dashboard preferences"
+            hint="Banners apply after Save. Timezone applies immediately in this browser."
+          >
+            <SettingsStack>
+              <SettingsPair>
+                <ToggleField
+                  label="Check for updates"
+                  hint="Show when a newer WatchTower release is available"
+                  value={bool(form.update_check)}
+                  onChange={(v) => set('update_check', v)}
+                />
+                <ToggleField
+                  label="Metrics context banner"
+                  hint="Short explainer above Live / chart pages"
+                  value={bool(form.metrics_context_banner)}
+                  onChange={(v) => set('metrics_context_banner', v)}
+                />
+              </SettingsPair>
+              <TimezonePreferenceField />
+            </SettingsStack>
           </Section>
         </div>
       ) : null}

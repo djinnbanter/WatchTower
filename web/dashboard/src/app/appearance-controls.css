@@ -4,6 +4,10 @@
   gap: 0.65rem;
 }
 
+.wt-appearance--embedded {
+  width: 100%;
+}
+
 .wt-appearance__themes {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
