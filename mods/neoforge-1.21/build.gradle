@@ -229,6 +229,10 @@ tasks.register('verifyModJar') {
                 throw new GradleException(
                         'Nested watchtower-core must not ship unrelocated com.google.protobuf (JPMS conflict)')
             }
+            if (nestedJarContains(zip, coreEntry, 'org/checkerframework/checker/nullness/qual/NonNull.class')) {
+                throw new GradleException(
+                        'Nested watchtower-core must not ship org.checkerframework (JPMS clash with Groovy/etc.)')
+            }
 
             def commonEntry = embeddedEntries.find { e -> e.name.contains('watchtower-neoforge-common') }
             if (commonEntry == null) {

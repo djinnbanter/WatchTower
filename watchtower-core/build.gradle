@@ -86,6 +86,9 @@ tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.Shadow
     relocate 'org.yaml.snakeyaml', 'dev.mcstatus.watchtower.core.internal.yaml'
     relocate 'org.tomlj', 'dev.mcstatus.watchtower.core.internal.tomlj'
     relocate 'org.antlr', 'dev.mcstatus.watchtower.core.internal.antlr'
+    // TomlJ pulls checker-qual; exporting it clashes with JPMS (e.g. Groovy macro lib on NeoForge).
+    exclude 'org/checkerframework/**'
+    exclude 'META-INF/maven/org.checkerframework/**'
     exclude 'module-info.class'
     mergeServiceFiles()
     manifest {

@@ -7,13 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Maintainers:** detailed planning and changelog notes may live in local `docs/dev/` (gitignored, not on GitHub).
 
-## [Unreleased](https://github.com/djinnbanter/WatchTower/compare/v1.2.0-beta.1...HEAD)
+## [Unreleased](https://github.com/djinnbanter/WatchTower/compare/v1.2.0-beta.2...HEAD)
 
 ### Added
 
 ### Changed
 
 ### Fixed
+
+## [1.2.0-beta.2](https://github.com/djinnbanter/WatchTower/compare/v1.2.0-beta.1...v1.2.0-beta.2) — 2026-08-02
+
+Artifacts: `watchtower-neoforge-1.2.0-beta.2+mc1.21.jar` · `watchtower-cli-1.2.0-beta.2.jar` in `releases/1.2.0-beta.2/` and `releases/latest/`.
+
+> **Beta hotfix:** same as beta.1 plus a boot fix. Prefer this over beta.1.
+
+### Fixed
+
+- **Server won't start with beta.1** — shaded TomlJ was exporting Checker Framework packages that clash with Groovy on NeoForge (`ResolutionException` / `org.checkerframework.checker.qual`). Those classes are excluded from the nested core JAR now.
 
 ## [1.2.0-beta.1](https://github.com/djinnbanter/WatchTower/compare/v1.1.9...v1.2.0-beta.1) — 2026-08-02
 
