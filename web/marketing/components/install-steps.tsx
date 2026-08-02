@@ -29,9 +29,8 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
               <div className="p-5 md:p-6">
                 <h2 className="install-step__title">Get the jar</h2>
                 <p className="install-step__copy">
-                  Download the {release.label} release from Modrinth or GitHub. Use{' '}
-                  <a href={LINKS.releasesLatest}>releases/latest</a> so you don&apos;t copy a version
-                  number by hand.
+                  Download the {release.label} release from Modrinth or GitHub. Prefer Modrinth, or
+                  open the repo and grab the jar from Releases.
                 </p>
                 {release.tag !== 'latest' ? (
                   <p className="install-meta">
@@ -47,11 +46,11 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
                     Get it on Modrinth
                   </Cta>
                   <Cta
-                    href={LINKS.releasesLatest}
+                    href={LINKS.github}
                     variant="ghost"
                     leading={<GithubMark className="h-3.5 w-3.5" />}
                   >
-                    GitHub Releases
+                    GitHub
                   </Cta>
                 </div>
               </div>
@@ -104,9 +103,27 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
                   Once the server is up, open the dashboard on the host. Stay on localhost or an SSH
                   tunnel. Don&apos;t put port 8787 on the open internet.
                 </p>
-                <div className="install-url">
-                  <p className="install-url__label">Local dashboard</p>
-                  <p className="install-url__value">http://127.0.0.1:8787</p>
+                <div className="install-url" role="group" aria-label="Local dashboard address">
+                  <div className="install-url__chrome" aria-hidden>
+                    <span />
+                    <span />
+                    <span />
+                    <em>Local dashboard</em>
+                  </div>
+                  <div className="install-url__address">
+                    <span className="install-url__lock" aria-hidden>
+                      <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden>
+                        <rect x="3.5" y="7" width="9" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.25" />
+                        <path
+                          d="M5.5 7V5.25a2.5 2.5 0 0 1 5 0V7"
+                          stroke="currentColor"
+                          strokeWidth="1.25"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </span>
+                    <p className="install-url__value">http://127.0.0.1:8787</p>
+                  </div>
                   <p className="install-url__hint">
                     Change the default login when you first open it. Defaults are listed below.
                   </p>

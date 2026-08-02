@@ -184,6 +184,8 @@
 .magic-bento-card--media-strip .magic-bento-card__visual {
   margin-top: 0;
   flex: 0 0 auto;
+  overflow: visible;
+  min-width: 0;
 }
 
 .magic-bento-card--media-strip .magic-bento-card__title {

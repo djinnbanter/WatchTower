@@ -1414,9 +1414,9 @@ function PeekAccounts() {
 
 function PeekAuth() {
   return (
-    <div className="bento-peek bento-peek--side" aria-hidden>
-      <div className="bento-peek__stamp-wrap">
-        <span className="bento-peek__stamp-box">
+    <div className="bento-peek bento-peek--auth" aria-hidden>
+      <div className="bento-peek__stamp-wrap bento-peek__stamp-wrap--auth">
+        <span className="bento-peek__stamp-box bento-peek__stamp-box--auth">
           <span className="bento-peek__stamp-ring" />
           <Plate className="bento-peek__stamp bento-peek__stamp--auth">
             <CapabilityMark id="auth" size="lg" />
@@ -1480,6 +1480,222 @@ function PeekCli() {
   );
 }
 
+function PeekJarDisable() {
+  return (
+    <div className="bento-peek bento-peek--drift" aria-hidden>
+      <Plate className="bento-peek__drift-panel">
+        <div className="bento-peek__drift-head">
+          <div className="bento-peek__drift-side">
+            <span className="bento-peek__kicker">Jar</span>
+            <code className="bento-peek__hash">create-6.0.0.jar</code>
+          </div>
+          <span className="bento-peek__drift-arrow" aria-hidden>
+            →
+          </span>
+          <div className="bento-peek__drift-side">
+            <span className="bento-peek__kicker">Next boot</span>
+            <code className="bento-peek__hash is-warn">create-6.0.0.jar.disabled</code>
+          </div>
+          <span className="desk-pill desk-pill--warn">Disabled</span>
+        </div>
+        <div className="bento-peek__pills bento-peek__pills--gap">
+          <span className="desk-pill desk-pill--info">All</span>
+          <span className="desk-pill desk-pill--ok">Enabled</span>
+          <span className="desk-pill desk-pill--warn">Disabled</span>
+        </div>
+        <span className="bento-peek__sub">High world risk asks you to confirm first · Admins only</span>
+      </Plate>
+    </div>
+  );
+}
+
+function PeekModConfigs() {
+  const rows = [
+    { label: 'enableHopper', kind: 'bool', value: 'true' },
+    { label: 'tickRate', kind: 'num', value: '20' },
+    { label: 'maxDepth', kind: 'num', value: '8' },
+  ];
+  return (
+    <div className="bento-peek bento-peek--config" aria-hidden>
+      <Plate className="bento-peek__config-panel">
+        <div className="bento-peek__config-head">
+          <span className="bento-peek__kicker">config/</span>
+          <span className="bento-peek__readout">TOML form · undo</span>
+        </div>
+        <ul className="bento-peek__config">
+          {rows.map((r) => (
+            <li key={r.label} className="bento-peek__config-row">
+              <span className={`desk-pill desk-pill--${r.kind === 'bool' ? 'ok' : 'info'}`}>
+                {r.kind === 'bool' ? 'bool' : 'num'}
+              </span>
+              <span className="bento-peek__config-body">
+                <code>
+                  {r.label}
+                  <span className="bento-peek__config-eq">=</span>
+                  <span className="bento-peek__config-val">{r.value}</span>
+                </code>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Plate>
+    </div>
+  );
+}
+
+function PeekStorageSpaceMap() {
+  return (
+    <div className="bento-peek bento-peek--space-map" aria-hidden>
+      <Plate className="bento-peek__space-map-panel">
+        <div className="bento-peek__theme-head">
+          <span className="bento-peek__kicker">Space map</span>
+          <span className="bento-peek__readout">244 GB</span>
+        </div>
+        <div className="bento-peek__space-map-grid">
+          <div
+            className="bento-peek__space-map-cell bento-peek__space-map-cell--world"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--wt-ch-disk) 35%, var(--wt-line))',
+              background: 'color-mix(in srgb, var(--wt-ch-disk) 18%, var(--wt-bg2))',
+            }}
+          >
+            <span className="bento-peek__kicker">World</span>
+            <span className="bento-peek__readout">184 GB</span>
+          </div>
+          <div
+            className="bento-peek__space-map-cell"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--wt-accent) 35%, var(--wt-line))',
+              background: 'color-mix(in srgb, var(--wt-accent) 16%, var(--wt-bg2))',
+            }}
+          >
+            <span className="bento-peek__kicker">Mods</span>
+            <span className="bento-peek__sub">drill in</span>
+          </div>
+          <div
+            className="bento-peek__space-map-cell"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--wt-warn) 35%, var(--wt-line))',
+              background: 'color-mix(in srgb, var(--wt-warn) 16%, var(--wt-bg2))',
+            }}
+          >
+            <span className="bento-peek__kicker">Logs</span>
+            <span className="bento-peek__sub">drill in</span>
+          </div>
+          <div
+            className="bento-peek__space-map-cell bento-peek__space-map-cell--backups"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--wt-ok) 35%, var(--wt-line))',
+              background: 'color-mix(in srgb, var(--wt-ok) 16%, var(--wt-bg2))',
+            }}
+          >
+            <span className="bento-peek__kicker">Backups</span>
+            <span className="bento-peek__sub">drill in</span>
+          </div>
+        </div>
+      </Plate>
+    </div>
+  );
+}
+
+function PeekSparkMap() {
+  const heat = [
+    18, 22, 40, 55, 48, 30, 24, 20, 28, 62, 78, 70, 44, 32, 26, 34, 58, 88, 72, 50, 36, 30, 42, 66,
+    80, 60, 38, 28,
+  ];
+  return (
+    <div className="bento-peek bento-peek--schedule" aria-hidden>
+      <Plate className="bento-peek__schedule-panel">
+        <div className="bento-peek__schedule-head">
+          <div>
+            <span className="bento-peek__kicker">Chunk heat</span>
+            <span className="bento-peek__schedule-peak">chunk 3, -12</span>
+          </div>
+          <div className="bento-peek__pills">
+            <span className="desk-pill desk-pill--warn">Hot</span>
+            <span className="desk-pill desk-pill--info">Quiet</span>
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: '0.2rem',
+            minHeight: '5.5rem',
+          }}
+        >
+          {heat.map((v, i) => (
+            <span
+              key={i}
+              className="bento-peek__heatmap-cell"
+              style={{
+                display: 'block',
+                minHeight: '0.85rem',
+                borderRadius: 2,
+                background: `color-mix(in srgb, var(--wt-lantern) ${Math.round(10 + v * 0.9)}%, var(--wt-bg2))`,
+                outline: i === 17 ? '1px solid var(--wt-lantern)' : undefined,
+              }}
+            />
+          ))}
+        </div>
+        <div className="bento-peek__schedule-foot">
+          <span>
+            Selected <strong>3, -12</strong> · entity hotspot
+          </span>
+        </div>
+      </Plate>
+    </div>
+  );
+}
+
+function PeekThemeAccent() {
+  const themes = [
+    { label: 'Light', bg: '#f4f2ec', fg: '#1a1a18', on: false },
+    { label: 'Dark', bg: '#1c2433', fg: '#e8e6e0', on: true },
+    { label: 'Black', bg: '#000000', fg: '#f2f2f2', on: false },
+  ];
+  const accents = [
+    { c: '#4C8DFF', on: true },
+    { c: '#E8A54B', on: false },
+    { c: '#3DCF8E', on: false },
+    { c: '#F07178', on: false },
+  ];
+  return (
+    <div className="bento-peek bento-peek--theme" aria-hidden>
+      <Plate className="bento-peek__theme-panel">
+        <div className="bento-peek__theme-head">
+          <span className="bento-peek__kicker">Appearance</span>
+          <span className="desk-pill desk-pill--info">Per account</span>
+        </div>
+        <div className="bento-peek__theme-grid bento-peek__theme-grid--three">
+          {themes.map((t) => (
+            <div
+              key={t.label}
+              className={`bento-peek__theme-swatch${t.on ? ' is-on' : ''}`}
+              style={{ background: t.bg, color: t.fg }}
+            >
+              <span className="bento-peek__theme-swatch-label">{t.label}</span>
+              {t.on ? <span className="desk-pill desk-pill--ok">Active</span> : null}
+            </div>
+          ))}
+        </div>
+        <div className="bento-peek__theme-accent-row">
+          <span className="bento-peek__kicker">Accent</span>
+          <div className="bento-peek__theme-accents">
+            {accents.map((a) => (
+              <span
+                key={a.c}
+                className={`bento-peek__theme-dot${a.on ? ' is-on' : ''}`}
+                style={{ background: a.c }}
+              />
+            ))}
+          </div>
+        </div>
+      </Plate>
+    </div>
+  );
+}
+
 export function featurePeek(id: string): ReactNode {
   switch (id) {
     case 'health-grade':
@@ -1496,6 +1712,8 @@ export function featurePeek(id: string): ReactNode {
       return <PeekSupportPack />;
     case 'spark':
       return <PeekSparkStamp />;
+    case 'spark-map':
+      return <PeekSparkMap />;
     case 'gc-ram':
       return <PeekGcRam />;
     case 'crash-fingerprints':
@@ -1508,10 +1726,16 @@ export function featurePeek(id: string): ReactNode {
       return <PeekMods />;
     case 'jar-drift':
       return <PeekJarDrift />;
+    case 'jar-disable':
+      return <PeekJarDisable />;
+    case 'mod-configs':
+      return <PeekModConfigs />;
     case 'schedule-load':
       return <PeekSchedule />;
     case 'storage-runway':
       return <PeekStorage />;
+    case 'storage-space-map':
+      return <PeekStorageSpaceMap />;
     case 'weekly-digest':
       return <PeekDigest />;
     case 'config-audit':
@@ -1528,6 +1752,8 @@ export function featurePeek(id: string): ReactNode {
       return <PeekSources />;
     case 'accounts':
       return <PeekAccounts />;
+    case 'theme-accent':
+      return <PeekThemeAccent />;
     case 'auth':
       return <PeekAuth />;
     case 'help':
@@ -1538,6 +1764,7 @@ export function featurePeek(id: string): ReactNode {
       throw new Error(`Missing feature peek: ${id}`);
   }
 }
+
 
 // Keep helper exported for potential reuse / tree-shake friendliness
 export { PeekInstrumentGrid };

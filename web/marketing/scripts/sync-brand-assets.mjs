@@ -21,37 +21,60 @@ const brandDest = join(ROOT, 'public', 'brand');
 mkdirSync(shotsDest, { recursive: true });
 mkdirSync(brandDest, { recursive: true });
 
-if (!existsSync(shotsSrc)) {
-  console.error('sync-brand-assets: missing', shotsSrc);
-  process.exit(1);
+function hasMedia(dir) {
+  if (!existsSync(dir)) return false;
+  return readdirSync(dir).some((n) => /\.(png|webp|jpg|jpeg|svg|ico)$/i.test(n));
 }
 
-for (const name of readdirSync(shotsSrc)) {
-  if (!/\.(png|webp|jpg|jpeg|svg)$/i.test(name)) continue;
-  cpSync(join(shotsSrc, name), join(shotsDest, name));
+if (!existsSync(shotsSrc)) {
+  // CLI deploys from web/marketing alone omit repo docs/; keep pre-synced public/.
+  if (!hasMedia(shotsDest)) {
+    console.error('sync-brand-assets: missing', shotsSrc);
+    process.exit(1);
+  }
+  console.warn('sync-brand-assets: screenshot source missing — using existing public/screenshots');
+} else {
+  for (const name of readdirSync(shotsSrc)) {
+    if (!/\.(png|webp|jpg|jpeg|svg)$/i.test(name)) continue;
+    cpSync(join(shotsSrc, name), join(shotsDest, name));
+  }
 }
 
 if (!existsSync(brandSrc)) {
-  console.error('sync-brand-assets: missing brand source', brandSrc);
-  process.exit(1);
+  if (!hasMedia(brandDest)) {
+    console.error('sync-brand-assets: missing brand source', brandSrc);
+    process.exit(1);
+  }
+  console.warn('sync-brand-assets: brand source missing — using existing public/brand');
+} else {
+  const brandFiles = [
+    'watchtower-logo.png',
+    'watchtower-logo-light.png',
+    'watchtower-wordmark.png',
+    'watchtower-icon.png',
+    'watchtower-favicon.png',
+    'watchtower-icon-simple.png',
+    'favicon.png',
+  ];
+  for (const name of brandFiles) {
+    const src = join(brandSrc, name);
+    if (!existsSync(src)) {
+      console.warn('sync-brand-assets: skip missing', name);
+      continue;
+    }
+    cpSync(src, join(brandDest, name));
+  }
 }
 
-const brandFiles = [
-  'watchtower-logo.png',
-  'watchtower-logo-light.png',
-  'watchtower-wordmark.png',
-  'watchtower-icon.png',
-  'watchtower-favicon.png',
-  'watchtower-icon-simple.png',
-  'favicon.png',
-];
-for (const name of brandFiles) {
-  const src = join(brandSrc, name);
-  if (!existsSync(src)) {
-    console.warn('sync-brand-assets: skip missing', name);
-    continue;
-  }
-  cpSync(src, join(brandDest, name));
+// Root favicon matches the static demo (copy of watchtower-icon-simple).
+const faviconSrc = join(REPO, 'web', 'dashboard', 'favicon.ico');
+const faviconDest = join(ROOT, 'public', 'favicon.ico');
+if (existsSync(faviconSrc)) {
+  cpSync(faviconSrc, faviconDest);
+} else if (existsSync(join(brandDest, 'watchtower-icon-simple.png'))) {
+  cpSync(join(brandDest, 'watchtower-icon-simple.png'), faviconDest);
+} else if (existsSync(join(brandDest, 'favicon.png'))) {
+  cpSync(join(brandDest, 'favicon.png'), faviconDest);
 }
 
 console.log('sync-brand-assets: ok → public/screenshots + public/brand');

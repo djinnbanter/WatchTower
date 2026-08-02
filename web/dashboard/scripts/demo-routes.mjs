@@ -51,6 +51,8 @@ export const DEMO_GET_ROUTES = [
   '/api/fs/roots',
   '/api/onboarding/discovery/status',
   '/api/preview/profile',
+  '/api/mods/configs',
+  '/api/soft-hang/dump',
 ];
 
 /**
@@ -182,8 +184,11 @@ export const DEMO_MANIFEST_ALLOWLIST = [
   '/api/accounts',
   '/api/accounts/update',
   '/api/accounts/me/minecraft',
+  '/api/accounts/me/appearance',
   '/api/accounts/reset-password',
   '/api/accounts/delete',
+  '/api/mods/configs/undo',
+  '/api/support/quality-gate',
   '/api/fs/',
   '/api/fs/list',
 ];

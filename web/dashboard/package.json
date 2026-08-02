@@ -14,6 +14,7 @@
     "test:demo": "tsx --test scripts/fixture-api-core.test.ts src/api/demo-key.test.ts src/api/client.demo.test.ts src/app/runtime.test.ts",
     "bake:demo": "tsx scripts/bake-demo-api.mjs",
     "build:demo": "node scripts/build-demo.mjs",
+    "vercel-build": "npm run build:demo",
     "check:demo": "node scripts/check-demo-manifest.mjs",
     "smoke:demo": "node scripts/smoke-demo.mjs",
     "test:logs": "tsx --test src/features/logs/parse-mc-log.test.ts",

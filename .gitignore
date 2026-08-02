@@ -30,6 +30,7 @@ samples/validation/
 # Node
 **/node_modules/
 web/marketing/.next/
+web/marketing/.next-dev/
 web/marketing/public/screenshots/
 web/marketing/public/brand/
 web/marketing/public/demo-app/
