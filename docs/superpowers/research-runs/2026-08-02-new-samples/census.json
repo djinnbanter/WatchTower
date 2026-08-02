@@ -1,0 +1,2618 @@
+{
+  "schema": "sample-gap-census-v1",
+  "sample_root": "samples/new samples 02.08.2026",
+  "files": [
+    {
+      "rel": "crash-reports/crash-2026-07-31_17.27.20-server.txt",
+      "line_count": 298,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {
+        "spark_profiler_inactive": 1,
+        "opac_better_commands": 3
+      },
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {
+        "spark_profiler_inactive": {
+          "line_no": 19,
+          "text": "java.lang.IllegalStateException: Profiler job no longer active!"
+        },
+        "opac_better_commands": {
+          "line_no": 74,
+          "text": "\tActive Data Packs: create:dynamic_data, vanilla, mod_data, mod/saturn, mod/c2me_fixes_worldgen_threading_issues, mod/kubeutils (incompatible), mod/almanac, mod/supermartijn642configlib (incompatible), mod/openpartiesandclaims (incompatible), mod/azimuth, mod/playeranimator, mod/aeronautics_bundled, mod/apollib, mod/c2me_fixes_general_threading_issues, mod/neoforge, mod/modernfix (incompatible), mod/hwid_anti_alts (incompatible), mod/krypton_fnp (incompatible), mod/veil (incompatible), mod/c2me,"
+        }
+      }
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_19.24.51-server.txt",
+      "line_count": 307,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {
+        "nosuchmethod": 1,
+        "opac_better_commands": 5
+      },
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {
+        "nosuchmethod": {
+          "line_no": 21,
+          "text": "java.lang.NoSuchMethodError: 'xaero.pac.common.server.player.config.IPlayerConfigManager xaero.pac.common.server.IServerData.getPlayerConfigs()'"
+        },
+        "opac_better_commands": {
+          "line_no": 22,
+          "text": "\tat TRANSFORMER/opac_better_commands@1.5/org.opnsoc.opac_better_commands.utils.PartyMessenger.sendPartyMessage(PartyMessenger.java:38) ~[opac_better_commands-1.5.jar%23383!/:?] {re:classloading}"
+        }
+      }
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_20.42.00-server.txt",
+      "line_count": 307,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {
+        "nosuchmethod": 1,
+        "opac_better_commands": 5
+      },
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {
+        "nosuchmethod": {
+          "line_no": 25,
+          "text": "java.lang.NoSuchMethodError: 'xaero.pac.common.server.player.config.IPlayerConfigManager xaero.pac.common.server.IServerData.getPlayerConfigs()'"
+        },
+        "opac_better_commands": {
+          "line_no": 26,
+          "text": "\tat TRANSFORMER/opac_better_commands@1.5/org.opnsoc.opac_better_commands.utils.PartyMessenger.sendPartyMessage(PartyMessenger.java:38) ~[opac_better_commands-1.5.jar%23383!/:?] {re:classloading}"
+        }
+      }
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_20.43.06-server.txt",
+      "line_count": 3168,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {
+        "watchdog_fatal": 1,
+        "opac_better_commands": 3
+      },
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {
+        "watchdog_fatal": {
+          "line_no": 14,
+          "text": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000004.00 seconds (should be max 0.05)"
+        },
+        "opac_better_commands": {
+          "line_no": 2947,
+          "text": "\tActive Data Packs: create:dynamic_data, vanilla, mod_data, mod/saturn, mod/c2me_fixes_worldgen_threading_issues, mod/kubeutils (incompatible), mod/almanac, mod/supermartijn642configlib (incompatible), mod/openpartiesandclaims (incompatible), mod/azimuth, mod/playeranimator, mod/aeronautics_bundled, mod/apollib, mod/c2me_fixes_general_threading_issues, mod/neoforge, mod/modernfix (incompatible), mod/hwid_anti_alts (incompatible), mod/krypton_fnp (incompatible), mod/veil (incompatible), mod/c2me,"
+        }
+      }
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_21.49.17-server.txt",
+      "line_count": 304,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {
+        "sable_body_removed": 1,
+        "opac_better_commands": 3
+      },
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {
+        "sable_body_removed": {
+          "line_no": 28,
+          "text": "java.lang.RuntimeException: Body has been removed"
+        },
+        "opac_better_commands": {
+          "line_no": 83,
+          "text": "\tActive Data Packs: create:dynamic_data, vanilla, mod_data, mod/saturn, mod/c2me_fixes_worldgen_threading_issues, mod/kubeutils (incompatible), mod/almanac, mod/supermartijn642configlib (incompatible), mod/openpartiesandclaims (incompatible), mod/azimuth, mod/playeranimator, mod/aeronautics_bundled, mod/apollib, mod/c2me_fixes_general_threading_issues, mod/neoforge, mod/modernfix (incompatible), mod/hwid_anti_alts (incompatible), mod/krypton_fnp (incompatible), mod/veil (incompatible), mod/c2me,"
+        }
+      }
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_21.50.21-server.txt",
+      "line_count": 3423,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {
+        "watchdog_fatal": 1,
+        "opac_better_commands": 3
+      },
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {
+        "watchdog_fatal": {
+          "line_no": 14,
+          "text": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000004.00 seconds (should be max 0.05)"
+        },
+        "opac_better_commands": {
+          "line_no": 3202,
+          "text": "\tActive Data Packs: create:dynamic_data, vanilla, mod_data, mod/saturn, mod/c2me_fixes_worldgen_threading_issues, mod/kubeutils (incompatible), mod/almanac, mod/supermartijn642configlib (incompatible), mod/openpartiesandclaims (incompatible), mod/azimuth, mod/playeranimator, mod/aeronautics_bundled, mod/apollib, mod/c2me_fixes_general_threading_issues, mod/neoforge, mod/modernfix (incompatible), mod/hwid_anti_alts (incompatible), mod/krypton_fnp (incompatible), mod/veil (incompatible), mod/c2me,"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-29-1.log.gz",
+      "line_count": 31217,
+      "time_start": "2026-07-29T22:06:27",
+      "time_end": "2026-07-29T23:59:58",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 6,
+        "server_done": 1,
+        "player_join": 9,
+        "tick_lag_cant_keep_up": 5
+      },
+      "error_lines": 587,
+      "mod_error_category_hits": {
+        "logger_error": 10,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 9
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[29Jul2026 22:06:27.982] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 613,
+          "text": "[29Jul2026 22:06:31.166] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 923,
+          "text": "[29Jul2026 22:06:38.090] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 972,
+          "text": "[29Jul2026 22:06:38.421] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1035,
+          "text": "[29Jul2026 22:06:39.665] [Worker-Main-6/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1176,
+          "text": "[29Jul2026 22:06:39.737] [Worker-Main-6/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "server_done": {
+          "line_no": 1694,
+          "text": "[29Jul2026 22:06:45.342] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.702s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 1747,
+          "text": "[29Jul2026 22:08:53.348] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 2107,
+          "text": "[29Jul2026 22:15:48.252] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2042ms or 40 ticks behind"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-29-2.log.gz",
+      "line_count": 1981,
+      "time_start": "2026-07-29T15:00:59",
+      "time_end": "2026-07-29T15:03:43",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 6,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 586,
+      "mod_error_category_hits": {
+        "logger_error": 9,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 9
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[29Jul2026 15:01:00.053] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 609,
+          "text": "[29Jul2026 15:01:03.403] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 969,
+          "text": "[29Jul2026 15:01:13.793] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 1039,
+          "text": "[29Jul2026 15:01:14.144] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1080,
+          "text": "[29Jul2026 15:01:15.347] [Worker-Main-13/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1221,
+          "text": "[29Jul2026 15:01:15.421] [Worker-Main-13/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "server_done": {
+          "line_no": 1870,
+          "text": "[29Jul2026 15:01:35.612] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (18.280s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 1955,
+          "text": "[29Jul2026 15:03:43.813] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-29-3.log.gz",
+      "line_count": 1778,
+      "time_start": "2026-07-29T15:03:47",
+      "time_end": "2026-07-29T15:05:50",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 6,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 582,
+      "mod_error_category_hits": {
+        "logger_error": 5,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 9
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[29Jul2026 15:03:47.890] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 609,
+          "text": "[29Jul2026 15:03:51.189] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 920,
+          "text": "[29Jul2026 15:03:58.066] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 990,
+          "text": "[29Jul2026 15:03:58.400] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1031,
+          "text": "[29Jul2026 15:03:59.630] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1172,
+          "text": "[29Jul2026 15:03:59.702] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "server_done": {
+          "line_no": 1689,
+          "text": "[29Jul2026 15:04:05.141] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.562s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 1752,
+          "text": "[29Jul2026 15:05:50.487] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-29-4.log.gz",
+      "line_count": 1833,
+      "time_start": "2026-07-29T15:05:53",
+      "time_end": "2026-07-29T15:31:46",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 6,
+        "server_done": 1,
+        "player_join": 1,
+        "server_stop": 1
+      },
+      "error_lines": 582,
+      "mod_error_category_hits": {
+        "logger_error": 5,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 9
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[29Jul2026 15:05:54.416] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 609,
+          "text": "[29Jul2026 15:05:57.653] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 920,
+          "text": "[29Jul2026 15:06:04.846] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 990,
+          "text": "[29Jul2026 15:06:05.179] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1031,
+          "text": "[29Jul2026 15:06:06.661] [Worker-Main-9/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1172,
+          "text": "[29Jul2026 15:06:06.735] [Worker-Main-9/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "server_done": {
+          "line_no": 1689,
+          "text": "[29Jul2026 15:06:12.095] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.430s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 1759,
+          "text": "[29Jul2026 15:24:32.141] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "server_stop": {
+          "line_no": 1808,
+          "text": "[29Jul2026 15:31:46.749] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-29-5.log.gz",
+      "line_count": 1782,
+      "time_start": "2026-07-29T15:32:09",
+      "time_end": "2026-07-29T15:34:34",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 6,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 582,
+      "mod_error_category_hits": {
+        "logger_error": 5,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 9
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[29Jul2026 15:32:10.345] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 609,
+          "text": "[29Jul2026 15:32:13.613] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 920,
+          "text": "[29Jul2026 15:32:20.566] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 990,
+          "text": "[29Jul2026 15:32:20.978] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1034,
+          "text": "[29Jul2026 15:32:22.420] [Worker-Main-2/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1175,
+          "text": "[29Jul2026 15:32:22.497] [Worker-Main-2/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "server_done": {
+          "line_no": 1693,
+          "text": "[29Jul2026 15:32:28.205] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.732s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 1757,
+          "text": "[29Jul2026 15:34:34.230] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-29-6.log.gz",
+      "line_count": 1966,
+      "time_start": "2026-07-29T15:34:38",
+      "time_end": "2026-07-29T15:44:24",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 6,
+        "server_done": 1,
+        "player_join": 1,
+        "server_stop": 1
+      },
+      "error_lines": 582,
+      "mod_error_category_hits": {
+        "logger_error": 5,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 9
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[29Jul2026 15:34:38.432] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 609,
+          "text": "[29Jul2026 15:34:41.793] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 920,
+          "text": "[29Jul2026 15:34:48.607] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 990,
+          "text": "[29Jul2026 15:34:48.942] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1031,
+          "text": "[29Jul2026 15:34:50.186] [Worker-Main-8/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1172,
+          "text": "[29Jul2026 15:34:50.257] [Worker-Main-8/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "server_done": {
+          "line_no": 1690,
+          "text": "[29Jul2026 15:34:56.078] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.959s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 1737,
+          "text": "[29Jul2026 15:35:11.113] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "server_stop": {
+          "line_no": 1940,
+          "text": "[29Jul2026 15:44:24.229] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-29-7.log.gz",
+      "line_count": 2247,
+      "time_start": "2026-07-29T15:52:41",
+      "time_end": "2026-07-29T20:20:00",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 6,
+        "server_done": 1,
+        "player_join": 1,
+        "server_stop": 1
+      },
+      "error_lines": 582,
+      "mod_error_category_hits": {
+        "logger_error": 5,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 9
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[29Jul2026 15:52:41.713] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 609,
+          "text": "[29Jul2026 15:52:45.110] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 920,
+          "text": "[29Jul2026 15:52:52.025] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 990,
+          "text": "[29Jul2026 15:52:52.398] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1031,
+          "text": "[29Jul2026 15:52:53.742] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1172,
+          "text": "[29Jul2026 15:52:53.836] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "server_done": {
+          "line_no": 1691,
+          "text": "[29Jul2026 15:52:59.527] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.674s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 1744,
+          "text": "[29Jul2026 15:53:24.459] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "server_stop": {
+          "line_no": 2222,
+          "text": "[29Jul2026 20:19:59.731] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-29-8.log.gz",
+      "line_count": 14289,
+      "time_start": "2026-07-29T20:20:05",
+      "time_end": "2026-07-29T22:06:23",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 6,
+        "server_done": 1,
+        "player_join": 5,
+        "tick_lag_cant_keep_up": 2,
+        "server_stop": 1
+      },
+      "error_lines": 584,
+      "mod_error_category_hits": {
+        "logger_error": 7,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 9
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[29Jul2026 20:20:05.567] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 609,
+          "text": "[29Jul2026 20:20:08.728] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 920,
+          "text": "[29Jul2026 20:20:15.644] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 968,
+          "text": "[29Jul2026 20:20:15.976] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1031,
+          "text": "[29Jul2026 20:20:17.524] [Worker-Main-16/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1172,
+          "text": "[29Jul2026 20:20:17.595] [Worker-Main-16/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "server_done": {
+          "line_no": 1690,
+          "text": "[29Jul2026 20:20:23.273] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.727s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 1732,
+          "text": "[29Jul2026 20:20:32.993] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 2860,
+          "text": "[29Jul2026 21:18:57.689] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2110ms or 42 ticks behind"
+        },
+        "server_stop": {
+          "line_no": 14264,
+          "text": "[29Jul2026 22:06:23.045] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-30-1.log.gz",
+      "line_count": 8432,
+      "time_start": "2026-07-30T19:41:44",
+      "time_end": "2026-07-30T23:58:01",
+      "signal_counts": {
+        "opac_better_commands": 5,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 1662,
+        "createfood_recipe": 3873,
+        "kubejs_recipe_parse": 4206,
+        "server_done": 1,
+        "player_join": 15,
+        "tick_lag_cant_keep_up": 9
+      },
+      "error_lines": 1979,
+      "mod_error_category_hits": {
+        "logger_error": 279,
+        "client_on_server": 14,
+        "loot_parse": 1662,
+        "recipe_missing_item": 24
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[30Jul2026 19:41:45.337] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 613,
+          "text": "[30Jul2026 19:41:48.566] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 923,
+          "text": "[30Jul2026 19:41:55.539] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 994,
+          "text": "[30Jul2026 19:41:55.877] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1040,
+          "text": "[30Jul2026 19:41:57.131] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1181,
+          "text": "[30Jul2026 19:41:57.217] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1602,
+          "text": "[30Jul2026 19:41:58.446] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3117,
+          "text": "[30Jul2026 19:42:03.577] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.730s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3156,
+          "text": "[30Jul2026 19:42:16.807] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 3207,
+          "text": "[30Jul2026 19:42:37.905] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2312ms or 46 ticks behind"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-30-2.log.gz",
+      "line_count": 1824,
+      "time_start": "2026-07-30T00:00:00",
+      "time_end": "2026-07-30T06:32:04",
+      "signal_counts": {
+        "player_join": 1
+      },
+      "error_lines": 2,
+      "mod_error_category_hits": {
+        "logger_error": 2
+      },
+      "samples": {
+        "player_join": {
+          "line_no": 1458,
+          "text": "[30Jul2026 00:28:45.012] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-30-3.log.gz",
+      "line_count": 10829,
+      "time_start": "2026-07-30T06:34:49",
+      "time_end": "2026-07-30T19:27:12",
+      "signal_counts": {
+        "opac_better_commands": 7,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 2770,
+        "createfood_recipe": 5170,
+        "server_done": 1,
+        "player_join": 6,
+        "kubejs_recipe_parse": 5608,
+        "tick_lag_cant_keep_up": 8,
+        "server_stop": 1
+      },
+      "error_lines": 2929,
+      "mod_error_category_hits": {
+        "logger_error": 104,
+        "client_on_server": 14,
+        "loot_parse": 2770,
+        "recipe_missing_item": 41
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[30Jul2026 06:34:49.594] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 613,
+          "text": "[30Jul2026 06:34:53.348] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 924,
+          "text": "[30Jul2026 06:35:00.967] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 990,
+          "text": "[30Jul2026 06:35:01.337] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1035,
+          "text": "[30Jul2026 06:35:02.820] [Worker-Main-11/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1176,
+          "text": "[30Jul2026 06:35:02.890] [Worker-Main-11/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "server_done": {
+          "line_no": 1694,
+          "text": "[30Jul2026 06:35:08.649] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.833s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 1882,
+          "text": "[30Jul2026 09:40:23.432] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Meskridge joined the game"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 2991,
+          "text": "[30Jul2026 17:58:54.745] [Server thread/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 4425,
+          "text": "[30Jul2026 17:58:55.980] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2225ms or 44 ticks behind"
+        },
+        "server_stop": {
+          "line_no": 10804,
+          "text": "[30Jul2026 19:27:11.778] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-30-4.log.gz",
+      "line_count": 3196,
+      "time_start": "2026-07-30T19:28:20",
+      "time_end": "2026-07-30T19:28:54",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 589,
+      "mod_error_category_hits": {
+        "logger_error": 13,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[30Jul2026 19:28:21.065] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 613,
+          "text": "[30Jul2026 19:28:24.339] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 924,
+          "text": "[30Jul2026 19:28:31.508] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 994,
+          "text": "[30Jul2026 19:28:31.957] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1040,
+          "text": "[30Jul2026 19:28:33.330] [Worker-Main-8/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1181,
+          "text": "[30Jul2026 19:28:33.434] [Worker-Main-8/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1602,
+          "text": "[30Jul2026 19:28:34.530] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3116,
+          "text": "[30Jul2026 19:28:39.651] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.710s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 3171,
+          "text": "[30Jul2026 19:28:54.094] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-30-5.log.gz",
+      "line_count": 5390,
+      "time_start": "2026-07-30T19:31:06",
+      "time_end": "2026-07-30T19:41:40",
+      "signal_counts": {
+        "opac_better_commands": 4,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 1108,
+        "createfood_recipe": 2582,
+        "kubejs_recipe_parse": 2804,
+        "server_done": 1,
+        "player_join": 2,
+        "server_stop": 1
+      },
+      "error_lines": 1160,
+      "mod_error_category_hits": {
+        "logger_error": 22,
+        "client_on_server": 14,
+        "loot_parse": 1108,
+        "recipe_missing_item": 16
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 112,
+          "text": "[30Jul2026 19:31:07.402] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 613,
+          "text": "[30Jul2026 19:31:10.761] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 924,
+          "text": "[30Jul2026 19:31:17.710] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 972,
+          "text": "[30Jul2026 19:31:18.026] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1043,
+          "text": "[30Jul2026 19:31:19.254] [Worker-Main-7/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1184,
+          "text": "[30Jul2026 19:31:19.331] [Worker-Main-7/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1605,
+          "text": "[30Jul2026 19:31:20.391] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3119,
+          "text": "[30Jul2026 19:31:25.379] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.691s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 5184,
+          "text": "[30Jul2026 19:31:47.285] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "server_stop": {
+          "line_no": 5362,
+          "text": "[30Jul2026 19:41:40.540] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-31-1.log.gz",
+      "line_count": 3902,
+      "time_start": "2026-07-31T20:16:24",
+      "time_end": "2026-07-31T23:42:18",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 3
+      },
+      "error_lines": 807,
+      "mod_error_category_hits": {
+        "logger_error": 231,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[31Jul2026 20:16:25.334] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 615,
+          "text": "[31Jul2026 20:16:28.431] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 924,
+          "text": "[31Jul2026 20:16:35.124] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 1000,
+          "text": "[31Jul2026 20:16:35.478] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1046,
+          "text": "[31Jul2026 20:16:36.723] [Worker-Main-2/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1187,
+          "text": "[31Jul2026 20:16:36.803] [Worker-Main-2/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1608,
+          "text": "[31Jul2026 20:16:38.012] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3119,
+          "text": "[31Jul2026 20:16:43.166] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.717s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3165,
+          "text": "[31Jul2026 20:17:29.480] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-31-2.log.gz",
+      "line_count": 3235,
+      "time_start": "2026-07-31T17:43:31",
+      "time_end": "2026-07-31T17:46:33",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 589,
+      "mod_error_category_hits": {
+        "logger_error": 13,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[31Jul2026 17:43:32.032] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 615,
+          "text": "[31Jul2026 17:43:35.088] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 959,
+          "text": "[31Jul2026 17:43:41.896] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 1013,
+          "text": "[31Jul2026 17:43:42.283] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1081,
+          "text": "[31Jul2026 17:43:43.520] [Worker-Main-8/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1222,
+          "text": "[31Jul2026 17:43:43.587] [Worker-Main-8/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1643,
+          "text": "[31Jul2026 17:43:44.807] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3154,
+          "text": "[31Jul2026 17:43:49.897] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.739s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 3213,
+          "text": "[31Jul2026 17:46:33.693] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-31-3.log.gz",
+      "line_count": 3272,
+      "time_start": "2026-07-31T17:47:15",
+      "time_end": "2026-07-31T17:57:25",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 1,
+        "server_stop": 1
+      },
+      "error_lines": 591,
+      "mod_error_category_hits": {
+        "logger_error": 15,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[31Jul2026 17:47:16.055] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 615,
+          "text": "[31Jul2026 17:47:19.089] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 959,
+          "text": "[31Jul2026 17:47:26.355] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 1035,
+          "text": "[31Jul2026 17:47:26.716] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1081,
+          "text": "[31Jul2026 17:47:28.124] [Worker-Main-8/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1222,
+          "text": "[31Jul2026 17:47:28.195] [Worker-Main-8/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1643,
+          "text": "[31Jul2026 17:47:29.277] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3155,
+          "text": "[31Jul2026 17:47:34.312] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.737s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3204,
+          "text": "[31Jul2026 17:50:35.699] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "server_stop": {
+          "line_no": 3249,
+          "text": "[31Jul2026 17:57:24.836] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-31-4.log.gz",
+      "line_count": 5292,
+      "time_start": "2026-07-31T17:57:58",
+      "time_end": "2026-07-31T18:01:55",
+      "signal_counts": {
+        "opac_better_commands": 4,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 1108,
+        "createfood_recipe": 2582,
+        "kubejs_recipe_parse": 2804,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 1193,
+      "mod_error_category_hits": {
+        "logger_error": 55,
+        "client_on_server": 14,
+        "loot_parse": 1108,
+        "recipe_missing_item": 16
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[31Jul2026 17:57:59.352] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 615,
+          "text": "[31Jul2026 17:58:02.577] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 922,
+          "text": "[31Jul2026 17:58:09.228] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 976,
+          "text": "[31Jul2026 17:58:09.561] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1044,
+          "text": "[31Jul2026 17:58:10.838] [Worker-Main-2/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1185,
+          "text": "[31Jul2026 17:58:10.913] [Worker-Main-2/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1606,
+          "text": "[31Jul2026 17:58:12.030] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3117,
+          "text": "[31Jul2026 17:58:17.206] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.884s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 5270,
+          "text": "[31Jul2026 18:01:54.077] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-31-5.log.gz",
+      "line_count": 3260,
+      "time_start": "2026-07-31T18:02:00",
+      "time_end": "2026-07-31T18:27:57",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 1,
+        "server_stop": 1
+      },
+      "error_lines": 589,
+      "mod_error_category_hits": {
+        "logger_error": 13,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[31Jul2026 18:02:00.488] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 615,
+          "text": "[31Jul2026 18:02:03.750] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 924,
+          "text": "[31Jul2026 18:02:10.679] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 1000,
+          "text": "[31Jul2026 18:02:11.070] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1046,
+          "text": "[31Jul2026 18:02:12.286] [Worker-Main-11/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1187,
+          "text": "[31Jul2026 18:02:12.365] [Worker-Main-11/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1608,
+          "text": "[31Jul2026 18:02:13.532] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3119,
+          "text": "[31Jul2026 18:02:19.205] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.809s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3188,
+          "text": "[31Jul2026 18:06:53.820] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "server_stop": {
+          "line_no": 3237,
+          "text": "[31Jul2026 18:27:57.144] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-31-6.log.gz",
+      "line_count": 3692,
+      "time_start": "2026-07-31T18:28:02",
+      "time_end": "2026-07-31T20:09:15",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 4,
+        "tick_lag_cant_keep_up": 1,
+        "server_stop": 1
+      },
+      "error_lines": 712,
+      "mod_error_category_hits": {
+        "logger_error": 136,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[31Jul2026 18:28:03.006] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 615,
+          "text": "[31Jul2026 18:28:06.043] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 923,
+          "text": "[31Jul2026 18:28:13.442] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 1000,
+          "text": "[31Jul2026 18:28:13.807] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1046,
+          "text": "[31Jul2026 18:28:15.070] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1187,
+          "text": "[31Jul2026 18:28:15.215] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1608,
+          "text": "[31Jul2026 18:28:16.230] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3118,
+          "text": "[31Jul2026 18:28:21.310] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.718s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3195,
+          "text": "[31Jul2026 18:34:56.402] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: tuxmango joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 3198,
+          "text": "[31Jul2026 18:34:59.331] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2753ms or 55 ticks behind"
+        },
+        "server_stop": {
+          "line_no": 3670,
+          "text": "[31Jul2026 20:09:13.694] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-31-7.log.gz",
+      "line_count": 3199,
+      "time_start": "2026-07-31T20:09:19",
+      "time_end": "2026-07-31T20:14:11",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 588,
+      "mod_error_category_hits": {
+        "logger_error": 12,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[31Jul2026 20:09:20.218] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 615,
+          "text": "[31Jul2026 20:09:23.302] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 924,
+          "text": "[31Jul2026 20:09:30.182] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 996,
+          "text": "[31Jul2026 20:09:30.564] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1046,
+          "text": "[31Jul2026 20:09:31.826] [Worker-Main-12/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1187,
+          "text": "[31Jul2026 20:09:31.941] [Worker-Main-12/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1608,
+          "text": "[31Jul2026 20:09:32.998] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3119,
+          "text": "[31Jul2026 20:09:38.145] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.711s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 3177,
+          "text": "[31Jul2026 20:14:10.584] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-07-31-8.log.gz",
+      "line_count": 3199,
+      "time_start": "2026-07-31T20:14:16",
+      "time_end": "2026-07-31T20:16:20",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 554,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 588,
+      "mod_error_category_hits": {
+        "logger_error": 12,
+        "client_on_server": 14,
+        "loot_parse": 554,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[31Jul2026 20:14:16.571] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 615,
+          "text": "[31Jul2026 20:14:19.629] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 923,
+          "text": "[31Jul2026 20:14:26.388] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 978,
+          "text": "[31Jul2026 20:14:26.766] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1046,
+          "text": "[31Jul2026 20:14:28.126] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1187,
+          "text": "[31Jul2026 20:14:28.215] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 1608,
+          "text": "[31Jul2026 20:14:29.364] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3119,
+          "text": "[31Jul2026 20:14:34.392] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.677s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 3177,
+          "text": "[31Jul2026 20:16:19.828] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-08-01-1.log.gz",
+      "line_count": 5726,
+      "time_start": "2026-08-01T23:06:32",
+      "time_end": "2026-08-01T23:59:50",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 24,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 47,
+        "tick_lag_cant_keep_up": 126
+      },
+      "error_lines": 616,
+      "mod_error_category_hits": {
+        "logger_error": 34,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[01Aug2026 23:06:32.832] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 607,
+          "text": "[01Aug2026 23:06:35.946] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 916,
+          "text": "[01Aug2026 23:06:43.292] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 988,
+          "text": "[01Aug2026 23:06:43.635] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1613,
+          "text": "[01Aug2026 23:06:45.314] [Worker-Main-7/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1755,
+          "text": "[01Aug2026 23:06:45.414] [Worker-Main-7/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 2180,
+          "text": "[01Aug2026 23:06:46.790] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3695,
+          "text": "[01Aug2026 23:06:52.366] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (4.073s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3722,
+          "text": "[01Aug2026 23:06:57.515] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Reset399 joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 3820,
+          "text": "[01Aug2026 23:07:01.715] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2008ms or 40 ticks behind"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-08-01-2.log.gz",
+      "line_count": 4982,
+      "time_start": "2026-08-01T18:54:37",
+      "time_end": "2026-08-01T18:59:29",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 53,
+        "tick_lag_cant_keep_up": 12
+      },
+      "error_lines": 660,
+      "mod_error_category_hits": {
+        "logger_error": 78,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[01Aug2026 18:54:38.036] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 607,
+          "text": "[01Aug2026 18:54:41.188] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 916,
+          "text": "[01Aug2026 18:54:48.535] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 988,
+          "text": "[01Aug2026 18:54:48.851] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1613,
+          "text": "[01Aug2026 18:54:50.442] [Worker-Main-13/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1755,
+          "text": "[01Aug2026 18:54:50.532] [Worker-Main-13/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 2180,
+          "text": "[01Aug2026 18:54:51.852] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3702,
+          "text": "[01Aug2026 18:54:57.312] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (4.026s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3733,
+          "text": "[01Aug2026 18:55:02.567] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: IronBlackSamurai joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 3845,
+          "text": "[01Aug2026 18:55:05.130] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2001ms or 40 ticks behind"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-08-01-3.log.gz",
+      "line_count": 2173,
+      "time_start": "2026-08-01T18:59:35",
+      "time_end": "2026-08-01T18:59:48",
+      "signal_counts": {
+        "opac_better_commands": 2,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 560,
+        "createfood_recipe": 6
+      },
+      "error_lines": 593,
+      "mod_error_category_hits": {
+        "logger_error": 19,
+        "client_on_server": 14,
+        "loot_parse": 560
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[01Aug2026 18:59:36.436] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 607,
+          "text": "[01Aug2026 18:59:39.548] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 915,
+          "text": "[01Aug2026 18:59:46.776] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 988,
+          "text": "[01Aug2026 18:59:47.063] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1613,
+          "text": "[01Aug2026 18:59:48.626] [Worker-Main-3/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1755,
+          "text": "[01Aug2026 18:59:48.717] [Worker-Main-3/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-08-01-4.log.gz",
+      "line_count": 8030,
+      "time_start": "2026-08-01T18:59:54",
+      "time_end": "2026-08-01T19:25:10",
+      "signal_counts": {
+        "opac_better_commands": 5,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 73,
+        "tick_lag_cant_keep_up": 67,
+        "nosuchmethod": 1,
+        "server_stop": 1
+      },
+      "error_lines": 725,
+      "mod_error_category_hits": {
+        "logger_error": 143,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[01Aug2026 18:59:54.480] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 607,
+          "text": "[01Aug2026 18:59:57.691] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 916,
+          "text": "[01Aug2026 19:00:05.430] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 984,
+          "text": "[01Aug2026 19:00:05.761] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1613,
+          "text": "[01Aug2026 19:00:07.393] [Worker-Main-9/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1755,
+          "text": "[01Aug2026 19:00:07.492] [Worker-Main-9/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 2180,
+          "text": "[01Aug2026 19:00:08.825] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3701,
+          "text": "[01Aug2026 19:00:14.230] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.870s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3733,
+          "text": "[01Aug2026 19:00:19.478] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Bichoneitor joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 3868,
+          "text": "[01Aug2026 19:00:22.242] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2037ms or 40 ticks behind"
+        },
+        "nosuchmethod": {
+          "line_no": 7793,
+          "text": "java.lang.NoSuchMethodError: 'xaero.pac.common.server.player.config.IPlayerConfigManager xaero.pac.common.server.IServerData.getPlayerConfigs()'"
+        },
+        "server_stop": {
+          "line_no": 7821,
+          "text": "[01Aug2026 19:24:51.919] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-08-01-5.log.gz",
+      "line_count": 13819,
+      "time_start": "2026-08-01T19:25:52",
+      "time_end": "2026-08-01T20:43:06",
+      "signal_counts": {
+        "opac_better_commands": 11,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 24,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 83,
+        "tick_lag_cant_keep_up": 207,
+        "nosuchmethod": 2,
+        "server_stop": 1,
+        "watchdog_fatal": 4
+      },
+      "error_lines": 868,
+      "mod_error_category_hits": {
+        "logger_error": 286,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[01Aug2026 19:25:53.395] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 607,
+          "text": "[01Aug2026 19:25:56.567] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 916,
+          "text": "[01Aug2026 19:26:04.058] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 984,
+          "text": "[01Aug2026 19:26:04.389] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1613,
+          "text": "[01Aug2026 19:26:06.012] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1755,
+          "text": "[01Aug2026 19:26:06.108] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 2180,
+          "text": "[01Aug2026 19:26:07.431] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3695,
+          "text": "[01Aug2026 19:26:12.779] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.812s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3737,
+          "text": "[01Aug2026 19:26:18.066] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Bichoneitor joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 3830,
+          "text": "[01Aug2026 19:26:20.479] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2089ms or 41 ticks behind"
+        },
+        "nosuchmethod": {
+          "line_no": 10413,
+          "text": "java.lang.NoSuchMethodError: 'xaero.pac.common.server.player.config.IPlayerConfigManager xaero.pac.common.server.IServerData.getPlayerConfigs()'"
+        },
+        "server_stop": {
+          "line_no": 10461,
+          "text": "[01Aug2026 20:42:00.900] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        },
+        "watchdog_fatal": {
+          "line_no": 10644,
+          "text": "[01Aug2026 20:43:05.319] [Server Watchdog/ERROR] [net.minecraft.server.dedicated.ServerWatchdog/FATAL]: A single server tick took 60.00 seconds (should be max 0.05)"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-08-01-6.log.gz",
+      "line_count": 10908,
+      "time_start": "2026-08-01T20:43:55",
+      "time_end": "2026-08-01T21:50:21",
+      "signal_counts": {
+        "opac_better_commands": 6,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 24,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 68,
+        "tick_lag_cant_keep_up": 153,
+        "sable_body_removed": 2,
+        "server_stop": 1,
+        "watchdog_fatal": 4
+      },
+      "error_lines": 700,
+      "mod_error_category_hits": {
+        "logger_error": 118,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[01Aug2026 20:43:56.374] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 607,
+          "text": "[01Aug2026 20:43:59.415] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 915,
+          "text": "[01Aug2026 20:44:06.883] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 988,
+          "text": "[01Aug2026 20:44:07.221] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1613,
+          "text": "[01Aug2026 20:44:08.882] [Worker-Main-11/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1755,
+          "text": "[01Aug2026 20:44:08.985] [Worker-Main-11/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 2180,
+          "text": "[01Aug2026 20:44:10.292] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3705,
+          "text": "[01Aug2026 20:44:15.697] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.895s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3738,
+          "text": "[01Aug2026 20:44:21.031] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: IronBlackSamurai joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 3818,
+          "text": "[01Aug2026 20:44:23.342] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2005ms or 40 ticks behind"
+        },
+        "sable_body_removed": {
+          "line_no": 7294,
+          "text": "java.lang.RuntimeException: Body has been removed"
+        },
+        "server_stop": {
+          "line_no": 7312,
+          "text": "[01Aug2026 21:49:18.003] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        },
+        "watchdog_fatal": {
+          "line_no": 7478,
+          "text": "[01Aug2026 21:50:21.141] [Server Watchdog/ERROR] [net.minecraft.server.dedicated.ServerWatchdog/FATAL]: A single server tick took 60.00 seconds (should be max 0.05)"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-08-01-7.log.gz",
+      "line_count": 8176,
+      "time_start": "2026-08-01T21:50:26",
+      "time_end": "2026-08-01T23:05:37",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 32,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 75,
+        "tick_lag_cant_keep_up": 130,
+        "server_stop": 1
+      },
+      "error_lines": 637,
+      "mod_error_category_hits": {
+        "logger_error": 55,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[01Aug2026 21:50:27.345] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 607,
+          "text": "[01Aug2026 21:50:30.581] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 916,
+          "text": "[01Aug2026 21:50:38.215] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 988,
+          "text": "[01Aug2026 21:50:38.577] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1613,
+          "text": "[01Aug2026 21:50:40.293] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1755,
+          "text": "[01Aug2026 21:50:40.397] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 2180,
+          "text": "[01Aug2026 21:50:41.766] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3698,
+          "text": "[01Aug2026 21:50:47.262] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.947s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3732,
+          "text": "[01Aug2026 21:50:52.733] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: IronBlackSamurai joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 3836,
+          "text": "[01Aug2026 21:50:55.163] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2058ms or 41 ticks behind"
+        },
+        "server_stop": {
+          "line_no": 8118,
+          "text": "[01Aug2026 23:05:28.878] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-08-01-8.log.gz",
+      "line_count": 3766,
+      "time_start": "2026-08-01T23:05:42",
+      "time_end": "2026-08-01T23:06:12",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 611,
+      "mod_error_category_hits": {
+        "logger_error": 29,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[01Aug2026 23:05:43.168] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 607,
+          "text": "[01Aug2026 23:05:46.414] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 915,
+          "text": "[01Aug2026 23:05:53.879] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 988,
+          "text": "[01Aug2026 23:05:54.236] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1613,
+          "text": "[01Aug2026 23:05:55.907] [Worker-Main-12/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1755,
+          "text": "[01Aug2026 23:05:56.005] [Worker-Main-12/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 2180,
+          "text": "[01Aug2026 23:05:57.395] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3697,
+          "text": "[01Aug2026 23:06:02.947] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (4.005s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 3743,
+          "text": "[01Aug2026 23:06:10.917] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/2026-08-02-1.log.gz",
+      "line_count": 26887,
+      "time_start": "2026-08-02T00:00:11",
+      "time_end": "2026-08-02T15:31:08",
+      "signal_counts": {
+        "player_join": 255,
+        "tick_lag_cant_keep_up": 943,
+        "loot_parse": 1680,
+        "createfood_recipe": 3873,
+        "opac_better_commands": 3,
+        "kubejs_recipe_parse": 4206,
+        "jade_invwrapper_npe": 18,
+        "server_stop": 1
+      },
+      "error_lines": 2892,
+      "mod_error_category_hits": {
+        "logger_error": 1188,
+        "loot_parse": 1680,
+        "recipe_missing_item": 24
+      },
+      "samples": {
+        "player_join": {
+          "line_no": 117,
+          "text": "[02Aug2026 00:10:13.925] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Albatrocs joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 240,
+          "text": "[02Aug2026 00:14:20.811] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2004ms or 40 ticks behind"
+        },
+        "loot_parse": {
+          "line_no": 5535,
+          "text": "[02Aug2026 02:48:44.238] [Worker-ResourceReload-2/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 5677,
+          "text": "[02Aug2026 02:48:44.301] [Worker-ResourceReload-2/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\""
+        },
+        "opac_better_commands": {
+          "line_no": 6097,
+          "text": "[02Aug2026 02:48:44.626] [Worker-ResourceReload-2/INFO] [org.opnsoc.opac_better_commands.opac_better_commands/]: [OPAC-BetterCommands] Registered commands after server start"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 6103,
+          "text": "[02Aug2026 02:48:44.994] [Server thread/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 8345,
+          "text": "[02Aug2026 03:56:10.321] [Server thread/ERROR] [snownee.jade.Jade/]: Caught unhandled exception : [INSTANCE] java.lang.IllegalStateException: Unexpected error: no cauldron at location BlockPos{x=3327, y=63, z=2519}"
+        },
+        "server_stop": {
+          "line_no": 26863,
+          "text": "[02Aug2026 15:31:07.412] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/debug-1.log.gz",
+      "line_count": 137762,
+      "time_start": "2026-08-01T23:06:32",
+      "time_end": "2026-08-02T15:31:08",
+      "signal_counts": {
+        "distxform_client": 171,
+        "opac_better_commands": 27,
+        "jade_invwrapper_npe": 348,
+        "db_addon_fail": 2,
+        "loot_parse": 2240,
+        "createfood_recipe": 5164,
+        "kubejs_recipe_parse": 5608,
+        "server_done": 1,
+        "player_join": 302,
+        "tick_lag_cant_keep_up": 1069,
+        "server_stop": 1
+      },
+      "error_lines": 3508,
+      "mod_error_category_hits": {
+        "logger_error": 1222,
+        "client_on_server": 14,
+        "loot_parse": 2240,
+        "recipe_missing_item": 32
+      },
+      "samples": {
+        "distxform_client": {
+          "line_no": 75,
+          "text": "[01Aug2026 23:06:32.576] [main/DEBUG] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Configuring for Dist DEDICATED_SERVER"
+        },
+        "opac_better_commands": {
+          "line_no": 523,
+          "text": "[01Aug2026 23:06:32.832] [main/DEBUG] [net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader/SCAN]: Found META-INF/neoforge.mods.toml mod of type null: /home/container/mods/opac_better_commands-1.5.jar"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 13693,
+          "text": "[01Aug2026 23:06:39.758] [main/DEBUG] [net.neoforged.fml.javafmlmod.FMLModContainer/LOADING]: Creating FMLModContainer instance for [snownee.jade.addon.JadeAddons]"
+        },
+        "db_addon_fail": {
+          "line_no": 16857,
+          "text": "[01Aug2026 23:06:43.292] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "loot_parse": {
+          "line_no": 17921,
+          "text": "[01Aug2026 23:06:45.314] [Worker-Main-7/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 18063,
+          "text": "[01Aug2026 23:06:45.414] [Worker-Main-7/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 18580,
+          "text": "[01Aug2026 23:06:46.790] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 21045,
+          "text": "[01Aug2026 23:06:52.366] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (4.073s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 21287,
+          "text": "[01Aug2026 23:06:57.515] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Reset399 joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 21600,
+          "text": "[01Aug2026 23:07:01.715] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2008ms or 40 ticks behind"
+        },
+        "server_stop": {
+          "line_no": 137713,
+          "text": "[02Aug2026 15:31:07.412] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/debug-2.log.gz",
+      "line_count": 21271,
+      "time_start": "2026-08-01T23:05:42",
+      "time_end": "2026-08-01T23:06:12",
+      "signal_counts": {
+        "distxform_client": 171,
+        "opac_better_commands": 24,
+        "jade_invwrapper_npe": 15,
+        "db_addon_fail": 2,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "server_stop": 1
+      },
+      "error_lines": 611,
+      "mod_error_category_hits": {
+        "logger_error": 29,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "distxform_client": {
+          "line_no": 75,
+          "text": "[01Aug2026 23:05:42.918] [main/DEBUG] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Configuring for Dist DEDICATED_SERVER"
+        },
+        "opac_better_commands": {
+          "line_no": 523,
+          "text": "[01Aug2026 23:05:43.168] [main/DEBUG] [net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader/SCAN]: Found META-INF/neoforge.mods.toml mod of type null: /home/container/mods/opac_better_commands-1.5.jar"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 13693,
+          "text": "[01Aug2026 23:05:50.471] [main/DEBUG] [net.neoforged.fml.javafmlmod.FMLModContainer/LOADING]: Creating FMLModContainer instance for [snownee.jade.addon.JadeAddons]"
+        },
+        "db_addon_fail": {
+          "line_no": 16857,
+          "text": "[01Aug2026 23:05:53.879] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "loot_parse": {
+          "line_no": 17922,
+          "text": "[01Aug2026 23:05:55.907] [Worker-Main-12/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 18064,
+          "text": "[01Aug2026 23:05:56.005] [Worker-Main-12/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 18581,
+          "text": "[01Aug2026 23:05:57.395] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 21049,
+          "text": "[01Aug2026 23:06:02.947] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (4.005s)! For help, type \"help\""
+        },
+        "server_stop": {
+          "line_no": 21228,
+          "text": "[01Aug2026 23:06:10.917] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/debug-3.log.gz",
+      "line_count": 34277,
+      "time_start": "2026-08-01T21:50:26",
+      "time_end": "2026-08-01T23:05:37",
+      "signal_counts": {
+        "distxform_client": 171,
+        "opac_better_commands": 24,
+        "jade_invwrapper_npe": 111,
+        "db_addon_fail": 2,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 75,
+        "tick_lag_cant_keep_up": 130,
+        "server_stop": 1
+      },
+      "error_lines": 637,
+      "mod_error_category_hits": {
+        "logger_error": 55,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "distxform_client": {
+          "line_no": 75,
+          "text": "[01Aug2026 21:50:27.098] [main/DEBUG] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Configuring for Dist DEDICATED_SERVER"
+        },
+        "opac_better_commands": {
+          "line_no": 523,
+          "text": "[01Aug2026 21:50:27.344] [main/DEBUG] [net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader/SCAN]: Found META-INF/neoforge.mods.toml mod of type null: /home/container/mods/opac_better_commands-1.5.jar"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 13693,
+          "text": "[01Aug2026 21:50:34.853] [main/DEBUG] [net.neoforged.fml.javafmlmod.FMLModContainer/LOADING]: Creating FMLModContainer instance for [snownee.jade.addon.JadeAddons]"
+        },
+        "db_addon_fail": {
+          "line_no": 16855,
+          "text": "[01Aug2026 21:50:38.215] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "loot_parse": {
+          "line_no": 17921,
+          "text": "[01Aug2026 21:50:40.293] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 18063,
+          "text": "[01Aug2026 21:50:40.397] [Worker-Main-1/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 18580,
+          "text": "[01Aug2026 21:50:41.766] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 21046,
+          "text": "[01Aug2026 21:50:47.262] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.947s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 21319,
+          "text": "[01Aug2026 21:50:52.733] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: IronBlackSamurai joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 21609,
+          "text": "[01Aug2026 21:50:55.163] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2058ms or 41 ticks behind"
+        },
+        "server_stop": {
+          "line_no": 34197,
+          "text": "[01Aug2026 23:05:28.878] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        }
+      }
+    },
+    {
+      "rel": "logs/debug-4.log.gz",
+      "line_count": 39626,
+      "time_start": "2026-08-01T20:43:55",
+      "time_end": "2026-08-01T21:50:21",
+      "signal_counts": {
+        "distxform_client": 171,
+        "opac_better_commands": 27,
+        "jade_invwrapper_npe": 96,
+        "db_addon_fail": 2,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 68,
+        "tick_lag_cant_keep_up": 153,
+        "sable_body_removed": 2,
+        "server_stop": 1,
+        "watchdog_fatal": 4
+      },
+      "error_lines": 700,
+      "mod_error_category_hits": {
+        "logger_error": 118,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "distxform_client": {
+          "line_no": 75,
+          "text": "[01Aug2026 20:43:56.119] [main/DEBUG] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Configuring for Dist DEDICATED_SERVER"
+        },
+        "opac_better_commands": {
+          "line_no": 523,
+          "text": "[01Aug2026 20:43:56.373] [main/DEBUG] [net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader/SCAN]: Found META-INF/neoforge.mods.toml mod of type null: /home/container/mods/opac_better_commands-1.5.jar"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 13693,
+          "text": "[01Aug2026 20:44:03.654] [main/DEBUG] [net.neoforged.fml.javafmlmod.FMLModContainer/LOADING]: Creating FMLModContainer instance for [snownee.jade.addon.JadeAddons]"
+        },
+        "db_addon_fail": {
+          "line_no": 16854,
+          "text": "[01Aug2026 20:44:06.883] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "loot_parse": {
+          "line_no": 17921,
+          "text": "[01Aug2026 20:44:08.882] [Worker-Main-11/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 18063,
+          "text": "[01Aug2026 20:44:08.985] [Worker-Main-11/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 18580,
+          "text": "[01Aug2026 20:44:10.292] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 21054,
+          "text": "[01Aug2026 20:44:15.697] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.895s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 21304,
+          "text": "[01Aug2026 20:44:21.031] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: IronBlackSamurai joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 21577,
+          "text": "[01Aug2026 20:44:23.342] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2005ms or 40 ticks behind"
+        },
+        "sable_body_removed": {
+          "line_no": 32941,
+          "text": "java.lang.RuntimeException: Body has been removed"
+        },
+        "server_stop": {
+          "line_no": 34406,
+          "text": "[01Aug2026 21:49:18.003] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        },
+        "watchdog_fatal": {
+          "line_no": 34750,
+          "text": "[01Aug2026 21:50:21.141] [Server Watchdog/ERROR] [net.minecraft.server.dedicated.ServerWatchdog/FATAL]: A single server tick took 60.00 seconds (should be max 0.05)"
+        }
+      }
+    },
+    {
+      "rel": "logs/debug-5.log.gz",
+      "line_count": 44896,
+      "time_start": "2026-08-01T19:25:52",
+      "time_end": "2026-08-01T20:43:06",
+      "signal_counts": {
+        "distxform_client": 171,
+        "opac_better_commands": 32,
+        "jade_invwrapper_npe": 111,
+        "db_addon_fail": 2,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 83,
+        "tick_lag_cant_keep_up": 207,
+        "nosuchmethod": 2,
+        "server_stop": 1,
+        "watchdog_fatal": 4
+      },
+      "error_lines": 868,
+      "mod_error_category_hits": {
+        "logger_error": 286,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "distxform_client": {
+          "line_no": 75,
+          "text": "[01Aug2026 19:25:53.144] [main/DEBUG] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Configuring for Dist DEDICATED_SERVER"
+        },
+        "opac_better_commands": {
+          "line_no": 523,
+          "text": "[01Aug2026 19:25:53.395] [main/DEBUG] [net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader/SCAN]: Found META-INF/neoforge.mods.toml mod of type null: /home/container/mods/opac_better_commands-1.5.jar"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 13693,
+          "text": "[01Aug2026 19:26:00.784] [main/DEBUG] [net.neoforged.fml.javafmlmod.FMLModContainer/LOADING]: Creating FMLModContainer instance for [snownee.jade.addon.JadeAddons]"
+        },
+        "db_addon_fail": {
+          "line_no": 16858,
+          "text": "[01Aug2026 19:26:04.058] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "loot_parse": {
+          "line_no": 17922,
+          "text": "[01Aug2026 19:26:06.012] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 18064,
+          "text": "[01Aug2026 19:26:06.108] [Worker-Main-4/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft:"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 18581,
+          "text": "[01Aug2026 19:26:07.431] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 21045,
+          "text": "[01Aug2026 19:26:12.779] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.812s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 21348,
+          "text": "[01Aug2026 19:26:18.066] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Bichoneitor joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 21615,
+          "text": "[01Aug2026 19:26:20.479] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2089ms or 41 ticks behind"
+        },
+        "nosuchmethod": {
+          "line_no": 38397,
+          "text": "java.lang.NoSuchMethodError: 'xaero.pac.common.server.player.config.IPlayerConfigManager xaero.pac.common.server.IServerData.getPlayerConfigs()'"
+        },
+        "server_stop": {
+          "line_no": 39891,
+          "text": "[01Aug2026 20:42:00.900] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Stopping server"
+        },
+        "watchdog_fatal": {
+          "line_no": 40275,
+          "text": "[01Aug2026 20:43:05.319] [Server Watchdog/ERROR] [net.minecraft.server.dedicated.ServerWatchdog/FATAL]: A single server tick took 60.00 seconds (should be max 0.05)"
+        }
+      }
+    },
+    {
+      "rel": "logs/debug.log",
+      "line_count": 22407,
+      "time_start": "2026-08-02T15:32:57",
+      "time_end": "2026-08-02T15:33:59",
+      "signal_counts": {
+        "distxform_client": 171,
+        "opac_better_commands": 24,
+        "jade_invwrapper_npe": 28,
+        "db_addon_fail": 2,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 13,
+        "tick_lag_cant_keep_up": 2
+      },
+      "error_lines": 619,
+      "mod_error_category_hits": {
+        "logger_error": 37,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "distxform_client": {
+          "line_no": 75,
+          "text": "[02Aug2026 15:32:57.953] [main/DEBUG] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Configuring for Dist DEDICATED_SERVER"
+        },
+        "opac_better_commands": {
+          "line_no": 523,
+          "text": "[02Aug2026 15:32:58.200] [main/DEBUG] [net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader/SCAN]: Found META-INF/neoforge.mods.toml mod of type null: /home/container/mods/opac_better_commands-1.5.jar"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 13716,
+          "text": "[02Aug2026 15:33:05.186] [main/DEBUG] [net.neoforged.fml.javafmlmod.FMLModContainer/LOADING]: Creating FMLModContainer instance for [snownee.jade.addon.JadeAddons]"
+        },
+        "db_addon_fail": {
+          "line_no": 16889,
+          "text": "[02Aug2026 15:33:08.653] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "loot_parse": {
+          "line_no": 18348,
+          "text": "[02Aug2026 15:33:10.688] [Worker-Main-14/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 18490,
+          "text": "[02Aug2026 15:33:10.789] [Worker-Main-14/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 19007,
+          "text": "[02Aug2026 15:33:12.142] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 21462,
+          "text": "[02Aug2026 15:33:17.646] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.998s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 21721,
+          "text": "[02Aug2026 15:33:24.643] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: mrpanda41 joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 21874,
+          "text": "[02Aug2026 15:33:27.422] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2296ms or 45 ticks behind"
+        }
+      }
+    },
+    {
+      "rel": "logs/JadeErrorOutput.txt",
+      "line_count": 204,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {
+        "jade_invwrapper_npe": 67
+      },
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {
+        "jade_invwrapper_npe": {
+          "line_no": 3,
+          "text": "java.lang.NullPointerException: Cannot invoke \"net.minecraft.world.Container.getContainerSize()\" because the return value of \"net.neoforged.neoforge.items.wrapper.InvWrapper.getInv()\" is null"
+        }
+      }
+    },
+    {
+      "rel": "logs/kubejs/client.log",
+      "line_count": 0,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {},
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {}
+    },
+    {
+      "rel": "logs/kubejs/server.log",
+      "line_count": 1424,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {
+        "kubejs_recipe_parse": 1402,
+        "createfood_recipe": 1285
+      },
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {
+        "kubejs_recipe_parse": {
+          "line_no": 18,
+          "text": "[15:33:12] [WARN] KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; Second: No key id in M"
+        },
+        "createfood_recipe": {
+          "line_no": 18,
+          "text": "[15:33:12] [WARN] KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; Second: No key id in M"
+        }
+      }
+    },
+    {
+      "rel": "logs/kubejs/startup.log",
+      "line_count": 12,
+      "time_start": null,
+      "time_end": null,
+      "signal_counts": {},
+      "error_lines": 0,
+      "mod_error_category_hits": {},
+      "samples": {}
+    },
+    {
+      "rel": "logs/latest.log",
+      "line_count": 3971,
+      "time_start": "2026-08-02T15:32:57",
+      "time_end": "2026-08-02T15:33:59",
+      "signal_counts": {
+        "opac_better_commands": 3,
+        "distxform_client": 30,
+        "db_addon_fail": 2,
+        "jade_invwrapper_npe": 11,
+        "loot_parse": 560,
+        "createfood_recipe": 1291,
+        "kubejs_recipe_parse": 1402,
+        "server_done": 1,
+        "player_join": 13,
+        "tick_lag_cant_keep_up": 2
+      },
+      "error_lines": 619,
+      "mod_error_category_hits": {
+        "logger_error": 37,
+        "client_on_server": 14,
+        "loot_parse": 560,
+        "recipe_missing_item": 8
+      },
+      "samples": {
+        "opac_better_commands": {
+          "line_no": 113,
+          "text": "[02Aug2026 15:32:58.201] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Found mod file \"opac_better_commands-1.5.jar\" [locator: {mods folder locator at /home/container/mods}, reader: mod manifest]"
+        },
+        "distxform_client": {
+          "line_no": 609,
+          "text": "[02Aug2026 15:33:01.362] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER"
+        },
+        "db_addon_fail": {
+          "line_no": 918,
+          "text": "[02Aug2026 15:33:08.653] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB"
+        },
+        "jade_invwrapper_npe": {
+          "line_no": 990,
+          "text": "[02Aug2026 15:33:09.007] [modloading-worker-0/INFO] [snownee.jade.Jade/]: Start loading plugin from net.blay09.mods.balm.neoforge.compat.hudinfo.NeoForgeJadeModCompat"
+        },
+        "loot_parse": {
+          "line_no": 1617,
+          "text": "[02Aug2026 15:33:10.688] [Worker-Main-14/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+        },
+        "createfood_recipe": {
+          "line_no": 1759,
+          "text": "[02Aug2026 15:33:10.789] [Worker-Main-14/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:createfood:blocks/bar_of_chocolate_plate_block - Failed to parse either. First: Failed to parse either. First: Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: createfood:bar_of_chocolate_plate_block; Second: Not a json array: {\"block\":\"createfood:bar_of_chocolate_plate_block\",\"condition\":\"minecraft"
+        },
+        "kubejs_recipe_parse": {
+          "line_no": 2184,
+          "text": "[02Aug2026 15:33:12.142] [main/WARN] [KubeJS Server/]: KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either. First: No key amount in MapLike[{\"item\":{\"id\":\"createfood:leather_soup_bowl\"}}]; No key id in MapLike[{\"item\":{\"id\":\"createfood:leather_"
+        },
+        "server_done": {
+          "line_no": 3697,
+          "text": "[02Aug2026 15:33:17.646] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (3.998s)! For help, type \"help\""
+        },
+        "player_join": {
+          "line_no": 3724,
+          "text": "[02Aug2026 15:33:24.643] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: mrpanda41 joined the game"
+        },
+        "tick_lag_cant_keep_up": {
+          "line_no": 3764,
+          "text": "[02Aug2026 15:33:27.422] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2296ms or 45 ticks behind"
+        }
+      }
+    }
+  ],
+  "totals": {
+    "spark_profiler_inactive": 1,
+    "opac_better_commands": 290,
+    "nosuchmethod": 7,
+    "watchdog_fatal": 18,
+    "sable_body_removed": 5,
+    "distxform_client": 1896,
+    "db_addon_fail": 70,
+    "jade_invwrapper_npe": 1173,
+    "loot_parse": 27272,
+    "createfood_recipe": 51694,
+    "server_done": 34,
+    "player_join": 1258,
+    "tick_lag_cant_keep_up": 3226,
+    "server_stop": 28,
+    "kubejs_recipe_parse": 56080
+  }
+}
