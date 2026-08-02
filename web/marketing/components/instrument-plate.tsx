@@ -18,7 +18,7 @@ export function InstrumentPlate({
 }) {
   return (
     <div
-      className={`flex flex-col border border-[color:var(--wt-line)] bg-[color:var(--wt-plate-outer)] p-[5px] ${className}`}
+      className={`wt-plate-stone flex flex-col border border-[color:var(--wt-line)] bg-[color:var(--wt-plate-outer)] p-[5px] ${className}`}
       style={{ borderRadius: 'var(--wt-radius-lg)' }}
     >
       <div
