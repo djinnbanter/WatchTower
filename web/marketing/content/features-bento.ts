@@ -60,10 +60,10 @@ export const FEATURE_BENTO_MORE: FeatureBentoMoreCell[] = [
   { id: 'logs', media: 'overlay', span: 'one' },
 
   { id: 'schedule-load', media: 'chart', span: 'one' },
-  { id: 'storage-runway', media: 'chart', span: 'one' },
+  { id: 'activity', media: 'overlay', span: 'one' },
   { id: 'storage-space-map', media: 'overlay', span: 'one' },
 
-  { id: 'activity', media: 'overlay', span: 'two' },
+  { id: 'storage-runway', media: 'chart', span: 'two' },
   { id: 'weekly-digest', media: 'overlay', span: 'one' },
 
   { id: 'config-audit', media: 'overlay', span: 'one' },

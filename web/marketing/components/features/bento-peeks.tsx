@@ -1414,9 +1414,9 @@ function PeekAccounts() {
 
 function PeekAuth() {
   return (
-    <div className="bento-peek bento-peek--side" aria-hidden>
-      <div className="bento-peek__stamp-wrap">
-        <span className="bento-peek__stamp-box">
+    <div className="bento-peek bento-peek--auth" aria-hidden>
+      <div className="bento-peek__stamp-wrap bento-peek__stamp-wrap--auth">
+        <span className="bento-peek__stamp-box bento-peek__stamp-box--auth">
           <span className="bento-peek__stamp-ring" />
           <Plate className="bento-peek__stamp bento-peek__stamp--auth">
             <CapabilityMark id="auth" size="lg" />
@@ -1544,60 +1544,54 @@ function PeekModConfigs() {
 }
 
 function PeekStorageSpaceMap() {
-  const cells = [
-    { label: 'World', flex: 2.4, tone: 'var(--wt-ch-disk)' },
-    { label: 'Mods', flex: 1.2, tone: 'var(--wt-accent)' },
-    { label: 'Logs', flex: 0.8, tone: 'var(--wt-warn)' },
-    { label: 'Backups', flex: 1.6, tone: 'var(--wt-ok)' },
-  ];
   return (
-    <div className="bento-peek bento-peek--storage" aria-hidden>
-      <Plate className="bento-peek__storage-panel">
-        <div className="bento-peek__config-head">
+    <div className="bento-peek bento-peek--space-map" aria-hidden>
+      <Plate className="bento-peek__space-map-panel">
+        <div className="bento-peek__theme-head">
           <span className="bento-peek__kicker">Space map</span>
           <span className="bento-peek__readout">244 GB</span>
         </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '2.4fr 1.2fr',
-            gridTemplateRows: '1.2fr 0.8fr',
-            gap: '0.35rem',
-            minHeight: '7.5rem',
-          }}
-        >
+        <div className="bento-peek__space-map-grid">
           <div
+            className="bento-peek__space-map-cell bento-peek__space-map-cell--world"
             style={{
-              gridRow: '1 / 3',
-              borderRadius: 4,
-              border: '1px solid color-mix(in srgb, var(--wt-ch-disk) 35%, var(--wt-line))',
+              borderColor: 'color-mix(in srgb, var(--wt-ch-disk) 35%, var(--wt-line))',
               background: 'color-mix(in srgb, var(--wt-ch-disk) 18%, var(--wt-bg2))',
-              padding: '0.45rem 0.55rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
             }}
           >
             <span className="bento-peek__kicker">World</span>
             <span className="bento-peek__readout">184 GB</span>
           </div>
-          {cells.slice(1).map((c) => (
-            <div
-              key={c.label}
-              style={{
-                borderRadius: 4,
-                border: `1px solid color-mix(in srgb, ${c.tone} 35%, var(--wt-line))`,
-                background: `color-mix(in srgb, ${c.tone} 16%, var(--wt-bg2))`,
-                padding: '0.35rem 0.45rem',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span className="bento-peek__kicker">{c.label}</span>
-              <span className="bento-peek__sub">drill in</span>
-            </div>
-          ))}
+          <div
+            className="bento-peek__space-map-cell"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--wt-accent) 35%, var(--wt-line))',
+              background: 'color-mix(in srgb, var(--wt-accent) 16%, var(--wt-bg2))',
+            }}
+          >
+            <span className="bento-peek__kicker">Mods</span>
+            <span className="bento-peek__sub">drill in</span>
+          </div>
+          <div
+            className="bento-peek__space-map-cell"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--wt-warn) 35%, var(--wt-line))',
+              background: 'color-mix(in srgb, var(--wt-warn) 16%, var(--wt-bg2))',
+            }}
+          >
+            <span className="bento-peek__kicker">Logs</span>
+            <span className="bento-peek__sub">drill in</span>
+          </div>
+          <div
+            className="bento-peek__space-map-cell bento-peek__space-map-cell--backups"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--wt-ok) 35%, var(--wt-line))',
+              background: 'color-mix(in srgb, var(--wt-ok) 16%, var(--wt-bg2))',
+            }}
+          >
+            <span className="bento-peek__kicker">Backups</span>
+            <span className="bento-peek__sub">drill in</span>
+          </div>
         </div>
       </Plate>
     </div>
@@ -1656,61 +1650,46 @@ function PeekSparkMap() {
 
 function PeekThemeAccent() {
   const themes = [
-    { label: 'Light', bg: '#f4f2ec', fg: '#1a1a18' },
-    { label: 'Dark', bg: '#16181d', fg: '#e8e6e0' },
-    { label: 'Black', bg: '#0a0a0b', fg: '#e8e6e0' },
-    { label: 'System', bg: '#2a2d34', fg: '#e8e6e0' },
+    { label: 'Light', bg: '#f4f2ec', fg: '#1a1a18', on: false },
+    { label: 'Dark', bg: '#1c2433', fg: '#e8e6e0', on: true },
+    { label: 'Black', bg: '#000000', fg: '#f2f2f2', on: false },
   ];
-  const accents = ['#4C8DFF', '#E8A54B', '#3DCF8E', '#F07178'];
+  const accents = [
+    { c: '#4C8DFF', on: true },
+    { c: '#E8A54B', on: false },
+    { c: '#3DCF8E', on: false },
+    { c: '#F07178', on: false },
+  ];
   return (
-    <div className="bento-peek bento-peek--accounts" aria-hidden>
-      <Plate className="bento-peek__accounts-panel">
-        <div className="bento-peek__config-head">
+    <div className="bento-peek bento-peek--theme" aria-hidden>
+      <Plate className="bento-peek__theme-panel">
+        <div className="bento-peek__theme-head">
           <span className="bento-peek__kicker">Appearance</span>
           <span className="desk-pill desk-pill--info">Per account</span>
         </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '0.35rem',
-            marginBottom: '0.55rem',
-          }}
-        >
+        <div className="bento-peek__theme-grid bento-peek__theme-grid--three">
           {themes.map((t) => (
             <div
               key={t.label}
-              style={{
-                borderRadius: 4,
-                border: '1px solid var(--wt-line)',
-                background: t.bg,
-                color: t.fg,
-                padding: '0.45rem 0.35rem',
-                textAlign: 'center',
-                fontSize: '0.75rem',
-                fontFamily: 'var(--wt-font-mono)',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-              }}
+              className={`bento-peek__theme-swatch${t.on ? ' is-on' : ''}`}
+              style={{ background: t.bg, color: t.fg }}
             >
-              {t.label}
+              <span className="bento-peek__theme-swatch-label">{t.label}</span>
+              {t.on ? <span className="desk-pill desk-pill--ok">Active</span> : null}
             </div>
           ))}
         </div>
-        <div className="bento-peek__pills bento-peek__pills--gap">
-          {accents.map((c) => (
-            <span
-              key={c}
-              style={{
-                width: '1.1rem',
-                height: '1.1rem',
-                borderRadius: 999,
-                background: c,
-                border: c === '#4C8DFF' ? '2px solid var(--wt-text)' : '1px solid var(--wt-line)',
-                display: 'inline-block',
-              }}
-            />
-          ))}
+        <div className="bento-peek__theme-accent-row">
+          <span className="bento-peek__kicker">Accent</span>
+          <div className="bento-peek__theme-accents">
+            {accents.map((a) => (
+              <span
+                key={a.c}
+                className={`bento-peek__theme-dot${a.on ? ' is-on' : ''}`}
+                style={{ background: a.c }}
+              />
+            ))}
+          </div>
         </div>
       </Plate>
     </div>
