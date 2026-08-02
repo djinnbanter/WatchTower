@@ -47,4 +47,4 @@ Backup dir: `watchtower/config-backups/<rel-with-__>/<yyyyMMdd-HHmmss>.bak`
 
 ## Non-goals
 
-Structured forms; `world/serverconfig/`; `server.properties` write; jar edits; auto-restart; Monaco.
+`world/serverconfig/`; `server.properties` write; jar edits; auto-restart; Monaco. (Structured TOML forms: see form-editor design.)
