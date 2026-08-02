@@ -150,45 +150,90 @@
   cursor: not-allowed;
 }
 
-.sh-rail__theme {
-  display: flex;
+.sh-rail__customize {
+  position: relative;
   width: 100%;
+}
+
+.sh-rail__customize-btn {
+  display: flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.4rem 0.7rem;
-  border: 0;
-  border-radius: var(--radius-wt-sm);
-  background: transparent;
-  font-size: 0.8125rem;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-wt);
+  border: 1px solid color-mix(in srgb, var(--wt-line) 85%, transparent);
+  background: color-mix(in srgb, var(--wt-bg2) 50%, transparent);
   color: var(--wt-text-mid);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 550;
   cursor: pointer;
 }
 
-.sh-rail__theme:hover {
-  background: color-mix(in srgb, var(--wt-bg2) 80%, transparent);
+.sh-rail__customize-btn:hover,
+.sh-rail__customize-btn--open {
   color: var(--wt-text);
+  border-color: color-mix(in srgb, var(--wt-accent) 35%, var(--wt-line));
+  background: color-mix(in srgb, var(--wt-accent-soft) 55%, var(--wt-bg2));
 }
 
-.sh-rail__cta:focus-visible,
-.sh-rail__theme:focus-visible {
+.sh-rail__customize-btn:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 1px;
+}
+
+.sh-rail__customize-meta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--wt-accent);
+}
+
+.sh-rail__accent-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 20%, transparent);
+}
+
+.sh-rail__customize-pop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 0.4rem);
+  z-index: 40;
+  padding: 0.65rem 0.7rem 0.75rem;
+  border-radius: var(--radius-wt);
+  border: 1px solid color-mix(in srgb, var(--wt-line) 88%, transparent);
+  background: var(--wt-bg1);
+  box-shadow: var(--wt-shadow, 0 10px 28px rgba(0, 0, 0, 0.35));
+}
+
+.sh-rail__customize-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--wt-text-low);
+}
+
+.sh-rail__cta:focus-visible {
   outline: 2px solid var(--wt-accent);
   outline-offset: 1px;
 }
 
 .sh-rail__account {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.45rem 0.55rem 0.55rem;
-  margin-bottom: 0.15rem;
-  border-bottom: 1px solid var(--wt-line);
-}
-
-.sh-rail__account-row {
-  display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-width: 0;
+  padding: 0.45rem 0.4rem 0.45rem 0.45rem;
+  margin-bottom: 0.2rem;
+  border-radius: var(--radius-wt);
+  border: 1px solid color-mix(in srgb, var(--wt-line) 85%, transparent);
+  background: color-mix(in srgb, var(--wt-bg2) 42%, transparent);
 }
 
 .sh-rail__account-mark {
@@ -200,48 +245,59 @@
   justify-content: center;
   border-radius: 2px;
   background: var(--wt-accent-soft);
-  color: var(--wt-accent);
+  color: var(--wt-accent-ink, var(--wt-accent));
   font-size: 11px;
   font-weight: 650;
   line-height: 1;
   overflow: hidden;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wt-line) 55%, transparent);
 }
 
 img.sh-rail__account-mark {
   background: transparent;
   object-fit: cover;
+  box-shadow: none;
+}
+
+.sh-rail__account-body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
 .sh-rail__account-name {
-  min-width: 0;
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.8125rem;
-  font-weight: 550;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--wt-text);
-}
-
-.sh-rail__account-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding-left: 2rem; /* align under name, past the mark */
+  line-height: 1.2;
 }
 
 .sh-rail__account-role {
-  font-size: 11px;
-  color: var(--wt-text-low);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  font-weight: 550;
+  color: var(--wt-text-mid);
+  line-height: 1.2;
 }
 
 .sh-rail__sign-out {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.25rem;
   border: 0;
   background: transparent;
-  padding: 0.15rem 0.25rem;
+  padding: 0.3rem 0.4rem;
   border-radius: var(--radius-wt-sm);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 550;
   color: var(--wt-text-mid);
   cursor: pointer;
@@ -249,12 +305,21 @@ img.sh-rail__account-mark {
 
 .sh-rail__sign-out:hover:not(:disabled) {
   color: var(--wt-text);
-  background: color-mix(in srgb, var(--wt-bg2) 80%, transparent);
+  background: color-mix(in srgb, var(--wt-bg3) 70%, transparent);
+}
+
+.sh-rail__sign-out:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 1px;
 }
 
 .sh-rail__sign-out:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.sh-rail__sign-out-label {
+  line-height: 1;
 }
 
 .sh-rail__sign-out:focus-visible {

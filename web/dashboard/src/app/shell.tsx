@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Eclipse,
   LifeBuoy,
+  LogOut,
   Menu,
   Moon,
   resolvePageIcon,
+  SlidersHorizontal,
   Sun,
   X,
-  type WtIcon,
 } from '@/ui/icons';
 import { api } from '@/api/client';
 import {
@@ -20,16 +21,19 @@ import {
 } from '@/app/permissions';
 import { GROUPS, getPages, type PageDef } from '@/app/registry';
 import { hrefFor, navigate, type RouteState } from '@/app/router';
+import { DemoBanner } from '@/app/demo-banner';
 import { isFixturePreview } from '@/app/runtime';
 import { useSessionStore } from '@/app/session-store';
-import { useTheme, type Theme } from '@/app/theme';
+import { AppearanceControls } from '@/app/appearance-controls';
+import { useTheme } from '@/app/theme';
+import { ACCENT_PRESETS } from '@/app/accents';
 import { asRecord, cn, get, str } from '@/lib/utils';
-import { isCaptureMode } from '@/app/capture-mode';
 import { SupportBuilderModal } from '@/features/support';
 import { StatusPill } from '@/ui/patterns';
 import { PlayerAvatar } from '@/ui/player-avatar';
 import '@/features/register';
 import './shell.css';
+import './appearance-controls.css';
 
 type Props = {
   route: RouteState;
@@ -37,14 +41,17 @@ type Props = {
   children: ReactNode;
 };
 
-const THEME_CYCLE: Record<Theme, { icon: WtIcon; label: string }> = {
-  light: { icon: Moon, label: 'Dark theme' },
-  dark: { icon: Eclipse, label: 'Black theme' },
-  black: { icon: Sun, label: 'Light theme' },
-};
+function ThemeGlyph({ resolved }: { resolved: 'light' | 'dark' | 'black' }) {
+  if (resolved === 'light') return <Sun size={14} aria-hidden />;
+  if (resolved === 'black') return <Eclipse size={14} aria-hidden />;
+  return <Moon size={14} aria-hidden />;
+}
 
 export function AppShell({ route, page, children }: Props) {
-  const { theme, toggleTheme } = useTheme();
+  const { themeMode, resolvedTheme, accent } = useTheme();
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const customizeWrapRef = useRef<HTMLDivElement | null>(null);
+  const customizePanelId = useId();
   const canWrite = useCanWrite();
   const session = useSessionStore((s) => s.session);
   const resetToLogin = useSessionStore((s) => s.resetToLogin);
@@ -57,15 +64,33 @@ export function AppShell({ route, page, children }: Props) {
     typeof session?.minecraft_name === 'string' && session.minecraft_name.trim()
       ? session.minecraft_name.trim()
       : username;
+  const accentSwatch =
+    ACCENT_PRESETS.find((p) => p.id === accent)?.swatch ?? 'var(--wt-accent)';
+
+  useEffect(() => {
+    if (!customizeOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCustomizeOpen(false);
+    };
+    const onPointer = (e: MouseEvent) => {
+      const el = customizeWrapRef.current;
+      if (el && e.target instanceof Node && !el.contains(e.target)) {
+        setCustomizeOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('mousedown', onPointer);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mousedown', onPointer);
+    };
+  }, [customizeOpen]);
   const fixture = isFixturePreview();
   const [signingOut, setSigningOut] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
-  const [capture, setCapture] = useState(isCaptureMode);
   const pageScrollRef = useRef<HTMLDivElement>(null);
   const pages = getPages();
-  const themeCycle = THEME_CYCLE[theme];
-  const ThemeIcon = themeCycle.icon;
 
   async function onSignOut() {
     if (fixture || signingOut) return;
@@ -103,12 +128,6 @@ export function AppShell({ route, page, children }: Props) {
     const onOpenSupport = () => setSupportOpen(true);
     window.addEventListener('wt:open-support', onOpenSupport);
     return () => window.removeEventListener('wt:open-support', onOpenSupport);
-  }, []);
-
-  useEffect(() => {
-    const onCapture = () => setCapture(isCaptureMode());
-    window.addEventListener('wt:capture-change', onCapture);
-    return () => window.removeEventListener('wt:capture-change', onCapture);
   }, []);
 
   const rail = (
@@ -168,29 +187,38 @@ export function AppShell({ route, page, children }: Props) {
 
       <div className="sh-rail__foot">
         <div className="sh-rail__account">
-          <div className="sh-rail__account-row">
-            <PlayerAvatar
-              uuid={mcUuid}
-              name={mcName}
-              size={24}
-              eager
-              className="sh-rail__account-mark"
-            />
-            <span className="sh-rail__account-name" title={username}>{username}</span>
-          </div>
-          <div className="sh-rail__account-meta">
+          <PlayerAvatar
+            uuid={mcUuid}
+            name={mcName}
+            size={24}
+            eager
+            className="sh-rail__account-mark"
+          />
+          <div className="sh-rail__account-body">
+            <span className="sh-rail__account-name" title={username}>
+              {username}
+            </span>
             <span className="sh-rail__account-role">{roleLabel(role)}</span>
-            <button
-              type="button"
-              className="sh-rail__sign-out"
-              disabled={fixture || signingOut}
-              title={fixture ? 'Not available in fixture preview' : undefined}
-              aria-label={signingOut ? 'Signing out' : 'Sign out'}
-              onClick={() => void onSignOut()}
-            >
-              {signingOut ? 'Signing out…' : 'Sign out'}
-            </button>
           </div>
+          <button
+            type="button"
+            className="sh-rail__sign-out"
+            disabled={fixture || signingOut}
+            title={
+              fixture
+                ? 'Not available in fixture preview'
+                : signingOut
+                  ? 'Signing out…'
+                  : 'Sign out'
+            }
+            aria-label={signingOut ? 'Signing out' : 'Sign out'}
+            onClick={() => void onSignOut()}
+          >
+            <LogOut size={14} aria-hidden />
+            <span className="sh-rail__sign-out-label">
+              {signingOut ? '…' : 'Sign out'}
+            </span>
+          </button>
         </div>
         <button
           type="button"
@@ -201,15 +229,41 @@ export function AppShell({ route, page, children }: Props) {
         >
           <LifeBuoy size={16} /> Build support pack
         </button>
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label="Cycle colour theme"
-          className="sh-rail__theme"
-        >
-          <ThemeIcon size={16} />
-          {themeCycle.label}
-        </button>
+        <div className="sh-rail__customize" ref={customizeWrapRef}>
+          <button
+            type="button"
+            className={cn('sh-rail__customize-btn', customizeOpen && 'sh-rail__customize-btn--open')}
+            aria-expanded={customizeOpen}
+            aria-controls={customizePanelId}
+            aria-label="Customize appearance"
+            title="Customize appearance"
+            onClick={() => setCustomizeOpen((v) => !v)}
+          >
+            <SlidersHorizontal size={14} aria-hidden />
+            <span>Customize</span>
+            <span className="sh-rail__customize-meta" aria-hidden>
+              <ThemeGlyph resolved={resolvedTheme} />
+              <span
+                className="sh-rail__accent-dot"
+                style={{ background: accentSwatch }}
+              />
+            </span>
+          </button>
+          {customizeOpen ? (
+            <div
+              id={customizePanelId}
+              className="sh-rail__customize-pop"
+              role="dialog"
+              aria-label="Appearance"
+            >
+              <p className="sh-rail__customize-title">
+                Appearance
+                {themeMode === 'system' ? ' · follows system' : ''}
+              </p>
+              <AppearanceControls idPrefix="rail-appearance" compact />
+            </div>
+          ) : null}
+        </div>
       </div>
     </nav>
   );
@@ -217,11 +271,13 @@ export function AppShell({ route, page, children }: Props) {
   const hideShellTitle = page?.hideShellTitle === true;
 
   return (
-    <div className="flex h-dvh overflow-hidden text-wt-text">
+    <div className="flex h-dvh flex-col overflow-hidden text-wt-text">
       <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-wt-bg1 focus:px-3 focus:py-2">
         Skip to content
       </a>
+      <DemoBanner />
 
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
       <aside className="hidden h-full shrink-0 md:block">{rail}</aside>
 
       {navOpen ? (
@@ -232,10 +288,11 @@ export function AppShell({ route, page, children }: Props) {
       ) : null}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="z-40 flex h-14 shrink-0 items-center gap-3 border-b border-wt-line bg-wt-bg1 px-4">
+        {/* Mobile-only chrome: menu + view-only. Desktop hostname lives in the rail. */}
+        <header className="z-40 flex h-14 shrink-0 items-center gap-3 border-b border-wt-line bg-wt-bg1 px-4 md:hidden">
           <button
             type="button"
-            className="inline-flex rounded-[var(--radius-wt-sm)] border border-wt-line p-2 md:hidden"
+            className="inline-flex rounded-[var(--radius-wt-sm)] border border-wt-line p-2"
             aria-label={navOpen ? 'Close navigation' : 'Open navigation'}
             aria-expanded={navOpen}
             onClick={() => setNavOpen((v) => !v)}
@@ -243,10 +300,8 @@ export function AppShell({ route, page, children }: Props) {
             {navOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium">{hostname}</div>
-            <div className={cn('truncate text-xs text-wt-text-low', capture && 'wt-capture-hide')}>
-              {isFixturePreview() ? 'Fixture preview' : 'Server ops dashboard'}
-            </div>
+            <div className="truncate text-sm font-medium">WatchTower</div>
+            <div className="truncate text-xs text-wt-text-low">{hostname}</div>
           </div>
           {canWrite ? null : (
             <StatusPill tone="info" title="An owner can change your role in Settings → Accounts">
@@ -273,6 +328,7 @@ export function AppShell({ route, page, children }: Props) {
             {children}
           </main>
         </div>
+      </div>
       </div>
       <SupportBuilderModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </div>
