@@ -1,0 +1,1 @@
+{"file":"crash-2026-07-04_20-44-08-server.txt","content":"---- Minecraft Crash Report ----\nTime: 2026-07-04 20:44:08\nDescription: Exception in server tick loop\n\njava.nio.file.FileSystemException: world/session.lock: The process cannot access the file because it is being used by another process\n","truncated":false}

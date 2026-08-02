@@ -1,0 +1,14 @@
+{
+  "name": "watchtower-dashboard-alpha",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "generate:mock": "node scripts/generate-mock-data.mjs",
+    "preview": "node scripts/build.mjs && node scripts/preview-server.mjs",
+    "preview:fresh": "node scripts/build.mjs && node scripts/preview-server.mjs fresh",
+    "smoke": "node scripts/build.mjs && node scripts/smoke.mjs",
+    "audit:packaging": "node ../../tools/audit-dashboard-alpha-packaging.mjs",
+    "audit:parity": "node ../../tools/audit-dashboard-alpha-parity.mjs"
+  }
+}

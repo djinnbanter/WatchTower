@@ -1,0 +1,1 @@
+{"file":"crash-2026-07-06_09-33-12-server.txt","content":"---- Minecraft Crash Report ----\nTime: 2026-07-06 09:33:12\nDescription: Mod loading has failed\n\norg.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Overwrite conflict createaddition → create\n","truncated":false}

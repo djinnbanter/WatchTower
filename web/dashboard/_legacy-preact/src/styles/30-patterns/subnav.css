@@ -1,0 +1,57 @@
+/* Subnav — underlined tab style */
+
+.ui-subnav {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border-bottom: 1px solid var(--ui-line);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.ui-subnav::-webkit-scrollbar {
+  display: none;
+}
+
+.ui-subnav__option {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--ui-sp-8) var(--ui-sp-16);
+  font-size: var(--ui-text-sm);
+  font-weight: 500;
+  color: var(--ui-text-mid);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--ui-dur-1) var(--ui-ease-out),
+              border-color var(--ui-dur-1) var(--ui-ease-out);
+  margin-bottom: -1px;
+  border-radius: 0;
+}
+
+.ui-subnav__option:hover {
+  color: var(--ui-text-hi);
+}
+
+.ui-subnav__option--active {
+  color: var(--ui-accent);
+  border-bottom-color: var(--ui-accent);
+}
+
+.ui-subnav__option:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: -2px;
+}
+
+/* Nested (second-level) — tighter so it doesn’t read as a second page header */
+.ui-subnav--nested {
+  margin-top: calc(var(--ui-sp-8) * -1);
+}
+
+.ui-subnav--nested .ui-subnav__option {
+  padding: var(--ui-sp-6) var(--ui-sp-12);
+  font-size: var(--ui-text-sm);
+}

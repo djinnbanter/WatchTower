@@ -1,0 +1,1 @@
+{"file":"crash-2026-07-09_21-48-01-server.txt","content":"---- Minecraft Crash Report ----\nTime: 2026-07-09 21:48:01\nDescription: Mod loading has failed\n\norg.spongepowered.asm.mixin.throwables.MixinInitialisationError: Error initialising mixin config create.mixins.json\n","truncated":false}

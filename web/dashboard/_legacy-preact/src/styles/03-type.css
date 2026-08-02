@@ -1,0 +1,207 @@
+﻿/* IBM Plex â€” self-hosted woff2 (latin subsets) */
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/IBMPlexSans-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../../assets/fonts/IBMPlexSans-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../../assets/fonts/IBMPlexSans-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../assets/fonts/IBMPlexSans-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/IBMPlexMono-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../../assets/fonts/IBMPlexMono-SemiBold.woff2") format("woff2");
+}
+
+
+/* Inter — Sass skin (Classic v1) UI */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/Inter-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../../assets/fonts/Inter-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../../assets/fonts/Inter-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../assets/fonts/Inter-Bold.woff2") format("woff2");
+}
+
+/* Plus Jakarta Sans â€” Sass skin UI */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/PlusJakartaSans-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../../assets/fonts/PlusJakartaSans-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../../assets/fonts/PlusJakartaSans-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../assets/fonts/PlusJakartaSans-Bold.woff2") format("woff2");
+}
+
+/* JetBrains Mono â€” Sass skin metrics / code */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../../assets/fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
+}
+
+/* Typography utilities */
+
+.ui-text-xs {
+  font-size: var(--ui-text-xs);
+  line-height: var(--ui-lh-xs);
+}
+
+.ui-text-sm {
+  font-size: var(--ui-text-sm);
+  line-height: var(--ui-lh-sm);
+}
+
+.ui-text-base {
+  font-size: var(--ui-text-base);
+  line-height: var(--ui-lh-base);
+}
+
+.ui-text-md {
+  font-size: var(--ui-text-md);
+  line-height: var(--ui-lh-md);
+}
+
+.ui-text-lg {
+  font-size: var(--ui-text-lg);
+  line-height: var(--ui-lh-lg);
+}
+
+.ui-text-xl {
+  font-size: var(--ui-text-xl);
+  line-height: var(--ui-lh-xl);
+}
+
+.ui-text-2xl {
+  font-size: var(--ui-text-2xl);
+  line-height: var(--ui-lh-2xl);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.ui-text-3xl {
+  font-size: var(--ui-text-3xl);
+  line-height: var(--ui-lh-3xl);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.ui-text-display {
+  font-size: var(--ui-text-display);
+  line-height: var(--ui-lh-display);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.ui-text-metric {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-text-metric);
+  line-height: var(--ui-lh-metric);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-mono {
+  font-family: var(--ui-font-mono);
+}
+
+.ui-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-text-hi { color: var(--ui-text-hi); }
+.ui-text-mid { color: var(--ui-text-mid); }
+.ui-text-low { color: var(--ui-text-low); }

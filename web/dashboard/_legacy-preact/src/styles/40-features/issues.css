@@ -1,0 +1,417 @@
+/* Issues — resolution-first inbox (list + detail) */
+
+.issues-page-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-10);
+}
+
+.issues-summary-slim {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-sp-10);
+  padding: var(--ui-sp-10) var(--ui-sp-14);
+  border: 1px solid var(--ui-glass-border, var(--ui-line));
+  border-radius: var(--ui-rad-xl, 14px);
+  background: color-mix(in srgb, var(--ui-glass, var(--ui-bg1)) 70%, transparent);
+  box-shadow: var(--ui-shadow-rest);
+}
+
+.issues-summary-slim__word {
+  font-size: var(--ui-text-sm);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.issues-summary-slim__word--danger {
+  color: var(--ui-danger, #e85d5d);
+}
+
+.issues-summary-slim__word--warn {
+  color: var(--ui-warn);
+}
+
+.issues-summary-slim__word--ok {
+  color: var(--ui-ok, #3d9a6a);
+}
+
+.issues-summary-slim__counts {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-sp-6);
+}
+
+.issues-summary-slim__sep {
+  color: var(--ui-text-low);
+  opacity: 0.6;
+}
+
+.feat-issues-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-8);
+}
+
+.issues-freshness {
+  margin-top: var(--ui-sp-12);
+}
+
+/* Queue chrome + split */
+.issues-queue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-12);
+  min-width: 0;
+}
+
+.issues-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--ui-sp-16);
+  align-items: start;
+  width: 100%;
+}
+
+@media (min-width: 1101px) {
+  .issues-split .crashes-detail,
+  .issues-split .issues-detail {
+    position: sticky;
+    top: var(--ui-sp-16);
+    max-height: none;
+    overflow: visible;
+    align-self: start;
+  }
+}
+
+@media (max-width: 1100px) {
+  .issues-split {
+    grid-template-columns: 1fr;
+  }
+
+  .issues-split .crashes-detail,
+  .issues-split .issues-detail {
+    position: static;
+  }
+}
+
+.issues-split__list {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.issues-inbox {
+  gap: var(--ui-sp-8);
+}
+
+/* Priority bands (Needs / Watching / Older) */
+.issues-band {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  border: 1px solid var(--ui-glass-border, var(--ui-line));
+  border-radius: var(--ui-rad-xl, 14px);
+  background: color-mix(in srgb, var(--ui-glass, var(--ui-bg1)) 70%, transparent);
+  overflow: hidden;
+  box-shadow: var(--ui-shadow-rest);
+}
+
+.issues-band--needs {
+  border-color: color-mix(in srgb, var(--ui-danger, #e85d5d) 28%, var(--ui-line));
+}
+
+.issues-band__header {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-8);
+  width: 100%;
+  padding: var(--ui-sp-10) var(--ui-sp-12);
+  border: none;
+  background: color-mix(in srgb, var(--ui-bg0) 35%, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.issues-band__header:hover {
+  background: color-mix(in srgb, var(--ui-sky) 10%, transparent);
+}
+
+.issues-band--open > .issues-band__header {
+  border-bottom: 1px solid var(--ui-line);
+}
+
+.issues-band__chevron {
+  flex-shrink: 0;
+  width: 1rem;
+  color: var(--ui-text-low);
+  font-size: var(--ui-text-xs);
+}
+
+.issues-band__label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--ui-text-sm);
+  font-weight: 650;
+  color: var(--ui-text-hi);
+}
+
+.issues-band--needs .issues-band__label {
+  color: color-mix(in srgb, var(--ui-danger, #e85d5d) 80%, var(--ui-text-hi));
+}
+
+.issues-band__counts {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-6);
+  flex-shrink: 0;
+}
+
+.issues-band__items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 6px;
+}
+
+.issues-band__items .issues-row {
+  border-radius: var(--ui-rad-l, 12px);
+  box-shadow: none;
+  margin-bottom: 4px;
+}
+
+.issues-band__items .issues-row:last-child {
+  margin-bottom: 0;
+}
+
+/* List rows */
+.issues-row {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-shrink: 0;
+  gap: var(--ui-sp-4);
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  padding: var(--ui-sp-10) var(--ui-sp-14);
+  border: 1px solid transparent;
+  border-radius: var(--ui-rad-l, 12px);
+  background: color-mix(in srgb, var(--ui-bg0) 40%, transparent);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.issues-row:hover {
+  background: color-mix(in srgb, var(--ui-sky) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ui-sky) 22%, var(--ui-line));
+}
+
+.issues-row:focus {
+  outline: none;
+}
+
+.issues-row:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 2px;
+}
+
+.issues-row--active {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 6%, transparent), transparent 50%),
+    color-mix(in srgb, var(--ui-sky) 14%, var(--ui-bg1));
+  border-color: color-mix(in srgb, var(--ui-sky) 40%, var(--ui-line));
+  box-shadow: var(--ui-shadow-rest);
+}
+
+.issues-row--reviewed {
+  opacity: 0.85;
+}
+
+.issues-row__top {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-6);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.issues-row__age {
+  margin-left: auto;
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.issues-row__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--ui-text-sm);
+  font-weight: 650;
+  color: var(--ui-text-hi);
+  line-height: 1.3;
+}
+
+.issues-row__cause {
+  margin: 0;
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-mid);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.issues-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-sp-8);
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+}
+
+.issues-row__peek {
+  color: var(--ui-text-mid);
+}
+
+/* Detail pane reuses Crashes chrome (.crashes-detail / .crashes-panel / .crashes-steps).
+   Keep only Issues-specific helpers below. */
+
+.issues-panel__crash-hint,
+.issues-panel__prose {
+  margin: 0;
+  font-size: var(--ui-text-sm);
+  color: var(--ui-text-mid);
+  line-height: 1.45;
+}
+
+.issues-panel__prose--muted {
+  margin-top: var(--ui-sp-8);
+  color: var(--ui-text-low);
+}
+
+.issues-panel__done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-sp-8);
+}
+
+.issues-fix__doc {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-sp-6);
+  font-size: var(--ui-text-sm);
+  color: var(--ui-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.issues-fix__doc:hover {
+  text-decoration: underline;
+}
+
+.issues-empty-actions {
+  display: flex;
+  gap: var(--ui-sp-8);
+  flex-wrap: wrap;
+}
+
+/* Tools */
+.issues-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-20);
+}
+
+.issues-kpi-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--ui-sp-12);
+  justify-content: space-between;
+}
+
+.issues-kpi-strip__metrics {
+  flex: 1 1 280px;
+  margin-bottom: 0;
+}
+
+.issues-kpi-strip__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-sp-8);
+}
+
+.issues-tools__hint {
+  margin: 0;
+  font-size: var(--ui-text-sm);
+  color: var(--ui-text-mid);
+  line-height: 1.45;
+}
+
+.issues-tools__tips {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-8);
+  font-size: var(--ui-text-sm);
+  color: var(--ui-text-mid);
+  line-height: 1.45;
+}
+
+.issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-8);
+}
+
+/* Legacy card chrome still used on Tools Hidden list */
+.issues-card {
+  margin-bottom: 0;
+}
+
+.issues-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-sp-12);
+  margin-bottom: var(--ui-sp-8);
+}
+
+.issues-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-8);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.issues-card__title {
+  font-size: var(--ui-text-md);
+  color: var(--ui-text-hi);
+}
+
+.issues-card__narrative {
+  margin: 0 0 var(--ui-sp-8);
+  font-size: var(--ui-text-sm);
+  color: var(--ui-text-mid);
+  line-height: 1.45;
+}

@@ -1,0 +1,1 @@
+{"file":"crash-2026-07-07_11-05-19-server.txt","content":"---- Minecraft Crash Report ----\nTime: 2026-07-07 11:05:19\nDescription: Exception in server tick loop\n\njava.lang.OutOfMemoryError: Java heap space\n","truncated":false}

@@ -1,0 +1,138 @@
+/* === TextField, NumberField, PasswordField, PathField === */
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-4);
+  width: 100%;
+}
+
+.ui-field__label {
+  font-size: var(--ui-text-sm);
+  font-weight: 500;
+  color: var(--ui-text-mid);
+  line-height: var(--ui-lh-sm);
+  user-select: none;
+}
+
+.ui-field__wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ui-field__input {
+  width: 100%;
+  height: var(--ui-row-md);
+  padding: 0 var(--ui-sp-12);
+  background: var(--ui-bg2);
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-rad-m);
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-text-base);
+  color: var(--ui-text-hi);
+  line-height: var(--ui-lh-base);
+  outline: none;
+  transition: border-color var(--ui-dur-1) var(--ui-ease-out),
+              background var(--ui-dur-1) var(--ui-ease-out);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ui-field__input::placeholder {
+  color: var(--ui-text-low);
+}
+
+.ui-field__input:hover:not(:disabled) {
+  border-color: var(--ui-text-low);
+}
+
+.ui-field__input:focus {
+  border-color: var(--ui-accent);
+  background: var(--ui-bg1);
+  outline: 2px solid var(--ui-accent);
+  outline-offset: -1px;
+}
+
+.ui-field__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mono variant */
+.ui-field--mono .ui-field__input {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-text-sm);
+}
+
+/* Error state */
+.ui-field--error .ui-field__input {
+  border-color: var(--ui-danger);
+}
+.ui-field--error .ui-field__input:focus {
+  outline-color: var(--ui-danger);
+}
+
+/* Icon adornment (left) */
+.ui-field--icon .ui-field__input {
+  padding-left: var(--ui-sp-32);
+}
+
+.ui-field__icon {
+  position: absolute;
+  left: var(--ui-sp-8);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ui-text-low);
+  pointer-events: none;
+}
+
+/* Right slot (for password toggle, browse button, etc.) */
+.ui-field__suffix {
+  position: absolute;
+  right: var(--ui-sp-4);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-2);
+}
+
+.ui-field--has-suffix .ui-field__input {
+  padding-right: var(--ui-sp-40);
+}
+
+/* Hint / error message */
+.ui-field__hint {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  line-height: var(--ui-lh-xs);
+}
+
+.ui-field--error .ui-field__hint {
+  color: var(--ui-danger);
+}
+
+/* PathField inline browse button */
+.ui-field--path .ui-field__input {
+  padding-right: calc(var(--ui-sp-64) + var(--ui-sp-4));
+}
+
+.ui-field__browse {
+  position: absolute;
+  right: var(--ui-sp-4);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Number input: hide spinners */
+.ui-field__input[type="number"]::-webkit-inner-spin-button,
+.ui-field__input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+.ui-field__input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

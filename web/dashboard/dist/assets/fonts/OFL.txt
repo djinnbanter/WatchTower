@@ -1,0 +1,13 @@
+IBM Plex, Inter, Plus Jakarta Sans, and JetBrains Mono Font Licenses (OFL)
+
+Font files in this directory are distributed under the SIL Open Font License, Version 1.1.
+
+- IBM Plex — Copyright © 2017 IBM Corp., with Reserved Font Name "Plex"
+- Inter — Copyright © 2016 The Inter Project Authors
+- Plus Jakarta Sans — Copyright © 2020 The Plus Jakarta Sans Project Authors
+- JetBrains Mono — Copyright © 2020 The JetBrains Mono Project Authors
+
+Full license: https://openfontlicense.org/open-font-license-official-text/
+
+Font files are downloaded by scripts/vendor-libs.mjs from Fontsource
+(jsDelivr CDN) during development setup.

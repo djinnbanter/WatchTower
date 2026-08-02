@@ -1,0 +1,184 @@
+/* Alpha polish — glare, gradient text, glass elevation, alpha badge */
+
+:root {
+  --ui-spotlight: color-mix(in srgb, var(--ui-sky) 14%, transparent);
+  --ui-glare: color-mix(in srgb, #fff 10%, transparent);
+  --ui-accent-2: color-mix(in srgb, var(--ui-sky) 85%, var(--ui-accent));
+}
+
+html[data-theme="light"] {
+  --ui-spotlight: color-mix(in srgb, var(--ui-sky) 12%, transparent);
+  --ui-glare: color-mix(in srgb, #fff 55%, transparent);
+}
+
+/* ── Pointer-follow hover surfaces ────────────────────────────────────────── */
+
+.ui-glare {
+  position: relative;
+  overflow: hidden;
+}
+
+.ui-glare::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    600px circle at var(--ui-mx, 50%) var(--ui-my, 50%),
+    var(--ui-glare),
+    transparent 40%
+  );
+  opacity: 0;
+  transition: opacity var(--ui-dur-2) var(--ui-ease-out);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ui-glare:hover::after {
+  opacity: 1;
+}
+
+.ui-spotlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.ui-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    500px circle at var(--ui-mx, 50%) var(--ui-my, 50%),
+    var(--ui-spotlight),
+    transparent 45%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--ui-dur-2) var(--ui-ease-out);
+  z-index: 2;
+}
+
+.ui-spotlight:hover::before {
+  opacity: 1;
+}
+
+.ui-border-glow {
+  box-shadow: var(--ui-shadow-glow);
+}
+
+/* ── Marketing text utilities ─────────────────────────────────────────────── */
+
+.ui-gradient-text {
+  background: linear-gradient(110deg, var(--ui-accent), var(--ui-accent-2), var(--ui-info));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ui-shine 6s linear infinite;
+}
+
+.ui-shiny-text {
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(
+    110deg,
+    var(--ui-text-hi) 0%,
+    var(--ui-text-hi) 40%,
+    var(--ui-accent-2) 50%,
+    var(--ui-text-hi) 60%,
+    var(--ui-text-hi) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ui-shine 4.5s ease-in-out infinite;
+}
+
+@keyframes ui-shine {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── Richer glass / elevation ─────────────────────────────────────────────── */
+
+.ui-shell .ui-rail {
+  background: color-mix(in srgb, var(--ui-glass, var(--ui-bg1)) 90%, transparent);
+  backdrop-filter: blur(calc(var(--ui-blur, 16px) + 2px));
+  -webkit-backdrop-filter: blur(calc(var(--ui-blur, 16px) + 2px));
+}
+
+.ui-card.ui-spotlight,
+.ui-card.ui-glare {
+  transition:
+    border-color var(--ui-dur-2) var(--ui-ease-out),
+    box-shadow var(--ui-dur-2) var(--ui-ease-out),
+    transform var(--ui-dur-2) var(--ui-ease-out);
+}
+
+.ui-card.ui-spotlight:hover,
+.ui-card.ui-glare:hover {
+  border-color: color-mix(in srgb, var(--ui-sky) 32%, var(--ui-line-strong));
+  box-shadow: var(--ui-shadow-lift);
+  transform: translateY(-1px);
+}
+
+/* ── Alpha badge (rail) ───────────────────────────────────────────────────── */
+
+.ui-alpha-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--ui-rad-full);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 14%, var(--ui-bg2));
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ui-accent) 18%, transparent);
+}
+
+.ui-rail__brand .ui-alpha-badge {
+  margin-top: 2px;
+}
+
+/* ── Visual Lab page layout ───────────────────────────────────────────────── */
+
+.feat-lab .ui-lab-grid {
+  display: grid;
+  gap: var(--ui-sp-16);
+}
+
+.feat-lab .ui-lab-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-sp-16);
+}
+
+.feat-lab .ui-lab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-sp-12);
+  align-items: center;
+}
+
+.feat-lab .ui-lab-card {
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .feat-lab .ui-lab-chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-gradient-text,
+  .ui-shiny-text {
+    animation: none;
+    color: var(--ui-text-hi);
+    background: none;
+  }
+}

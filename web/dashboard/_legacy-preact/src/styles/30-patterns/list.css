@@ -1,0 +1,124 @@
+/* ListRow — bordered rows with optional tone accent */
+
+.ui-list-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ui-sp-12);
+  padding: var(--ui-sp-12) var(--ui-sp-16);
+  border-radius: var(--ui-rad-l);
+  transition: background-color var(--ui-dur-1) var(--ui-ease-out),
+              border-color var(--ui-dur-1) var(--ui-ease-out),
+              box-shadow var(--ui-dur-1) var(--ui-ease-out),
+              transform var(--ui-dur-2) var(--ui-ease-out);
+  min-height: var(--ui-row-md);
+  background: var(--ui-glass, var(--ui-bg1));
+  border: 1px solid var(--ui-glass-border, var(--ui-line));
+  box-shadow: var(--ui-shadow-rest);
+  backdrop-filter: blur(var(--ui-blur, 10px));
+}
+
+.ui-list-row:hover {
+  background: color-mix(in srgb, var(--ui-sky) 6%, var(--ui-glass, var(--ui-bg2)));
+  border-color: color-mix(in srgb, var(--ui-sky) 28%, var(--ui-line-strong));
+  transform: translateY(-1px);
+  box-shadow: var(--ui-shadow-lift);
+}
+
+.ui-list-row--ok,
+.ui-list-row--success {
+  background: color-mix(in srgb, var(--ui-ok) 7%, var(--ui-bg1));
+  border-color: color-mix(in srgb, var(--ui-ok) 22%, var(--ui-line));
+}
+
+.ui-list-row--warn {
+  background: color-mix(in srgb, var(--ui-warn) 8%, var(--ui-bg1));
+  border-color: color-mix(in srgb, var(--ui-warn) 24%, var(--ui-line));
+}
+
+.ui-list-row--danger {
+  background: color-mix(in srgb, var(--ui-danger) 10%, var(--ui-bg1));
+  border-color: color-mix(in srgb, var(--ui-danger) 30%, var(--ui-line));
+  box-shadow: var(--ui-shadow-rest), 0 0 0 1px color-mix(in srgb, var(--ui-danger) 12%, transparent);
+}
+
+.ui-list-row--info {
+  background: color-mix(in srgb, var(--ui-info) 7%, var(--ui-bg1));
+  border-color: color-mix(in srgb, var(--ui-info) 22%, var(--ui-line));
+}
+
+.ui-list-row--accent {
+  background: color-mix(in srgb, var(--ui-accent) 8%, var(--ui-bg1));
+  border-color: color-mix(in srgb, var(--ui-accent) 26%, var(--ui-line));
+}
+
+.ui-list-row--clickable {
+  cursor: pointer;
+}
+
+.ui-list-row--clickable:active {
+  transform: translateY(0);
+  box-shadow: var(--ui-shadow-rest);
+  opacity: 0.94;
+}
+
+.ui-list-row--clickable:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: -2px;
+}
+
+.ui-list-row__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: var(--ui-text-mid);
+}
+
+.ui-list-row__icon--ok { color: var(--ui-ok); }
+.ui-list-row__icon--warn { color: var(--ui-warn); }
+.ui-list-row__icon--danger { color: var(--ui-danger); }
+.ui-list-row__icon--accent { color: var(--ui-accent); }
+.ui-list-row__icon--info { color: var(--ui-info); }
+
+.ui-list-row__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-4);
+  flex: 1;
+  min-width: 0;
+}
+
+.ui-list-row__title {
+  font-size: var(--ui-text-sm);
+  font-weight: 600;
+  color: var(--ui-text-hi);
+  line-height: 1.35;
+}
+
+.ui-list-row__meta {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  line-height: 1.4;
+}
+
+.ui-list-row__end {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-8);
+  flex-shrink: 0;
+}
+
+.ui-list-row__children {
+  margin-top: var(--ui-sp-2);
+}
+
+/* Stacked list of rows */
+.feat-list,
+.ui-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-8);
+}

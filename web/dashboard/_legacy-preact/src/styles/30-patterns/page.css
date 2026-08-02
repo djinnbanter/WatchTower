@@ -1,0 +1,102 @@
+/* Page layout — single spacing rhythm for every tab */
+
+.ui-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-20);
+  padding: var(--ui-sp-24) var(--ui-sp-24) var(--ui-sp-40);
+  min-height: 0;
+  width: 100%;
+  max-width: var(--ui-page-max, none);
+  box-sizing: border-box;
+}
+
+@media (min-width: 1600px) {
+  .ui-page {
+    padding-inline: var(--ui-sp-32);
+  }
+}
+
+@media (max-width: 720px) {
+  .ui-page {
+    padding: var(--ui-sp-16);
+    gap: var(--ui-sp-12);
+  }
+}
+
+.ui-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-sp-16);
+  flex-wrap: wrap;
+  padding-bottom: var(--ui-sp-4);
+}
+
+.ui-page__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-4);
+  min-width: 0;
+}
+
+.ui-page__title {
+  font-size: var(--ui-text-3xl);
+  line-height: var(--ui-lh-3xl);
+  font-weight: 700;
+  color: var(--ui-text-hi);
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+
+.ui-page__subtitle {
+  font-size: var(--ui-text-md);
+  line-height: var(--ui-lh-md);
+  color: var(--ui-text-low);
+  margin: 0;
+}
+
+.ui-page__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-8);
+  flex-shrink: 0;
+}
+
+.ui-page__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-20);
+  min-width: 0;
+}
+
+/* Stack of page zones (status → hero → sections) share the same rhythm */
+.ui-page__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-20);
+  min-width: 0;
+}
+
+/* Stagger children entrance — mount-once via data-motion="entering".
+   Do NOT use transform here — fill-mode leaves transform on .ui-page__body > *,
+   which creates a containing block and breaks position:sticky detail panes. */
+@media (prefers-reduced-motion: no-preference) {
+  .ui-page[data-motion="entering"] .ui-page__body > * {
+    animation: ui-page-child-enter var(--ui-dur-4) var(--ui-ease-out) both;
+    animation-delay: calc(var(--ui-stagger-index, 0) * 60ms);
+  }
+
+  .ui-page[data-motion="settled"] .ui-page__body > * {
+    animation: none;
+  }
+
+  @keyframes ui-page-child-enter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
