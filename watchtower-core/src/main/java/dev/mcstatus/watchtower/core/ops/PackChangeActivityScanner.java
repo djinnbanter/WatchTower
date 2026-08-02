@@ -57,9 +57,8 @@ public final class PackChangeActivityScanner {
                 && prevSnapshot.has("mods")
                 && prevSnapshot.get("mods").isJsonObject();
 
-        JsonObject next = buildSnapshot(nowEpochSeconds, curMods, curConfigs, prevSnapshot);
         if (!hasPrev) {
-            return new Result(List.of(), next);
+            return new Result(List.of(), buildSnapshot(nowEpochSeconds, curMods, curConfigs, Map.of()));
         }
 
         Map<String, FileMeta> prevMods = readMods(prevSnapshot.getAsJsonObject("mods"));
@@ -71,10 +70,17 @@ public final class PackChangeActivityScanner {
                 : Map.of();
         Map<String, Long> lastEmit = readLastEmit(prevSnapshot);
         Map<String, Long> nextEmit = new HashMap<>(lastEmit);
-        diffConfigs(prevConfigs, curConfigs, lastEmit, nextEmit, nowEpochSeconds, events);
-        next.add("config_last_emit_epoch", toEpochObject(nextEmit));
+        Set<String> cooldownHeld = new HashSet<>();
+        diffConfigs(prevConfigs, curConfigs, lastEmit, nextEmit, nowEpochSeconds, events, cooldownHeld);
 
-        return new Result(events, next);
+        Map<String, FileMeta> snapConfigs = new HashMap<>(curConfigs);
+        for (String path : cooldownHeld) {
+            FileMeta held = prevConfigs.get(path);
+            if (held != null) {
+                snapConfigs.put(path, held);
+            }
+        }
+        return new Result(events, buildSnapshot(nowEpochSeconds, curMods, snapConfigs, nextEmit));
     }
 
     private static void diffMods(
@@ -173,7 +179,8 @@ public final class PackChangeActivityScanner {
             Map<String, Long> lastEmit,
             Map<String, Long> nextEmit,
             long nowEpoch,
-            List<JsonObject> events
+            List<JsonObject> events,
+            Set<String> cooldownHeld
     ) {
         Set<String> paths = new HashSet<>();
         paths.addAll(prev.keySet());
@@ -191,6 +198,7 @@ public final class PackChangeActivityScanner {
             }
             long last = lastEmit.getOrDefault(path, 0L);
             if (last > 0 && nowEpoch - last < CONFIG_COOLDOWN_SECONDS) {
+                cooldownHeld.add(path);
                 continue;
             }
             events.add(event(TYPE_CONFIG_CHANGED, path, path, nowEpoch));
@@ -218,14 +226,12 @@ public final class PackChangeActivityScanner {
             long nowEpoch,
             Map<String, FileMeta> mods,
             Map<String, FileMeta> configs,
-            JsonObject prevSnapshot
+            Map<String, Long> lastEmit
     ) {
         JsonObject next = new JsonObject();
         next.addProperty("captured_at_epoch", nowEpoch);
         next.add("mods", toMetaObject(mods));
         next.add("configs", toMetaObject(configs));
-        Map<String, Long> lastEmit = readLastEmit(prevSnapshot);
-        // Drop emit entries for configs that disappeared; keep others until overwritten
         Map<String, Long> kept = new HashMap<>();
         for (Map.Entry<String, Long> e : lastEmit.entrySet()) {
             if (configs.containsKey(e.getKey())) {
