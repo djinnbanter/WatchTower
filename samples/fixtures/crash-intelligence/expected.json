@@ -80,6 +80,14 @@
         "primary_mod_id": "spark",
         "category": "mod"
       }
+    },
+    "sable-body-removed-save": {
+      "file": "sable-body-removed-save.txt",
+      "expected": {
+        "failure_kind": "mod_runtime",
+        "primary_mod_id": "sable_rapier",
+        "category": "mod"
+      }
     }
   }
 }

@@ -157,6 +157,26 @@ class CrashNarratorTest {
         assertFalse(n.manualReview());
     }
 
+    @Test
+    void sableBodyRemovedMentionsSublevelSave() throws Exception {
+        Path p = resolveCrashIntel("sable-body-removed-save.txt");
+        String text = Files.readString(p);
+        var parsed = CrashReportParser.parse(text, List.of());
+        JsonObject report = new JsonObject();
+        parsed.applyTo(report);
+        CrashClassifier.Classification c = CrashClassifier.classify(report);
+        assertEquals("sable_rapier", c.primaryModId());
+        assertEquals(CrashClassifier.FK_MOD_RUNTIME, c.failureKind());
+        CrashNarrator.Narrative n = CrashNarrator.narrate(report, new JsonArray());
+        String plain = n.plainEnglish().toLowerCase(Locale.ROOT);
+        assertTrue(plain.contains("sublevel") || plain.contains("body") || plain.contains("save"));
+        // fix hints must not be ONLY generic update/remove
+        String hints = n.fixHints().toString().toLowerCase(Locale.ROOT);
+        assertTrue(hints.contains("sublevel") || hints.contains("save") || hints.contains("carriage")
+                || hints.contains("physics"));
+        assertFalse(n.manualReview());
+    }
+
     private static Path resolveCrashIntel(String name) {
         Path p = Path.of("samples", "fixtures", "crash-intelligence", name);
         if (!Files.isRegularFile(p)) {
