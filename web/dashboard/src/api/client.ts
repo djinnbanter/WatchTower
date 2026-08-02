@@ -252,6 +252,23 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  /** List sandboxed files under config/ (Mods → Configs). */
+  modsConfigsList: () => apiFetch<Record<string, unknown>>('/api/mods/configs'),
+  /** Read one config file by relative path (config/...). */
+  modsConfigRead: (path: string) =>
+    apiFetch<Record<string, unknown>>(`/api/mods/configs?path=${encodeURIComponent(path)}`),
+  /** Save config text with mtime check; creates a timestamped backup first. */
+  modsConfigSave: (payload: { path: string; content: string; expected_mtime: number }) =>
+    apiFetch<Record<string, unknown>>('/api/mods/configs', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  /** Restore newest backup for a config path. */
+  modsConfigUndo: (path: string) =>
+    apiFetch<Record<string, unknown>>('/api/mods/configs/undo', {
+      method: 'POST',
+      body: JSON.stringify({ path }),
+    }),
   /** Latest report facts (live: /api/reports/latest; fixture preview may alias /api/facts). */
   facts: async () => {
     try {
