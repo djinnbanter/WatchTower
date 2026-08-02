@@ -21,16 +21,14 @@ import {
 
 const meta = nightById('welcome');
 
-/** Quiet page wash — soft Signal Blue radial, no canvas / no drift. */
+/** Night wash + sparse stars + block grid — Minecraft motif on the desk tour open. */
 function WelcomeAmbient() {
   return (
-    <div
-      className="absolute inset-0"
-      style={{
-        background:
-          'radial-gradient(ellipse 70% 55% at 12% 18%, color-mix(in srgb, var(--wt-accent) 7%, transparent), transparent 70%)',
-      }}
-    />
+    <>
+      <div aria-hidden className="wt-hero-night" />
+      <div aria-hidden className="wt-hero-stars" />
+      <div aria-hidden className="absolute inset-0 wt-block-grid opacity-70" />
+    </>
   );
 }
 
@@ -86,6 +84,7 @@ export function WelcomeEntry() {
             Get it on Modrinth
           </Cta>
         </div>
+        <div aria-hidden className="wt-grass-strip wt-grass-strip--start mt-5" />
 
         <Link
           href="#live"

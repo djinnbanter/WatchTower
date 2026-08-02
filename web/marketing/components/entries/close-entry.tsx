@@ -11,11 +11,28 @@ import { DEMO_URL, CLOSE_BODY, CLOSE_HEADLINE, FOOTNOTE, LINKS } from '@/content
 
 const meta = nightById('close');
 
+/** Soft night echo — zenith + lantern, no grass / no full star field. */
+function CloseAmbient() {
+  return (
+    <>
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(36rem 18rem at 50% 120%, var(--wt-zenith), transparent 55%), radial-gradient(36rem 20rem at 12% 100%, var(--wt-glow-lantern), transparent 62%), radial-gradient(28rem 16rem at 88% 0%, var(--wt-glow-accent), transparent 58%)',
+        }}
+      />
+      <DeskShapeGrid />
+    </>
+  );
+}
+
 export function CloseEntry() {
   const { burst } = useSpark();
 
   return (
-    <ShiftEntry {...meta} ambient={<DeskShapeGrid />}>
+    <ShiftEntry {...meta} ambient={<CloseAmbient />}>
       <div className="relative z-[1] grid items-end gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
         <Reveal>
           <MarginNote className="mb-5 text-[0.8125rem]">End of shift</MarginNote>

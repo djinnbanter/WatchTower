@@ -200,6 +200,10 @@ body {
   border-radius: 0;
 }
 
+.wt-grass-strip--start {
+  margin-inline: 0 auto;
+}
+
 .wt-hero-night {
   pointer-events: none;
   position: absolute;
