@@ -4,6 +4,8 @@
 
 **Goal:** Build a reusable sample-gap research toolkit, then run it on a user log/crash dump to produce an incident timeline, WatchTower replay gap matrix, ingestion checklist, and ranked fixture backlog — without changing product classifiers/scanners in this pass.
 
+**First run status:** Complete — see `docs/superpowers/research-runs/2026-08-02-new-samples/REPORT.md`
+
 **Architecture:** Parameterized playbook. Each run takes `SAMPLE_ROOT` + `RUN_ID`, writes isolated artifacts under `docs/superpowers/research-runs/<RUN_ID>/`, and reuses Node census/inventory scripts plus a Java crash/narrator replay harness gated by `-Dwt.sample.root=…`. Timeline-first forensics; ingestion checklist is a required appendix every run.
 
 **Tech Stack:** Node.js (corpus inventory/census), Java 21 + Gradle `:watchtower-core:test` (crash parse/classify/narrate replay), Markdown reports.

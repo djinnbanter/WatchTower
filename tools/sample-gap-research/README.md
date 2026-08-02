@@ -28,3 +28,14 @@ Tick these in the run's `REPORT.md` when true.
 - Change product classifiers in a research run
 - Reuse an existing RUN_ID folder
 - Double-count files inside mega.tar.gz / nested archives that already exist as peers
+
+## Agent prompt (copy/paste)
+
+Run the log sample gap research playbook on `SAMPLE_ROOT_HERE` with
+`RUN_ID=YYYY-MM-DD-label` per
+`docs/superpowers/specs/2026-08-02-log-sample-gap-research-design.md` and
+`docs/superpowers/plans/2026-08-02-log-sample-gap-research.md`.
+
+If `tools/sample-gap-research/` already exists and matches the plan, skip Tasks 1–4
+and execute Tasks 5–11 for the new run only. Write artifacts under
+`docs/superpowers/research-runs/<RUN_ID>/`. Do not change product classifiers.
