@@ -401,83 +401,97 @@ export function PageView({ route }: { route: RouteState }) {
 
       {panel === 'monitoring' ? (
         <div className="space-y-6">
-          <Section title="Lag thresholds" hint="When TPS or MSPT crosses these, Issues and Overview treat the window as unhealthy.">
-            <div className="grid gap-3 md:grid-cols-2">
-              <NumberField
-                label="TPS warning"
-                hint="Warn when ticks per second stay below this (typical 19.5)"
-                value={num(form.tps_warn)}
-                onChange={(v) => set('tps_warn', v)}
-              />
-              <NumberField
-                label="MSPT warning"
-                unit="ms"
-                hint="Warn when milliseconds-per-tick stay above this (typical 50)"
-                value={num(form.mspt_warn)}
-                onChange={(v) => set('mspt_warn', v)}
-              />
-            </div>
+          <Section
+            title="Lag thresholds"
+            hint="When TPS or MSPT crosses these, Issues and Overview mark the window unhealthy."
+          >
+            <SettingsStack>
+              <SettingsPair>
+                <NumberField
+                  label="TPS warning"
+                  hint="Typical 19.5"
+                  value={num(form.tps_warn)}
+                  onChange={(v) => set('tps_warn', v)}
+                />
+                <NumberField
+                  label="MSPT warning"
+                  hint="Typical 50"
+                  unit="ms"
+                  value={num(form.mspt_warn)}
+                  onChange={(v) => set('mspt_warn', v)}
+                />
+              </SettingsPair>
+            </SettingsStack>
           </Section>
-          <Section title="Performance baseline" hint="Freeze a known-good week and get nudged when the last 7 days are clearly slower.">
-            <div className="grid gap-3 md:grid-cols-2">
-              <ToggleField
-                label="Auto-capture baseline when healthy"
-                hint="Once, when the server looks healthy — only Set new baseline on Insights refreshes it"
-                value={bool(form.baseline_auto_capture)}
-                onChange={(v) => set('baseline_auto_capture', v)}
-              />
-              <NumberField
-                label="Regression threshold"
-                unit="%"
-                hint="Flag when the last 7 days are this much worse than the baseline (typical 10)"
-                value={num(form.baseline_regression_threshold_pct)}
-                onChange={(v) => set('baseline_regression_threshold_pct', v)}
-              />
-            </div>
+          <Section
+            title="Performance baseline"
+            hint="Freeze a known-good week and get nudged when the last 7 days are clearly slower."
+          >
+            <SettingsStack>
+              <SettingsPair>
+                <ToggleField
+                  label="Auto-capture baseline when healthy"
+                  hint="Once, when the server looks healthy — only Set new baseline on Insights refreshes it"
+                  value={bool(form.baseline_auto_capture)}
+                  onChange={(v) => set('baseline_auto_capture', v)}
+                />
+                <NumberField
+                  label="Regression threshold"
+                  unit="%"
+                  hint="Flag when the last 7 days are this much worse than the baseline (typical 10)"
+                  value={num(form.baseline_regression_threshold_pct)}
+                  onChange={(v) => set('baseline_regression_threshold_pct', v)}
+                />
+              </SettingsPair>
+            </SettingsStack>
           </Section>
           <Section
             title="Spark on lag"
             hint="Optional: on critical sustained lag, run a short Spark profile and attach it to the lag Issue. Profiles stay on disk."
           >
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="wt-form-row px-4 py-3">
-                <div className="text-sm font-medium">Spark mod</div>
-                <div className="mt-1.5">
-                  <StatusPill tone={sparkLoaded ? 'ok' : 'warn'}>
-                    {sparkLoaded ? 'Installed' : 'Not installed'}
-                  </StatusPill>
+            <SettingsStack>
+              <SettingsPair>
+                <div className="st-row">
+                  <div className="st-row__label">Spark mod</div>
+                  <div className="st-row__hint">
+                    Detected from the running server — install Spark to enable auto-capture
+                  </div>
+                  <div className="mt-1.5">
+                    <StatusPill tone={sparkLoaded ? 'ok' : 'warn'}>
+                      {sparkLoaded ? 'Installed' : 'Not installed'}
+                    </StatusPill>
+                  </div>
                 </div>
-                <p className="mt-1.5 text-xs text-wt-text-low">
-                  Detected from the running server — install Spark to enable auto-capture
-                </p>
-              </div>
-              <ToggleField
-                label="Spark enabled"
-                hint="Allow Watchtower to use Spark (profiles, auto-capture). Also under Integrations."
-                value={sparkEnabled}
-                onChange={(v) => set('spark_enabled', v)}
-              />
-              <ToggleField
-                label="Auto-capture Spark on critical lag"
-                hint={
-                  !sparkLoaded
-                    ? 'Install Spark on this server to enable'
-                    : !sparkEnabled
-                      ? 'Turn on Spark enabled first'
-                      : 'Critical lag only (not small blips). Leave off while profiling by hand.'
-                }
-                value={bool(form.spark_auto_capture_on_lag)}
-                onChange={(v) => set('spark_auto_capture_on_lag', v)}
-                disabled={!sparkLoaded || !sparkEnabled}
-              />
-              <NumberField
-                label="Capture window"
-                unit="sec"
-                hint="How long each auto-capture runs (about 45s typical)"
-                value={num(form.spark_auto_capture_window_sec)}
-                onChange={(v) => set('spark_auto_capture_window_sec', v)}
-                disabled={!sparkLoaded || !sparkEnabled}
-              />
+                <ToggleField
+                  label="Spark enabled"
+                  hint="Allow Watchtower to use Spark (profiles, auto-capture). Also under Integrations."
+                  value={sparkEnabled}
+                  onChange={(v) => set('spark_enabled', v)}
+                />
+              </SettingsPair>
+              <SettingsPair>
+                <ToggleField
+                  label="Auto-capture Spark on critical lag"
+                  hint={
+                    !sparkLoaded
+                      ? 'Install Spark on this server to enable'
+                      : !sparkEnabled
+                        ? 'Turn on Spark enabled first'
+                        : 'Critical lag only (not small blips). Leave off while profiling by hand.'
+                  }
+                  value={bool(form.spark_auto_capture_on_lag)}
+                  onChange={(v) => set('spark_auto_capture_on_lag', v)}
+                  disabled={!sparkLoaded || !sparkEnabled}
+                />
+                <NumberField
+                  label="Capture window"
+                  unit="sec"
+                  hint="How long each auto-capture runs (about 45s typical)"
+                  value={num(form.spark_auto_capture_window_sec)}
+                  onChange={(v) => set('spark_auto_capture_window_sec', v)}
+                  disabled={!sparkLoaded || !sparkEnabled}
+                />
+              </SettingsPair>
               <NumberField
                 label="Cooldown"
                 unit="sec"
@@ -486,30 +500,35 @@ export function PageView({ route }: { route: RouteState }) {
                 onChange={(v) => set('spark_auto_capture_cooldown_sec', v)}
                 disabled={!sparkLoaded || !sparkEnabled}
               />
-            </div>
+            </SettingsStack>
           </Section>
-          <Section title="Scan cadence" hint="How often background Watching / Scanning wakes up. Applies on the next poll cycle.">
-            <div className="grid gap-3 md:grid-cols-2">
-              <NumberField
-                label="Ops poll interval"
-                unit="sec"
-                hint="How often ops scans jars, crashes, backups, and Issues (typical 60)"
-                value={num(form.ops_poll_sec)}
-                onChange={(v) => set('ops_poll_sec', v)}
-              />
-              <NumberField
-                label="Log scan interval"
-                unit="sec"
-                hint="How often latest.log is tailed for activity and peeks (typical 60)"
-                value={num(form.ops_log_scan_sec)}
-                onChange={(v) => set('ops_log_scan_sec', v)}
-              />
+          <Section
+            title="Scan cadence"
+            hint="How often background Watching / Scanning wakes up. Applies on the next poll cycle."
+          >
+            <SettingsStack>
+              <SettingsPair>
+                <NumberField
+                  label="Ops poll interval"
+                  unit="sec"
+                  hint="How often ops scans jars, crashes, backups, and Issues (typical 60)"
+                  value={num(form.ops_poll_sec)}
+                  onChange={(v) => set('ops_poll_sec', v)}
+                />
+                <NumberField
+                  label="Log scan interval"
+                  unit="sec"
+                  hint="How often latest.log is tailed for activity and peeks (typical 60)"
+                  value={num(form.ops_log_scan_sec)}
+                  onChange={(v) => set('ops_log_scan_sec', v)}
+                />
+              </SettingsPair>
               <ReadOnlyField
                 label="Live sample interval"
                 value={`${num(form.live_sample_interval_seconds) || 1} sec`}
                 hint="NeoForge mod config (liveSampleIntervalSeconds) — restart after changing"
               />
-            </div>
+            </SettingsStack>
           </Section>
         </div>
       ) : null}
