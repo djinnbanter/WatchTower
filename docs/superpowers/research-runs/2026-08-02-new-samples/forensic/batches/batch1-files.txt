@@ -1,0 +1,11 @@
+crash-reports/crash-2026-07-31_17.27.20-server.txt
+crash-reports/crash-2026-08-01_19.24.51-server.txt
+crash-reports/crash-2026-08-01_20.42.00-server.txt
+crash-reports/crash-2026-08-01_20.43.06-server.txt
+crash-reports/crash-2026-08-01_21.49.17-server.txt
+crash-reports/crash-2026-08-01_21.50.21-server.txt
+logs/JadeErrorOutput.txt
+logs/kubejs/client.log
+logs/kubejs/server.log
+logs/kubejs/startup.log
+logs/latest.log

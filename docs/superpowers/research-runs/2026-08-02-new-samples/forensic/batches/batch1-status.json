@@ -1,0 +1,71 @@
+{
+  "batch": 1,
+  "files": [
+    {
+      "rel": "crash-reports/crash-2026-07-31_17.27.20-server.txt",
+      "note_path": "forensic/files/crash-reports__crash-2026-07-31_17.27.20-server.txt.md",
+      "line_count": 298,
+      "read_complete": true
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_19.24.51-server.txt",
+      "note_path": "forensic/files/crash-reports__crash-2026-08-01_19.24.51-server.txt.md",
+      "line_count": 307,
+      "read_complete": true
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_20.42.00-server.txt",
+      "note_path": "forensic/files/crash-reports__crash-2026-08-01_20.42.00-server.txt.md",
+      "line_count": 307,
+      "read_complete": true
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_20.43.06-server.txt",
+      "note_path": "forensic/files/crash-reports__crash-2026-08-01_20.43.06-server.txt.md",
+      "line_count": 3168,
+      "read_complete": true
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_21.49.17-server.txt",
+      "note_path": "forensic/files/crash-reports__crash-2026-08-01_21.49.17-server.txt.md",
+      "line_count": 304,
+      "read_complete": true
+    },
+    {
+      "rel": "crash-reports/crash-2026-08-01_21.50.21-server.txt",
+      "note_path": "forensic/files/crash-reports__crash-2026-08-01_21.50.21-server.txt.md",
+      "line_count": 3423,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/JadeErrorOutput.txt",
+      "note_path": "forensic/files/logs__JadeErrorOutput.txt.md",
+      "line_count": 205,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/kubejs/client.log",
+      "note_path": "forensic/files/logs__kubejs__client.log.md",
+      "line_count": 0,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/kubejs/server.log",
+      "note_path": "forensic/files/logs__kubejs__server.log.md",
+      "line_count": 1425,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/kubejs/startup.log",
+      "note_path": "forensic/files/logs__kubejs__startup.log.md",
+      "line_count": 13,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/latest.log",
+      "note_path": "forensic/files/logs__latest.log.md",
+      "line_count": 3972,
+      "read_complete": true
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "batch": 6,
+  "label": "Aug 1 late rotates + Aug 2 + debug.log + debug-3/4/5",
+  "read_complete": true,
+  "files_total": 9,
+  "files_done": 9,
+  "files": [
+    {
+      "rel": "logs/2026-08-01-5.log.gz",
+      "note_path": "forensic/files/logs__2026-08-01-5.log.gz.md",
+      "line_count": 13819,
+      "read_complete": true,
+      "fb_links": ["FB-02", "FB-03", "FB-01"]
+    },
+    {
+      "rel": "logs/2026-08-01-6.log.gz",
+      "note_path": "forensic/files/logs__2026-08-01-6.log.gz.md",
+      "line_count": 10908,
+      "read_complete": true,
+      "fb_links": ["FB-04", "FB-05"]
+    },
+    {
+      "rel": "logs/2026-08-01-7.log.gz",
+      "note_path": "forensic/files/logs__2026-08-01-7.log.gz.md",
+      "line_count": 8176,
+      "read_complete": true,
+      "fb_links": ["FB-04"]
+    },
+    {
+      "rel": "logs/2026-08-01-8.log.gz",
+      "note_path": "forensic/files/logs__2026-08-01-8.log.gz.md",
+      "line_count": 3766,
+      "read_complete": true,
+      "fb_links": []
+    },
+    {
+      "rel": "logs/2026-08-02-1.log.gz",
+      "note_path": "forensic/files/logs__2026-08-02-1.log.gz.md",
+      "line_count": 26887,
+      "read_complete": true,
+      "fb_links": []
+    },
+    {
+      "rel": "logs/debug.log",
+      "note_path": "forensic/files/logs__debug.log.md",
+      "line_count": 22407,
+      "read_complete": true,
+      "fb_links": []
+    },
+    {
+      "rel": "logs/debug-3.log.gz",
+      "note_path": "forensic/files/logs__debug-3.log.gz.md",
+      "line_count": 34277,
+      "read_complete": true,
+      "fb_links": ["FB-04"]
+    },
+    {
+      "rel": "logs/debug-4.log.gz",
+      "note_path": "forensic/files/logs__debug-4.log.gz.md",
+      "line_count": 39626,
+      "read_complete": true,
+      "fb_links": ["FB-04", "FB-05"]
+    },
+    {
+      "rel": "logs/debug-5.log.gz",
+      "note_path": "forensic/files/logs__debug-5.log.gz.md",
+      "line_count": 44896,
+      "read_complete": true,
+      "fb_links": ["FB-02", "FB-03", "FB-01"]
+    }
+  ]
+}

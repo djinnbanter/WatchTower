@@ -1,0 +1,43 @@
+{
+  "batch": 5,
+  "label": "Aug 1 early rotates + debug-1/2",
+  "read_complete": true,
+  "files": [
+    {
+      "rel": "logs/2026-08-01-1.log.gz",
+      "note_path": "forensic/files/logs__2026-08-01-1.log.gz.md",
+      "line_count": 5726,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-08-01-2.log.gz",
+      "note_path": "forensic/files/logs__2026-08-01-2.log.gz.md",
+      "line_count": 4982,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-08-01-3.log.gz",
+      "note_path": "forensic/files/logs__2026-08-01-3.log.gz.md",
+      "line_count": 2173,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-08-01-4.log.gz",
+      "note_path": "forensic/files/logs__2026-08-01-4.log.gz.md",
+      "line_count": 8030,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/debug-1.log.gz",
+      "note_path": "forensic/files/logs__debug-1.log.gz.md",
+      "line_count": 137762,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/debug-2.log.gz",
+      "note_path": "forensic/files/logs__debug-2.log.gz.md",
+      "line_count": 21271,
+      "read_complete": true
+    }
+  ]
+}

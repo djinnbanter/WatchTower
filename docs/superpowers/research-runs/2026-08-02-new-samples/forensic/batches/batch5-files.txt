@@ -1,0 +1,6 @@
+logs/2026-08-01-1.log.gz
+logs/2026-08-01-2.log.gz
+logs/2026-08-01-3.log.gz
+logs/2026-08-01-4.log.gz
+logs/debug-1.log.gz
+logs/debug-2.log.gz

@@ -1,0 +1,63 @@
+{
+  "batch": 4,
+  "label": "Jul 31 rotates",
+  "sample_root": "samples/new samples 02.08.2026",
+  "completed_at": "2026-08-02T20:45:00Z",
+  "files_read": 8,
+  "notes": [
+    "Chronological order: -2 (17:43) → -3 → -4 → -5 → -6 → -7 → -8 → -1 (20:16–23:42). Rotate -1 is latest evening, not first.",
+    "FB-06 / crash-0731-spark (17:27 Profiler job no longer active) is NOT present in any Jul 31 rotate body — ~16 min gap before -2. Evidence remains the crash-report. Clean Spark-enabled stops in -2..-8 do not log the ISE.",
+    "FB-08 createfood/KubeJS recipe fail ~1402 per normal boot; -4 doubles to ~2804 via /reload during SDLink config.",
+    "Only 1x Can't keep up in batch (-6 @ 18:34:59). No OPAC/Sable hard crashes on Jul 31 rotates."
+  ],
+  "files": [
+    {
+      "rel": "logs/2026-07-31-1.log.gz",
+      "note_path": "forensic/files/logs__2026-07-31-1.log.gz.md",
+      "line_count": 3903,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-31-2.log.gz",
+      "note_path": "forensic/files/logs__2026-07-31-2.log.gz.md",
+      "line_count": 3236,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-31-3.log.gz",
+      "note_path": "forensic/files/logs__2026-07-31-3.log.gz.md",
+      "line_count": 3273,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-31-4.log.gz",
+      "note_path": "forensic/files/logs__2026-07-31-4.log.gz.md",
+      "line_count": 5293,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-31-5.log.gz",
+      "note_path": "forensic/files/logs__2026-07-31-5.log.gz.md",
+      "line_count": 3261,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-31-6.log.gz",
+      "note_path": "forensic/files/logs__2026-07-31-6.log.gz.md",
+      "line_count": 3693,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-31-7.log.gz",
+      "note_path": "forensic/files/logs__2026-07-31-7.log.gz.md",
+      "line_count": 3200,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-31-8.log.gz",
+      "note_path": "forensic/files/logs__2026-07-31-8.log.gz.md",
+      "line_count": 3200,
+      "read_complete": true
+    }
+  ]
+}

@@ -8,9 +8,9 @@
       "kind": "crash",
       "bytes": 53165,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/crash-reports__crash-2026-07-31_17.27.20-server.txt.md",
-      "line_count": null,
+      "line_count": 298,
       "skip_reason": null
     },
     {
@@ -18,9 +18,9 @@
       "kind": "crash",
       "bytes": 72242,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/crash-reports__crash-2026-08-01_19.24.51-server.txt.md",
-      "line_count": null,
+      "line_count": 307,
       "skip_reason": null
     },
     {
@@ -28,9 +28,9 @@
       "kind": "crash",
       "bytes": 71304,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/crash-reports__crash-2026-08-01_20.42.00-server.txt.md",
-      "line_count": null,
+      "line_count": 307,
       "skip_reason": null
     },
     {
@@ -38,9 +38,9 @@
       "kind": "crash",
       "bytes": 278124,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/crash-reports__crash-2026-08-01_20.43.06-server.txt.md",
-      "line_count": null,
+      "line_count": 3168,
       "skip_reason": null
     },
     {
@@ -48,9 +48,9 @@
       "kind": "crash",
       "bytes": 70197,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/crash-reports__crash-2026-08-01_21.49.17-server.txt.md",
-      "line_count": null,
+      "line_count": 304,
       "skip_reason": null
     },
     {
@@ -58,9 +58,9 @@
       "kind": "crash",
       "bytes": 292471,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/crash-reports__crash-2026-08-01_21.50.21-server.txt.md",
-      "line_count": null,
+      "line_count": 3423,
       "skip_reason": null
     },
     {
@@ -68,9 +68,9 @@
       "kind": "rotate_gz",
       "bytes": 193908,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-29-1.log.gz.md",
-      "line_count": null,
+      "line_count": 31217,
       "skip_reason": null
     },
     {
@@ -78,9 +78,9 @@
       "kind": "rotate_gz",
       "bytes": 38857,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-29-2.log.gz.md",
-      "line_count": null,
+      "line_count": 1981,
       "skip_reason": null
     },
     {
@@ -88,9 +88,9 @@
       "kind": "rotate_gz",
       "bytes": 36146,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-29-3.log.gz.md",
-      "line_count": null,
+      "line_count": 1778,
       "skip_reason": null
     },
     {
@@ -98,9 +98,9 @@
       "kind": "rotate_gz",
       "bytes": 37465,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-29-4.log.gz.md",
-      "line_count": null,
+      "line_count": 1833,
       "skip_reason": null
     },
     {
@@ -108,9 +108,9 @@
       "kind": "rotate_gz",
       "bytes": 36229,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-29-5.log.gz.md",
-      "line_count": null,
+      "line_count": 1782,
       "skip_reason": null
     },
     {
@@ -118,9 +118,9 @@
       "kind": "rotate_gz",
       "bytes": 39897,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-29-6.log.gz.md",
-      "line_count": null,
+      "line_count": 1966,
       "skip_reason": null
     },
     {
@@ -128,9 +128,9 @@
       "kind": "rotate_gz",
       "bytes": 42938,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-29-7.log.gz.md",
-      "line_count": null,
+      "line_count": 2247,
       "skip_reason": null
     },
     {
@@ -138,9 +138,9 @@
       "kind": "rotate_gz",
       "bytes": 86677,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-29-8.log.gz.md",
-      "line_count": null,
+      "line_count": 14289,
       "skip_reason": null
     },
     {
@@ -148,9 +148,9 @@
       "kind": "rotate_gz",
       "bytes": 219967,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-30-1.log.gz.md",
-      "line_count": null,
+      "line_count": 8432,
       "skip_reason": null
     },
     {
@@ -158,9 +158,9 @@
       "kind": "rotate_gz",
       "bytes": 33407,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-30-2.log.gz.md",
-      "line_count": null,
+      "line_count": 1824,
       "skip_reason": null
     },
     {
@@ -168,9 +168,9 @@
       "kind": "rotate_gz",
       "bytes": 278345,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-30-3.log.gz.md",
-      "line_count": null,
+      "line_count": 10829,
       "skip_reason": null
     },
     {
@@ -178,9 +178,9 @@
       "kind": "rotate_gz",
       "bytes": 82959,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-30-4.log.gz.md",
-      "line_count": null,
+      "line_count": 3196,
       "skip_reason": null
     },
     {
@@ -188,9 +188,9 @@
       "kind": "rotate_gz",
       "bytes": 143731,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-30-5.log.gz.md",
-      "line_count": null,
+      "line_count": 5390,
       "skip_reason": null
     },
     {
@@ -198,9 +198,9 @@
       "kind": "rotate_gz",
       "bytes": 99586,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-31-1.log.gz.md",
-      "line_count": null,
+      "line_count": 3903,
       "skip_reason": null
     },
     {
@@ -208,9 +208,9 @@
       "kind": "rotate_gz",
       "bytes": 83740,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-31-2.log.gz.md",
-      "line_count": null,
+      "line_count": 3236,
       "skip_reason": null
     },
     {
@@ -218,9 +218,9 @@
       "kind": "rotate_gz",
       "bytes": 85023,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-31-3.log.gz.md",
-      "line_count": null,
+      "line_count": 3273,
       "skip_reason": null
     },
     {
@@ -228,9 +228,9 @@
       "kind": "rotate_gz",
       "bytes": 141266,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-31-4.log.gz.md",
-      "line_count": null,
+      "line_count": 5293,
       "skip_reason": null
     },
     {
@@ -238,9 +238,9 @@
       "kind": "rotate_gz",
       "bytes": 86086,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-31-5.log.gz.md",
-      "line_count": null,
+      "line_count": 3261,
       "skip_reason": null
     },
     {
@@ -248,9 +248,9 @@
       "kind": "rotate_gz",
       "bytes": 89911,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-31-6.log.gz.md",
-      "line_count": null,
+      "line_count": 3693,
       "skip_reason": null
     },
     {
@@ -258,9 +258,9 @@
       "kind": "rotate_gz",
       "bytes": 83297,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-31-7.log.gz.md",
-      "line_count": null,
+      "line_count": 3200,
       "skip_reason": null
     },
     {
@@ -268,9 +268,9 @@
       "kind": "rotate_gz",
       "bytes": 83259,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-07-31-8.log.gz.md",
-      "line_count": null,
+      "line_count": 3200,
       "skip_reason": null
     },
     {
@@ -278,9 +278,9 @@
       "kind": "rotate_gz",
       "bytes": 128376,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-08-01-1.log.gz.md",
-      "line_count": null,
+      "line_count": 5726,
       "skip_reason": null
     },
     {
@@ -288,9 +288,9 @@
       "kind": "rotate_gz",
       "bytes": 106520,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-08-01-2.log.gz.md",
-      "line_count": null,
+      "line_count": 4982,
       "skip_reason": null
     },
     {
@@ -298,9 +298,9 @@
       "kind": "rotate_gz",
       "bytes": 32728,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-08-01-3.log.gz.md",
-      "line_count": null,
+      "line_count": 2173,
       "skip_reason": null
     },
     {
@@ -308,9 +308,9 @@
       "kind": "rotate_gz",
       "bytes": 183931,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-08-01-4.log.gz.md",
-      "line_count": null,
+      "line_count": 8030,
       "skip_reason": null
     },
     {
@@ -318,9 +318,9 @@
       "kind": "rotate_gz",
       "bytes": 247942,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-08-01-5.log.gz.md",
-      "line_count": null,
+      "line_count": 13819,
       "skip_reason": null
     },
     {
@@ -328,9 +328,9 @@
       "kind": "rotate_gz",
       "bytes": 193128,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-08-01-6.log.gz.md",
-      "line_count": null,
+      "line_count": 10908,
       "skip_reason": null
     },
     {
@@ -338,9 +338,9 @@
       "kind": "rotate_gz",
       "bytes": 189787,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-08-01-7.log.gz.md",
-      "line_count": null,
+      "line_count": 8176,
       "skip_reason": null
     },
     {
@@ -348,9 +348,9 @@
       "kind": "rotate_gz",
       "bytes": 86169,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-08-01-8.log.gz.md",
-      "line_count": null,
+      "line_count": 3766,
       "skip_reason": null
     },
     {
@@ -358,9 +358,9 @@
       "kind": "rotate_gz",
       "bytes": 580172,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__2026-08-02-1.log.gz.md",
-      "line_count": null,
+      "line_count": 26887,
       "skip_reason": null
     },
     {
@@ -368,9 +368,9 @@
       "kind": "debug_gz",
       "bytes": 1817208,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__debug-1.log.gz.md",
-      "line_count": null,
+      "line_count": 137762,
       "skip_reason": null
     },
     {
@@ -378,9 +378,9 @@
       "kind": "debug_gz",
       "bytes": 343195,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__debug-2.log.gz.md",
-      "line_count": null,
+      "line_count": 21271,
       "skip_reason": null
     },
     {
@@ -388,9 +388,9 @@
       "kind": "debug_gz",
       "bytes": 555244,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__debug-3.log.gz.md",
-      "line_count": null,
+      "line_count": 34277,
       "skip_reason": null
     },
     {
@@ -398,9 +398,9 @@
       "kind": "debug_gz",
       "bytes": 562065,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__debug-4.log.gz.md",
-      "line_count": null,
+      "line_count": 39626,
       "skip_reason": null
     },
     {
@@ -408,9 +408,9 @@
       "kind": "debug_gz",
       "bytes": 651007,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__debug-5.log.gz.md",
-      "line_count": null,
+      "line_count": 44896,
       "skip_reason": null
     },
     {
@@ -418,9 +418,9 @@
       "kind": "debug",
       "bytes": 5108972,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__debug.log.md",
-      "line_count": null,
+      "line_count": 22407,
       "skip_reason": null
     },
     {
@@ -428,9 +428,9 @@
       "kind": "jade",
       "bytes": 21360,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__JadeErrorOutput.txt.md",
-      "line_count": null,
+      "line_count": 205,
       "skip_reason": null
     },
     {
@@ -438,9 +438,9 @@
       "kind": "kubejs",
       "bytes": null,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__kubejs__client.log.md",
-      "line_count": null,
+      "line_count": 0,
       "skip_reason": null
     },
     {
@@ -448,9 +448,9 @@
       "kind": "kubejs",
       "bytes": 858533,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__kubejs__server.log.md",
-      "line_count": null,
+      "line_count": 1425,
       "skip_reason": null
     },
     {
@@ -458,9 +458,9 @@
       "kind": "kubejs",
       "bytes": 826,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__kubejs__startup.log.md",
-      "line_count": null,
+      "line_count": 13,
       "skip_reason": null
     },
     {
@@ -468,9 +468,9 @@
       "kind": "latest",
       "bytes": 1426621,
       "duplicate_of": null,
-      "read_complete": false,
+      "read_complete": true,
       "note_path": "forensic/files/logs__latest.log.md",
-      "line_count": null,
+      "line_count": 3972,
       "skip_reason": null
     },
     {
@@ -478,7 +478,7 @@
       "kind": "archive",
       "bytes": 851541,
       "duplicate_of": null,
-      "read_complete": true,
+      "read_complete": false,
       "note_path": null,
       "line_count": null,
       "skip_reason": "not_scannable"
@@ -488,70 +488,85 @@
       "kind": "rotate_gz",
       "bytes": null,
       "duplicate_of": "logs/2026-08-01-1.log.gz",
-      "read_complete": true,
+      "read_complete": false,
       "note_path": null,
       "line_count": null,
-      "skip_reason": "deduped"
+      "skip_reason": "deduped",
+      "skipped_reason": "duplicate_of"
     },
     {
       "rel": "logs/mega.tar.gz#2026-08-01-2.log.gz",
       "kind": "rotate_gz",
       "bytes": null,
       "duplicate_of": "logs/2026-08-01-2.log.gz",
-      "read_complete": true,
+      "read_complete": false,
       "note_path": null,
       "line_count": null,
-      "skip_reason": "deduped"
+      "skip_reason": "deduped",
+      "skipped_reason": "duplicate_of"
     },
     {
       "rel": "logs/mega.tar.gz#2026-08-01-3.log.gz",
       "kind": "rotate_gz",
       "bytes": null,
       "duplicate_of": "logs/2026-08-01-3.log.gz",
-      "read_complete": true,
+      "read_complete": false,
       "note_path": null,
       "line_count": null,
-      "skip_reason": "deduped"
+      "skip_reason": "deduped",
+      "skipped_reason": "duplicate_of"
     },
     {
       "rel": "logs/mega.tar.gz#2026-08-01-4.log.gz",
       "kind": "rotate_gz",
       "bytes": null,
       "duplicate_of": "logs/2026-08-01-4.log.gz",
-      "read_complete": true,
+      "read_complete": false,
       "note_path": null,
       "line_count": null,
-      "skip_reason": "deduped"
+      "skip_reason": "deduped",
+      "skipped_reason": "duplicate_of"
     },
     {
       "rel": "logs/mega.tar.gz#2026-08-01-5.log.gz",
       "kind": "rotate_gz",
       "bytes": null,
       "duplicate_of": "logs/2026-08-01-5.log.gz",
-      "read_complete": true,
+      "read_complete": false,
       "note_path": null,
       "line_count": null,
-      "skip_reason": "deduped"
+      "skip_reason": "deduped",
+      "skipped_reason": "duplicate_of"
     },
     {
       "rel": "logs/mega.tar.gz#2026-08-01-6.log.gz",
       "kind": "rotate_gz",
       "bytes": null,
       "duplicate_of": "logs/2026-08-01-6.log.gz",
-      "read_complete": true,
+      "read_complete": false,
       "note_path": null,
       "line_count": null,
-      "skip_reason": "deduped"
+      "skip_reason": "deduped",
+      "skipped_reason": "duplicate_of"
     },
     {
       "rel": "logs/mega.tar.gz#2026-08-01-7.log.gz",
       "kind": "rotate_gz",
       "bytes": null,
       "duplicate_of": "logs/2026-08-01-7.log.gz",
-      "read_complete": true,
+      "read_complete": false,
       "note_path": null,
       "line_count": null,
-      "skip_reason": "deduped"
+      "skip_reason": "deduped",
+      "skipped_reason": "duplicate_of"
     }
-  ]
+  ],
+  "forensic_merged_at": "2026-08-02T19:29:35.146Z",
+  "coverage": {
+    "non_dup_scannable_total": 47,
+    "read_complete": 47,
+    "pending": [],
+    "duplicates_skipped": 7,
+    "archives_skipped": 1
+  }
 }

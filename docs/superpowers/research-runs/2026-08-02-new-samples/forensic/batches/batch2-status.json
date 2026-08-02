@@ -1,0 +1,53 @@
+{
+  "batch": 2,
+  "files": [
+    {
+      "rel": "logs/2026-07-29-1.log.gz",
+      "note_path": "forensic/files/logs__2026-07-29-1.log.gz.md",
+      "line_count": 31217,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-29-2.log.gz",
+      "note_path": "forensic/files/logs__2026-07-29-2.log.gz.md",
+      "line_count": 1981,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-29-3.log.gz",
+      "note_path": "forensic/files/logs__2026-07-29-3.log.gz.md",
+      "line_count": 1778,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-29-4.log.gz",
+      "note_path": "forensic/files/logs__2026-07-29-4.log.gz.md",
+      "line_count": 1833,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-29-5.log.gz",
+      "note_path": "forensic/files/logs__2026-07-29-5.log.gz.md",
+      "line_count": 1782,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-29-6.log.gz",
+      "note_path": "forensic/files/logs__2026-07-29-6.log.gz.md",
+      "line_count": 1966,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-29-7.log.gz",
+      "note_path": "forensic/files/logs__2026-07-29-7.log.gz.md",
+      "line_count": 2247,
+      "read_complete": true
+    },
+    {
+      "rel": "logs/2026-07-29-8.log.gz",
+      "note_path": "forensic/files/logs__2026-07-29-8.log.gz.md",
+      "line_count": 14289,
+      "read_complete": true
+    }
+  ]
+}

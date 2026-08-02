@@ -1,0 +1,8 @@
+logs/2026-07-31-1.log.gz
+logs/2026-07-31-2.log.gz
+logs/2026-07-31-3.log.gz
+logs/2026-07-31-4.log.gz
+logs/2026-07-31-5.log.gz
+logs/2026-07-31-6.log.gz
+logs/2026-07-31-7.log.gz
+logs/2026-07-31-8.log.gz
