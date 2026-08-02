@@ -113,6 +113,45 @@ function toEnabledJar(jar: string): string {
   return base;
 }
 
+
+type ModConfigEntry = { content: string; mtime: number; backups?: string[] };
+
+function secretHintText(text: string): boolean {
+  return /(password|token|secret|api[_-]?key)\s*[=:]/i.test(text);
+}
+
+function loadModConfigStore(session: FixtureSession): Record<string, ModConfigEntry> {
+  if (session.modConfigs && typeof session.modConfigs === 'object') {
+    return session.modConfigs as Record<string, ModConfigEntry>;
+  }
+  const disk = asRecord(readJson('mod-configs.json'));
+  const files = asRecord(disk.files);
+  const store: Record<string, ModConfigEntry> = {};
+  for (const [path, raw] of Object.entries(files)) {
+    const row = asRecord(raw);
+    store[path] = {
+      content: String(row.content ?? ''),
+      mtime: Number(row.mtime ?? Math.floor(Date.now() / 1000)),
+      backups: [],
+    };
+  }
+  session.modConfigs = store;
+  return store;
+}
+
+function modConfigListPayload(store: Record<string, ModConfigEntry>) {
+  const files = Object.entries(store)
+    .map(([path, entry]) => ({
+      path,
+      size: Buffer.byteLength(entry.content, 'utf8'),
+      mtime: entry.mtime,
+      has_backup: (entry.backups?.length ?? 0) > 0,
+      secret_hint: secretHintText(entry.content),
+    }))
+    .sort((a, b) => a.path.localeCompare(b.path));
+  return { files };
+}
+
 function applyModJarOverrides(ops: Record<string, unknown>, session: Record<string, unknown>) {
   const overrides = asRecord(session.modJarOverrides);
   const entries = Object.entries(overrides);
@@ -850,6 +889,104 @@ export async function handleFixtureRequest(
             });
           }
 
+          if (pathOnly === '/api/mods/configs') {
+            const store = loadModConfigStore(session);
+            if (method === 'GET') {
+              const pathParam = url.searchParams.get('path');
+              if (pathParam) {
+                const entry = store[pathParam];
+                if (!entry) {
+                  return jsonRes(404, { ok: false, error: 'not_found', message: `not found: ${pathParam}` });
+                }
+                return jsonRes(200, {
+                  path: pathParam,
+                  content: entry.content,
+                  mtime: entry.mtime,
+                  size: Buffer.byteLength(entry.content, 'utf8'),
+                  secret_hint: secretHintText(entry.content),
+                  parse_warnings: [],
+                });
+              }
+              return jsonRes(200, modConfigListPayload(store));
+            }
+            if (method === 'PUT') {
+              const body = (requestBody && typeof requestBody === 'object' ? requestBody : {}) as Record<
+                string,
+                unknown
+              >;
+              const pathKey = String(body.path ?? '').trim();
+              if (!pathKey.startsWith('config/')) {
+                return jsonRes(400, { ok: false, error: 'bad_path', message: 'path must be under config/' });
+              }
+              if (!('content' in body)) {
+                return jsonRes(400, { ok: false, error: 'content required' });
+              }
+              if (!('expected_mtime' in body)) {
+                return jsonRes(400, { ok: false, error: 'expected_mtime required' });
+              }
+              const content = String(body.content ?? '');
+              const expected = Number(body.expected_mtime);
+              const existing = store[pathKey];
+              if (existing && existing.mtime !== expected) {
+                return jsonRes(409, {
+                  ok: false,
+                  error: 'mtime_conflict',
+                  message: `mtime mismatch: expected ${expected} got ${existing.mtime}`,
+                });
+              }
+              if (Buffer.byteLength(content, 'utf8') > 512 * 1024) {
+                return jsonRes(413, { ok: false, error: 'oversize', message: 'content exceeds 512 KiB' });
+              }
+              let backupPath: string | undefined;
+              if (existing) {
+                const backups = existing.backups ? [...existing.backups] : [];
+                backups.push(existing.content);
+                while (backups.length > 10) backups.shift();
+                existing.backups = backups;
+                backupPath = `watchtower/config-backups/${pathKey.replaceAll('/', '__')}/preview.bak`;
+              }
+              const nextMtime = Math.floor(Date.now() / 1000);
+              store[pathKey] = {
+                content,
+                mtime: nextMtime,
+                backups: existing?.backups ?? [],
+              };
+              session.modConfigs = store;
+              return jsonRes(200, {
+                path: pathKey,
+                mtime: nextMtime,
+                size: Buffer.byteLength(content, 'utf8'),
+                ...(backupPath ? { backup_path: backupPath } : {}),
+              });
+            }
+            return jsonRes(405, { error: 'Method not allowed' });
+          }
+
+          if (method === 'POST' && pathOnly === '/api/mods/configs/undo') {
+            const store = loadModConfigStore(session);
+            const body = (requestBody && typeof requestBody === 'object' ? requestBody : {}) as Record<
+              string,
+              unknown
+            >;
+            const pathKey = String(body.path ?? '').trim();
+            const entry = store[pathKey];
+            if (!entry || !(entry.backups?.length)) {
+              return jsonRes(404, { ok: false, error: 'no_backup', message: `no backup for ${pathKey}` });
+            }
+            const prior = entry.backups[entry.backups.length - 1]!;
+            entry.backups = entry.backups.slice(0, -1);
+            entry.content = prior;
+            entry.mtime = Math.floor(Date.now() / 1000);
+            store[pathKey] = entry;
+            session.modConfigs = store;
+            return jsonRes(200, {
+              path: pathKey,
+              mtime: entry.mtime,
+              size: Buffer.byteLength(entry.content, 'utf8'),
+              restored_from: 'preview-backup',
+            });
+          }
+
           if (method === 'POST' && pathOnly === '/api/modrinth/scan') {
             session.modrinth = {
               running: true,
@@ -1183,6 +1320,9 @@ export async function handleFixtureRequest(
               diskWarnPct: 'disk_warn_pct',
               diskFillWarnDays: 'disk_fill_warn_days',
               diskIoLatencyWarnMs: 'disk_io_latency_warn_ms',
+              chunkWritePressureEnabled: 'chunk_write_pressure_enabled',
+              chunkWriteGrowthChunks: 'chunk_write_growth_chunks',
+              chunkWriteSustainedScans: 'chunk_write_sustained_scans',
               backupStaleHours: 'backup_stale_hours',
               reportRetentionDays: 'report_retention_days',
               reportRetentionCount: 'report_retention_count',

@@ -232,6 +232,11 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | `/api/rules/get` | GET | `?id=` rule id or `packId/ruleId` (sanitized detail) |
 | `/api/rules/validate` | POST | Body YAML or `{ yaml }` → `{ valid, errors[] }` |
 | `/api/mods/scan` | POST | Force unified log scan + running mods → updates ops-cache; returns `{ scanned_at, mod_error_count, running_mod_count, mod_log_errors[], running_mods[], kubejs_failures[] }` |
+| `/api/mods/disable` | POST | Soft-disable top-level jar under `mods/` — `{ jar, confirm_world_risk? }` → rename to `*.jar.disabled` (admin+; `MOD_DISABLE_ENABLED`; 400 `world_risk_confirm_required` when high risk and confirm missing) |
+| `/api/mods/enable` | POST | Re-enable — `{ jar }` basename of `*.jar.disabled` (or `*.disabled`) → rename back to `*.jar` |
+| `/api/mods/configs` | GET | List files under `config/` (`files[]`: `path`, `size`, `mtime`, `has_backup`, `secret_hint`). With `?path=` — read one file (`content`, `parse_warnings[]`, …). Requires `MOD_CONFIG_EDIT_ENABLED` (default true); otherwise 403 |
+| `/api/mods/configs` | PUT | Save — `{ path, content, expected_mtime }` → backup then write (admin+). `409` on mtime conflict; max 512 KiB. Audit `config_saved` (path only) |
+| `/api/mods/configs/undo` | POST | `{ path }` — restore newest backup (admin+). Audit `config_undone` |
 | `/api/mods/tree` | GET | `?mod_id=` — nested dependency tree from latest report (`dependents` + `dependencies`, max depth 6) |
 | `/api/mods/forensics/status` | GET | Mod forensics index/status (`index.state`: `ready`\|`idle`\|`skipped`\|`error`; `config.mod_forensics_scan` / `corrupt_jar_walk`; stale cache reported without jar walk) |
 | `/api/mods/forensics/find-class` | POST | `{ class, include_nested? }` → owning jar matches (rate limit 10/min); builds cache on demand |
@@ -264,6 +269,10 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/backups/scan` | POST | Rescan backup inventory; persists `backups_live` in ops-cache |
+| `/api/backups/verify` | POST | Light integrity verify — `{ path }` under configured backup dirs; updates inventory `verify` (admin+) |
+| `/api/backups/test-restore` | POST | Start async extract under `watchtower/restore-verify/<id>/` — `{ path }` (`BACKUP_TEST_RESTORE_ENABLED`) |
+| `/api/backups/test-restore/status` | GET | Current test-restore job |
+| `/api/backups/test-restore/cleanup` | POST | Delete sandbox — `{ id? }` |
 | `/api/backups/dirs` | POST | `{ dirs: ["path"] }` — save paths + scan + `backups_live` |
 | `/api/backups/heartbeat` | POST | External backup webhook — requires `BACKUP_WEBHOOK_TOKEN`; Bearer or `X-Watchtower-Backup-Token` |
 | `/api/backups/external` | POST | External backup setup — session auth; `{ trackingEnabled?, trackingMode?, generateWebhookToken?, backupExternalMarker?, backupSuppressLocalMissing? }`. `trackingEnabled: false` writes `BACKUP_TRACKING_ENABLED=false`, clears external signals, and silences backup Issues/alerts (dirs kept). |
