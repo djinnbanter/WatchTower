@@ -724,49 +724,37 @@ export function PageView({ route }: { route: RouteState }) {
       {panel === 'audit' ? <AuditLogPanel /> : null}
 
       {panel === 'about' ? (
-        <Section title="About this install" hint="Quick facts for this Watchtower dashboard.">
-          <div className="rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 divide-y divide-wt-line">
-            <div className="flex items-center justify-between gap-4 px-4 py-3">
-              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">
-                Hosting panel
-              </div>
-              <div className="text-sm text-right">{str(form.panel_display_name) || str(form.panel, 'none')}</div>
-            </div>
-            <div className="flex items-center justify-between gap-4 px-4 py-3">
-              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">Hostname</div>
-              <div className="text-sm text-right">{str(form.hostname) || '—'}</div>
-            </div>
-            <div className="flex items-center justify-between gap-4 px-4 py-3">
-              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">
-                Dashboard port
-              </div>
-              <div className="text-sm text-right">{num(form.dashboard_port) || '—'}</div>
-            </div>
-            <div className="flex items-center justify-between gap-4 px-4 py-3">
-              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-wt-text-low">Spark</div>
+        <Section title="About this install" hint="Quick facts for this WatchTower dashboard.">
+          <SettingsStack>
+            <ReadOnlyField
+              label="Hosting panel"
+              value={str(form.panel_display_name) || str(form.panel, 'none')}
+            />
+            <ReadOnlyField label="Hostname" value={str(form.hostname) || '—'} />
+            <ReadOnlyField label="Dashboard port" value={String(num(form.dashboard_port) || '—')} />
+            <div className="st-row st-row--inline">
+              <div className="st-row__label">Spark</div>
               <StatusPill tone={sparkLoaded ? 'ok' : 'neutral'}>
                 {sparkLoaded ? 'Mod loaded' : 'Mod not loaded'}
               </StatusPill>
             </div>
-            <div className="px-4 py-3">
-              <p className="text-sm text-wt-text-mid">
-                {isFixturePreview()
-                  ? 'Fixture preview mode — saves stay in the browser session until you reload fixtures.'
-                  : 'Need to walk through first-run setup again? Relaunch the wizard below.'}
-              </p>
-              <Button
-                kind="primary"
-                className="mt-4"
-                onClick={() => {
-                  relaunchSetupWizard();
-                  navigate({ tab: 'overview', setup: '1' });
-                  window.location.reload();
-                }}
-              >
-                Relaunch setup wizard
-              </Button>
-            </div>
-          </div>
+          </SettingsStack>
+          <p className="mt-4 text-xs text-wt-text-low">
+            {isFixturePreview()
+              ? 'Fixture preview mode — saves stay in the browser session until you reload fixtures.'
+              : 'Need to walk through first-run setup again? Relaunch the wizard below.'}
+          </p>
+          <Button
+            kind="primary"
+            className="mt-3"
+            onClick={() => {
+              relaunchSetupWizard();
+              navigate({ tab: 'overview', setup: '1' });
+              window.location.reload();
+            }}
+          >
+            Relaunch setup wizard
+          </Button>
         </Section>
       ) : null}
     </PageEnter>
@@ -799,13 +787,9 @@ function SecurityPanel() {
 
   if (!live) {
     return (
-      <div className="flex items-start gap-3 rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 p-4">
-        <Shield size={18} className="mt-0.5 shrink-0 text-wt-info" />
+      <div className="wt-plate p-4">
         <p className="text-sm text-wt-text-mid">
-          Security settings require a live Watchtower server. Use{' '}
-          <code className="rounded bg-wt-bg2 px-1">npm run preview:live</code> with{' '}
-          <code className="rounded bg-wt-bg2 px-1">WATCHTOWER_ORIGIN</code>, or open the dashboard
-          embedded from the mod.
+          Security settings require a live WatchTower server.
         </p>
       </div>
     );
@@ -887,8 +871,10 @@ function SecurityPanel() {
 
   return (
     <div className="grid gap-6">
-      <div className="space-y-3 wt-form-row p-4">
-        <h3 className="text-sm font-semibold">Change password</h3>
+      <SettingsStack>
+        <div className="st-row">
+          <div className="st-row__label">Change password</div>
+        </div>
         <TextField
           label="Current password"
           type="password"
@@ -904,35 +890,45 @@ function SecurityPanel() {
           onChange={setNewPw}
         />
         {pwMsg ? (
-          <p className={`text-sm ${pwMsg.ok ? 'text-wt-ok' : 'text-wt-danger'}`}>{pwMsg.text}</p>
+          <div className="st-row">
+            <p className={`text-sm ${pwMsg.ok ? 'text-wt-ok' : 'text-wt-danger'}`}>{pwMsg.text}</p>
+          </div>
         ) : null}
-        <Button
-          kind="primary"
-          disabled={saving || !currentPw || !newPw}
-          onClick={() => void handleChangePw()}
-        >
-          Update password
-        </Button>
-      </div>
+        <div className="st-row">
+          <Button
+            kind="primary"
+            disabled={saving || !currentPw || !newPw}
+            onClick={() => void handleChangePw()}
+          >
+            Update password
+          </Button>
+        </div>
+      </SettingsStack>
 
-      <div className="space-y-3 wt-form-row p-4">
-        <h3 className="text-sm font-semibold">Change username</h3>
+      <SettingsStack>
+        <div className="st-row">
+          <div className="st-row__label">Change username</div>
+        </div>
         <TextField label="New username" value={newUsername} onChange={setNewUsername} />
         {unMsg ? (
-          <p className={`text-sm ${unMsg.ok ? 'text-wt-ok' : 'text-wt-danger'}`}>{unMsg.text}</p>
+          <div className="st-row">
+            <p className={`text-sm ${unMsg.ok ? 'text-wt-ok' : 'text-wt-danger'}`}>{unMsg.text}</p>
+          </div>
         ) : null}
-        <Button
-          kind="default"
-          disabled={saving || !newUsername.trim()}
-          onClick={() => void handleChangeUsername()}
-        >
-          Update username
-        </Button>
-      </div>
+        <div className="st-row">
+          <Button
+            kind="default"
+            disabled={saving || !newUsername.trim()}
+            onClick={() => void handleChangeUsername()}
+          >
+            Update username
+          </Button>
+        </div>
+      </SettingsStack>
 
-      <div className="space-y-3 wt-form-row p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">Two-factor authentication</h3>
+      <SettingsStack>
+        <div className="st-row st-row--inline">
+          <div className="st-row__label">Two-factor authentication</div>
           <StatusPill tone={localTotpOn ? 'ok' : 'neutral'}>
             {localTotpOn ? 'Enabled' : 'Off'}
           </StatusPill>
@@ -940,17 +936,23 @@ function SecurityPanel() {
         {totpStep === 'idle' ? (
           <>
             {!localTotpOn ? (
-              <Button kind="default" disabled={saving} onClick={() => void startTotp()}>
-                Set up two-factor authentication
-              </Button>
+              <div className="st-row">
+                <Button kind="default" disabled={saving} onClick={() => void startTotp()}>
+                  Set up two-factor authentication
+                </Button>
+              </div>
             ) : (
-              <p className="text-sm text-wt-text-mid">
-                2FA is on. Use an authenticator app when signing in.
-              </p>
+              <div className="st-row">
+                <p className="text-sm text-wt-text-mid">
+                  2FA is on. Use an authenticator app when signing in.
+                </p>
+              </div>
             )}
             {localTotpOn ? (
-              <div className="grid gap-2 border-t border-wt-line pt-3">
-                <p className="text-xs text-wt-text-low">Disable 2FA (requires password + code)</p>
+              <>
+                <div className="st-row">
+                  <p className="text-xs text-wt-text-low">Disable 2FA (requires password + code)</p>
+                </div>
                 <TextField
                   label="Password"
                   type="password"
@@ -963,64 +965,80 @@ function SecurityPanel() {
                   value={disableCode}
                   onChange={setDisableCode}
                 />
-                <Button
-                  kind="ghost"
-                  disabled={saving || !disablePw || !disableCode}
-                  onClick={() => void disableTotp()}
-                >
-                  Disable 2FA
-                </Button>
-              </div>
+                <div className="st-row">
+                  <Button
+                    kind="ghost"
+                    disabled={saving || !disablePw || !disableCode}
+                    onClick={() => void disableTotp()}
+                  >
+                    Disable 2FA
+                  </Button>
+                </div>
+              </>
             ) : null}
           </>
         ) : null}
         {totpStep === 'qr' ? (
-          <div className="space-y-3">
+          <>
             {qrSrc ? (
-              <img
-                className="rounded-[var(--radius-wt)] border border-wt-line"
-                src={qrSrc}
-                alt="TOTP QR code"
-                width={180}
-                height={180}
-              />
+              <div className="st-row">
+                <img
+                  className="rounded-[var(--radius-wt)] border border-wt-line"
+                  src={qrSrc}
+                  alt="TOTP QR code"
+                  width={180}
+                  height={180}
+                />
+              </div>
             ) : null}
             {str(qrData?.secret) ? (
-              <p className="text-xs text-wt-text-low">
-                Manual key: <code>{str(qrData?.secret)}</code>
-              </p>
+              <div className="st-row">
+                <p className="text-xs text-wt-text-low">
+                  Manual key: <code>{str(qrData?.secret)}</code>
+                </p>
+              </div>
             ) : null}
             <TextField label="Authenticator code" value={totpCode} onChange={setTotpCode} />
-            <Button
-              kind="primary"
-              disabled={saving || totpCode.length < 6}
-              onClick={() => void confirmTotp()}
-            >
-              Verify and enable
-            </Button>
-          </div>
+            <div className="st-row">
+              <Button
+                kind="primary"
+                disabled={saving || totpCode.length < 6}
+                onClick={() => void confirmTotp()}
+              >
+                Verify and enable
+              </Button>
+            </div>
+          </>
         ) : null}
         {totpStep === 'codes' ? (
-          <div className="space-y-3">
-            <p className="text-sm text-wt-text-mid">2FA enabled. Save these recovery codes:</p>
-            <ul className="space-y-1 font-mono text-xs">
-              {recoveryCodes.map((c) => (
-                <li key={c}>
-                  <code>{c}</code>
-                </li>
-              ))}
-            </ul>
-            <Button kind="primary" onClick={() => setTotpStep('idle')}>
-              Done
-            </Button>
+          <>
+            <div className="st-row">
+              <p className="text-sm text-wt-text-mid">2FA enabled. Save these recovery codes:</p>
+            </div>
+            <div className="st-row">
+              <ul className="space-y-1 font-mono text-xs">
+                {recoveryCodes.map((c) => (
+                  <li key={c}>
+                    <code>{c}</code>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="st-row">
+              <Button kind="primary" onClick={() => setTotpStep('idle')}>
+                Done
+              </Button>
+            </div>
+          </>
+        ) : null}
+        {totpError ? (
+          <div className="st-row">
+            <p className="text-sm text-wt-danger">{totpError}</p>
           </div>
         ) : null}
-        {totpError ? <p className="text-sm text-wt-danger">{totpError}</p> : null}
-      </div>
+      </SettingsStack>
 
-      <div className="border-t border-wt-line pt-4">
-        <SelfMinecraftLink />
-      </div>
+      <SelfMinecraftLink />
     </div>
   );
 }
