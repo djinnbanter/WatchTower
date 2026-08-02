@@ -407,6 +407,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  /** Sync theme mode + accent preset to the signed-in account. */
+  appearanceSave: (payload: { theme: string; accent: string }) =>
+    apiFetch<Record<string, unknown>>('/api/accounts/me/appearance', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
   resetAccountPassword: (id: string, clear2fa = false) =>
     apiFetch<Record<string, unknown>>('/api/accounts/reset-password', {
       method: 'POST',
