@@ -1,0 +1,107 @@
+{
+  "schema": "sample-gap-crash-replay-v1",
+  "sample_root": "../samples/new samples 02.08.2026",
+  "generated_at": "2026-08-02T18:59:35.137835100Z",
+  "crashes": [
+    {
+      "file": "crash-reports/crash-2026-07-31_17.27.20-server.txt",
+      "description": "Exception in server tick loop",
+      "exception": "java.lang.IllegalStateException: Profiler job no longer active!",
+      "failure_kind": "mod_runtime",
+      "category": "mod",
+      "primary_mod_id": "spark",
+      "suspect_mod_id": "spark",
+      "plain_english": "The crash points to mod spark — check for updates, corrupt jars, or mixin conflicts.",
+      "likely_cause": "Mod crash",
+      "confidence": "medium",
+      "fix_hints": [
+        "Update or temporarily remove mod \u0027spark\u0027, then restart."
+      ],
+      "manual_review": false
+    },
+    {
+      "file": "crash-reports/crash-2026-08-01_19.24.51-server.txt",
+      "description": "Exception in server tick loop",
+      "exception": "java.lang.NoSuchMethodError: \u0027xaero.pac.common.server.player.config.IPlayerConfigManager xaero.pac.common.server.IServerData.getPlayerConfigs()\u0027",
+      "failure_kind": "mod_runtime",
+      "category": "mod",
+      "primary_mod_id": "opac_better_commands",
+      "suspect_mod_id": "opac_better_commands",
+      "plain_english": "The crash points to mod opac_better_commands — check for updates, corrupt jars, or mixin conflicts.",
+      "likely_cause": "Mod crash",
+      "confidence": "medium",
+      "fix_hints": [
+        "Update or temporarily remove mod \u0027opac_better_commands\u0027, then restart."
+      ],
+      "manual_review": false
+    },
+    {
+      "file": "crash-reports/crash-2026-08-01_20.42.00-server.txt",
+      "description": "Exception in server tick loop",
+      "exception": "java.lang.NoSuchMethodError: \u0027xaero.pac.common.server.player.config.IPlayerConfigManager xaero.pac.common.server.IServerData.getPlayerConfigs()\u0027",
+      "failure_kind": "mod_runtime",
+      "category": "mod",
+      "primary_mod_id": "opac_better_commands",
+      "suspect_mod_id": "opac_better_commands",
+      "plain_english": "The crash points to mod opac_better_commands — check for updates, corrupt jars, or mixin conflicts.",
+      "likely_cause": "Mod crash",
+      "confidence": "medium",
+      "fix_hints": [
+        "Update or temporarily remove mod \u0027opac_better_commands\u0027, then restart."
+      ],
+      "manual_review": false
+    },
+    {
+      "file": "crash-reports/crash-2026-08-01_20.43.06-server.txt",
+      "description": "Watching Server",
+      "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000004.00 seconds (should be max 0.05)",
+      "failure_kind": "watchdog",
+      "category": "host_resource",
+      "primary_mod_id": "c2me_base",
+      "suspect_mod_id": "c2me_base",
+      "plain_english": "The main server thread stopped responding for ~60s (tick watchdog). Read the thread dump first — lag, pregen, or a heavy assembly, not always a broken mod.",
+      "likely_cause": "Server hung",
+      "confidence": "high",
+      "fix_hints": [
+        "Read the watchdog thread dump — the stuck stack names the hang (mod, worldgen, or farm).",
+        "Pause Chunky / Distant Horizons / map render only if pregen or those mods appear in the dump.",
+        "If MSPT was high, reduce simulation distance or find chunk loaders / rogue entities."
+      ],
+      "manual_review": false
+    },
+    {
+      "file": "crash-reports/crash-2026-08-01_21.49.17-server.txt",
+      "description": "Exception in server tick loop",
+      "exception": "java.lang.RuntimeException: Body has been removed",
+      "failure_kind": "mod_runtime",
+      "category": "mod",
+      "primary_mod_id": "sable_rapier",
+      "suspect_mod_id": "sable_rapier",
+      "plain_english": "The crash points to mod sable_rapier — check for updates, corrupt jars, or mixin conflicts.",
+      "likely_cause": "Mod crash",
+      "confidence": "medium",
+      "fix_hints": [
+        "Update or temporarily remove mod \u0027sable_rapier\u0027, then restart."
+      ],
+      "manual_review": false
+    },
+    {
+      "file": "crash-reports/crash-2026-08-01_21.50.21-server.txt",
+      "description": "Watching Server",
+      "exception": "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000004.00 seconds (should be max 0.05)",
+      "failure_kind": "watchdog",
+      "category": "host_resource",
+      "primary_mod_id": "c2me_base",
+      "suspect_mod_id": "c2me_base",
+      "plain_english": "The main server thread stopped responding for ~60s (tick watchdog). Read the thread dump first — lag, pregen, or a heavy assembly, not always a broken mod.",
+      "likely_cause": "Server hung",
+      "confidence": "high",
+      "fix_hints": [
+        "Read the watchdog thread dump — the stuck stack names the hang (mod, worldgen, or farm).",
+        "Pause Chunky / Distant Horizons / map render only if pregen or those mods appear in the dump.",
+        "If MSPT was high, reduce simulation distance or find chunk loaders / rogue entities."
+      ],
+      "manual_review": false
+    }
+  ]
+}
