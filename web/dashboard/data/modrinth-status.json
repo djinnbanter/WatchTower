@@ -15,23 +15,23 @@
   },
   "eta_seconds": null,
   "last_run": {
-    "started_at": "2026-08-01T21:22:16.533Z",
-    "finished_at": "2026-08-01T21:22:24.533Z",
+    "started_at": "2026-08-02T13:25:58.281Z",
+    "finished_at": "2026-08-02T13:26:06.281Z",
     "duration_ms": 8000,
     "success": true
   },
   "history": [
     {
-      "started_at": "2026-07-31T21:22:37.533Z",
-      "finished_at": "2026-07-31T21:22:44.533Z",
+      "started_at": "2026-08-01T13:26:19.281Z",
+      "finished_at": "2026-08-01T13:26:26.281Z",
       "duration_ms": 7000,
       "success": true,
       "matched": 38,
       "outdated": 3
     },
     {
-      "started_at": "2026-08-01T21:22:16.533Z",
-      "finished_at": "2026-08-01T21:22:24.533Z",
+      "started_at": "2026-08-02T13:25:58.281Z",
+      "finished_at": "2026-08-02T13:26:06.281Z",
       "duration_ms": 8000,
       "success": true,
       "matched": 38,

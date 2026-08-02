@@ -27,6 +27,9 @@ Release: [v1.2.0-beta.1](https://github.com/djinnbanter/WatchTower/releases/tag/
 - **Audit log** — Settings → Audit log records settings, acks, suppressions, accounts, and sign-ins (`watchtower/audit-log.jsonl`, newest 2000 / 90 days)
 - **Join & pack sync clinic** — rejects for mismatched channels / missing / wrong-version mods from `latest.log`; Issues `JOIN_SYNC` + Session → **Session activity** (joins / leaves / failed joins with **Copy fix**)
 - **Session activity plate** — replaces Join clinic + Recent sessions with one right-column feed
+- **Mods → Configs** — edit TOML under `config/` from the dashboard (form when it parses; raw otherwise); backup + undo; Admin+ only
+- **RAM advice** — Insights → Configs uses host/container memory limits
+- **Theme + accent** — rail Customize + Settings → Appearance; per account
 - **Dashboard look** — bold blue accent, tighter corners, clearer gauge colours (metric vs healthy/warn), shared hero plates; less generic dark-SaaS chrome
 - **React dashboard is the real app** — old Preact/alpha UI archived; packaging and docs follow `web/dashboard`
 - **Insights → Storage Space map** — treemap of where disk goes (world / mods / logs / backups drill-in); meters and tables stay

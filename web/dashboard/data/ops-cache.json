@@ -1,108 +1,108 @@
 {
   "schema_version": 3,
-  "updated_at": "2026-08-01T21:23:51.780Z",
-  "report_reconcile_at": "2026-08-01T19:23:51.780Z",
+  "updated_at": "2026-08-02T13:27:33.625Z",
+  "report_reconcile_at": "2026-08-02T11:27:33.625Z",
   "ops_cache_seq": 4,
   "activity": {
-    "scanned_at": "2026-08-01T21:23:21.780Z",
+    "scanned_at": "2026-08-02T13:27:03.625Z",
     "new_count": 15,
     "events": [
       {
-        "time": "2026-08-01T21:20:51.780Z",
+        "time": "2026-08-02T13:24:33.625Z",
         "type": "mod_jar_added",
         "detail": "create-1.21.1-6.0.0.jar",
         "source": "scan",
         "path": "create-1.21.1-6.0.0.jar"
       },
       {
-        "time": "2026-08-01T21:19:51.780Z",
+        "time": "2026-08-02T13:23:33.625Z",
         "type": "config_changed",
         "detail": "config/create-common.toml",
         "source": "scan",
         "path": "config/create-common.toml"
       },
       {
-        "time": "2026-08-01T21:18:51.780Z",
+        "time": "2026-08-02T13:22:33.625Z",
         "type": "mod_disabled",
         "detail": "dimdoors-1.21.jar → dimdoors-1.21.jar.disabled",
         "source": "dashboard",
         "path": "dimdoors-1.21.jar.disabled"
       },
       {
-        "time": "2026-08-01T21:17:51.780Z",
+        "time": "2026-08-02T13:21:33.625Z",
         "type": "restart_scheduled",
         "detail": "Server will restart in 5 minutes",
         "source": "scan"
       },
       {
-        "time": "2026-08-01T21:15:51.780Z",
+        "time": "2026-08-02T13:19:33.625Z",
         "type": "lag_incident",
         "detail": "Lag spike captured",
         "source": "scan",
-        "incident_id": "2026-08-01T21-15-51Z"
+        "incident_id": "2026-08-02T13-19-33Z"
       },
       {
-        "time": "2026-08-01T21:15:51.780Z",
+        "time": "2026-08-02T13:19:33.625Z",
         "type": "tick_lag",
         "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
         "source": "scan",
         "ms_behind": 5200
       },
       {
-        "time": "2026-08-01T21:15:51.780Z",
+        "time": "2026-08-02T13:19:33.625Z",
         "type": "backup_job",
         "detail": "[Crafty] Starting backup for Example Server",
         "source": "scan"
       },
       {
-        "time": "2026-08-01T21:13:51.780Z",
+        "time": "2026-08-02T13:17:33.625Z",
         "type": "command",
         "detail": "/chunky continue",
         "source": "scan",
         "player": "Admin"
       },
       {
-        "time": "2026-08-01T21:11:51.780Z",
+        "time": "2026-08-02T13:15:33.625Z",
         "type": "player_join",
         "detail": "Steve",
         "source": "scan"
       },
       {
-        "time": "2026-08-01T21:09:51.780Z",
+        "time": "2026-08-02T13:13:33.625Z",
         "type": "player_leave",
         "detail": "Alex",
         "source": "scan"
       },
       {
-        "time": "2026-08-01T21:01:51.780Z",
+        "time": "2026-08-02T13:05:33.625Z",
         "type": "command",
         "detail": "/fill ~ ~ ~ ~10 ~10 ~10 stone",
         "source": "scan",
         "player": "Steve"
       },
       {
-        "time": "2026-08-01T20:55:51.780Z",
+        "time": "2026-08-02T12:59:33.625Z",
         "type": "mod_jar_updated",
         "detail": "jei-1.21.1-neoforge-19.21.0.jar",
         "source": "scan",
         "path": "jei-1.21.1-neoforge-19.21.0.jar"
       },
       {
-        "time": "2026-08-01T20:50:51.780Z",
+        "time": "2026-08-02T12:54:33.625Z",
         "type": "mod_jar_removed",
         "detail": "old-debug-1.0.jar",
         "source": "scan",
         "path": "old-debug-1.0.jar"
       },
       {
-        "time": "2026-08-01T20:45:51.780Z",
+        "time": "2026-08-02T12:49:33.625Z",
         "type": "mod_enabled",
         "detail": "appleskin-neoforge-mc1.21-3.0.9.jar.disabled → appleskin-neoforge-mc1.21-3.0.9.jar",
         "source": "dashboard",
         "path": "appleskin-neoforge-mc1.21-3.0.9.jar"
       },
       {
-        "time": "2026-08-01T20:38:51.780Z",
+        "time": "2026-08-02T12:42:33.625Z",
         "type": "performance_spike",
         "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
         "source": "scan"
@@ -110,21 +110,21 @@
     ]
   },
   "lag_issues": {
-    "updated_at": "2026-08-01T21:15:51.780Z",
+    "updated_at": "2026-08-02T13:19:33.625Z",
     "active_count": 1,
     "entries": [
       {
-        "id": "LAG-2026-08-01T21-15-51Z",
-        "incident_id": "2026-08-01T21-15-51Z",
+        "id": "LAG-2026-08-02T13-19-33Z",
+        "incident_id": "2026-08-02T13-19-33Z",
         "severity": "critical",
-        "time": "2026-08-01T21:15:51.780Z",
-        "title": "Lag spike \u2014 MSPT 118ms \u00b7 TPS 8.4",
+        "time": "2026-08-02T13:19:33.625Z",
+        "title": "Lag spike — MSPT 118ms · TPS 8.4",
         "narrative": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
         "hints": [
-          "4 players online \u2014 lag may be player-driven (entities, chunk loading)",
-          "World pregen running \u2014 competes with tick time; consider pausing during peak hours",
+          "4 players online — lag may be player-driven (entities, chunk loading)",
+          "World pregen running — competes with tick time; consider pausing during peak hours",
           "Recent command: /chunky continue",
-          "Entity count elevated (1247) \u2014 check farms / mob caps"
+          "Entity count elevated (1247) — check farms / mob caps"
         ],
         "findings": [
           {
@@ -135,12 +135,12 @@
           {
             "kind": "confirmed",
             "category": "pregen",
-            "text": "World pregen was running \u2014 overworld 43%"
+            "text": "World pregen was running — overworld 43%"
           },
           {
             "kind": "confirmed",
             "category": "command",
-            "text": "Recent heavy command \u2014 Admin: /chunky continue"
+            "text": "Recent heavy command — Admin: /chunky continue"
           },
           {
             "kind": "confirmed",
@@ -148,7 +148,7 @@
             "text": "Entity count elevated (1247)"
           }
         ],
-        "primary_suspect": "World pregen was running \u2014 overworld 43%",
+        "primary_suspect": "World pregen was running — overworld 43%",
         "metrics": {
           "tps": 8.4,
           "mspt": 118.2,
@@ -165,107 +165,107 @@
     ]
   },
   "crashes": {
-    "scanned_at": "2026-08-01T21:23:06.780Z",
+    "scanned_at": "2026-08-02T13:26:48.625Z",
     "count": 13,
     "unreviewed": 12,
     "unreviewed_groups": 11,
     "latest": {
       "file": "crash-2026-06-22_14-33-07-server.txt",
-      "mtime": 1785616731,
+      "mtime": 1785674553,
       "size": 28410,
-      "display_label": "Create contraption collision \u2014 mf.axis null (evidence-backed)",
+      "display_label": "Create contraption collision — mf.axis null (evidence-backed)",
       "source": "scan"
     },
     "entries": [
       {
         "file": "crash-2026-06-22_14-33-07-server.txt",
-        "mtime": 1785616731,
+        "mtime": 1785674553,
         "size": 28410,
-        "display_label": "Create contraption collision \u2014 mf.axis null (evidence-backed)",
+        "display_label": "Create contraption collision — mf.axis null (evidence-backed)",
         "source": "scan"
       },
       {
         "file": "crash-2026-07-10_19-04-12-server.txt",
-        "mtime": 1785597831,
+        "mtime": 1785655653,
         "size": 22104,
-        "display_label": "Create crashed while ticking \u2014 BeltBlockEntity (no contraption evidence)",
+        "display_label": "Create crashed while ticking — BeltBlockEntity (no contraption evidence)",
         "source": "scan"
       },
       {
         "file": "crash-2026-06-18_08-12-44-server.txt",
-        "mtime": 1785605031,
+        "mtime": 1785662853,
         "size": 48291,
-        "display_label": "Watchdog timeout \u2014 server stopped responding",
+        "display_label": "Watchdog timeout — server stopped responding",
         "source": "scan"
       },
       {
         "file": "crash-2026-06-18_08-13-50-server.txt",
-        "mtime": 1785605091,
+        "mtime": 1785662913,
         "size": 48102,
-        "display_label": "Watchdog follow-up \u2014 paired with primary hang",
+        "display_label": "Watchdog follow-up — paired with primary hang",
         "source": "scan"
       },
       {
         "file": "crash-2026-06-19_11-02-18-server.txt",
-        "mtime": 1785612231,
+        "mtime": 1785670053,
         "size": 47011,
-        "display_label": "Watchdog timeout \u2014 Chunky pregen stall",
+        "display_label": "Watchdog timeout — Chunky pregen stall",
         "source": "scan"
       },
       {
         "file": "crash-2026-07-11_02-15-33-server.txt",
-        "mtime": 1785554631,
+        "mtime": 1785612453,
         "size": 31200,
-        "display_label": "Corrupt world NBT \u2014 Unexpected end of ZLIB input stream",
+        "display_label": "Corrupt world NBT — Unexpected end of ZLIB input stream",
         "source": "scan"
       },
       {
         "file": "crash-2026-07-09_21-48-01-server.txt",
-        "mtime": 1785446631,
+        "mtime": 1785504453,
         "size": 19840,
-        "display_label": "Mixin init failed \u2014 create.mixins.json",
+        "display_label": "Mixin init failed — create.mixins.json",
         "source": "scan"
       },
       {
         "file": "crash-2026-07-06_09-33-12-server.txt",
-        "mtime": 1785187431,
+        "mtime": 1785245253,
         "size": 17600,
-        "display_label": "Mixin conflict \u2014 create vs createaddition",
+        "display_label": "Mixin conflict — create vs createaddition",
         "source": "scan"
       },
       {
         "file": "crash-2026-07-05_14-01-55-server.txt",
-        "mtime": 1785101031,
+        "mtime": 1785158853,
         "size": 14200,
-        "display_label": "Duplicate mods \u2014 create installed twice",
+        "display_label": "Duplicate mods — create installed twice",
         "source": "scan"
       },
       {
         "file": "crash-2026-07-08_16-22-44-server.txt",
-        "mtime": 1785360231,
+        "mtime": 1785418053,
         "size": 15420,
-        "display_label": "Java version mismatch \u2014 LuckPerms needs Java 21",
+        "display_label": "Java version mismatch — LuckPerms needs Java 21",
         "source": "scan"
       },
       {
         "file": "crash-2026-07-04_20-44-08-server.txt",
-        "mtime": 1785014631,
+        "mtime": 1785072453,
         "size": 11800,
-        "display_label": "File lock \u2014 world/session.lock held",
+        "display_label": "File lock — world/session.lock held",
         "source": "scan"
       },
       {
         "file": "crash-2026-07-07_11-05-19-server.txt",
-        "mtime": 1785273831,
+        "mtime": 1785331653,
         "size": 9800,
-        "display_label": "OutOfMemoryError \u2014 Java heap space",
+        "display_label": "OutOfMemoryError — Java heap space",
         "source": "scan"
       },
       {
         "file": "crash-2026-06-17_22-18-11-server.txt",
-        "mtime": 1785518631,
+        "mtime": 1785576453,
         "size": 12004,
-        "display_label": "Mod crash (examplemod) \u2014 reviewed",
+        "display_label": "Mod crash (examplemod) — reviewed",
         "source": "scan",
         "reviewed": true
       }
@@ -274,11 +274,11 @@
   "scorecard": {
     "low_tps_minutes_24h": 48,
     "low_tps_minutes_7d": 48,
-    "mspt_p95_24h": 126,
+    "mspt_p95_24h": 150.2,
     "mspt_jitter_max_24h": 18.1
   },
   "mod_log_errors": {
-    "scanned_at": "2026-08-01T21:21:51.780Z",
+    "scanned_at": "2026-08-02T13:25:33.625Z",
     "new_count": 6,
     "entries": [
       {
@@ -295,7 +295,7 @@
           "[Server thread/WARN] [create/]: Contraption stalled at block pos BlockPos{x=128, y=64, z=-42}"
         ],
         "source": "scan",
-        "last_seen_epoch": 1785619431
+        "last_seen_epoch": 1785677253
       },
       {
         "mod_id": "sable",
@@ -307,7 +307,7 @@
         },
         "sample_line": "[Server thread/ERROR] [sable/]: Tick handler exceeded budget in sublevel overworld_farm",
         "source": "scan",
-        "last_seen_epoch": 1785619431
+        "last_seen_epoch": 1785677253
       },
       {
         "mod_id": "ae2",
@@ -320,7 +320,7 @@
         },
         "sample_line": "[main/WARN] [ae2/]: Unable to resolve ingredient ae2:fluix_crystal in custom pack recipe",
         "source": "scan",
-        "last_seen_epoch": 1785619431
+        "last_seen_epoch": 1785677253
       },
       {
         "mod_id": "kubejs",
@@ -330,9 +330,9 @@
         "by_category": {
           "logger_error": 8
         },
-        "sample_line": "[KubeJS Server/ERROR]: scripts/mekanism.js#42 \u2014 TypeError: Cannot read property of undefined",
+        "sample_line": "[KubeJS Server/ERROR]: scripts/mekanism.js#42 — TypeError: Cannot read property of undefined",
         "source": "scan",
-        "last_seen_epoch": 1785619431
+        "last_seen_epoch": 1785677253
       },
       {
         "mod_id": "examplemod",
@@ -344,7 +344,7 @@
         },
         "sample_line": "[main/WARN] [examplemod/]: Missing registry entry for example:block",
         "source": "scan",
-        "last_seen_epoch": 1785619431
+        "last_seen_epoch": 1785677253
       },
       {
         "mod_id": "botania",
@@ -356,12 +356,12 @@
         },
         "sample_line": "[Server thread/WARN] [botania/]: Failed to match mana infusion recipe botania:mana_diamond",
         "source": "scan",
-        "last_seen_epoch": 1785619431
+        "last_seen_epoch": 1785677253
       }
     ]
   },
   "running_mods": {
-    "scanned_at": "2026-08-01T21:21:56.780Z",
+    "scanned_at": "2026-08-02T13:25:38.625Z",
     "count": 58,
     "mods": [
       {
@@ -657,21 +657,21 @@
     ]
   },
   "mod_issues": {
-    "updated_at": "2026-08-01T21:21:51.780Z",
+    "updated_at": "2026-08-02T13:25:33.625Z",
     "active_count": 4,
     "entries": [
       {
         "id": "MOD-create-0",
         "mod_id": "create",
         "severity": "warning",
-        "time": "2026-08-01T21:21:51.780Z",
-        "title": "create \u2014 14 log errors (missing item)",
+        "time": "2026-08-02T13:25:33.625Z",
+        "title": "create — 14 log errors (missing item)",
         "narrative": "create logged 14 error lines in the scan window (missing item).",
         "top_category": "recipe_missing_item",
         "source": "scan",
         "resolved": false,
         "hints": [
-          "Check Mods \u2192 Log errors for details and sample lines."
+          "Check Mods → Log errors for details and sample lines."
         ],
         "fix_steps": [
           "Find the contraption controller block and break it to stop the assembly.",
@@ -684,28 +684,28 @@
         "id": "MOD-sable-1",
         "mod_id": "sable",
         "severity": "info",
-        "time": "2026-08-01T21:21:51.780Z",
-        "title": "sable \u2014 3 log errors (error)",
+        "time": "2026-08-02T13:25:33.625Z",
+        "title": "sable — 3 log errors (error)",
         "narrative": "sable logged 3 error lines in the scan window (error).",
         "top_category": "logger_error",
         "source": "scan",
         "resolved": false,
         "hints": [
-          "Check Mods \u2192 Log errors for details and sample lines."
+          "Check Mods → Log errors for details and sample lines."
         ]
       },
       {
         "id": "MOD-ae2-2",
         "mod_id": "ae2",
         "severity": "warning",
-        "time": "2026-08-01T21:21:51.780Z",
-        "title": "ae2 \u2014 6 log errors (recipe compat)",
+        "time": "2026-08-02T13:25:33.625Z",
+        "title": "ae2 — 6 log errors (recipe compat)",
         "narrative": "Applied Energistics 2 logged recipe compatibility errors after the pack update.",
         "top_category": "recipe_compat",
         "source": "scan",
         "resolved": false,
         "hints": [
-          "New AE2 jar was added since the last report \u2014 verify KubeJS recipes reference valid tags."
+          "New AE2 jar was added since the last report — verify KubeJS recipes reference valid tags."
         ],
         "fix_steps": [
           "Open scripts that reference AE2 items and confirm IDs match 19.2.x.",
@@ -718,8 +718,8 @@
         "id": "MOD-kubejs-3",
         "mod_id": "kubejs",
         "severity": "warning",
-        "time": "2026-08-01T21:21:51.780Z",
-        "title": "kubejs \u2014 8 log errors (script error)",
+        "time": "2026-08-02T13:25:33.625Z",
+        "title": "kubejs — 8 log errors (script error)",
         "narrative": "KubeJS script errors appeared after updating kubejs-neoforge.",
         "top_category": "logger_error",
         "source": "scan",
@@ -737,7 +737,7 @@
     ]
   },
   "right_now": {
-    "updated_at": "2026-08-01T21:23:21.780Z",
+    "updated_at": "2026-08-02T13:27:03.625Z",
     "signals": [
       {
         "type": "backup_job",
@@ -775,7 +775,7 @@
         "type": "join_clinic",
         "label": "3 recent pack sync join failures",
         "severity": "warning",
-        "detail": "NotchFan42 / BuilderBob / FridayGuest \u2014 open Session \u2192 Join clinic",
+        "detail": "NotchFan42 / BuilderBob / FridayGuest — open Session → Join clinic",
         "tab": "session"
       },
       {
@@ -788,17 +788,17 @@
     ]
   },
   "log_stale": {
-    "checked_at": "2026-08-01T21:23:21.780Z",
+    "checked_at": "2026-08-02T13:27:03.625Z",
     "active": true,
     "gap_minutes": 22.4,
-    "last_mtime": "2026-08-01T21:01:51.780Z"
+    "last_mtime": "2026-08-02T13:05:33.625Z"
   },
   "backups_live": {
-    "scanned_at": "2026-08-01T21:05:51.780Z",
+    "scanned_at": "2026-08-02T13:09:33.625Z",
     "last_backup": {
       "file": "2026-06-23_08-00-00.zip",
       "path": "/srv/backups/minecraft/2026-06-23_08-00-00.zip",
-      "mtime": 1785618351,
+      "mtime": 1785676173,
       "size_mb": 842,
       "age_hours": 0.3
     },
@@ -812,11 +812,11 @@
         "path": "/srv/backups/minecraft/2026-06-23_08-00-00.zip",
         "size_mb": 842,
         "age_hours": 0.3,
-        "mtime": 1785618351,
+        "mtime": 1785676173,
         "verify": {
           "status": "suspicious",
           "mode": "light",
-          "checked_at": "2026-08-01T20:23:51.780Z",
+          "checked_at": "2026-08-02T12:27:33.625Z",
           "findings": [
             "archive_ok",
             "has_level.dat",
@@ -832,7 +832,7 @@
         "verify": {
           "status": "verified",
           "mode": "light",
-          "checked_at": "2026-08-01T19:23:51.780Z",
+          "checked_at": "2026-08-02T11:27:33.625Z",
           "findings": [
             "archive_ok",
             "has_level.dat",
@@ -848,7 +848,7 @@
         "verify": {
           "status": "broken",
           "mode": "light",
-          "checked_at": "2026-08-01T18:23:51.780Z",
+          "checked_at": "2026-08-02T10:27:33.625Z",
           "findings": [
             "truncated_or_unreadable"
           ]
@@ -862,7 +862,7 @@
         "verify": {
           "status": "not_checked",
           "mode": "light",
-          "checked_at": "2026-08-01T17:23:51.780Z",
+          "checked_at": "2026-08-02T09:27:33.625Z",
           "findings": [
             "unsupported_format"
           ]
@@ -876,7 +876,7 @@
         "verify": {
           "status": "pending",
           "mode": "light",
-          "checked_at": "2026-08-01T16:23:51.780Z",
+          "checked_at": "2026-08-02T08:27:33.625Z",
           "findings": []
         }
       },
@@ -888,7 +888,7 @@
         "verify": {
           "status": "verified",
           "mode": "light",
-          "checked_at": "2026-08-01T15:23:51.780Z",
+          "checked_at": "2026-08-02T07:27:33.625Z",
           "findings": [
             "archive_ok",
             "has_level.dat",
@@ -904,7 +904,7 @@
         "verify": {
           "status": "verified",
           "mode": "light",
-          "checked_at": "2026-08-01T14:23:51.780Z",
+          "checked_at": "2026-08-02T06:27:33.625Z",
           "findings": [
             "archive_ok",
             "has_level.dat",
@@ -920,7 +920,7 @@
         "verify": {
           "status": "verified",
           "mode": "light",
-          "checked_at": "2026-08-01T13:23:51.780Z",
+          "checked_at": "2026-08-02T05:27:33.625Z",
           "findings": [
             "archive_ok",
             "has_level.dat",
@@ -936,7 +936,7 @@
         "verify": {
           "status": "verified",
           "mode": "light",
-          "checked_at": "2026-08-01T12:23:51.780Z",
+          "checked_at": "2026-08-02T04:27:33.625Z",
           "findings": [
             "archive_ok",
             "has_level.dat",
@@ -952,7 +952,7 @@
         "verify": {
           "status": "verified",
           "mode": "light",
-          "checked_at": "2026-08-01T11:23:51.780Z",
+          "checked_at": "2026-08-02T03:27:33.625Z",
           "findings": [
             "archive_ok",
             "has_level.dat",
@@ -968,7 +968,7 @@
         "verify": {
           "status": "verified",
           "mode": "light",
-          "checked_at": "2026-08-01T10:23:51.780Z",
+          "checked_at": "2026-08-02T02:27:33.625Z",
           "findings": [
             "archive_ok",
             "has_level.dat",
@@ -984,7 +984,7 @@
         "verify": {
           "status": "verified",
           "mode": "light",
-          "checked_at": "2026-08-01T09:23:51.780Z",
+          "checked_at": "2026-08-02T01:27:33.625Z",
           "findings": [
             "archive_ok",
             "has_level.dat",
@@ -995,7 +995,7 @@
     ]
   },
   "mods_inventory": {
-    "scanned_at": "2026-08-01T21:21:51.780Z",
+    "scanned_at": "2026-08-02T13:25:33.625Z",
     "tldr": "3 added, 2 removed, 4 updated, 1 drifted since last report",
     "jar_count": 58,
     "diff": {
@@ -1049,8 +1049,8 @@
           "version": "6.0.1",
           "prev_size": 15234567,
           "size": 15890234,
-          "prev_mtime": 1784841831,
-          "mtime": 1785597831
+          "prev_mtime": 1784899653,
+          "mtime": 1785655653
         },
         {
           "jar": "Mekanism-1.21.1-10.7.9.jar",
@@ -1061,7 +1061,7 @@
           "prev_size": 8102400,
           "size": 8456192,
           "prev_mtime": 1782000000,
-          "mtime": 1785597831
+          "mtime": 1785655653
         },
         {
           "jar": "Botania-1.20-452.jar",
@@ -1071,8 +1071,8 @@
           "version": "1.20-452",
           "prev_size": 12884736,
           "size": 12884736,
-          "prev_mtime": 1784841831,
-          "mtime": 1785597831
+          "prev_mtime": 1784899653,
+          "mtime": 1785655653
         },
         {
           "jar": "jei-1.21.1-neoforge-19.21.1.247.jar",
@@ -1083,7 +1083,7 @@
           "prev_size": 1245952,
           "size": 1312768,
           "prev_mtime": 1782000000,
-          "mtime": 1785597831
+          "mtime": 1785655653
         }
       ],
       "drift_count": 1,
@@ -1100,7 +1100,7 @@
     }
   },
   "disk_jump": {
-    "scanned_at": "2026-08-01T21:23:21.780Z",
+    "scanned_at": "2026-08-02T13:27:03.625Z",
     "active": true,
     "disk_use_pct": 48.2,
     "baseline_disk_use_pct": 42,
@@ -1109,15 +1109,15 @@
     "message": "Disk use rose 6.2% since last check (12.4 GB less free)"
   },
   "weekly_digest": {
-    "updated_at": "2026-08-01T21:23:51.780Z",
+    "updated_at": "2026-08-02T13:27:33.625Z",
     "history": [
       {
-        "id": "digest-2026-08-01",
-        "generated_at": "2026-08-01T21:23:51.780Z",
+        "id": "digest-2026-08-02",
+        "generated_at": "2026-08-02T13:27:33.625Z",
         "trigger": "auto",
         "window_days": 7,
-        "period_start": "2026-07-25T21:23:51.780Z",
-        "period_end": "2026-08-01T21:23:51.780Z",
+        "period_start": "2026-07-26T13:27:33.625Z",
+        "period_end": "2026-08-02T13:27:33.625Z",
         "grade": "healthy",
         "grade_word": "Healthy",
         "grade_prev": "degraded",
@@ -1153,15 +1153,15 @@
           "message": "Can't keep up! appeared 3 times in the lookback window.",
           "tab_link": "issues"
         },
-        "summary": "This week: grade Healthy, 1 crash (create), disk \u2248+8.4 GB, MSPT down 16% vs last week. Do this next: Can't keep up! appeared 3 times in the lookback window."
+        "summary": "This week: grade Healthy, 1 crash (create), disk ≈+8.4 GB, MSPT down 16% vs last week. Do this next: Can't keep up! appeared 3 times in the lookback window."
       },
       {
-        "id": "digest-2026-07-25",
-        "generated_at": "2026-07-25T21:23:51.780Z",
+        "id": "digest-2026-07-26",
+        "generated_at": "2026-07-26T13:27:33.625Z",
         "trigger": "auto",
         "window_days": 7,
-        "period_start": "2026-07-18T21:23:51.780Z",
-        "period_end": "2026-07-25T21:23:51.780Z",
+        "period_start": "2026-07-19T13:27:33.625Z",
+        "period_end": "2026-07-26T13:27:33.625Z",
         "grade": "degraded",
         "grade_word": "Degraded",
         "grade_prev": "healthy",
@@ -1197,15 +1197,15 @@
           "message": "Can't keep up! appeared 3 times in the lookback window.",
           "tab_link": "issues"
         },
-        "summary": "This week: grade Degraded, 2 crashes (both create), disk \u2248+14.7 GB, MSPT up 19% vs last week. Do this next: Can't keep up! appeared 3 times in the lookback window."
+        "summary": "This week: grade Degraded, 2 crashes (both create), disk ≈+14.7 GB, MSPT up 19% vs last week. Do this next: Can't keep up! appeared 3 times in the lookback window."
       },
       {
-        "id": "digest-2026-07-18",
-        "generated_at": "2026-07-18T21:23:51.780Z",
+        "id": "digest-2026-07-19",
+        "generated_at": "2026-07-19T13:27:33.625Z",
         "trigger": "auto",
         "window_days": 7,
-        "period_start": "2026-07-11T21:23:51.780Z",
-        "period_end": "2026-07-18T21:23:51.780Z",
+        "period_start": "2026-07-12T13:27:33.625Z",
+        "period_end": "2026-07-19T13:27:33.625Z",
         "grade": "healthy",
         "grade_word": "Healthy",
         "grade_trend": "unknown",
@@ -1233,13 +1233,13 @@
           "changed": 1
         },
         "top_action": null,
-        "summary": "This week: grade Healthy, 0 crashes, disk \u2248+3.2 GB, MSPT steady."
+        "summary": "This week: grade Healthy, 0 crashes, disk ≈+3.2 GB, MSPT steady."
       }
     ]
   },
   "external_kill": {
-    "detected_at": "2026-08-01T21:18:51.780Z",
-    "killed_at": "2026-08-01T20:48:51.780Z",
+    "detected_at": "2026-08-02T13:22:33.625Z",
+    "killed_at": "2026-08-02T12:52:33.625Z",
     "failure_kind": "external_kill",
     "subtype": "oom",
     "confidence": "high",
@@ -1248,24 +1248,24 @@
     "plain_english": "The server process was killed from outside the JVM by the OS or container out-of-memory killer. There is no Minecraft crash report because the process was terminated by the host, not by a mod exception.",
     "likely_cause": "Container or host memory limit exceeded",
     "fix_hints": [
-      "The server process was killed by the OS or container out-of-memory killer \u2014 nothing in Minecraft crashed.",
+      "The server process was killed by the OS or container out-of-memory killer — nothing in Minecraft crashed.",
       "Raise the container / host memory limit, or lower -Xmx so the JVM fits under the limit.",
-      "Open Insights \u2192 Configs for the RAM sizing advisor before changing flags.",
-      "Leave 1\u20132 GB above -Xmx for JVM overhead and the OS."
+      "Open Insights → Configs for the RAM sizing advisor before changing flags.",
+      "Leave 1–2 GB above -Xmx for JVM overhead and the OS."
     ],
     "evidence": [
       {
         "file": "journalctl-k",
         "line": null,
         "quote": "Out of memory: Killed process 18432 (java) total-vm:12582912kB",
-        "time": "2026-08-01T20:48:51.780Z"
+        "time": "2026-08-02T12:52:33.625Z"
       }
     ],
-    "session_boot_at": "2026-08-01T13:23:51.780Z",
+    "session_boot_at": "2026-08-02T05:27:33.625Z",
     "recent": []
   },
   "mods_light": {
-    "updated_at": "2026-08-01T21:21:51.780Z",
+    "updated_at": "2026-08-02T13:25:33.625Z",
     "trigger": "jar_change",
     "client_only_mods": [
       {
@@ -1283,7 +1283,7 @@
         "version": "1.8.0",
         "bucket": "likely_removable",
         "confidence": "high",
-        "reason": "Client rendering / shaders \u2014 not needed on a dedicated server",
+        "reason": "Client rendering / shaders — not needed on a dedicated server",
         "removal_advice": "Safe to remove from server mods/."
       }
     ],
@@ -1296,33 +1296,12 @@
   },
   "issues_live": [
     {
-      "id": "SOFT_HANG",
-      "key": "SOFT_HANG",
-      "severity": "critical",
-      "status": "open",
-      "first_seen": "2026-08-02T00:00:00Z",
-      "last_seen": "2026-08-02T00:00:48Z",
-      "evidence_fingerprint": "soft_hang:2026-08-02T00:00:00Z",
-      "source": "ops",
-      "message": "Server tick frozen for 48s (phase: ticking) — Looks stuck while ticking entities",
-      "evidence_refs": [
-        "ops:soft_hang"
-      ],
-      "fix_steps": [
-        "Check dense entity farms, mob caps, or entity-heavy mods.",
-        "Hang dump hint points at examplelag — treat as a lead, not proof.",
-        "Open the hang dump under watchtower/hangs/.",
-        "Build a Support pack for Discord or a bug report.",
-        "WatchTower will not restart the server for you."
-      ]
-    },
-    {
       "id": "BACKUP_VERIFY_FAILED",
       "key": "BACKUP_VERIFY_FAILED",
       "severity": "warning",
       "status": "open",
-      "first_seen": "2026-08-01T21:17:51.780Z",
-      "last_seen": "2026-08-01T21:17:51.780Z",
+      "first_seen": "2026-08-02T13:21:33.625Z",
+      "last_seen": "2026-08-02T13:21:33.625Z",
       "evidence_fingerprint": "backup:verify:suspicious",
       "source": "ops",
       "message": "Newest backup failed integrity check (suspicious): /srv/backups/minecraft/2026-06-23_08-00-00.zip",
@@ -1331,7 +1310,7 @@
       ],
       "fix_steps": [
         "Open Backups and check the integrity chip on the newest archive.",
-        "Run Verify now \u2014 if it still fails, take a fresh backup before relying on restore.",
+        "Run Verify now — if it still fails, take a fresh backup before relying on restore.",
         "Do not treat a suspicious archive as a recovery plan until a light verify (or test restore) passes."
       ]
     },
@@ -1340,8 +1319,8 @@
       "key": "EXTERNAL_KILL:oom",
       "severity": "warning",
       "status": "open",
-      "first_seen": "2026-08-01T21:18:51.780Z",
-      "last_seen": "2026-08-01T21:18:51.780Z",
+      "first_seen": "2026-08-02T13:22:33.625Z",
+      "last_seen": "2026-08-02T13:22:33.625Z",
       "evidence_fingerprint": "external_kill:oom",
       "source": "ops",
       "message": "Killed by the OS out-of-memory killer",
@@ -1349,9 +1328,9 @@
         "ops:external_kill"
       ],
       "fix_steps": [
-        "The server process was killed by the OS or container out-of-memory killer \u2014 nothing in Minecraft crashed.",
+        "The server process was killed by the OS or container out-of-memory killer — nothing in Minecraft crashed.",
         "Raise the container / host memory limit, or lower -Xmx so the JVM fits under the limit.",
-        "Open Insights \u2192 Configs for the RAM sizing advisor before changing flags."
+        "Open Insights → Configs for the RAM sizing advisor before changing flags."
       ]
     },
     {
@@ -1359,16 +1338,16 @@
       "key": "MOD_JAR_DRIFT:create-addons-extra-1.0.0.jar",
       "severity": "warning",
       "status": "open",
-      "first_seen": "2026-08-01T21:21:51.780Z",
-      "last_seen": "2026-08-01T21:21:51.780Z",
+      "first_seen": "2026-08-02T13:25:33.625Z",
+      "last_seen": "2026-08-02T13:25:33.625Z",
       "evidence_fingerprint": "mod_drift:create-addons-extra-1.0.0.jar",
       "source": "ops",
-      "message": "`create-addons-extra-1.0.0.jar` changed without a version bump \u2014 verify this was intentional.",
+      "message": "`create-addons-extra-1.0.0.jar` changed without a version bump — verify this was intentional.",
       "evidence_refs": [
         "ops:mods_inventory"
       ],
       "fix_steps": [
-        "Open Mods \u2192 Changes and confirm the jar swap was intentional.",
+        "Open Mods → Changes and confirm the jar swap was intentional.",
         "If unexpected, restore the jar from a known-good backup and re-check."
       ]
     },
@@ -1377,11 +1356,11 @@
       "key": "SILENT_FAIL:kubejs|kubejs/server_scripts/machines.js:42",
       "severity": "warning",
       "status": "open",
-      "first_seen": "2026-08-01T21:20:51.780Z",
-      "last_seen": "2026-08-01T21:20:51.780Z",
+      "first_seen": "2026-08-02T13:24:33.625Z",
+      "last_seen": "2026-08-02T13:24:33.625Z",
       "evidence_fingerprint": "silent_fail:kubejs|kubejs/server_scripts/machines.js:42",
       "source": "ops",
-      "message": "KubeJS script error \u2014 `kubejs/server_scripts/machines.js:42`",
+      "message": "KubeJS script error — `kubejs/server_scripts/machines.js:42`",
       "evidence_refs": [
         "ops:silent_fails"
       ],
@@ -1395,8 +1374,8 @@
       "key": "SILENT_FAIL:reload_failed|abcdef01",
       "severity": "info",
       "status": "open",
-      "first_seen": "2026-08-01T21:19:51.780Z",
-      "last_seen": "2026-08-01T21:19:51.780Z",
+      "first_seen": "2026-08-02T13:23:33.625Z",
+      "last_seen": "2026-08-02T13:23:33.625Z",
       "evidence_fingerprint": "silent_fail:reload_failed|abcdef01",
       "source": "ops",
       "message": "/reload command failed",
@@ -1413,16 +1392,16 @@
       "key": "CLIENT_ON_SERVER:iris",
       "severity": "info",
       "status": "open",
-      "first_seen": "2026-08-01T21:21:51.780Z",
-      "last_seen": "2026-08-01T21:21:51.780Z",
+      "first_seen": "2026-08-02T13:25:33.625Z",
+      "last_seen": "2026-08-02T13:25:33.625Z",
       "evidence_fingerprint": "client_on_server:iris",
       "source": "ops",
-      "message": "Iris \u2014 Known client-only shader mod",
+      "message": "Iris — Known client-only shader mod",
       "evidence_refs": [
         "ops:mods_light"
       ],
       "fix_steps": [
-        "Open Mods \u2192 Overview (Client filter) and confirm this jar is not needed server-side.",
+        "Open Mods → Overview (Client filter) and confirm this jar is not needed server-side.",
         "Remove from the dedicated server mods folder."
       ]
     },
@@ -1431,16 +1410,16 @@
       "key": "CLIENT_ON_SERVER:oculus",
       "severity": "info",
       "status": "open",
-      "first_seen": "2026-08-01T21:21:51.780Z",
-      "last_seen": "2026-08-01T21:21:51.780Z",
+      "first_seen": "2026-08-02T13:25:33.625Z",
+      "last_seen": "2026-08-02T13:25:33.625Z",
       "evidence_fingerprint": "client_on_server:oculus",
       "source": "ops",
-      "message": "Oculus \u2014 Client rendering / shaders \u2014 not needed on a dedicated server",
+      "message": "Oculus — Client rendering / shaders — not needed on a dedicated server",
       "evidence_refs": [
         "ops:mods_light"
       ],
       "fix_steps": [
-        "Open Mods \u2192 Overview (Client filter) and confirm this jar is not needed server-side.",
+        "Open Mods → Overview (Client filter) and confirm this jar is not needed server-side.",
         "Safe to remove from server mods/."
       ]
     },
@@ -1449,37 +1428,18 @@
       "key": "WORLD_PRESSURE:item_storm:minecraft:overworld",
       "severity": "warning",
       "status": "open",
-      "first_seen": "2026-08-01T21:17:51.780Z",
-      "last_seen": "2026-08-01T21:22:51.780Z",
+      "first_seen": "2026-08-02T13:21:33.625Z",
+      "last_seen": "2026-08-02T13:26:33.625Z",
       "evidence_fingerprint": "world_pressure:item_storm:minecraft:overworld",
       "source": "ops",
-      "message": "Item storm in Overworld \u2014 2,200 item entities in Overworld \u2014 43% of entities there; total load is 2.8x quiet-hours normal.",
+      "message": "Item storm in Overworld — 2,200 item entities in Overworld — 43% of entities there; total load is 2.8x quiet-hours normal.",
       "evidence_refs": [
         "ops:world_pressure"
       ],
       "fix_steps": [
         "Fly to the busiest chunks in Overworld and check hoppers/void filters on item farms",
         "Look for broken item vacuum or overflow near forced chunks",
-        "Capture a Spark profile and open World \u2192 busy chunks for a precise hotspot"
-      ]
-    },
-    {
-      "id": "WORLD_PRESSURE:pregen_outrunning_disk:minecraft:overworld",
-      "key": "WORLD_PRESSURE:pregen_outrunning_disk:minecraft:overworld",
-      "severity": "warning",
-      "status": "open",
-      "first_seen": "2026-08-01T21:20:51.780Z",
-      "last_seen": "2026-08-01T21:23:51.780Z",
-      "evidence_fingerprint": "world_pressure:pregen_outrunning_disk:minecraft:overworld",
-      "source": "ops",
-      "message": "Pregen is outrunning the disk \u2014 Chunky pregen is active while disk write latency is 120 ms \u2014 the disk cannot keep up.",
-      "evidence_refs": [
-        "ops:world_pressure"
-      ],
-      "fix_steps": [
-        "Pause pregen and let the disk catch up.",
-        "Wait for chunk saves to finish before making more world changes.",
-        "Do not restart mid-flush when write latency is this high."
+        "Capture a Spark profile and open World → busy chunks for a precise hotspot"
       ]
     },
     {
@@ -1487,18 +1447,18 @@
       "key": "JOIN_SYNC:mismatched_channel|NotchFan42|create,flywheel",
       "severity": "warning",
       "status": "open",
-      "first_seen": "2026-08-01T21:05:51.780Z",
-      "last_seen": "2026-08-01T21:17:51.780Z",
+      "first_seen": "2026-08-02T13:09:33.625Z",
+      "last_seen": "2026-08-02T13:21:33.625Z",
       "evidence_fingerprint": "join_sync:mismatched_channel|NotchFan42|create,flywheel",
       "source": "ops",
-      "message": "NotchFan42 can't join \u2014 create, flywheel (mismatched channels)",
+      "message": "NotchFan42 can't join — create, flywheel (mismatched channels)",
       "evidence_refs": [
         "ops:join_clinic"
       ],
       "fix_steps": [
         "Install/update the listed mods on the client to match the server.",
         "Remove client mods that register network channels the server does not have.",
-        "Open Session \u2192 Join clinic and Copy fix for a player-safe list."
+        "Open Session → Join clinic and Copy fix for a player-safe list."
       ]
     },
     {
@@ -1506,17 +1466,17 @@
       "key": "JOIN_SYNC:missing_mod|BuilderBob|jei,farmersdelight",
       "severity": "warning",
       "status": "open",
-      "first_seen": "2026-08-01T20:38:51.780Z",
-      "last_seen": "2026-08-01T21:11:51.780Z",
+      "first_seen": "2026-08-02T12:42:33.625Z",
+      "last_seen": "2026-08-02T13:15:33.625Z",
       "evidence_fingerprint": "join_sync:missing_mod|BuilderBob|jei,farmersdelight",
       "source": "ops",
-      "message": "BuilderBob can't join \u2014 jei, farmersdelight (missing mods)",
+      "message": "BuilderBob can't join — jei, farmersdelight (missing mods)",
       "evidence_refs": [
         "ops:join_clinic"
       ],
       "fix_steps": [
         "Install the missing mod(s) on the client (same version as the server).",
-        "Open Session \u2192 Join clinic and Copy fix for a player-safe list."
+        "Open Session → Join clinic and Copy fix for a player-safe list."
       ]
     },
     {
@@ -1524,22 +1484,22 @@
       "key": "JOIN_SYNC:wrong_version|FridayGuest|supplementaries",
       "severity": "warning",
       "status": "open",
-      "first_seen": "2026-08-01T19:48:51.780Z",
-      "last_seen": "2026-08-01T20:58:51.780Z",
+      "first_seen": "2026-08-02T11:52:33.625Z",
+      "last_seen": "2026-08-02T13:02:33.625Z",
       "evidence_fingerprint": "join_sync:wrong_version|FridayGuest|supplementaries",
       "source": "ops",
-      "message": "FridayGuest can't join \u2014 supplementaries (wrong mod versions)",
+      "message": "FridayGuest can't join — supplementaries (wrong mod versions)",
       "evidence_refs": [
         "ops:join_clinic"
       ],
       "fix_steps": [
         "Update the named mod(s) on the client to the server's version.",
-        "Open Session \u2192 Join clinic and Copy fix for a player-safe list."
+        "Open Session → Join clinic and Copy fix for a player-safe list."
       ]
     }
   ],
   "join_clinic": {
-    "scanned_at": "2026-08-01T21:23:51.780Z",
+    "scanned_at": "2026-08-02T13:27:33.625Z",
     "new_count": 3,
     "entries": [
       {
@@ -1547,7 +1507,7 @@
         "kind": "mismatched_channel",
         "platform": "neoforge",
         "player": "NotchFan42",
-        "time": "2026-08-01T21:17:51.780Z",
+        "time": "2026-08-02T13:21:33.625Z",
         "confidence": "high",
         "reason": "Failed to connect to server: Incompatible mod set: mismatched channels: [create:main, flywheel:network]",
         "sample_line": "NotchFan42 lost connection: Failed to connect to server: Incompatible mod set: mismatched channels: [create:main, flywheel:network]",
@@ -1567,14 +1527,14 @@
         "wrong_version": [],
         "suppressed_client_only": [],
         "vs_known_good": false,
-        "fix_copy": "Hey NotchFan42 \u2014 the server rejected your join (mismatched channels).\n\nInstall/update on your client:\n- create (server has 6.0.4)\n- flywheel (server has 1.0.2)\n\nAsk the admin if you need the pack download."
+        "fix_copy": "Hey NotchFan42 — the server rejected your join (mismatched channels).\n\nInstall/update on your client:\n- create (server has 6.0.4)\n- flywheel (server has 1.0.2)\n\nAsk the admin if you need the pack download."
       },
       {
         "key": "missing_mod|BuilderBob|jei,farmersdelight",
         "kind": "missing_mod",
         "platform": "neoforge",
         "player": "BuilderBob",
-        "time": "2026-08-01T21:11:51.780Z",
+        "time": "2026-08-02T13:15:33.625Z",
         "confidence": "high",
         "reason": "Mod Rejection: Missing required mods: [jei, farmersdelight]",
         "sample_line": "BuilderBob lost connection: Mod Rejection: Missing required mods: [jei, farmersdelight]",
@@ -1594,14 +1554,14 @@
         "wrong_version": [],
         "suppressed_client_only": [],
         "vs_known_good": false,
-        "fix_copy": "Hey BuilderBob \u2014 the server rejected your join (missing mods).\n\nInstall/update on your client:\n- jei (server has 19.21.0)\n- farmersdelight (server has 1.2.7)\n\nAsk the admin if you need the pack download."
+        "fix_copy": "Hey BuilderBob — the server rejected your join (missing mods).\n\nInstall/update on your client:\n- jei (server has 19.21.0)\n- farmersdelight (server has 1.2.7)\n\nAsk the admin if you need the pack download."
       },
       {
         "key": "wrong_version|FridayGuest|supplementaries",
         "kind": "wrong_version",
         "platform": "neoforge",
         "player": "FridayGuest",
-        "time": "2026-08-01T20:58:51.780Z",
+        "time": "2026-08-02T13:02:33.625Z",
         "confidence": "high",
         "reason": "Incompatible client: Mod mismatch: supplementaries@3.1.14 required, client has 3.0.9",
         "sample_line": "FridayGuest lost connection: Incompatible client: Mod mismatch: supplementaries@3.1.14 required, client has 3.0.9",
@@ -1617,14 +1577,14 @@
         ],
         "suppressed_client_only": [],
         "vs_known_good": true,
-        "fix_copy": "Hey FridayGuest \u2014 the server rejected your join (wrong mod versions).\n\nInstall/update on your client:\n- supplementaries \u2192 need 3.1.14 (you have 3.0.9)\n\nNote: server jars have drifted since the last baseline \u2014 confirm the pack pin with an admin.\n\nAsk the admin if you need the pack download."
+        "fix_copy": "Hey FridayGuest — the server rejected your join (wrong mod versions).\n\nInstall/update on your client:\n- supplementaries → need 3.1.14 (you have 3.0.9)\n\nNote: server jars have drifted since the last baseline — confirm the pack pin with an admin.\n\nAsk the admin if you need the pack download."
       },
       {
         "key": "mismatched_channel|Alex|create",
         "kind": "mismatched_channel",
         "platform": "neoforge",
         "player": "Alex",
-        "time": "2026-08-01T20:05:51.780Z",
+        "time": "2026-08-02T12:09:33.625Z",
         "confidence": "high",
         "reason": "Incompatible mod set: mismatched channels: [create:main]",
         "sample_line": "Alex lost connection: Failed to connect to server: Incompatible mod set: mismatched channels: [create:main]",
@@ -1648,14 +1608,14 @@
           }
         ],
         "vs_known_good": false,
-        "fix_copy": "Hey Alex \u2014 the server rejected your join (mismatched channels).\n\nInstall/update on your client:\n- create (server has 6.0.4)\n\nRemove these client-only extras (not on the server):\n- sodiumextras\n\nAsk the admin if you need the pack download."
+        "fix_copy": "Hey Alex — the server rejected your join (mismatched channels).\n\nInstall/update on your client:\n- create (server has 6.0.4)\n\nRemove these client-only extras (not on the server):\n- sodiumextras\n\nAsk the admin if you need the pack download."
       },
       {
         "key": "missing_mod|Steve|jei",
         "kind": "missing_mod",
         "platform": "neoforge",
         "player": "Steve",
-        "time": "2026-08-01T19:03:51.780Z",
+        "time": "2026-08-02T11:07:33.625Z",
         "confidence": "high",
         "reason": "Mod Rejection: Missing required mods: [jei]",
         "sample_line": "Steve lost connection: Mod Rejection: Missing required mods: [jei]",
@@ -1670,13 +1630,13 @@
         "wrong_version": [],
         "suppressed_client_only": [],
         "vs_known_good": false,
-        "fix_copy": "Hey Steve \u2014 the server rejected your join (missing mods).\n\nInstall/update on your client:\n- jei (server has 19.21.0)\n\nAsk the admin if you need the pack download."
+        "fix_copy": "Hey Steve — the server rejected your join (missing mods).\n\nInstall/update on your client:\n- jei (server has 19.21.0)\n\nAsk the admin if you need the pack download."
       }
     ]
   },
   "world_pressure": {
-    "scanned_at": "2026-08-01T21:23:51.780Z",
-    "census_at": "2026-08-01T21:23:49.780Z",
+    "scanned_at": "2026-08-02T13:27:33.625Z",
+    "census_at": "2026-08-02T13:27:31.625Z",
     "learning": false,
     "correlated_with_mspt": true,
     "correlation": {
@@ -1805,10 +1765,10 @@
         "dimension": "minecraft:overworld",
         "severity": "warning",
         "sustained_scans": 4,
-        "first_seen": "2026-08-01T21:17:51.780Z",
-        "last_seen": "2026-08-01T21:22:51.780Z",
+        "first_seen": "2026-08-02T13:21:33.625Z",
+        "last_seen": "2026-08-02T13:26:33.625Z",
         "headline": "Item storm in Overworld",
-        "detail": "2,200 item entities in Overworld \u2014 43% of entities there; total load is 2.8x quiet-hours normal.",
+        "detail": "2,200 item entities in Overworld — 43% of entities there; total load is 2.8x quiet-hours normal.",
         "evidence": {
           "items": 2200,
           "entities": 5100,
@@ -1820,65 +1780,13 @@
         "next_steps": [
           "Fly to the busiest chunks in Overworld and check hoppers/void filters on item farms",
           "Look for broken item vacuum or overflow near forced chunks",
-          "Capture a Spark profile and open World \u2192 busy chunks for a precise hotspot"
-        ]
-      },
-      {
-        "kind": "pregen_outrunning_disk",
-        "dimension": "minecraft:overworld",
-        "severity": "warning",
-        "sustained_scans": 3,
-        "headline": "Pregen is outrunning the disk",
-        "detail": "Chunky pregen is active while disk write latency is 120 ms — the disk cannot keep up.",
-        "evidence": {
-          "write_await_ms": 120,
-          "write_warn_ms": 50,
-          "write_mb_s": 15,
-          "pregen_active": true,
-          "pregen_label": "Chunky",
-          "pregen_rate": "120/s"
-        },
-        "next_steps": [
-          "Pause pregen and let the disk catch up.",
-          "Wait for chunk saves to finish before making more world changes.",
-          "Do not restart mid-flush when write latency is this high."
+          "Capture a Spark profile and open World → busy chunks for a precise hotspot"
         ]
       }
     ],
     "streaks": {
       "item_storm:minecraft:overworld": 4
-    },
-    "chunk_write_streaks": {
-      "pregen_outrunning_disk:minecraft:overworld": 3
-    },
-    "meters": {
-      "write_await_ms": 120,
-      "write_warn_ms": 50,
-      "write_mb_s": 15,
-      "pregen_active": true,
-      "pregen_label": "Chunky",
-      "pregen_rate": "120/s",
-      "chunk_growth_label": "+40",
-      "growth_hot_chunks": 48,
-      "prev_loaded_chunks": 688
     }
   },
-  "issues_live_updated_at": "2026-08-01T21:23:51.780Z",
-  "soft_hang": {
-    "active": true,
-    "phase": "ticking",
-    "stall_seconds": 48,
-    "effective_threshold_seconds": 45,
-    "max_tick_time_ms": 60000,
-    "started_at": "2026-08-02T00:00:00Z",
-    "last_tick_at": "2026-08-02T00:00:00Z",
-    "tick_count": 1200,
-    "dump_path": "watchtower/hangs/hang-preview.txt",
-    "recovered_at": null,
-    "likely_cause": "entity_tick",
-    "likely_cause_summary": "Looks stuck while ticking entities",
-    "likely_cause_confidence": "medium",
-    "suspect_mod": "examplelag",
-    "suspect_mod_note": "Hint from the hang dump — not proof."
-  }
+  "issues_live_updated_at": "2026-08-02T13:27:33.625Z"
 }

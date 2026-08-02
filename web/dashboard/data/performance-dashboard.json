@@ -1,7 +1,7 @@
 {
   "window": "7d",
   "hours": 168,
-  "generated_at": "2026-08-01T21:23:51.780Z",
+  "generated_at": "2026-08-02T13:27:33.625Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -90,7 +90,7 @@
   "players_band_scale_source": "observed_peak",
   "outlier_minutes": [
     {
-      "ts": "2026-08-01T20:38:51.780Z",
+      "ts": "2026-08-02T12:42:33.625Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
@@ -99,8 +99,8 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-08-01T19:53:51.780Z",
-      "ended_at": "2026-08-01T20:38:51.780Z",
+      "started_at": "2026-08-02T11:57:33.625Z",
+      "ended_at": "2026-08-02T12:42:33.625Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
@@ -1659,18 +1659,18 @@
   ],
   "daily_series": [
     {
-      "date": "2026-07-26",
+      "date": "2026-07-27",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 15,
-      "mspt_p95": 32.1,
-      "players_peak": 9,
-      "heap_avg": 6.36,
-      "cpu_avg": 67,
+      "mspt_avg": 8.9,
+      "mspt_p95": 21,
+      "players_peak": 7,
+      "heap_avg": 6.2,
+      "cpu_avg": 55,
       "low_tps_minutes": 0
     },
     {
-      "date": "2026-07-27",
+      "date": "2026-07-28",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.8,
@@ -1681,7 +1681,7 @@
       "low_tps_minutes": 5
     },
     {
-      "date": "2026-07-28",
+      "date": "2026-07-29",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.4,
@@ -1692,7 +1692,7 @@
       "low_tps_minutes": 4
     },
     {
-      "date": "2026-07-29",
+      "date": "2026-07-30",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.2,
@@ -1703,36 +1703,36 @@
       "low_tps_minutes": 3
     },
     {
-      "date": "2026-07-30",
-      "minutes": 1440,
-      "tps_avg": 20,
-      "mspt_avg": 9.1,
-      "mspt_p95": 22.3,
-      "players_peak": 7,
-      "heap_avg": 6.04,
-      "cpu_avg": 55,
-      "low_tps_minutes": 2
-    },
-    {
       "date": "2026-07-31",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 10.8,
-      "mspt_p95": 22.9,
+      "mspt_avg": 11,
+      "mspt_p95": 24.2,
       "players_peak": 8,
-      "heap_avg": 6.08,
-      "cpu_avg": 57,
-      "low_tps_minutes": 1
+      "heap_avg": 6.12,
+      "cpu_avg": 58,
+      "low_tps_minutes": 2
     },
     {
       "date": "2026-08-01",
       "minutes": 1440,
       "tps_avg": 20,
-      "mspt_avg": 16.7,
-      "mspt_p95": 32.7,
+      "mspt_avg": 16.9,
+      "mspt_p95": 34,
       "players_peak": 10,
-      "heap_avg": 6.2,
-      "cpu_avg": 69,
+      "heap_avg": 6.24,
+      "cpu_avg": 70,
+      "low_tps_minutes": 1
+    },
+    {
+      "date": "2026-08-02",
+      "minutes": 1440,
+      "tps_avg": 20,
+      "mspt_avg": 14.9,
+      "mspt_p95": 30.9,
+      "players_peak": 9,
+      "heap_avg": 6.12,
+      "cpu_avg": 65,
       "low_tps_minutes": 0
     }
   ],
@@ -1782,21 +1782,21 @@
   ],
   "related_events": [
     {
-      "ts": "2026-08-01T21:15:51.780Z",
+      "ts": "2026-08-02T13:19:33.625Z",
       "type": "lag_incident",
       "title": "Lag spike — MSPT 118ms · TPS 8.4",
       "detail": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
       "tab_link": "issues"
     },
     {
-      "ts": "2026-08-01T21:15:51.780Z",
+      "ts": "2026-08-02T13:19:33.625Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-08-01T20:38:51.780Z",
+      "ts": "2026-08-02T12:42:33.625Z",
       "type": "performance_spike",
       "title": "Sticky lag after players left",
       "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
@@ -1855,6 +1855,10 @@
     "heap_pressure_pct_peak": 84.2,
     "xmx_source": "live",
     "xmx_gb": 8,
+    "host_mem_gb": 16,
+    "ram_source": "cgroup_v2",
+    "outside_headroom_gb": 8,
+    "envelope": "ok",
     "gc_verdict": "healthy",
     "verdict": "right_sized",
     "ram_upgrade_blocked": false,
@@ -1868,8 +1872,8 @@
     "lookback_hours": 24,
     "sample_minutes": 980,
     "confidence": "ok",
-    "disk_free_gb": 18.6,
-    "disk_use_pct": 64.4,
+    "disk_free_gb": 12.5,
+    "disk_use_pct": 78,
     "message": "≈9 days until full at current growth",
     "driver_hint": "world +1.2 GB in 24h"
   },
@@ -1878,14 +1882,14 @@
     "can_set_baseline": true,
     "threshold_pct": 10,
     "has_baseline": true,
-    "baseline_captured_at": "2026-07-22T21:23:52.533Z",
+    "baseline_captured_at": "2026-07-23T13:27:34.281Z",
     "baseline_source": "auto",
     "label": "Slower than your baseline",
     "detail": "MSPT p95 is 18% higher than your saved baseline over the last 7 days.",
     "severity": "warn",
     "worst_metric": "mspt_p95",
     "worst_delta_pct": 18.2,
-    "since": "2026-07-28",
+    "since": "2026-07-29",
     "deltas_pct": {
       "mspt_p95": 18.2,
       "tps_p50": 4.1,
