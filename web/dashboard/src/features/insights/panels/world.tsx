@@ -84,7 +84,17 @@ function dimPieSegments(
 function classifierIcon(kind: string): ComponentType<{ size?: number; className?: string }> {
   if (kind === 'item_storm') return Package;
   if (kind === 'mob_spike') return Users;
+  if (kind === 'pregen_outrunning_disk' || kind === 'chunk_save_backlog') return HardDrive;
+  if (kind === 'heavy_chunk_generation') return Zap;
   return AlertTriangle;
+}
+
+function isChunkWriteKind(kind: string): boolean {
+  return (
+    kind === 'pregen_outrunning_disk' ||
+    kind === 'chunk_save_backlog' ||
+    kind === 'heavy_chunk_generation'
+  );
 }
 
 function statusCopy(classifiers: number, learning: boolean): { tone: Tone; headline: string } {
@@ -277,20 +287,94 @@ function ChunkLoadBar({
   );
 }
 
+function ChunkWriteEvidence({
+  kind,
+  evidence,
+  meters,
+}: {
+  kind: string;
+  evidence: Record<string, unknown>;
+  meters: Record<string, unknown>;
+}) {
+  const writeAwait = num(evidence.write_await_ms, num(meters.write_await_ms, NaN));
+  const writeWarn = num(evidence.write_warn_ms, num(meters.write_warn_ms, 50));
+  const writeMbS = num(evidence.write_mb_s, num(meters.write_mb_s, NaN));
+  const pregenActive = evidence.pregen_active != null ? Boolean(evidence.pregen_active) : Boolean(meters.pregen_active);
+  const pregenLabel = str(evidence.pregen_label, str(meters.pregen_label, 'Pregen'));
+  const pregenRate = str(evidence.pregen_rate, str(meters.pregen_rate));
+  const growth = num(evidence.chunk_growth, NaN);
+  const loaded = num(evidence.loaded_chunks, NaN);
+  const players = num(evidence.players, NaN);
+
+  const rows: { label: string; value: string }[] = [];
+  if (kind === 'pregen_outrunning_disk' || kind === 'chunk_save_backlog') {
+    rows.push({
+      label: 'Write latency',
+      value: Number.isFinite(writeAwait)
+        ? `${Math.round(writeAwait)}ms (warn ${Math.round(writeWarn)}ms)`
+        : '—',
+    });
+    if (Number.isFinite(writeMbS) && writeMbS > 0) {
+      rows.push({ label: 'Write throughput', value: `${writeMbS.toFixed(1)} MB/s` });
+    }
+  }
+  if (kind === 'pregen_outrunning_disk') {
+    rows.push({
+      label: 'Pregen',
+      value: pregenActive
+        ? `Active (${pregenLabel})${pregenRate ? ` · ${pregenRate}` : ''}`
+        : 'Idle',
+    });
+  }
+  if (kind === 'heavy_chunk_generation') {
+    rows.push({
+      label: 'Chunk growth',
+      value: Number.isFinite(growth) ? `+${fmtInt(growth)} since last scan` : '—',
+    });
+    if (Number.isFinite(loaded)) {
+      rows.push({ label: 'Loaded chunks', value: fmtInt(loaded) });
+    }
+    if (Number.isFinite(players)) {
+      rows.push({ label: 'Players online', value: fmtInt(players) });
+    }
+  }
+
+  if (!rows.length) return null;
+
+  return (
+    <div className="in-world-compare">
+      {rows.map((row) => (
+        <div key={row.label} className="in-world-compare__row">
+          <div className="in-world-compare__meta">
+            <span>{row.label}</span>
+            <code>{row.value}</code>
+          </div>
+        </div>
+      ))}
+      <p className="in-world-compare__caption">
+        Write / pregen pressure — not an entity-load comparison. Open Issues for the fix steps.
+      </p>
+    </div>
+  );
+}
+
 function AlertCard({
   c,
   compare,
   windowKey,
+  meters,
 }: {
   c: Record<string, unknown>;
   compare: CompareSlice;
   windowKey: WindowKey;
+  meters: Record<string, unknown>;
 }) {
   const kind = str(c.kind);
   const sev = str(c.severity, 'warning');
   const tone = severityTone[sev] ?? 'warn';
   const Icon = classifierIcon(kind);
   const evidence = asRecord(c.evidence);
+  const chunkWrite = isChunkWriteKind(kind);
   const nowVal = num(evidence.entities);
   const items = num(evidence.items);
   const itemShareNote =
@@ -310,29 +394,35 @@ function AlertCard({
         </div>
         <StatusPill tone={tone}>{sev}</StatusPill>
       </div>
-      <CompareBars
-        label="Total entities"
-        now={nowVal}
-        quiet={compare.quiet}
-        busy={compare.busy}
-        peak={compare.peak}
-        windowKey={windowKey}
-        ready={compare.ready}
-        tone={tone === 'neutral' ? 'warn' : tone}
-        note={itemShareNote}
-      />
+      {chunkWrite ? (
+        <ChunkWriteEvidence kind={kind} evidence={evidence} meters={meters} />
+      ) : (
+        <CompareBars
+          label="Total entities"
+          now={nowVal}
+          quiet={compare.quiet}
+          busy={compare.busy}
+          peak={compare.peak}
+          windowKey={windowKey}
+          ready={compare.ready}
+          tone={tone === 'neutral' ? 'warn' : tone}
+          note={itemShareNote}
+        />
+      )}
       <div className="in-world-card__foot">
         <Button type="button" size="sm" onClick={() => navigate({ tab: 'issues' })}>
           Open Issues for fix steps
         </Button>
-        <button
-          type="button"
-          className="in-world-card__link"
-          onClick={() => navigate({ tab: 'spark', view: 'world' })}
-        >
-          Spark World
-          <ArrowUpRight size={13} aria-hidden />
-        </button>
+        {!chunkWrite ? (
+          <button
+            type="button"
+            className="in-world-card__link"
+            onClick={() => navigate({ tab: 'spark', view: 'world' })}
+          >
+            Spark World
+            <ArrowUpRight size={13} aria-hidden />
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -576,6 +666,7 @@ export function WorldPanel({
                 c={c}
                 compare={entitiesCompare}
                 windowKey={windowKey}
+                meters={meters}
               />
             ))}
           </div>

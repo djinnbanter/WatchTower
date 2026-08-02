@@ -1769,6 +1769,14 @@
         "sustained_scans": 3,
         "headline": "Pregen is outrunning the disk",
         "detail": "Chunky pregen is active while disk write latency is 120 ms — the disk cannot keep up.",
+        "evidence": {
+          "write_await_ms": 120,
+          "write_warn_ms": 50,
+          "write_mb_s": 15,
+          "pregen_active": true,
+          "pregen_label": "Chunky",
+          "pregen_rate": "120/s"
+        },
         "next_steps": [
           "Pause pregen and let the disk catch up.",
           "Wait for chunk saves to finish before making more world changes.",

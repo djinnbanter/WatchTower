@@ -91,6 +91,19 @@ public final class ChunkWritePressureAnalyzer {
 
         // pregen_outrunning_disk
         boolean pregenHit = pregen.active && latencyHot;
+        JsonObject pregenEvidence = new JsonObject();
+        if (writeAwait != null) {
+            pregenEvidence.addProperty("write_await_ms", round1(writeAwait));
+        }
+        pregenEvidence.addProperty("write_warn_ms", warn);
+        pregenEvidence.addProperty("pregen_active", pregen.active);
+        pregenEvidence.addProperty("pregen_label", pregen.label);
+        if (pregen.rateLabel != null) {
+            pregenEvidence.addProperty("pregen_rate", pregen.rateLabel);
+        }
+        if (writeMbS != null) {
+            pregenEvidence.addProperty("write_mb_s", round1(writeMbS));
+        }
         maybeEmit(classifiers, streaks, active, KIND_PREGEN_DISK, dimId, pregenHit,
                 latencyCritical ? "critical" : "warning",
                 "Pregen is outrunning the disk",
@@ -100,10 +113,19 @@ public final class ChunkWritePressureAnalyzer {
                 List.of(
                         "Pause pregen and let the disk catch up.",
                         "Wait for chunk saves to finish before making more world changes.",
-                        "Do not restart mid-flush when write latency is this high."));
+                        "Do not restart mid-flush when write latency is this high."),
+                pregenEvidence);
 
         // chunk_save_backlog — latency without needing pregen; skip if pregen classifier already covers it
         boolean saveHit = latencyHot && !pregen.active;
+        JsonObject saveEvidence = new JsonObject();
+        if (writeAwait != null) {
+            saveEvidence.addProperty("write_await_ms", round1(writeAwait));
+        }
+        saveEvidence.addProperty("write_warn_ms", warn);
+        if (writeMbS != null) {
+            saveEvidence.addProperty("write_mb_s", round1(writeMbS));
+        }
         maybeEmit(classifiers, streaks, active, KIND_SAVE_BACKLOG, dimId, saveHit,
                 latencyCritical ? "critical" : "warning",
                 "Chunk save backlog",
@@ -116,10 +138,15 @@ public final class ChunkWritePressureAnalyzer {
                 List.of(
                         "Wait for world saves to finish before restarting.",
                         "Avoid restarting mid-flush when the disk is this busy.",
-                        "If this keeps happening, pause heavy worldgen or lower save frequency."));
+                        "If this keeps happening, pause heavy worldgen or lower save frequency."),
+                saveEvidence);
 
         // heavy_chunk_generation
         boolean heavyHit = totalPlayers > 0 && growthHot;
+        JsonObject heavyEvidence = new JsonObject();
+        heavyEvidence.addProperty("loaded_chunks", totalLoaded);
+        heavyEvidence.addProperty("chunk_growth", Math.max(0, growth));
+        heavyEvidence.addProperty("players", totalPlayers);
         maybeEmit(classifiers, streaks, active, KIND_HEAVY_GEN, dimId, heavyHit,
                 "warning",
                 "Heavy chunk generation while players are online",
@@ -129,7 +156,8 @@ public final class ChunkWritePressureAnalyzer {
                 List.of(
                         "Pause pregen or slow exploration bursts while players are on.",
                         "Check view distance and worldgen load — WatchTower will not name a mod without evidence.",
-                        "Prefer waiting for chunk load to settle before restarting."));
+                        "Prefer waiting for chunk load to settle before restarting."),
+                heavyEvidence);
 
         // Decay inactive chunk-write streaks only
         List<String> remove = new ArrayList<>();
@@ -208,7 +236,8 @@ public final class ChunkWritePressureAnalyzer {
             String severity,
             String headline,
             String detail,
-            List<String> nextSteps
+            List<String> nextSteps,
+            JsonObject evidence
     ) {
         String key = kind + ":" + dimId;
         int streak = streaks.has(key) ? streaks.get(key).getAsInt() : 0;
@@ -228,6 +257,9 @@ public final class ChunkWritePressureAnalyzer {
         c.addProperty("sustained_scans", streak);
         c.addProperty("headline", headline);
         c.addProperty("detail", detail);
+        if (evidence != null) {
+            c.add("evidence", evidence.deepCopy());
+        }
         JsonArray steps = new JsonArray();
         for (String s : nextSteps) {
             steps.add(s);
