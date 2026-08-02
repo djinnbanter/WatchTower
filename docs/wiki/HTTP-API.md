@@ -234,8 +234,8 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | `/api/mods/scan` | POST | Force unified log scan + running mods → updates ops-cache; returns `{ scanned_at, mod_error_count, running_mod_count, mod_log_errors[], running_mods[], kubejs_failures[] }` |
 | `/api/mods/disable` | POST | Soft-disable top-level jar under `mods/` — `{ jar, confirm_world_risk? }` → rename to `*.jar.disabled` (admin+; `MOD_DISABLE_ENABLED`; 400 `world_risk_confirm_required` when high risk and confirm missing) |
 | `/api/mods/enable` | POST | Re-enable — `{ jar }` basename of `*.jar.disabled` (or `*.disabled`) → rename back to `*.jar` |
-| `/api/mods/configs` | GET | List files under `config/` (`files[]`: `path`, `size`, `mtime`, `has_backup`, `secret_hint`). With `?path=` — read one file (`content`, `parse_warnings[]`, …). Requires `MOD_CONFIG_EDIT_ENABLED` (default true); otherwise 403 |
-| `/api/mods/configs` | PUT | Save — `{ path, content, expected_mtime }` → backup then write (admin+). `409` on mtime conflict; max 512 KiB. Audit `config_saved` (path only) |
+| `/api/mods/configs` | GET | List files under `config/` (`files[]`: `path`, `size`, `mtime`, `has_backup`, `secret_hint`). With `?path=` — read one file (`content`, `mtime`, `parse_warnings[]`, `editor`: `form`\|`raw`, and `fields[]` when `editor=form`). Requires `MOD_CONFIG_EDIT_ENABLED` (default true); otherwise 403 |
+| `/api/mods/configs` | PUT | Save — `{ path, expected_mtime, content? }` or `{ path, expected_mtime, fields? }` → backup then write (admin+). Prefer `fields` for TOML form saves (server serializes). `409` on mtime conflict; max 512 KiB. Audit `config_saved` (path only) |
 | `/api/mods/configs/undo` | POST | `{ path }` — restore newest backup (admin+). Audit `config_undone` |
 | `/api/mods/tree` | GET | `?mod_id=` — nested dependency tree from latest report (`dependents` + `dependencies`, max depth 6) |
 | `/api/mods/forensics/status` | GET | Mod forensics index/status (`index.state`: `ready`\|`idle`\|`skipped`\|`error`; `config.mod_forensics_scan` / `corrupt_jar_walk`; stale cache reported without jar walk) |

@@ -21,7 +21,7 @@
 | **Conflicts** | Version / dependency clashes |
 | **Log errors** | Mod-related errors from Scanning |
 | **Changes** | What changed in the pack recently |
-| **Configs** | Raw edit for files under `config/` (backup + undo) |
+| **Configs** | Form edit for clean `.toml` under `config/` (raw fallback; backup + undo) |
 | **Modrinth** | Online metadata (optional; privacy below) |
 | **Forensics** | Deep jar / package ownership — use when debugging, not daily |
 
@@ -31,7 +31,7 @@ Client vs server chips tell you where a mod is expected to run. High-confidence 
 
 **World risk** badges appear when WatchTower finds evidence that disabling the mod may break the save (world dimension folders for that mod id, live dimension namespaces, or jar `data/<modId>/dimension/` paths). High risk requires an extra confirm. Overview shows a **Restart needed** chip until the server restarts after a jar change.
 
-**Configs** (admin/owner to save): open a file under `config/`, edit the text, review a simple diff, then save. WatchTower writes a timestamped backup under `watchtower/config-backups/` first and keeps the last 10 per file. **Undo** restores the newest backup. Viewers can read but not save. Kill-switch: `MOD_CONFIG_EDIT_ENABLED=false` hides the API. Does not edit `server.properties`, `world/serverconfig/`, or jars. After a save, restart if the mod only reloads config on boot. Paths from Forensics → Config health that start with `config/` deep-link here.
+**Configs** (admin/owner to save): open a file under `config/`. Clean `.toml` files open as a **form** (sections, toggles, numbers, strings) with a **Form | Raw** toggle; other formats and unparseable TOML stay raw-only. Review a simple diff, then save. Form saves rewrite the TOML cleanly — original comments may be dropped; values stay correct. WatchTower writes a timestamped backup under `watchtower/config-backups/` first and keeps the last 10 per file. **Undo** restores the newest backup. Viewers can read but not save. Kill-switch: `MOD_CONFIG_EDIT_ENABLED=false` hides the API. Does not edit `server.properties`, `world/serverconfig/`, or jars. After a save, restart if the mod only reloads config on boot. Paths from Forensics → Config health that start with `config/` deep-link here.
 
 **Changes** shows pack add/remove/update. If a jar’s contents change **without** a version bump, Watchtower raises **Jar drift** on [[Issues]] (checksum lock) — confirm the swap was intentional.
 
