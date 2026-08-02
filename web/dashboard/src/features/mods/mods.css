@@ -3234,6 +3234,131 @@ button.md-status__chip:hover {
   outline-offset: 1px;
 }
 
+.md-cfg-mode {
+  display: inline-flex;
+  border: 1px solid color-mix(in srgb, var(--wt-line) 90%, transparent);
+  border-radius: calc(var(--radius-wt) - 2px);
+  overflow: hidden;
+}
+
+.md-cfg-mode__btn {
+  border: 0;
+  background: transparent;
+  color: var(--wt-text-low);
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.28rem 0.65rem;
+  cursor: pointer;
+}
+
+.md-cfg-mode__btn--on {
+  background: color-mix(in srgb, var(--wt-accent) 16%, transparent);
+  color: var(--wt-text);
+}
+
+.md-cfg-form {
+  flex: 1 1 auto;
+  min-height: 14rem;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.md-cfg-form__empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--wt-text-low);
+}
+
+.md-cfg-section {
+  border: 1px solid color-mix(in srgb, var(--wt-line) 88%, transparent);
+  border-radius: calc(var(--radius-wt) - 2px);
+  background: color-mix(in srgb, var(--wt-bg0, var(--wt-bg1)) 94%, transparent);
+}
+
+.md-cfg-section__head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.md-cfg-section__count {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--wt-text-low);
+}
+
+.md-cfg-section__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.55rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.md-cfg-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 12rem);
+  gap: 0.55rem;
+  align-items: start;
+}
+
+.md-cfg-field__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.md-cfg-field__key {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+
+.md-cfg-field__hint {
+  font-size: 0.72rem;
+  color: var(--wt-text-low);
+}
+
+.md-cfg-input,
+.md-cfg-array {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--wt-line) 90%, transparent);
+  border-radius: calc(var(--radius-wt) - 2px);
+  background: color-mix(in srgb, var(--wt-bg1) 96%, transparent);
+  color: var(--wt-text);
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.md-cfg-array {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  resize: vertical;
+}
+
+.md-cfg-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--wt-text-low);
+}
+
 .md-cfg-banner {
   margin: 0;
   padding: 0.5rem 0.7rem;
