@@ -980,7 +980,7 @@ function SecurityStep({ session }: { session: Record<string, unknown> | null }) 
           <label className="block text-sm">
             <span className="font-medium text-wt-text">Authenticator code</span>
             <input
-              className="mt-1.5 w-full rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 px-3 py-2 font-mono text-sm outline-none focus:border-wt-accent"
+              className="mt-1.5 w-full rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 px-3 py-2 font-mono text-sm outline-none focus-visible:border-wt-accent focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--wt-accent)_35%,transparent)]"
               value={totpCode}
               onChange={(e) => setTotpCode(e.target.value.replace(/\s+/g, ''))}
               inputMode="numeric"
