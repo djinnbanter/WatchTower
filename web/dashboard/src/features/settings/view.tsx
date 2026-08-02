@@ -536,18 +536,18 @@ export function PageView({ route }: { route: RouteState }) {
       {panel === 'backups' ? (
         <Section
           title="Backups"
-          hint="Local folders are supported. Panel / cloud tracking is alpha and may not work on every host — folder blocks have their own Save; freshness uses Save changes above."
+          hint="Local folders are supported. Panel / cloud tracking is alpha. Folders save separately from the threshold below."
         >
           <div className="space-y-6">
-            <div className="grid gap-3 md:grid-cols-2">
+            <SettingsStack>
               <NumberField
                 label="Stale after"
                 unit="hours"
-                hint="Backups older than this count as Stale on the Backups page and raise a BACKUP_STALE Issue (default 24)"
+                hint="Older than this → Stale on Backups and BACKUP_STALE Issue"
                 value={num(form.backup_stale_hours) || 24}
                 onChange={(v) => set('backup_stale_hours', Math.max(1, Math.min(720, v)))}
               />
-            </div>
+            </SettingsStack>
             <LocalFolderSetup
               settingsData={form}
               onSaved={(dirs) => {
