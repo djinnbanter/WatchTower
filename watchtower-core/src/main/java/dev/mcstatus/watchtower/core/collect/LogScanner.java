@@ -330,7 +330,7 @@ public final class LogScanner {
             state.bootLines.add(stripped);
         }
 
-        state.modLogAnalyzer.processLine(stripped, inBootWindow);
+        state.modLogAnalyzer.processLine(rel, lineNo, stripped, inBootWindow);
         state.clientLogAttributor.processLine(stripped);
         accumulateFml(stripped, state);
 

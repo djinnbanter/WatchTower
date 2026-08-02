@@ -37,6 +37,10 @@ public final class ModLogAnalyzer {
     }
 
     public void processLine(String line, boolean inBootWindow) {
+        processLine(null, 0, line, inBootWindow);
+    }
+
+    public void processLine(String relLogPath, int lineNo, String line, boolean inBootWindow) {
         ModErrorCategory.Hit hit = ModErrorCategory.classify(line);
         if (hit == null) {
             return;
@@ -51,11 +55,27 @@ public final class ModLogAnalyzer {
         }
         final String key = modId;
         ModStats stats = byMod.computeIfAbsent(key, k -> new ModStats(key));
-        stats.record(hit, line, inBootWindow);
+        stats.record(hit, line, inBootWindow, relLogPath, lineNo);
         if (hit.relatedMod() != null && !hit.relatedMod().isBlank()) {
             ModStats related = byMod.computeIfAbsent(hit.relatedMod(), k -> new ModStats(hit.relatedMod()));
-            related.record(hit, line, inBootWindow);
+            related.record(hit, line, inBootWindow, relLogPath, lineNo);
         }
+        if (isKubejsSidecar(relLogPath)) {
+            ModStats kubejs = byMod.computeIfAbsent("kubejs", k -> new ModStats("kubejs"));
+            kubejs.record(hit, line, inBootWindow, relLogPath, lineNo);
+        }
+    }
+
+    private static boolean isKubejsSidecar(String relLogPath) {
+        if (relLogPath == null || relLogPath.isBlank()) {
+            return false;
+        }
+        String norm = relLogPath.replace('\\', '/');
+        return norm.endsWith("kubejs/server.log") || norm.endsWith("kubejs/startup.log");
+    }
+
+    private static String normalizeLogPath(String relLogPath) {
+        return relLogPath == null ? "" : relLogPath.replace('\\', '/');
     }
 
     public JsonArray toJsonArray() {
@@ -78,12 +98,15 @@ public final class ModLogAnalyzer {
         private final List<String> topRecipes = new ArrayList<>();
         private final Set<String> recipeSeen = new HashSet<>();
         private final List<String> samples = new ArrayList<>();
+        private String sourceLog;
+        private final List<JsonObject> evidence = new ArrayList<>();
 
         private ModStats(String modId) {
             this.modId = modId;
         }
 
-        private void record(ModErrorCategory.Hit hit, String line, boolean inBootWindow) {
+        private void record(ModErrorCategory.Hit hit, String line, boolean inBootWindow,
+                            String relLogPath, int lineNo) {
             total++;
             if (inBootWindow) {
                 bootHits++;
@@ -104,6 +127,26 @@ public final class ModLogAnalyzer {
                 }
                 if (!samples.contains(sample)) {
                     samples.add(sample);
+                }
+            }
+            if (relLogPath != null && !relLogPath.isBlank()) {
+                if (sourceLog == null) {
+                    sourceLog = normalizeLogPath(relLogPath);
+                }
+                if (evidence.size() < MAX_SAMPLES) {
+                    String norm = normalizeLogPath(relLogPath);
+                    boolean seen = false;
+                    for (JsonObject ev : evidence) {
+                        if (ev.has("file") && norm.equals(ev.get("file").getAsString())
+                                && ev.has("line") && !ev.get("line").isJsonNull()
+                                && ev.get("line").getAsInt() == lineNo) {
+                            seen = true;
+                            break;
+                        }
+                    }
+                    if (!seen) {
+                        evidence.add(CollectSupport.evidence(norm, lineNo > 0 ? lineNo : null, line, null));
+                    }
                 }
             }
         }
@@ -128,6 +171,14 @@ public final class ModLogAnalyzer {
                 JsonArray sampleArr = new JsonArray();
                 samples.forEach(sampleArr::add);
                 row.add("sample_lines", sampleArr);
+            }
+            if (sourceLog != null && !sourceLog.isBlank()) {
+                row.addProperty("source", sourceLog);
+            }
+            if (!evidence.isEmpty()) {
+                JsonArray evArr = new JsonArray();
+                evidence.forEach(evArr::add);
+                row.add("evidence", evArr);
             }
             if ("client_noise".equals(modId)) {
                 row.addProperty("display_name", ModErrorCategory.CLIENT_ON_SERVER_DISPLAY);

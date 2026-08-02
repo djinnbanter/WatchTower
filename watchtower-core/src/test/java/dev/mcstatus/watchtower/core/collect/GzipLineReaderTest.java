@@ -40,7 +40,6 @@ class GzipLineReaderTest {
         Path kjs = Files.createDirectories(logs.resolve("kubejs"));
         Files.writeString(kjs.resolve("server.log"), "WARN recipe\n");
         Files.writeString(kjs.resolve("startup.log"), "ok\n");
-        Files.writeString(kjs.resolve("client.log"), ""); // empty OK
 
         List<Path> found = GzipLineReader.iterLogFiles(server.toString(), 1, Instant.now().getEpochSecond());
         assertTrue(found.stream().anyMatch(p -> p.getFileName().toString().equals("JadeErrorOutput.txt")));

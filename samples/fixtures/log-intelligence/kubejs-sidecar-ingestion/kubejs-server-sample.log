@@ -1,0 +1,1 @@
+[15:33:12] [WARN] KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! Falling back to vanilla: Failed to read required component 'results: either<fluid_stack, create:processing_output>[]' - java.lang.IllegalStateException: Failed to parse either.
