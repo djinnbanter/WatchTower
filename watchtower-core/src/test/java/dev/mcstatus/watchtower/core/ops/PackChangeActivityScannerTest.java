@@ -73,4 +73,60 @@ class PackChangeActivityScannerTest {
         PackChangeActivityScanner.Result r = PackChangeActivityScanner.scan(root, base.nextSnapshot(), t0 + 60);
         assertTrue(r.events().stream().noneMatch(e -> e.get("type").getAsString().startsWith("mod_jar_")));
     }
+
+    @Test
+    void configBaselineSilentThenTouchEmits() throws Exception {
+        long t0 = 1_700_000_000L;
+        Path root = tempServerWithMods("a.jar");
+        Path cfg = root.resolve("config");
+        Files.createDirectories(cfg);
+        Files.writeString(cfg.resolve("foo.toml"), "x=1\n");
+        PackChangeActivityScanner.Result base = PackChangeActivityScanner.scan(root, null, t0);
+        assertTrue(base.events().isEmpty());
+        assertTrue(base.nextSnapshot().getAsJsonObject("configs").has("config/foo.toml"));
+
+        Files.writeString(cfg.resolve("foo.toml"), "x=2\n");
+        Files.setLastModifiedTime(
+                cfg.resolve("foo.toml"),
+                java.nio.file.attribute.FileTime.fromMillis((t0 + 10) * 1000L));
+        PackChangeActivityScanner.Result r = PackChangeActivityScanner.scan(root, base.nextSnapshot(), t0 + 10);
+        assertEquals(1, r.events().size());
+        assertEquals("config_changed", r.events().get(0).get("type").getAsString());
+        assertTrue(r.events().get(0).get("detail").getAsString().contains("config/foo.toml"));
+    }
+
+    @Test
+    void configCooldownSuppressesThenAllows() throws Exception {
+        long t0 = 1_700_000_000L;
+        Path root = tempServerWithMods("a.jar");
+        Path cfg = root.resolve("config");
+        Files.createDirectories(cfg);
+        Files.writeString(cfg.resolve("foo.toml"), "x=1\n");
+        PackChangeActivityScanner.Result base = PackChangeActivityScanner.scan(root, null, t0);
+
+        Files.writeString(cfg.resolve("foo.toml"), "x=2\n");
+        Files.setLastModifiedTime(
+                cfg.resolve("foo.toml"),
+                java.nio.file.attribute.FileTime.fromMillis((t0 + 10) * 1000L));
+        PackChangeActivityScanner.Result first =
+                PackChangeActivityScanner.scan(root, base.nextSnapshot(), t0 + 10);
+        assertEquals(1, first.events().size());
+
+        Files.writeString(cfg.resolve("foo.toml"), "x=3\n");
+        Files.setLastModifiedTime(
+                cfg.resolve("foo.toml"),
+                java.nio.file.attribute.FileTime.fromMillis((t0 + 70) * 1000L));
+        PackChangeActivityScanner.Result cooled =
+                PackChangeActivityScanner.scan(root, first.nextSnapshot(), t0 + 70);
+        assertTrue(cooled.events().stream().noneMatch(e -> "config_changed".equals(e.get("type").getAsString())));
+
+        Files.writeString(cfg.resolve("foo.toml"), "x=4\n");
+        Files.setLastModifiedTime(
+                cfg.resolve("foo.toml"),
+                java.nio.file.attribute.FileTime.fromMillis((t0 + 320) * 1000L));
+        PackChangeActivityScanner.Result again =
+                PackChangeActivityScanner.scan(root, cooled.nextSnapshot(), t0 + 320);
+        assertEquals(1, again.events().size());
+        assertEquals("config_changed", again.events().get(0).get("type").getAsString());
+    }
 }
