@@ -1520,7 +1520,7 @@ function PeekModConfigs() {
       <Plate className="bento-peek__config-panel">
         <div className="bento-peek__config-head">
           <span className="bento-peek__kicker">config/</span>
-          <span className="bento-peek__readout">TOML form</span>
+          <span className="bento-peek__readout">TOML form · undo</span>
         </div>
         <ul className="bento-peek__config">
           {rows.map((r) => (
@@ -1534,7 +1534,6 @@ function PeekModConfigs() {
                   <span className="bento-peek__config-eq">=</span>
                   <span className="bento-peek__config-val">{r.value}</span>
                 </code>
-                <span className="bento-peek__sub">Save makes a backup · undo available</span>
               </span>
             </li>
           ))}

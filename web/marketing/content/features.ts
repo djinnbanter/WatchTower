@@ -140,7 +140,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'jar-disable',
     title: 'Soft jar disable / enable',
     blurb:
-      'Rename a mod jar to `*.jar.disabled` so it skips the next boot (or rename it back). Filter All / Enabled / Disabled. High world risk asks you to confirm first. Admins only - no delete.',
+      'Rename a mod jar to *.jar.disabled so it skips the next boot (or rename it back). Filter All / Enabled / Disabled. High world risk asks you to confirm first. Admins only - no delete.',
     tag: 'Mods',
     weight: 'standard',
     tone: 'warn',
@@ -149,7 +149,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'mod-configs',
     title: 'Mods → Configs',
     blurb:
-      'Edit files under the server `config/` folder from the dashboard. TOML gets a form when WatchTower can parse it; otherwise you edit the raw text. Saves create a backup and support undo. Admins only.',
+      'Edit files under the server config/ folder from the dashboard. TOML gets a form when WatchTower can parse it; otherwise you edit the raw text. Saves create a backup and support undo. Admins only.',
     tag: 'Mods',
     weight: 'standard',
     tone: 'accent',
@@ -216,7 +216,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'backups',
     title: 'Backup health',
     blurb:
-      'See whether local backups look present and fresh, then verify zip/tar.gz integrity. Optional test restore only under `watchtower/restore-verify/` - never into the live world.',
+      'See whether local backups look present and fresh, then verify zip/tar.gz integrity. Optional test restore only under watchtower/restore-verify/ - never into the live world.',
     tag: 'Backups',
     weight: 'standard',
     tone: 'ok',
