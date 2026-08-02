@@ -1872,7 +1872,7 @@ function generateOverviewMeta(now, opsCache, performanceRollups, envelope) {
   const gradeWord = grade === 'critical' ? 'Critical' : grade === 'degraded' ? 'Degraded' : 'Healthy';
 
   return {
-    version: '1.0.0',
+    version: '1.2.0-beta.1',
     stale: false,
     last_report_at: offsetIso(now, -2 * 3600_000),
     age_hours: 2,

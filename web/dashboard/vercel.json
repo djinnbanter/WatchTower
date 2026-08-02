@@ -1,4 +1,8 @@
 {
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build:demo",
+  "outputDirectory": "dist-demo",
   "rewrites": [
     { "source": "/((?!demo-api|assets|.*\\..*).*)", "destination": "/index.html" }
   ],

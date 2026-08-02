@@ -344,11 +344,11 @@ function applyHighLoad(now) {
 function applyError(now) {
   writeJson('update-check.json', {
     enabled: true,
-    current: '1.1.3a',
-    current_version: '1.1.3a',
+    current: '1.2.0-beta.1',
+    current_version: '1.2.0-beta.1',
     update_available: false,
     error: 'check_failed',
-    channel: 'stable',
+    channel: 'beta',
     modrinth_url: 'https://modrinth.com/mod/watchtower',
   });
 

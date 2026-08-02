@@ -28,17 +28,18 @@ function isoAt(ms) {
 function buildUpdateCheck(now) {
   return {
     enabled: true,
-    current: '1.1.3a',
-    current_version: '1.1.3a',
-    update_available: true,
-    latest_version: '1.1.4',
+    current: '1.2.0-beta.1',
+    current_version: '1.2.0-beta.1',
+    update_available: false,
+    latest_version: '1.2.0-beta.1',
     published_at: isoAt(now - 3 * 86400_000),
-    channel: 'stable',
-    release_url: 'https://github.com/djinnbanter/WatchTower/releases/tag/v1.1.4',
+    channel: 'beta',
+    release_url: 'https://github.com/djinnbanter/WatchTower/releases/tag/v1.2.0-beta.1',
     modrinth_url: 'https://modrinth.com/mod/watchtower',
     urls: {
-      github: 'https://github.com/djinnbanter/WatchTower/releases/download/v1.1.4/watchtower-neoforge-1.1.4+mc1.21.jar',
-      release_page: 'https://github.com/djinnbanter/WatchTower/releases/tag/v1.1.4',
+      github:
+        'https://github.com/djinnbanter/WatchTower/releases/download/v1.2.0-beta.1/watchtower-neoforge-1.2.0-beta.1+mc1.21.jar',
+      release_page: 'https://github.com/djinnbanter/WatchTower/releases/tag/v1.2.0-beta.1',
       modrinth: 'https://modrinth.com/mod/watchtower',
     },
   };

@@ -16,7 +16,9 @@ const bakedPaths = new Set(
   Object.keys(manifest).map((k) => k.replace(/^GET\s+/, '').split('?')[0]),
 );
 
-const literals = [...clientSrc.matchAll(/['"`](\/api\/[^'"`?]+)/g)].map((m) => m[1]);
+const literals = [...clientSrc.matchAll(/['"`](\/api\/[^'"`?]+)/g)].map((m) =>
+  m[1].replace(/\$\{[^}]+\}/g, ''),
+);
 const unique = [...new Set(literals)];
 const allow = new Set(DEMO_MANIFEST_ALLOWLIST.map((p) => p.split('?')[0]));
 const missing = unique.filter((p) => !bakedPaths.has(p) && !allow.has(p));
