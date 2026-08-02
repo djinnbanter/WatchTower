@@ -4,6 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.mcstatus.watchtower.core.analyze.BackupTestRestore;
+import dev.mcstatus.watchtower.core.analyze.ModRestartNudge;
 import dev.mcstatus.watchtower.core.collect.ModChangeDetector;
 import dev.mcstatus.watchtower.core.util.TimeParse;
 import dev.mcstatus.watchtower.core.util.WatchtowerPathLocks;
@@ -616,6 +618,39 @@ public final class StateManager {
         }
     }
 
+    public static JsonObject getExternalKillSession(Path statePath) throws IOException {
+        JsonObject state = loadState(statePath);
+        if (state.has("external_kill_session") && state.get("external_kill_session").isJsonObject()) {
+            return state.getAsJsonObject("external_kill_session").deepCopy();
+        }
+        return new JsonObject();
+    }
+
+    /**
+     * Merge {@code patch} into the existing {@code external_kill_session} block and write.
+     * Null values in the patch remove the key; other values overwrite.
+     */
+    public static void updateExternalKillSession(Path statePath, JsonObject patch) throws IOException {
+        if (patch == null) {
+            return;
+        }
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            JsonObject session = state.has("external_kill_session") && state.get("external_kill_session").isJsonObject()
+                    ? state.getAsJsonObject("external_kill_session").deepCopy()
+                    : new JsonObject();
+            for (String key : patch.keySet()) {
+                if (patch.get(key).isJsonNull()) {
+                    session.remove(key);
+                } else {
+                    session.add(key, patch.get(key).deepCopy());
+                }
+            }
+            state.add("external_kill_session", session);
+            writeState(statePath, state);
+        }
+    }
+
     public static JsonObject getActivityBackfillState(Path statePath) throws IOException {
         JsonObject state = loadState(statePath);
         if (state.has("activity_backfill") && state.get("activity_backfill").isJsonObject()) {
@@ -636,6 +671,26 @@ public final class StateManager {
         synchronized (WatchtowerPathLocks.lockFor(statePath)) {
             JsonObject state = loadState(statePath);
             state.remove("activity_backfill");
+            writeState(statePath, state);
+        }
+    }
+
+    public static JsonObject getPackChangeSnapshot(Path statePath) throws IOException {
+        JsonObject state = loadState(statePath);
+        if (state.has("pack_change_snapshot") && state.get("pack_change_snapshot").isJsonObject()) {
+            return state.getAsJsonObject("pack_change_snapshot").deepCopy();
+        }
+        return null;
+    }
+
+    public static void setPackChangeSnapshot(Path statePath, JsonObject snapshot) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            if (snapshot == null) {
+                state.remove("pack_change_snapshot");
+            } else {
+                state.add("pack_change_snapshot", snapshot.deepCopy());
+            }
             writeState(statePath, state);
         }
     }
@@ -793,6 +848,47 @@ public final class StateManager {
         synchronized (WatchtowerPathLocks.lockFor(statePath)) {
             JsonObject state = loadState(statePath);
             state.add("suppressed_issues", suppressed != null ? suppressed.deepCopy() : new JsonArray());
+            writeState(statePath, state);
+        }
+    }
+
+    public static JsonObject getModRestartPending(Path statePath) throws IOException {
+        JsonObject state = loadState(statePath);
+        if (!state.has(ModRestartNudge.STATE_KEY) || !state.get(ModRestartNudge.STATE_KEY).isJsonObject()) {
+            return new JsonObject();
+        }
+        return state.getAsJsonObject(ModRestartNudge.STATE_KEY).deepCopy();
+    }
+
+    public static void setModRestartPending(Path statePath, JsonObject pending) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            if (pending == null || pending.entrySet().isEmpty()
+                    || (pending.has("jars") && pending.getAsJsonArray("jars").isEmpty())) {
+                state.remove(ModRestartNudge.STATE_KEY);
+            } else {
+                state.add(ModRestartNudge.STATE_KEY, pending.deepCopy());
+            }
+            writeState(statePath, state);
+        }
+    }
+
+    public static JsonObject getBackupTestRestore(Path statePath) throws IOException {
+        JsonObject state = loadState(statePath);
+        if (!state.has(BackupTestRestore.STATE_KEY) || !state.get(BackupTestRestore.STATE_KEY).isJsonObject()) {
+            return new JsonObject();
+        }
+        return state.getAsJsonObject(BackupTestRestore.STATE_KEY).deepCopy();
+    }
+
+    public static void setBackupTestRestore(Path statePath, JsonObject job) throws IOException {
+        synchronized (WatchtowerPathLocks.lockFor(statePath)) {
+            JsonObject state = loadState(statePath);
+            if (job == null || job.entrySet().isEmpty()) {
+                state.remove(BackupTestRestore.STATE_KEY);
+            } else {
+                state.add(BackupTestRestore.STATE_KEY, job.deepCopy());
+            }
             writeState(statePath, state);
         }
     }
