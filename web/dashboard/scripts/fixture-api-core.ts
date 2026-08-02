@@ -8,6 +8,11 @@ import {
   mergeCrashRows,
   type CrashRow,
 } from '../src/features/crashes/groups';
+import {
+  parseTomlForm,
+  serializeTomlFields,
+  type TomlFormField,
+} from '../src/features/mods/toml-form';
 
 export type FixtureResponse = { status: number; contentType: string; body: string | Buffer };
 export type FixtureSession = Record<string, unknown>;
@@ -111,6 +116,75 @@ function toEnabledJar(jar: string): string {
   if (base.endsWith('.jar.disabled')) return base.slice(0, -'.disabled'.length);
   if (base.endsWith('.disabled')) return base.slice(0, -'.disabled'.length);
   return base;
+}
+
+
+type ModConfigEntry = { content: string; mtime: number; backups?: string[] };
+
+function secretHintText(text: string): boolean {
+  return /(password|token|secret|api[_-]?key)\s*[=:]/i.test(text);
+}
+
+function loadModConfigStore(session: FixtureSession): Record<string, ModConfigEntry> {
+  const disk = asRecord(readJson('mod-configs.json'));
+  const files = asRecord(disk.files);
+  const existing =
+    session.modConfigs && typeof session.modConfigs === 'object'
+      ? ({ ...(session.modConfigs as Record<string, ModConfigEntry>) } as Record<string, ModConfigEntry>)
+      : {};
+  // Keep in-session edits/backups, but pick up newly added fixture files from disk.
+  for (const [path, raw] of Object.entries(files)) {
+    if (existing[path]) continue;
+    const row = asRecord(raw);
+    existing[path] = {
+      content: String(row.content ?? ''),
+      mtime: Number(row.mtime ?? Math.floor(Date.now() / 1000)),
+      backups: [],
+    };
+  }
+  session.modConfigs = existing;
+  return existing;
+}
+
+function modConfigListPayload(store: Record<string, ModConfigEntry>) {
+  const files = Object.entries(store)
+    .map(([path, entry]) => ({
+      path,
+      size: Buffer.byteLength(entry.content, 'utf8'),
+      mtime: entry.mtime,
+      has_backup: (entry.backups?.length ?? 0) > 0,
+      secret_hint: secretHintText(entry.content),
+    }))
+    .sort((a, b) => a.path.localeCompare(b.path));
+  return { files };
+}
+
+function modConfigReadPayload(pathParam: string, entry: ModConfigEntry) {
+  const base = {
+    path: pathParam,
+    content: entry.content,
+    mtime: entry.mtime,
+    size: Buffer.byteLength(entry.content, 'utf8'),
+    secret_hint: secretHintText(entry.content),
+    parse_warnings: [] as string[],
+  };
+  if (!pathParam.toLowerCase().endsWith('.toml')) {
+    return { ...base, editor: 'raw' as const };
+  }
+  const pr = parseTomlForm(entry.content);
+  if (pr.formOk) {
+    return {
+      ...base,
+      editor: 'form' as const,
+      fields: pr.fields,
+      parse_warnings: pr.warnings,
+    };
+  }
+  return {
+    ...base,
+    editor: 'raw' as const,
+    parse_warnings: pr.warnings,
+  };
 }
 
 function applyModJarOverrides(ops: Record<string, unknown>, session: Record<string, unknown>) {
@@ -850,6 +924,109 @@ export async function handleFixtureRequest(
             });
           }
 
+          if (pathOnly === '/api/mods/configs') {
+            const store = loadModConfigStore(session);
+            if (method === 'GET') {
+              const pathParam = new URL(url, 'http://127.0.0.1').searchParams.get('path');
+              if (pathParam) {
+                const entry = store[pathParam];
+                if (!entry) {
+                  return jsonRes(404, { ok: false, error: 'not_found', message: `not found: ${pathParam}` });
+                }
+                return jsonRes(200, modConfigReadPayload(pathParam, entry));
+              }
+              return jsonRes(200, modConfigListPayload(store));
+            }
+            if (method === 'PUT') {
+              const body = (requestBody && typeof requestBody === 'object' ? requestBody : {}) as Record<
+                string,
+                unknown
+              >;
+              const pathKey = String(body.path ?? '').trim();
+              if (!pathKey.startsWith('config/')) {
+                return jsonRes(400, { ok: false, error: 'bad_path', message: 'path must be under config/' });
+              }
+              if (!('expected_mtime' in body)) {
+                return jsonRes(400, { ok: false, error: 'expected_mtime required' });
+              }
+              let content: string;
+              if (Array.isArray(body.fields)) {
+                try {
+                  content = serializeTomlFields(body.fields as TomlFormField[]);
+                } catch (e) {
+                  return jsonRes(400, {
+                    ok: false,
+                    error: 'bad_fields',
+                    message: e instanceof Error ? e.message : 'invalid fields',
+                  });
+                }
+              } else if ('content' in body) {
+                content = String(body.content ?? '');
+              } else {
+                return jsonRes(400, { ok: false, error: 'content or fields required' });
+              }
+              const expected = Number(body.expected_mtime);
+              const existing = store[pathKey];
+              if (existing && existing.mtime !== expected) {
+                return jsonRes(409, {
+                  ok: false,
+                  error: 'mtime_conflict',
+                  message: `mtime mismatch: expected ${expected} got ${existing.mtime}`,
+                });
+              }
+              if (Buffer.byteLength(content, 'utf8') > 512 * 1024) {
+                return jsonRes(413, { ok: false, error: 'oversize', message: 'content exceeds 512 KiB' });
+              }
+              let backupPath: string | undefined;
+              if (existing) {
+                const backups = existing.backups ? [...existing.backups] : [];
+                backups.push(existing.content);
+                while (backups.length > 10) backups.shift();
+                existing.backups = backups;
+                backupPath = `watchtower/config-backups/${pathKey.replaceAll('/', '__')}/preview.bak`;
+              }
+              const nextMtime = Math.floor(Date.now() / 1000);
+              store[pathKey] = {
+                content,
+                mtime: nextMtime,
+                backups: existing?.backups ?? [],
+              };
+              session.modConfigs = store;
+              return jsonRes(200, {
+                path: pathKey,
+                mtime: nextMtime,
+                size: Buffer.byteLength(content, 'utf8'),
+                ...(backupPath ? { backup_path: backupPath } : {}),
+              });
+            }
+            return jsonRes(405, { error: 'Method not allowed' });
+          }
+
+          if (method === 'POST' && pathOnly === '/api/mods/configs/undo') {
+            const store = loadModConfigStore(session);
+            const body = (requestBody && typeof requestBody === 'object' ? requestBody : {}) as Record<
+              string,
+              unknown
+            >;
+            const pathKey = String(body.path ?? '').trim();
+            const entry = store[pathKey];
+            if (!entry || !(entry.backups?.length)) {
+              return jsonRes(404, { ok: false, error: 'no_backup', message: `no backup for ${pathKey}` });
+            }
+            const prior = entry.backups[entry.backups.length - 1]!;
+            entry.backups = entry.backups.slice(0, -1);
+            entry.content = prior;
+            entry.mtime = Math.floor(Date.now() / 1000);
+            store[pathKey] = entry;
+            session.modConfigs = store;
+            return jsonRes(200, {
+              path: pathKey,
+              mtime: entry.mtime,
+              size: Buffer.byteLength(entry.content, 'utf8'),
+              restored_from: 'preview-backup',
+            });
+          }
+
           if (method === 'POST' && pathOnly === '/api/modrinth/scan') {
             session.modrinth = {
               running: true,
@@ -969,15 +1146,52 @@ export async function handleFixtureRequest(
 
           if (method === 'GET' && pathOnly === '/api/auth/session') {
             const role = previewRoleFromUrl(url);
+            const appearance =
+              session.appearance && typeof session.appearance === 'object'
+                ? (session.appearance as Record<string, unknown>)
+                : {};
             return jsonRes(200, {
               authenticated: true,
+              fully_authenticated: true,
               username: role === 'owner' ? 'ella' : role === 'admin' ? 'marco' : 'sam',
               preview: true,
               must_change_password: false,
               role,
+              can_write: role === 'owner' || role === 'admin',
               minecraft_uuid: '069a79f4-44e9-4726-a5be-fca90e38aaf5',
               minecraft_name: role === 'owner' ? 'Ella' : role === 'admin' ? 'Marco' : 'Sam',
+              ...(typeof appearance.ui_theme === 'string' ? { ui_theme: appearance.ui_theme } : {}),
+              ...(typeof appearance.ui_accent === 'string' ? { ui_accent: appearance.ui_accent } : {}),
             });
+          }
+
+          if (method === 'PUT' && pathOnly === '/api/accounts/me/appearance') {
+            const body = (requestBody && typeof requestBody === 'object' ? requestBody : {}) as Record<
+              string,
+              unknown
+            >;
+            const theme = String(body.theme ?? '').trim().toLowerCase();
+            const accent = String(body.accent ?? '').trim().toLowerCase();
+            const themes = new Set(['light', 'dark', 'black', 'system']);
+            const accents = new Set([
+              'signal',
+              'amber',
+              'teal',
+              'violet',
+              'rose',
+              'green',
+              'coral',
+              'slate',
+            ]);
+            if (!themes.has(theme) || !accents.has(accent)) {
+              return jsonRes(400, {
+                ok: false,
+                error: 'invalid_appearance',
+                message: 'invalid theme or accent',
+              });
+            }
+            session.appearance = { ui_theme: theme, ui_accent: accent };
+            return jsonRes(200, { ok: true, ui_theme: theme, ui_accent: accent });
           }
 
           if (method === 'GET' && pathOnly === '/api/accounts') {
@@ -1183,6 +1397,9 @@ export async function handleFixtureRequest(
               diskWarnPct: 'disk_warn_pct',
               diskFillWarnDays: 'disk_fill_warn_days',
               diskIoLatencyWarnMs: 'disk_io_latency_warn_ms',
+              chunkWritePressureEnabled: 'chunk_write_pressure_enabled',
+              chunkWriteGrowthChunks: 'chunk_write_growth_chunks',
+              chunkWriteSustainedScans: 'chunk_write_sustained_scans',
               backupStaleHours: 'backup_stale_hours',
               reportRetentionDays: 'report_retention_days',
               reportRetentionCount: 'report_retention_count',
@@ -1258,6 +1475,34 @@ export async function handleFixtureRequest(
               const digest = history[0] ?? null;
               return jsonRes(200, { ok: true, digest });
             }
+          }
+
+          if (method === 'GET' && pathOnly === '/api/soft-hang/dump') {
+            const u = new URL(url, 'http://127.0.0.1');
+            const file = u.searchParams.get('file') || 'hang-preview.txt';
+            const content = [
+              'WatchTower hang dump',
+              'phase=ticking',
+              'stall_seconds=48',
+              'captured_at=2026-08-02T00:00:45Z',
+              '',
+              '"Server thread" #29 prio=5 Id=29 RUNNABLE',
+              '  at net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:0)',
+              '  at net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:0)',
+              '  ... fixture preview stacks ...',
+              '',
+              '"watchtower-soft-hang" #88 prio=5 Id=88 TIMED_WAITING',
+              '  at java.base@21/java.lang.Thread.sleep(Native Method)',
+            ].join('\n');
+            return jsonRes(200, {
+              ok: true,
+              file,
+              path: `watchtower/hangs/${file}`,
+              content,
+              truncated: false,
+              size: content.length,
+              preview: true,
+            });
           }
 
           if (method === 'GET' && pathOnly === '/api/logs/content') {

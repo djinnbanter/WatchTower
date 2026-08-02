@@ -30,7 +30,7 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 | `/api/auth/totp/disable` | POST | `{ password, code }` |
 | `/api/auth/recovery/regenerate` | POST | `{ password, code }` — new recovery codes |
 
-Session JSON (`GET /api/auth/session` and login responses) includes `role` (`owner` / `admin` / `viewer`) when authenticated. When a Minecraft player is linked, it also includes `minecraft_uuid` and `minecraft_name`. Viewers get 403 `read_only_account` on every non-GET `/api/*` write except self-service routes such as `/api/accounts/me/minecraft`. Account-management routes need `owner` or return 403 `owner_required`. If auth failed to initialize, protected routes return 503 `auth_unavailable` (recovery: `/watchtower dashboard reset-password`).
+Session JSON (`GET /api/auth/session` and login responses) includes `role` (`owner` / `admin` / `viewer`) when authenticated. When a Minecraft player is linked, it also includes `minecraft_uuid` and `minecraft_name`. Appearance prefs (`ui_theme`, `ui_accent`) are included when set on the account. Viewers get 403 `read_only_account` on every non-GET `/api/*` write except self-service routes such as `/api/accounts/me/minecraft` and `/api/accounts/me/appearance`. Account-management routes need `owner` or return 403 `owner_required`. If auth failed to initialize, protected routes return 503 `auth_unavailable` (recovery: `/watchtower dashboard reset-password`).
 
 ---
 
@@ -42,6 +42,7 @@ Session JSON (`GET /api/auth/session` and login responses) includes `role` (`own
 | `/api/accounts` | POST | owner | `{ username, role }` → `{ ok, id, username, role, temp_password }` (temp password shown once) |
 | `/api/accounts/update` | POST | owner | `{ id, role?, disabled?, minecraft_uuid?, minecraft_name?, clear_minecraft? }` — role/disable ends sessions; Minecraft fields are optional |
 | `/api/accounts/me/minecraft` | POST | any signed-in | `{ uuid, name }` or `{ clear: true }` — link/unlink self only (viewers allowed) |
+| `/api/accounts/me/appearance` | PUT | any signed-in | `{ theme, accent }` — `theme`: `light`\|`dark`\|`black`\|`system`; `accent`: `signal`\|`amber`\|`teal`\|`violet`\|`rose`\|`green`\|`coral`\|`slate` (viewers allowed) |
 | `/api/accounts/reset-password` | POST | owner | `{ id, clear_2fa? }` → `{ ok, temp_password }`; ends that account’s sessions |
 | `/api/accounts/delete` | POST | owner | `{ id }` — refuses self-delete and last owner |
 | `/api/audit-log` | GET | owner or admin | `?limit=` (default 200, max 2000) → `{ entries, truncated, retention_days: 90, max_entries: 2000 }` |
@@ -232,6 +233,11 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | `/api/rules/get` | GET | `?id=` rule id or `packId/ruleId` (sanitized detail) |
 | `/api/rules/validate` | POST | Body YAML or `{ yaml }` → `{ valid, errors[] }` |
 | `/api/mods/scan` | POST | Force unified log scan + running mods → updates ops-cache; returns `{ scanned_at, mod_error_count, running_mod_count, mod_log_errors[], running_mods[], kubejs_failures[] }` |
+| `/api/mods/disable` | POST | Soft-disable top-level jar under `mods/` — `{ jar, confirm_world_risk? }` → rename to `*.jar.disabled` (admin+; `MOD_DISABLE_ENABLED`; 400 `world_risk_confirm_required` when high risk and confirm missing) |
+| `/api/mods/enable` | POST | Re-enable — `{ jar }` basename of `*.jar.disabled` (or `*.disabled`) → rename back to `*.jar` |
+| `/api/mods/configs` | GET | List files under `config/` (`files[]`: `path`, `size`, `mtime`, `has_backup`, `secret_hint`). With `?path=` — read one file (`content`, `mtime`, `parse_warnings[]`, `editor`: `form`\|`raw`, and `fields[]` when `editor=form`). Requires `MOD_CONFIG_EDIT_ENABLED` (default true); otherwise 403 |
+| `/api/mods/configs` | PUT | Save — `{ path, expected_mtime, content? }` or `{ path, expected_mtime, fields? }` → backup then write (admin+). Prefer `fields` for TOML form saves (server serializes). `409` on mtime conflict; max 512 KiB. Audit `config_saved` (path only) |
+| `/api/mods/configs/undo` | POST | `{ path }` — restore newest backup (admin+). Audit `config_undone` |
 | `/api/mods/tree` | GET | `?mod_id=` — nested dependency tree from latest report (`dependents` + `dependencies`, max depth 6) |
 | `/api/mods/forensics/status` | GET | Mod forensics index/status (`index.state`: `ready`\|`idle`\|`skipped`\|`error`; `config.mod_forensics_scan` / `corrupt_jar_walk`; stale cache reported without jar walk) |
 | `/api/mods/forensics/find-class` | POST | `{ class, include_nested? }` → owning jar matches (rate limit 10/min); builds cache on demand |
@@ -264,6 +270,10 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/backups/scan` | POST | Rescan backup inventory; persists `backups_live` in ops-cache |
+| `/api/backups/verify` | POST | Light integrity verify — `{ path }` under configured backup dirs; updates inventory `verify` (admin+) |
+| `/api/backups/test-restore` | POST | Start async extract under `watchtower/restore-verify/<id>/` — `{ path }` (`BACKUP_TEST_RESTORE_ENABLED`) |
+| `/api/backups/test-restore/status` | GET | Current test-restore job |
+| `/api/backups/test-restore/cleanup` | POST | Delete sandbox — `{ id? }` |
 | `/api/backups/dirs` | POST | `{ dirs: ["path"] }` — save paths + scan + `backups_live` |
 | `/api/backups/heartbeat` | POST | External backup webhook — requires `BACKUP_WEBHOOK_TOKEN`; Bearer or `X-Watchtower-Backup-Token` |
 | `/api/backups/external` | POST | External backup setup — session auth; `{ trackingEnabled?, trackingMode?, generateWebhookToken?, backupExternalMarker?, backupSuppressLocalMissing? }`. `trackingEnabled: false` writes `BACKUP_TRACKING_ENABLED=false`, clears external signals, and silences backup Issues/alerts (dirs kept). |

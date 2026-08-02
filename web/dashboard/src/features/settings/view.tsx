@@ -18,6 +18,8 @@ import { useCanWrite, useIsOwner, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { navigate, type RouteState } from '@/app/router';
 import { isFixturePreview } from '@/app/runtime';
 import { useSessionStore } from '@/app/session-store';
+import { AppearanceControls } from '@/app/appearance-controls';
+import '@/app/appearance-controls.css';
 import { LocalFolderSetup } from '@/features/backups/local-folder-setup';
 import { ExternalTrackingSetup } from '@/features/backups/external-tracking-setup';
 import { relaunchSetupWizard } from '@/features/wizard/persist';
@@ -44,12 +46,10 @@ const PANELS = [
 
 type PanelId = (typeof PANELS)[number]['id'];
 
-const CONF_PANELS: ReadonlySet<PanelId> = new Set(['general', 'monitoring', 'alerts', 'integrations']);
+const CONF_PANELS: ReadonlySet<PanelId> = new Set(['general', 'monitoring', 'alerts', 'integrations', 'backups']);
 
 /** Snake keys that participate in dirty tracking / Save. */
 const EDITABLE_KEYS = [
-  'lookback_hours',
-  'incremental',
   'update_check',
   'metrics_context_banner',
   'tps_warn',
@@ -67,6 +67,10 @@ const EDITABLE_KEYS = [
   'disk_warn_pct',
   'disk_fill_warn_days',
   'disk_io_latency_warn_ms',
+  'chunk_write_pressure_enabled',
+  'chunk_write_growth_chunks',
+  'chunk_write_sustained_scans',
+  'backup_stale_hours',
   'report_retention_days',
   'report_retention_count',
 ] as const;
@@ -92,8 +96,6 @@ function panelVisible(id: PanelId, canWrite: boolean, isOwner: boolean): boolean
 function toSettingsWritePayload(form: FormState): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   const map: Record<string, string> = {
-    lookback_hours: 'lookbackHours',
-    incremental: 'incremental',
     update_check: 'updateCheck',
     metrics_context_banner: 'metricsContextBanner',
     tps_warn: 'tpsWarn',
@@ -111,6 +113,10 @@ function toSettingsWritePayload(form: FormState): Record<string, unknown> {
     disk_warn_pct: 'diskWarnPct',
     disk_fill_warn_days: 'diskFillWarnDays',
     disk_io_latency_warn_ms: 'diskIoLatencyWarnMs',
+    chunk_write_pressure_enabled: 'chunkWritePressureEnabled',
+    chunk_write_growth_chunks: 'chunkWriteGrowthChunks',
+    chunk_write_sustained_scans: 'chunkWriteSustainedScans',
+    backup_stale_hours: 'backupStaleHours',
     report_retention_days: 'reportRetentionDays',
     report_retention_count: 'reportRetentionCount',
   };
@@ -471,6 +477,12 @@ export function PageView({ route }: { route: RouteState }) {
               />
             </div>
           </Section>
+          <Section
+            title="Appearance"
+            hint="Theme and accent sync to your signed-in account. Status colours (ok / warn / danger) stay the same."
+          >
+            <AppearanceControls idPrefix="settings-appearance" />
+          </Section>
           <Section title="Dashboard preferences" hint="Applies after Save — next page load for banners. Timezone applies immediately in this browser.">
             <div className="grid gap-3 md:grid-cols-2">
               <ToggleField
@@ -487,26 +499,6 @@ export function PageView({ route }: { route: RouteState }) {
               />
             </div>
             <TimezonePreferenceField />
-          </Section>
-          <Section
-            title="Reports (legacy)"
-            hint="Only for deep audits and Support compose — day-to-day Watching does not use these. NeoForge mod config may reset lookback/incremental on server restart."
-          >
-            <div className="grid gap-3 md:grid-cols-2">
-              <NumberField
-                label="Lookback window"
-                unit="hours"
-                hint="How far back a deep audit / Support facts pass looks (1–720)"
-                value={num(form.lookback_hours)}
-                onChange={(v) => set('lookback_hours', v)}
-              />
-              <ToggleField
-                label="Incremental reports"
-                hint="Only recompute what changed since the last deep audit"
-                value={bool(form.incremental)}
-                onChange={(v) => set('incremental', v)}
-              />
-            </div>
           </Section>
         </div>
       ) : null}
@@ -629,9 +621,18 @@ export function PageView({ route }: { route: RouteState }) {
       {panel === 'backups' ? (
         <Section
           title="Backups"
-          hint="Local folders are supported. Panel / cloud tracking is alpha and may not work on every host — each block has its own Save."
+          hint="Local folders are supported. Panel / cloud tracking is alpha and may not work on every host — folder blocks have their own Save; freshness uses Save changes above."
         >
           <div className="space-y-6">
+            <div className="grid gap-3 md:grid-cols-2">
+              <NumberField
+                label="Stale after"
+                unit="hours"
+                hint="Backups older than this count as Stale on the Backups page and raise a BACKUP_STALE Issue (default 24)"
+                value={num(form.backup_stale_hours) || 24}
+                onChange={(v) => set('backup_stale_hours', Math.max(1, Math.min(720, v)))}
+              />
+            </div>
             <LocalFolderSetup
               settingsData={form}
               onSaved={(dirs) => {
@@ -679,9 +680,35 @@ export function PageView({ route }: { route: RouteState }) {
               <NumberField
                 label="Disk write latency warning"
                 unit="ms"
-                hint="Warn when disk write await stays above this (typical 50)"
+                hint="Warn when disk write await stays above this (typical 50). Also used for pregen / chunk-save pressure."
                 value={num(form.disk_io_latency_warn_ms)}
                 onChange={(v) => set('disk_io_latency_warn_ms', v)}
+              />
+            </div>
+          </Section>
+          <Section
+            title="Chunk write / pregen"
+            hint="When write latency stays high or chunks grow too fast during pregen, Insights → World and Issues warn you. WatchTower cannot read JVM save-queue depth — latency is the signal."
+          >
+            <div className="grid gap-3 md:grid-cols-2">
+              <ToggleField
+                label="Chunk write pressure"
+                hint="Classify save backlog, pregen outrunning disk, and heavy chunk growth"
+                value={bool(form.chunk_write_pressure_enabled, true)}
+                onChange={(v) => set('chunk_write_pressure_enabled', v)}
+              />
+              <NumberField
+                label="Heavy growth threshold"
+                unit="chunks"
+                hint="Warn when loaded chunks jump by this many between scans while players are online (typical 48)"
+                value={num(form.chunk_write_growth_chunks, 48)}
+                onChange={(v) => set('chunk_write_growth_chunks', v)}
+              />
+              <NumberField
+                label="Sustained scans"
+                hint="How many ops scans in a row before raising an Issue (typical 3)"
+                value={num(form.chunk_write_sustained_scans, 3)}
+                onChange={(v) => set('chunk_write_sustained_scans', v)}
               />
             </div>
           </Section>

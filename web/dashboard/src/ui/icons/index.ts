@@ -84,6 +84,7 @@ import {
   Save as LucideSave,
   ScrollText as LucideScrollText,
   ShieldAlert as LucideShieldAlert,
+  Monitor as LucideMonitor,
   XCircle as LucideXCircle,
 } from 'lucide-react';
 
@@ -181,6 +182,7 @@ export const MinusCircle = LucideMinusCircle;
 export const Save = LucideSave;
 export const ScrollText = LucideScrollText;
 export const ShieldAlert = LucideShieldAlert;
+export const Monitor = LucideMonitor;
 export const XCircle = LucideXCircle;
 
 /** Kebab-case page registry names → icon components. */

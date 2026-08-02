@@ -1,0 +1,20 @@
+{
+  "files": {
+    "config/create-common.toml": {
+      "content": "# Create common config (preview fixture)\n[worldgen]\nmaxTrainLength = 32\nenableContraptions = true\n\n[kinetics]\nmaxRotationSpeed = 256\n",
+      "mtime": 1754000000
+    },
+    "config/example-with-secret.toml": {
+      "content": "# Example with a secret-looking key — list shows Secret badge; editor has real bytes\napi_token = \"preview-only-not-a-real-token\"\npassword = \"changeme\"\nenableFeature = true\n",
+      "mtime": 1754000100
+    },
+    "config/fml.toml": {
+      "content": "defaultConfigPath = \"defaultconfigs\"\ndisableConfigWatcher = false\nearlyWindowControl = \"\"\n",
+      "mtime": 1753999900
+    },
+    "config/neoforge-server.toml": {
+      "content": "[server]\nadvertiseDedicatedServerToLan = false\nremoveErroringBlockEntities = false\n",
+      "mtime": 1753999800
+    }
+  }
+}

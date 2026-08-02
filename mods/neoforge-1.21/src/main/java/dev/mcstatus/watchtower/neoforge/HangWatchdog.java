@@ -5,6 +5,7 @@ import com.google.gson.JsonNull;
 import dev.mcstatus.watchtower.ModReportConfig;
 import dev.mcstatus.watchtower.OpsScanService;
 import dev.mcstatus.watchtower.WatchtowerPaths;
+import dev.mcstatus.watchtower.core.analyze.HangDumpAnalyzer;
 import dev.mcstatus.watchtower.core.analyze.HangDumpWriter;
 import dev.mcstatus.watchtower.core.analyze.SoftHangDetector;
 import dev.mcstatus.watchtower.core.analyze.SoftHangThreshold;
@@ -15,6 +16,7 @@ import dev.mcstatus.watchtower.runtime.ModRuntime;
 import dev.mcstatus.watchtower.runtime.ServerContext;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -37,6 +39,7 @@ public final class HangWatchdog {
             new SoftHangDetector.PollState(Long.MIN_VALUE, false, 0L);
     private static volatile long lastRecoveredAtMs;
     private static volatile boolean dumpWrittenThisHang;
+    private static volatile HangDumpAnalyzer.Result lastAnalysis;
 
     private HangWatchdog() {
     }
@@ -58,6 +61,7 @@ public final class HangWatchdog {
         }
         pollState = new SoftHangDetector.PollState(Long.MIN_VALUE, false, 0L);
         dumpWrittenThisHang = false;
+        lastAnalysis = null;
         exec = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "watchtower-soft-hang");
             t.setDaemon(true);
@@ -83,6 +87,7 @@ public final class HangWatchdog {
         }
         pollState = new SoftHangDetector.PollState(Long.MIN_VALUE, false, 0L);
         dumpWrittenThisHang = false;
+        lastAnalysis = null;
     }
 
     static void poll(ServerContext server) throws Exception {
@@ -125,7 +130,17 @@ public final class HangWatchdog {
                     dumpWrittenThisHang = true;
                 }
             }
+            String dumpText = null;
+            if (dumpRel != null) {
+                try {
+                    dumpText = Files.readString(server.serverDirectory().resolve(dumpRel), StandardCharsets.UTF_8);
+                } catch (Exception ignored) {
+                    dumpText = null;
+                }
+            }
+            lastAnalysis = HangDumpAnalyzer.analyze(dumpText, d.phase());
             JsonObject peek = buildPeek(true, d, effective, maxTickMs, dumpRel, null);
+            putAnalysis(peek, lastAnalysis);
             OpsCacheWriter.applySoftHang(
                     WatchtowerPaths.opsCachePath(server),
                     WatchtowerPaths.statePath(server),
@@ -135,6 +150,7 @@ public final class HangWatchdog {
             lastRecoveredAtMs = nowMs;
             String dumpRel = dumpWrittenThisHang ? existingDumpHint(server) : null;
             JsonObject peek = buildPeek(false, d, effective, maxTickMs, dumpRel, Instant.ofEpochMilli(nowMs).toString());
+            putAnalysis(peek, lastAnalysis);
             OpsCacheWriter.applySoftHang(
                     WatchtowerPaths.opsCachePath(server),
                     WatchtowerPaths.statePath(server),
@@ -142,13 +158,31 @@ public final class HangWatchdog {
             OpsScanService.refreshIssuesLive(server);
             dumpWrittenThisHang = false;
         } else if (d.active()) {
-            // Refresh stall_seconds while hung (no new dump).
+            // Refresh stall_seconds while hung (no new dump); preserve prior analysis.
             JsonObject peek = buildPeek(true, d, effective, maxTickMs,
                     dumpWrittenThisHang ? existingDumpHint(server) : null, null);
+            putAnalysis(peek, lastAnalysis);
             OpsCacheWriter.applySoftHang(
                     WatchtowerPaths.opsCachePath(server),
                     WatchtowerPaths.statePath(server),
                     peek);
+        }
+    }
+
+    private static void putAnalysis(JsonObject o, HangDumpAnalyzer.Result r) {
+        if (r == null) {
+            return;
+        }
+        o.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE, r.likelyCause());
+        o.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE_SUMMARY, r.likelyCauseSummary());
+        o.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE_CONFIDENCE, r.likelyCauseConfidence());
+        if (r.suspectMod() != null && !r.suspectMod().isBlank()) {
+            o.addProperty(OpsCacheSchema.SOFT_HANG_SUSPECT_MOD, r.suspectMod());
+            o.addProperty(OpsCacheSchema.SOFT_HANG_SUSPECT_MOD_NOTE,
+                    r.suspectModNote() != null ? r.suspectModNote() : HangDumpAnalyzer.NOTE_HINT);
+        } else {
+            o.add(OpsCacheSchema.SOFT_HANG_SUSPECT_MOD, JsonNull.INSTANCE);
+            o.add(OpsCacheSchema.SOFT_HANG_SUSPECT_MOD_NOTE, JsonNull.INSTANCE);
         }
     }
 

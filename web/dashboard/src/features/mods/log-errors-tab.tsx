@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { str } from '@/lib/utils';
 import { acksMapFromResponse, isIssueAcked } from '@/features/issues/helpers';
 import { CheckCircle2, ChevronRight } from '@/ui/icons';
@@ -9,8 +9,6 @@ import { Button, EmptyState, StatusPill } from '@/ui/patterns';
 import { ModsSearch } from './components';
 import { mergeLogErrorRows } from './log-errors';
 import type { LogErrorRow } from './types';
-
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 
 type LogErrorBand = 'active' | 'reviewed';
 

@@ -202,6 +202,28 @@ class IssuesLiveEvaluatorsTest {
     }
 
     @Test
+    void fromSoftHangIncludesLikelyCauseInMessageAndSteps() {
+        JsonObject cache = new JsonObject();
+        JsonObject soft = new JsonObject();
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_ACTIVE, true);
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_PHASE, "ticking");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_STALL_SECONDS, 48);
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_STARTED_AT, "2026-08-02T00:00:00Z");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE, "entity_tick");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE_SUMMARY, "Looks stuck while ticking entities");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE_CONFIDENCE, "medium");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_SUSPECT_MOD, "example");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_DUMP_PATH, "watchtower/hangs/hang-x.txt");
+        cache.add(OpsCacheSchema.SOFT_HANG, soft);
+        IssuesLiveRecord r = IssuesLiveEvaluators.fromSoftHang(cache).getFirst();
+        assertTrue(r.message().contains("Looks stuck while ticking entities"));
+        assertFalse(r.message().contains("example"));
+        assertTrue(r.fixSteps().stream().anyMatch(s ->
+                s.contains("entity") || s.contains("farm") || s.contains("mob")));
+        assertTrue(r.fixSteps().stream().anyMatch(s -> s.contains("example") && s.contains("lead")));
+    }
+
+    @Test
     void evaluateAndMergeResolvesSoftHangWhenInactive() {
         String t0 = "2026-08-02T00:00:00Z";
         IssuesLiveRecord open = IssuesLiveRecord.builder()
@@ -397,6 +419,29 @@ class IssuesLiveEvaluatorsTest {
         assertEquals("warning", rows.get(0).severity());
         assertTrue(rows.get(0).message().contains("Item storm"));
         assertTrue(IssuesLiveEvaluators.fromWorldPressure(cache, false).isEmpty());
+    }
+
+    @Test
+    void fromWorldPressureMapsPregenOutrunningDisk() {
+        JsonObject cache = new JsonObject();
+        JsonObject wp = new JsonObject();
+        JsonArray classifiers = new JsonArray();
+        JsonObject c = new JsonObject();
+        c.addProperty("kind", "pregen_outrunning_disk");
+        c.addProperty("dimension", "minecraft:overworld");
+        c.addProperty("severity", "warning");
+        c.addProperty("headline", "Pregen is outrunning the disk");
+        c.addProperty("detail", "Chunky active with high write latency");
+        JsonArray steps = new JsonArray();
+        steps.add("Pause pregen and wait for the disk to catch up.");
+        c.add("next_steps", steps);
+        classifiers.add(c);
+        wp.add(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS, classifiers);
+        cache.add(OpsCacheSchema.WORLD_PRESSURE, wp);
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromWorldPressure(cache, true);
+        assertEquals(1, rows.size());
+        assertEquals("WORLD_PRESSURE:PREGEN_OUTRUNNING_DISK:MINECRAFT:OVERWORLD", rows.get(0).normalizedKey());
+        assertTrue(rows.get(0).fixSteps().get(0).toLowerCase().contains("pregen"));
     }
 
     @Test

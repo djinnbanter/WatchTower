@@ -71,7 +71,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       const previewRole = new URLSearchParams(window.location.search).get('role') ?? 'owner';
       set({
         gate: 'none',
-        session: { authenticated: true, username: 'admin', preview: true, role: previewRole },
+        session: { authenticated: true, fully_authenticated: true, username: 'admin', preview: true, role: previewRole },
         bootPhase: 'loading',
       });
       await get().resumeAfterAuth();

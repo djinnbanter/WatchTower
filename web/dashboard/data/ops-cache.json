@@ -5,8 +5,35 @@
   "ops_cache_seq": 4,
   "activity": {
     "scanned_at": "2026-08-01T21:23:21.780Z",
-    "new_count": 9,
+    "new_count": 15,
     "events": [
+      {
+        "time": "2026-08-01T21:20:51.780Z",
+        "type": "mod_jar_added",
+        "detail": "create-1.21.1-6.0.0.jar",
+        "source": "scan",
+        "path": "create-1.21.1-6.0.0.jar"
+      },
+      {
+        "time": "2026-08-01T21:19:51.780Z",
+        "type": "config_changed",
+        "detail": "config/create-common.toml",
+        "source": "scan",
+        "path": "config/create-common.toml"
+      },
+      {
+        "time": "2026-08-01T21:18:51.780Z",
+        "type": "mod_disabled",
+        "detail": "dimdoors-1.21.jar → dimdoors-1.21.jar.disabled",
+        "source": "dashboard",
+        "path": "dimdoors-1.21.jar.disabled"
+      },
+      {
+        "time": "2026-08-01T21:17:51.780Z",
+        "type": "restart_scheduled",
+        "detail": "Server will restart in 5 minutes",
+        "source": "scan"
+      },
       {
         "time": "2026-08-01T21:15:51.780Z",
         "type": "lag_incident",
@@ -20,6 +47,12 @@
         "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
         "source": "scan",
         "ms_behind": 5200
+      },
+      {
+        "time": "2026-08-01T21:15:51.780Z",
+        "type": "backup_job",
+        "detail": "[Crafty] Starting backup for Example Server",
+        "source": "scan"
       },
       {
         "time": "2026-08-01T21:13:51.780Z",
@@ -48,16 +81,25 @@
         "player": "Steve"
       },
       {
-        "time": "2026-08-01T21:15:51.780Z",
-        "type": "backup_job",
-        "detail": "[Crafty] Starting backup for Example Server",
-        "source": "scan"
+        "time": "2026-08-01T20:55:51.780Z",
+        "type": "mod_jar_updated",
+        "detail": "jei-1.21.1-neoforge-19.21.0.jar",
+        "source": "scan",
+        "path": "jei-1.21.1-neoforge-19.21.0.jar"
       },
       {
-        "time": "2026-08-01T21:17:51.780Z",
-        "type": "restart_scheduled",
-        "detail": "Server will restart in 5 minutes",
-        "source": "scan"
+        "time": "2026-08-01T20:50:51.780Z",
+        "type": "mod_jar_removed",
+        "detail": "old-debug-1.0.jar",
+        "source": "scan",
+        "path": "old-debug-1.0.jar"
+      },
+      {
+        "time": "2026-08-01T20:45:51.780Z",
+        "type": "mod_enabled",
+        "detail": "appleskin-neoforge-mc1.21-3.0.9.jar.disabled → appleskin-neoforge-mc1.21-3.0.9.jar",
+        "source": "dashboard",
+        "path": "appleskin-neoforge-mc1.21-3.0.9.jar"
       },
       {
         "time": "2026-08-01T20:38:51.780Z",
@@ -1262,13 +1304,14 @@
       "last_seen": "2026-08-02T00:00:48Z",
       "evidence_fingerprint": "soft_hang:2026-08-02T00:00:00Z",
       "source": "ops",
-      "message": "Server tick frozen for 48s (phase: ticking)",
+      "message": "Server tick frozen for 48s (phase: ticking) — Looks stuck while ticking entities",
       "evidence_refs": [
         "ops:soft_hang"
       ],
       "fix_steps": [
-        "Check whether a world save or pregen is stuck.",
-        "If hang dumps are enabled, open the file under watchtower/hangs/.",
+        "Check dense entity farms, mob caps, or entity-heavy mods.",
+        "Hang dump hint points at examplelag — treat as a lead, not proof.",
+        "Open the hang dump under watchtower/hangs/.",
         "Build a Support pack for Discord or a bug report.",
         "WatchTower will not restart the server for you."
       ]
@@ -1418,6 +1461,25 @@
         "Fly to the busiest chunks in Overworld and check hoppers/void filters on item farms",
         "Look for broken item vacuum or overflow near forced chunks",
         "Capture a Spark profile and open World \u2192 busy chunks for a precise hotspot"
+      ]
+    },
+    {
+      "id": "WORLD_PRESSURE:pregen_outrunning_disk:minecraft:overworld",
+      "key": "WORLD_PRESSURE:pregen_outrunning_disk:minecraft:overworld",
+      "severity": "warning",
+      "status": "open",
+      "first_seen": "2026-08-01T21:20:51.780Z",
+      "last_seen": "2026-08-01T21:23:51.780Z",
+      "evidence_fingerprint": "world_pressure:pregen_outrunning_disk:minecraft:overworld",
+      "source": "ops",
+      "message": "Pregen is outrunning the disk \u2014 Chunky pregen is active while disk write latency is 120 ms \u2014 the disk cannot keep up.",
+      "evidence_refs": [
+        "ops:world_pressure"
+      ],
+      "fix_steps": [
+        "Pause pregen and let the disk catch up.",
+        "Wait for chunk saves to finish before making more world changes.",
+        "Do not restart mid-flush when write latency is this high."
       ]
     },
     {
@@ -1760,10 +1822,45 @@
           "Look for broken item vacuum or overflow near forced chunks",
           "Capture a Spark profile and open World \u2192 busy chunks for a precise hotspot"
         ]
+      },
+      {
+        "kind": "pregen_outrunning_disk",
+        "dimension": "minecraft:overworld",
+        "severity": "warning",
+        "sustained_scans": 3,
+        "headline": "Pregen is outrunning the disk",
+        "detail": "Chunky pregen is active while disk write latency is 120 ms — the disk cannot keep up.",
+        "evidence": {
+          "write_await_ms": 120,
+          "write_warn_ms": 50,
+          "write_mb_s": 15,
+          "pregen_active": true,
+          "pregen_label": "Chunky",
+          "pregen_rate": "120/s"
+        },
+        "next_steps": [
+          "Pause pregen and let the disk catch up.",
+          "Wait for chunk saves to finish before making more world changes.",
+          "Do not restart mid-flush when write latency is this high."
+        ]
       }
     ],
     "streaks": {
       "item_storm:minecraft:overworld": 4
+    },
+    "chunk_write_streaks": {
+      "pregen_outrunning_disk:minecraft:overworld": 3
+    },
+    "meters": {
+      "write_await_ms": 120,
+      "write_warn_ms": 50,
+      "write_mb_s": 15,
+      "pregen_active": true,
+      "pregen_label": "Chunky",
+      "pregen_rate": "120/s",
+      "chunk_growth_label": "+40",
+      "growth_hot_chunks": 48,
+      "prev_loaded_chunks": 688
     }
   },
   "issues_live_updated_at": "2026-08-01T21:23:51.780Z",
@@ -1776,7 +1873,12 @@
     "started_at": "2026-08-02T00:00:00Z",
     "last_tick_at": "2026-08-02T00:00:00Z",
     "tick_count": 1200,
-    "dump_path": null,
-    "recovered_at": null
+    "dump_path": "watchtower/hangs/hang-preview.txt",
+    "recovered_at": null,
+    "likely_cause": "entity_tick",
+    "likely_cause_summary": "Looks stuck while ticking entities",
+    "likely_cause_confidence": "medium",
+    "suspect_mod": "examplelag",
+    "suspect_mod_note": "Hint from the hang dump — not proof."
   }
 }

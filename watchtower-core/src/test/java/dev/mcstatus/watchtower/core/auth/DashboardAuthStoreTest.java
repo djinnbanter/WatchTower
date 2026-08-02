@@ -386,6 +386,33 @@ class DashboardAuthStoreTest {
                 () -> store.setMinecraftLink(marcoId, uuid, "Notch"));
     }
 
+    @Test
+    void updateAppearancePersistsThemeAndAccent() throws Exception {
+        DashboardAuthStore store = freshStoreWithOwner();
+        String ownerId = store.ownerAccount().id;
+        store.updateAppearance(ownerId, "black", "teal");
+        DashboardAuthRecord r = store.findById(ownerId);
+        assertEquals("black", r.ui_theme);
+        assertEquals("teal", r.ui_accent);
+
+        // Reload from disk
+        AuthKeyStore keys = new AuthKeyStore(tempDir.resolve(".auth-key"));
+        DashboardAuthStore reloaded = new DashboardAuthStore(tempDir.resolve("dashboard-auth.json"), keys);
+        DashboardAuthRecord again = reloaded.findById(ownerId);
+        assertEquals("black", again.ui_theme);
+        assertEquals("teal", again.ui_accent);
+    }
+
+    @Test
+    void updateAppearanceRejectsInvalid() throws Exception {
+        DashboardAuthStore store = freshStoreWithOwner();
+        String ownerId = store.ownerAccount().id;
+        assertThrows(IllegalArgumentException.class,
+                () -> store.updateAppearance(ownerId, "neon", "signal"));
+        assertThrows(IllegalArgumentException.class,
+                () -> store.updateAppearance(ownerId, "dark", "hotpink"));
+    }
+
     private DashboardAuthStore freshStoreWithOwner() throws Exception {
         Path authPath = tempDir.resolve("dashboard-auth.json");
         AuthKeyStore keys = new AuthKeyStore(tempDir.resolve(".auth-key"));

@@ -65,6 +65,7 @@ public final class OpsCacheSchema {
     public static final String WORLD_PRESSURE_DIMENSIONS = "dimensions";
     public static final String WORLD_PRESSURE_CLASSIFIERS = "classifiers";
     public static final String WORLD_PRESSURE_STREAKS = "streaks";
+    public static final String WORLD_PRESSURE_METERS = "meters";
 
     public static final String RIGHT_NOW_UPDATED_AT = "updated_at";
     public static final String RIGHT_NOW_SIGNALS = "signals";
@@ -111,6 +112,11 @@ public final class OpsCacheSchema {
     public static final String SOFT_HANG_TICK_COUNT = "tick_count";
     public static final String SOFT_HANG_DUMP_PATH = "dump_path";
     public static final String SOFT_HANG_RECOVERED_AT = "recovered_at";
+    public static final String SOFT_HANG_LIKELY_CAUSE = "likely_cause";
+    public static final String SOFT_HANG_LIKELY_CAUSE_SUMMARY = "likely_cause_summary";
+    public static final String SOFT_HANG_LIKELY_CAUSE_CONFIDENCE = "likely_cause_confidence";
+    public static final String SOFT_HANG_SUSPECT_MOD = "suspect_mod";
+    public static final String SOFT_HANG_SUSPECT_MOD_NOTE = "suspect_mod_note";
 
     public static final String ENTRY_FILE = "file";
     public static final String ENTRY_MTIME = "mtime";

@@ -37,6 +37,7 @@ import dev.mcstatus.watchtower.core.analyze.SafeRestartAdvisor;
 import dev.mcstatus.watchtower.core.analyze.ModRestartNudge;
 import dev.mcstatus.watchtower.core.analyze.WorldRiskAnalyzer;
 import dev.mcstatus.watchtower.core.collect.ModJarDisable;
+import dev.mcstatus.watchtower.core.config.ModConfigService;
 import dev.mcstatus.watchtower.core.collect.ModsInventoryDiff;
 import dev.mcstatus.watchtower.core.collect.ServerPropertiesReader;
 import dev.mcstatus.watchtower.core.analyze.ScorecardBuilder;
@@ -137,8 +138,11 @@ public final class DashboardHttpServer {
             "/api/accounts/update",
             "/api/accounts/delete",
             "/api/accounts/reset-password",
+            "/api/accounts/me/appearance",
             "/api/mods/disable",
             "/api/mods/enable",
+            "/api/mods/configs",
+            "/api/mods/configs/undo",
             "/api/backups/verify",
             "/api/backups/test-restore",
             "/api/backups/test-restore/cleanup");
@@ -197,6 +201,7 @@ public final class DashboardHttpServer {
             server.createContext("/api/incidents/get", this::handleIncidentGet);
             server.createContext("/api/incidents/pin", this::handleIncidentPin);
             server.createContext("/api/issues/peek", this::handleIssuesPeek);
+            server.createContext("/api/soft-hang/dump", this::handleSoftHangDump);
             server.createContext("/api/issues/acks", this::handleIssueAcks);
             server.createContext("/api/issues/ack", this::handleIssueAck);
             server.createContext("/api/issues/acknowledge-all", this::handleIssueAckAll);
@@ -231,6 +236,8 @@ public final class DashboardHttpServer {
             server.createContext("/api/mods/forensics/find-package", this::handleModsForensicsFindPackage);
             server.createContext("/api/mods/forensics/scan-corrupt", this::handleModsForensicsScanCorrupt);
             server.createContext("/api/mods/forensics/config-health", this::handleModsForensicsConfigHealth);
+            server.createContext("/api/mods/configs", this::handleModsConfigs);
+            server.createContext("/api/mods/configs/undo", this::handleModsConfigsUndo);
             server.createContext("/api/ops-cache", this::handleOpsCache);
             server.createContext("/api/client-mods/ignores", this::handleClientModIgnores);
             server.createContext("/api/client-mods/ignore", this::handleClientModIgnore);
@@ -266,6 +273,7 @@ public final class DashboardHttpServer {
             server.createContext("/api/accounts/reset-password", this::handleAccountResetPassword);
             server.createContext("/api/accounts/delete", this::handleAccountDelete);
             server.createContext("/api/accounts/me/minecraft", this::handleMyMinecraftLink);
+            server.createContext("/api/accounts/me/appearance", this::handleMyAppearance);
             server.createContext("/api/audit-log", this::handleAuditLog);
             server.setExecutor(Executors.newCachedThreadPool(r -> {
                 Thread t = new Thread(r, "watchtower-http");
@@ -451,6 +459,11 @@ public final class DashboardHttpServer {
     private void handleMyMinecraftLink(HttpExchange ex) throws IOException {
         // Self-service: viewers may link their own skin (bypass write gate).
         DashboardAuthHttp.handleMyMinecraftLink(ex);
+    }
+
+    private void handleMyAppearance(HttpExchange ex) throws IOException {
+        // Self-service: any signed-in role may sync their own theme/accent.
+        DashboardAuthHttp.handleMyAppearance(ex);
     }
 
     private void handleAuditLog(HttpExchange ex) throws IOException {
@@ -719,6 +732,21 @@ public final class DashboardHttpServer {
                     text = WatchtowerConfWriter.upsertLine(text, "DISK_IO_LATENCY_WARN_MS",
                             String.valueOf(latencyMs));
                 }
+                if (json.has("chunkWritePressureEnabled") && !json.get("chunkWritePressureEnabled").isJsonNull()) {
+                    boolean enabled = json.get("chunkWritePressureEnabled").getAsBoolean();
+                    text = WatchtowerConfWriter.upsertLine(text, "CHUNK_WRITE_PRESSURE_ENABLED",
+                            enabled ? "true" : "false");
+                }
+                if (json.has("chunkWriteGrowthChunks") && !json.get("chunkWriteGrowthChunks").isJsonNull()) {
+                    int growth = Math.max(8, Math.min(2000, json.get("chunkWriteGrowthChunks").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "CHUNK_WRITE_GROWTH_CHUNKS",
+                            String.valueOf(growth));
+                }
+                if (json.has("chunkWriteSustainedScans") && !json.get("chunkWriteSustainedScans").isJsonNull()) {
+                    int sustained = Math.max(1, Math.min(30, json.get("chunkWriteSustainedScans").getAsInt()));
+                    text = WatchtowerConfWriter.upsertLine(text, "CHUNK_WRITE_SUSTAINED_SCANS",
+                            String.valueOf(sustained));
+                }
                 if (json.has("opsPollSec") && !json.get("opsPollSec").isJsonNull()) {
                     int opsPoll = Math.max(15, Math.min(3600, json.get("opsPollSec").getAsInt()));
                     text = WatchtowerConfWriter.upsertLine(text, "OPS_POLL_SEC", String.valueOf(opsPoll));
@@ -752,6 +780,9 @@ public final class DashboardHttpServer {
                         || json.has("diskFillWarnDays")
                         || json.has("backupStaleHours")
                         || json.has("diskIoLatencyWarnMs")
+                        || json.has("chunkWritePressureEnabled")
+                        || json.has("chunkWriteGrowthChunks")
+                        || json.has("chunkWriteSustainedScans")
                         || json.has("opsPollSec")
                         || json.has("opsLogScanSec")
                         || json.has("reportRetentionDays")
@@ -904,6 +935,12 @@ public final class DashboardHttpServer {
                 WatchtowerConfWriter.readInt(map, "BACKUP_STALE_HOURS", config.backupStaleHours()));
         out.addProperty("disk_io_latency_warn_ms",
                 WatchtowerConfWriter.readDouble(map, "DISK_IO_LATENCY_WARN_MS", config.diskIoLatencyWarnMs()));
+        out.addProperty("chunk_write_pressure_enabled",
+                WatchtowerConfWriter.readBool(map, "CHUNK_WRITE_PRESSURE_ENABLED", config.chunkWritePressureEnabled()));
+        out.addProperty("chunk_write_growth_chunks",
+                WatchtowerConfWriter.readInt(map, "CHUNK_WRITE_GROWTH_CHUNKS", config.chunkWriteGrowthChunks()));
+        out.addProperty("chunk_write_sustained_scans",
+                WatchtowerConfWriter.readInt(map, "CHUNK_WRITE_SUSTAINED_SCANS", config.chunkWriteSustainedScans()));
         out.addProperty("metrics_context_banner",
                 WatchtowerConfWriter.readBool(map, "METRICS_CONTEXT_BANNER", config.metricsContextBanner()));
         out.addProperty("update_check",
@@ -3776,6 +3813,176 @@ public final class DashboardHttpServer {
         }
     }
 
+    private void handleModsConfigs(HttpExchange ex) throws IOException {
+        String method = ex.getRequestMethod();
+        if (!"GET".equalsIgnoreCase(method) && !"PUT".equalsIgnoreCase(method)) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        ReportConfig config = ModReportConfig.forServer(serverContext);
+        if (!config.modConfigEditEnabled()) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", "mod_config_edit_disabled");
+            err.addProperty("message", "Config editing is disabled (MOD_CONFIG_EDIT_ENABLED=false)");
+            sendJson(ex, 403, err);
+            return;
+        }
+        Path serverDir = serverContext.serverDirectory();
+        Path watchtowerDir = WatchtowerPaths.watchtowerRoot(serverContext);
+        try {
+            if ("GET".equalsIgnoreCase(method)) {
+                String pathParam = parseQueryParam(ex.getRequestURI().getQuery(), "path");
+                if (pathParam != null && !pathParam.isBlank()) {
+                    String decoded = URLDecoder.decode(pathParam, StandardCharsets.UTF_8);
+                    sendJson(ex, 200, ModConfigService.read(serverDir, decoded));
+                    return;
+                }
+                JsonObject out = new JsonObject();
+                JsonArray files = new JsonArray();
+                for (JsonObject row : ModConfigService.list(serverDir, watchtowerDir)) {
+                    files.add(row);
+                }
+                out.add("files", files);
+                sendJson(ex, 200, out);
+                return;
+            }
+            // PUT
+            JsonObject body;
+            try {
+                body = GSON.fromJson(new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
+            } catch (Exception e) {
+                send(ex, 400, "text/plain", "Invalid JSON");
+                return;
+            }
+            if (body == null || !body.has("path") || body.get("path").isJsonNull()) {
+                send(ex, 400, "text/plain", "path required");
+                return;
+            }
+            if (!body.has("expected_mtime") || body.get("expected_mtime").isJsonNull()) {
+                send(ex, 400, "text/plain", "expected_mtime required");
+                return;
+            }
+            String path = body.get("path").getAsString().trim();
+            long expectedMtime = body.get("expected_mtime").getAsLong();
+            JsonObject result;
+            if (body.has("fields") && body.get("fields").isJsonArray()) {
+                result = ModConfigService.saveFields(
+                        serverDir, watchtowerDir, path, body.getAsJsonArray("fields"), expectedMtime);
+            } else if (body.has("content") && !body.get("content").isJsonNull()) {
+                String content = body.get("content").getAsString();
+                result = ModConfigService.save(serverDir, watchtowerDir, path, content, expectedMtime);
+            } else {
+                send(ex, 400, "text/plain", "content or fields required");
+                return;
+            }
+            DashboardAudit.record("config_saved", DashboardAuthHttp.sessionOf(ex), path, path,
+                    DashboardAuthHttp.clientIp(ex));
+            sendJson(ex, 200, result);
+        } catch (ModConfigService.ConflictException e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", "mtime_conflict");
+            err.addProperty("message", e.getMessage() != null ? e.getMessage() : "file changed on disk");
+            sendJson(ex, 409, err);
+        } catch (ModConfigService.OversizeException e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", "oversize");
+            err.addProperty("message", e.getMessage() != null ? e.getMessage() : "file too large");
+            sendJson(ex, 413, err);
+        } catch (IllegalArgumentException e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", "bad_path");
+            err.addProperty("message", e.getMessage() != null ? e.getMessage() : "invalid path");
+            sendJson(ex, 400, err);
+        } catch (IOException e) {
+            String msg = e.getMessage() != null ? e.getMessage() : "config io failed";
+            int code = msg.startsWith("not found") ? 404 : 500;
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", code == 404 ? "not_found" : "io_error");
+            err.addProperty("message", msg);
+            sendJson(ex, code, err);
+        } catch (Exception e) {
+            ModRuntime.logger().warn("Mods configs failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "configs failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
+    private void handleModsConfigsUndo(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        ReportConfig config = ModReportConfig.forServer(serverContext);
+        if (!config.modConfigEditEnabled()) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", "mod_config_edit_disabled");
+            err.addProperty("message", "Config editing is disabled (MOD_CONFIG_EDIT_ENABLED=false)");
+            sendJson(ex, 403, err);
+            return;
+        }
+        JsonObject body;
+        try {
+            body = GSON.fromJson(new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
+        } catch (Exception e) {
+            send(ex, 400, "text/plain", "Invalid JSON");
+            return;
+        }
+        if (body == null || !body.has("path") || body.get("path").isJsonNull()) {
+            send(ex, 400, "text/plain", "path required");
+            return;
+        }
+        String path = body.get("path").getAsString().trim();
+        try {
+            JsonObject result = ModConfigService.undo(
+                    serverContext.serverDirectory(),
+                    WatchtowerPaths.watchtowerRoot(serverContext),
+                    path);
+            DashboardAudit.record("config_undone", DashboardAuthHttp.sessionOf(ex), path, path,
+                    DashboardAuthHttp.clientIp(ex));
+            sendJson(ex, 200, result);
+        } catch (IllegalArgumentException e) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", "bad_path");
+            err.addProperty("message", e.getMessage() != null ? e.getMessage() : "invalid path");
+            sendJson(ex, 400, err);
+        } catch (IOException e) {
+            String msg = e.getMessage() != null ? e.getMessage() : "undo failed";
+            int code = msg.startsWith("no backup") ? 404 : 500;
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", code == 404 ? "no_backup" : "io_error");
+            err.addProperty("message", msg);
+            sendJson(ex, code, err);
+        } catch (Exception e) {
+            ModRuntime.logger().warn("Mods configs undo failed: {}", e.toString());
+            JsonObject err = new JsonObject();
+            err.addProperty("error", e.getMessage() != null ? e.getMessage() : "undo failed");
+            sendJson(ex, 500, err);
+        }
+    }
+
     private boolean allowForensicsFind(HttpExchange ex) {
         String ip = "unknown";
         try {
@@ -6518,6 +6725,77 @@ public final class DashboardHttpServer {
         out.addProperty("truncated", truncated);
         out.addProperty("size", size);
         out.addProperty("lines", emitted);
+        sendJson(ex, 200, out);
+    }
+
+    private void handleSoftHangDump(HttpExchange ex) throws IOException {
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) {
+            send(ex, 405, "text/plain", "Method not allowed");
+            return;
+        }
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        if (serverContext == null) {
+            send(ex, 503, "text/plain", "Server not ready");
+            return;
+        }
+        String file = null;
+        String q = ex.getRequestURI().getQuery();
+        if (q != null) {
+            for (String part : q.split("&")) {
+                if (part.startsWith("file=")) {
+                    file = URLDecoder.decode(part.substring(5), StandardCharsets.UTF_8);
+                }
+            }
+        }
+        Path hangsDir = serverContext.serverDirectory().resolve("watchtower").resolve("hangs");
+        Path target = null;
+        if (file != null && !file.isBlank()) {
+            String bare = Path.of(file).getFileName().toString();
+            if (bare.contains("..") || bare.contains("/") || bare.contains("\\")) {
+                send(ex, 400, "text/plain", "Invalid file");
+                return;
+            }
+            if (!(bare.endsWith(".txt") || bare.endsWith(".log"))) {
+                send(ex, 400, "text/plain", "Invalid file type");
+                return;
+            }
+            target = hangsDir.resolve(bare);
+        } else if (Files.isDirectory(hangsDir)) {
+            try (var stream = Files.list(hangsDir)) {
+                target = stream
+                        .filter(p -> {
+                            String n = p.getFileName().toString();
+                            return Files.isRegularFile(p) && (n.endsWith(".txt") || n.endsWith(".log"));
+                        })
+                        .max((a, b) -> {
+                            try {
+                                return Files.getLastModifiedTime(a).compareTo(Files.getLastModifiedTime(b));
+                            } catch (Exception e) {
+                                return 0;
+                            }
+                        })
+                        .orElse(null);
+            }
+        }
+        if (target == null || !Files.isRegularFile(target)) {
+            send(ex, 404, "text/plain", "Hang dump not found");
+            return;
+        }
+        final int maxChars = 256 * 1024;
+        String raw = Files.readString(target, StandardCharsets.UTF_8);
+        boolean truncated = raw.length() > maxChars;
+        if (truncated) {
+            raw = raw.substring(0, maxChars);
+        }
+        JsonObject out = new JsonObject();
+        out.addProperty("ok", true);
+        out.addProperty("file", target.getFileName().toString());
+        out.addProperty("path", "watchtower/hangs/" + target.getFileName());
+        out.addProperty("content", raw);
+        out.addProperty("truncated", truncated);
+        out.addProperty("size", Files.size(target));
         sendJson(ex, 200, out);
     }
 

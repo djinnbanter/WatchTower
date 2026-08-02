@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { navigate } from '@/app/router';
 import { asRecord, num, str } from '@/lib/utils';
 import { Button, EmptyState, StatusPill } from '@/ui/patterns';
@@ -18,7 +18,6 @@ import { modIconUrl } from './modrinth';
 import { matchesCatalogFilter, modDisplayName } from './side';
 import type { BadgeMaps, CatalogFilter, CatalogRow, CatalogSort } from './types';
 
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 const VIRTUALIZE_THRESHOLD = 50;
 const CATALOG_ROW_ESTIMATE = 56;
 

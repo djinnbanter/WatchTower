@@ -49,9 +49,11 @@ PANEL=auto
 # Advisory only — never starts or schedules a restart.
 # SILENT_FAIL_DETECT_ENABLED=true
 # WORLD_PRESSURE_ENABLED=true
+# CHUNK_WRITE_PRESSURE_ENABLED=true
 # JOIN_CLINIC_ENABLED=true
 # Soft jar disable/enable + world-risk badges (1.1.19)
 # MOD_DISABLE_ENABLED=true
+# MOD_CONFIG_EDIT_ENABLED=true
 # WORLD_RISK_ENABLED=true
 # Per-dimension entity/chunk census + farm/chunk-loader advice (read-only; never kills entities)
 # Surfaces KubeJS / CraftTweaker / datapack /reload silent fails as Issues (no auto-edit).

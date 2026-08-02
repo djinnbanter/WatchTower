@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.collect.CollectSupport;
 import dev.mcstatus.watchtower.core.collect.LogPatterns;
 import dev.mcstatus.watchtower.core.collect.ModLogAnalyzer;
+import dev.mcstatus.watchtower.core.collect.JoinRejectionSignatures;
+import dev.mcstatus.watchtower.core.collect.SilentFailSignatures;
 import dev.mcstatus.watchtower.core.report.StateManager;
 
 import java.io.IOException;
@@ -26,7 +28,7 @@ import java.util.regex.Matcher;
  */
 public final class OpsLogTailScanner {
 
-    public static final int MAX_LEDGER_EVENTS = 500;
+    public static final int MAX_LEDGER_EVENTS = 1500;
     public static final int DEFAULT_TAIL_LINES = 200;
     public static final int MAX_BYTES_PER_SCAN = 4 * 1024 * 1024;
 
@@ -36,6 +38,8 @@ public final class OpsLogTailScanner {
             List<JsonObject> activityEvents,
             JsonArray modLogErrors,
             List<JsonObject> kubejsFailures,
+            List<JsonObject> silentFails,
+            List<JsonObject> joinRejections,
             List<JsonObject> backgroundJobs,
             JsonObject updatedOffset,
             JsonObject context,
@@ -82,6 +86,8 @@ public final class OpsLogTailScanner {
                     tail.activityEvents(),
                     tail.modLogErrors(),
                     tail.kubejsFailures(),
+                    tail.silentFails(),
+                    tail.joinRejections(),
                     tail.backgroundJobs(),
                     priorOffset,
                     tail.context(),
@@ -121,6 +127,8 @@ public final class OpsLogTailScanner {
         boolean hadNewData = !state.events.isEmpty()
                 || state.modLogAnalyzer.toJsonArray().size() > 0
                 || !state.kubejsFailures.isEmpty()
+                || !state.silentFails.isEmpty()
+                || !state.joinRejections.isEmpty()
                 || !state.backgroundJobs.isEmpty();
         return new ScanResult(
                 Instant.now(),
@@ -128,6 +136,8 @@ public final class OpsLogTailScanner {
                 state.events,
                 state.modLogAnalyzer.toJsonArray(),
                 List.copyOf(state.kubejsFailures),
+                List.copyOf(state.silentFails),
+                List.copyOf(state.joinRejections),
                 List.copyOf(state.backgroundJobs),
                 updatedOffset,
                 state.buildContext(),
@@ -153,6 +163,8 @@ public final class OpsLogTailScanner {
         boolean hadNewData = !state.events.isEmpty()
                 || state.modLogAnalyzer.toJsonArray().size() > 0
                 || !state.kubejsFailures.isEmpty()
+                || !state.silentFails.isEmpty()
+                || !state.joinRejections.isEmpty()
                 || !state.backgroundJobs.isEmpty();
         return new ScanResult(
                 Instant.now(),
@@ -160,6 +172,8 @@ public final class OpsLogTailScanner {
                 state.events,
                 state.modLogAnalyzer.toJsonArray(),
                 List.copyOf(state.kubejsFailures),
+                List.copyOf(state.silentFails),
+                List.copyOf(state.joinRejections),
                 List.copyOf(state.backgroundJobs),
                 new JsonObject(),
                 state.buildContext(),
@@ -278,7 +292,7 @@ public final class OpsLogTailScanner {
 
     private static ScanResult emptyResult(JsonObject offset) {
         return new ScanResult(
-                Instant.now(), 0, List.of(), new JsonArray(), List.of(), List.of(),
+                Instant.now(), 0, List.of(), new JsonArray(), List.of(), List.of(), List.of(), List.of(),
                 offset, new JsonObject(), false);
     }
 
@@ -291,6 +305,8 @@ public final class OpsLogTailScanner {
 
         state.modLogAnalyzer.processLine(stripped);
         detectKubejsFailure(stripped, ts, state);
+        detectSilentFail(stripped, ts, state);
+        detectJoinRejection(stripped, ts, state);
 
         Matcher jm = LogPatterns.PLAYER_JOIN.matcher(stripped);
         if (jm.find()) {
@@ -406,6 +422,61 @@ public final class OpsLogTailScanner {
         state.kubejsFailures.add(row);
     }
 
+    private static void detectSilentFail(String stripped, ZonedDateTime ts, ParseState state) {
+        SilentFailSignatures.Hit hit = SilentFailSignatures.match(stripped);
+        if (hit == null) {
+            return;
+        }
+        String dedupeKey = hit.kind() + "|" + (hit.path() != null
+                ? hit.path() + (hit.line() != null ? ":" + hit.line() : "")
+                : Integer.toHexString(hit.sampleLine().hashCode()));
+        if (!state.silentFailKeys.add(dedupeKey)) {
+            return;
+        }
+        JsonObject row = new JsonObject();
+        row.addProperty("kind", hit.kind());
+        row.addProperty("severity", hit.severity());
+        row.addProperty("title", hit.title());
+        row.addProperty("time", CollectSupport.iso(ts));
+        if (hit.path() != null) {
+            row.addProperty("path", hit.path());
+        }
+        if (hit.line() != null) {
+            row.addProperty("line", hit.line());
+        }
+        row.addProperty("sample_line", hit.sampleLine());
+        state.silentFails.add(row);
+    }
+
+    private static void detectJoinRejection(String stripped, ZonedDateTime ts, ParseState state) {
+        JoinRejectionSignatures.Hit hit = JoinRejectionSignatures.match(stripped);
+        if (hit == null) {
+            return;
+        }
+        String dedupeKey = hit.kind() + "|" + hit.player() + "|"
+                + String.join(",", hit.modIds()) + "|"
+                + Integer.toHexString(hit.sampleLine().hashCode());
+        if (!state.joinRejectionKeys.add(dedupeKey)) {
+            return;
+        }
+        JsonObject row = new JsonObject();
+        row.addProperty("kind", hit.kind());
+        row.addProperty("platform", hit.platform());
+        if (!hit.player().isBlank()) {
+            row.addProperty("player", hit.player());
+        }
+        JsonArray ids = new JsonArray();
+        for (String id : hit.modIds()) {
+            ids.add(id);
+        }
+        row.add("mod_ids", ids);
+        row.addProperty("reason", hit.reason());
+        row.addProperty("confidence", hit.confidence());
+        row.addProperty("time", CollectSupport.iso(ts));
+        row.addProperty("sample_line", hit.sampleLine());
+        state.joinRejections.add(row);
+    }
+
     private static void addBackgroundJob(ParseState state, JsonObject job) {
         String key = job.get("type").getAsString() + "|" + job.get("detail").getAsString();
         if (state.backgroundJobKeys.add(key)) {
@@ -505,6 +576,10 @@ public final class OpsLogTailScanner {
         final ModLogAnalyzer modLogAnalyzer = new ModLogAnalyzer();
         final List<JsonObject> kubejsFailures = new ArrayList<>();
         final Set<String> kubejsKeys = new HashSet<>();
+        final List<JsonObject> silentFails = new ArrayList<>();
+        final Set<String> silentFailKeys = new HashSet<>();
+        final List<JsonObject> joinRejections = new ArrayList<>();
+        final Set<String> joinRejectionKeys = new HashSet<>();
 
         ParseState(int tickLagThrottleMs, long lastTickLagAt, long nowEpoch) {
             this.tickLagThrottleMs = tickLagThrottleMs;

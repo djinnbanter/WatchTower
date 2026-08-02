@@ -1,6 +1,11 @@
 {
   "config_health": [
     {
+      "path": "config/create-common.toml",
+      "reason": "quote_mismatch",
+      "detail": "Unbalanced quotes near line 12 (preview sample)"
+    },
+    {
       "path": "world/serverconfig/create-server.toml",
       "reason": "parse_error",
       "detail": "Expected '=' after key at line 42"

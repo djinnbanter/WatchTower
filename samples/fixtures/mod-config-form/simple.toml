@@ -1,0 +1,4 @@
+# Simple flat TOML for form editor tests
+enabled = true
+maxPlayers = 20
+serverName = "WatchTower Demo"

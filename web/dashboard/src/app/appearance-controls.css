@@ -1,0 +1,91 @@
+.wt-appearance {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.wt-appearance__themes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.2rem;
+  padding: 0.15rem;
+  border-radius: var(--radius-wt);
+  border: 1px solid color-mix(in srgb, var(--wt-line) 85%, transparent);
+  background: color-mix(in srgb, var(--wt-bg2) 50%, transparent);
+}
+
+.wt-appearance__theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.4rem 0.2rem;
+  border: 0;
+  border-radius: var(--radius-wt-sm);
+  background: transparent;
+  font-size: 0.6875rem;
+  font-weight: 550;
+  color: var(--wt-text-mid);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.wt-appearance__theme-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wt-appearance__theme-btn:hover:not(.wt-appearance__theme-btn--on) {
+  color: var(--wt-text);
+  background: color-mix(in srgb, var(--wt-bg3) 55%, transparent);
+}
+
+.wt-appearance__theme-btn--on {
+  background: var(--wt-accent-soft);
+  color: var(--wt-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wt-accent) 35%, var(--wt-line));
+}
+
+.wt-appearance__theme-btn:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.wt-appearance__accents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.1rem 0.05rem;
+}
+
+.wt-appearance__swatch {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--wt-line) 70%, transparent);
+  background: var(--wt-swatch, var(--wt-accent));
+  cursor: pointer;
+  padding: 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 12%, transparent);
+}
+
+.wt-appearance__swatch--on {
+  box-shadow:
+    0 0 0 2px var(--wt-bg1),
+    0 0 0 4px var(--wt-accent);
+}
+
+.wt-appearance__swatch:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 2px;
+}
+
+.wt-appearance--compact .wt-appearance__theme-btn {
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.35rem 0.15rem;
+  font-size: 0.625rem;
+}

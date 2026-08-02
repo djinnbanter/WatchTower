@@ -202,6 +202,10 @@ export const api = {
     apiFetch<Record<string, unknown>>(
       `/api/logs/content?file=${encodeURIComponent(file)}&tail=${encodeURIComponent(String(tail))}`,
     ),
+  softHangDump: (file?: string) => {
+    const q = file ? `?file=${encodeURIComponent(file)}` : '';
+    return apiFetch<Record<string, unknown>>(`/api/soft-hang/dump${q}`);
+  },
   crashContexts: () => apiFetch<Record<string, unknown>>('/api/crash-contexts'),
   crashesGrouped: () => apiFetch<Record<string, unknown>>('/api/crashes'),
   crashesAcks: () => apiFetch<Record<string, unknown>>('/api/crashes/acks'),
@@ -247,6 +251,28 @@ export const api = {
     apiFetch<Record<string, unknown>>('/api/mods/enable', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+  /** List sandboxed files under config/ (Mods → Configs). */
+  modsConfigsList: () => apiFetch<Record<string, unknown>>('/api/mods/configs'),
+  /** Read one config file by relative path (config/...). */
+  modsConfigRead: (path: string) =>
+    apiFetch<Record<string, unknown>>(`/api/mods/configs?path=${encodeURIComponent(path)}`),
+  /** Save config text or form fields with mtime check; creates a timestamped backup first. */
+  modsConfigSave: (payload: {
+    path: string;
+    expected_mtime: number;
+    content?: string;
+    fields?: unknown[];
+  }) =>
+    apiFetch<Record<string, unknown>>('/api/mods/configs', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  /** Restore newest backup for a config path. */
+  modsConfigUndo: (path: string) =>
+    apiFetch<Record<string, unknown>>('/api/mods/configs/undo', {
+      method: 'POST',
+      body: JSON.stringify({ path }),
     }),
   /** Latest report facts (live: /api/reports/latest; fixture preview may alias /api/facts). */
   facts: async () => {
@@ -380,6 +406,12 @@ export const api = {
     apiFetch<Record<string, unknown>>('/api/accounts/me/minecraft', {
       method: 'POST',
       body: JSON.stringify(body),
+    }),
+  /** Sync theme mode + accent preset to the signed-in account. */
+  appearanceSave: (payload: { theme: string; accent: string }) =>
+    apiFetch<Record<string, unknown>>('/api/accounts/me/appearance', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
     }),
   resetAccountPassword: (id: string, clear2fa = false) =>
     apiFetch<Record<string, unknown>>('/api/accounts/reset-password', {

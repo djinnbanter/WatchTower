@@ -33,6 +33,8 @@ configurations {
     protobufRuntime
     // SnakeYAML for crash rule packs — shaded to avoid JPMS clashes.
     yamlRuntime
+    // TomlJ for config form editor — shaded to avoid ANTLR clashes.
+    tomlRuntime
 }
 
 dependencies {
@@ -46,6 +48,9 @@ dependencies {
     compileOnly 'org.yaml:snakeyaml:2.2'
     yamlRuntime 'org.yaml:snakeyaml:2.2'
     testImplementation 'org.yaml:snakeyaml:2.2'
+    compileOnly 'org.tomlj:tomlj:1.1.1'
+    tomlRuntime 'org.tomlj:tomlj:1.1.1'
+    testImplementation 'org.tomlj:tomlj:1.1.1'
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -72,9 +77,15 @@ tasks.named('jar', Jar) {
 
 tasks.named('shadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
     archiveClassifier.set('')
-    configurations = [project.configurations.protobufRuntime, project.configurations.yamlRuntime]
+    configurations = [
+            project.configurations.protobufRuntime,
+            project.configurations.yamlRuntime,
+            project.configurations.tomlRuntime
+    ]
     relocate 'com.google.protobuf', 'dev.mcstatus.watchtower.core.internal.protobuf'
     relocate 'org.yaml.snakeyaml', 'dev.mcstatus.watchtower.core.internal.yaml'
+    relocate 'org.tomlj', 'dev.mcstatus.watchtower.core.internal.tomlj'
+    relocate 'org.antlr', 'dev.mcstatus.watchtower.core.internal.antlr'
     exclude 'module-info.class'
     mergeServiceFiles()
     manifest {

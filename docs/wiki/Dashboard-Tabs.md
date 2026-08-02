@@ -73,12 +73,10 @@ Tabs are grouped as **Monitor**, **Triage**, **Ops**, and **System**. Theme, ski
 | Tab / tool | Job |
 |------------|-----|
 | **Help Center** | Guides, search, Support pack shortcut |
-| **Settings** | General, Monitoring, Backups, Alerts, Security, Accounts, Audit log, Integrations, About |
-| **Roadmap** | Works / coming / later / not our job |
-| **Welcome** | Skippable tour — not a daily tab |
-| Theme / Collapse | Appearance and rail width |
+| Theme / Collapse | Rail **Customize** popover (Light / Dark / Black / System + accent) and rail width |
+| **Settings** | General (incl. Appearance), Monitoring, Backups, Alerts, Security, Accounts, Audit log, Integrations, About |
 
-**Settings panels:** General · Monitoring · Backups · Alerts · Security · Accounts · Audit log · Integrations · About (`?tab=settings&panel=<id>`). Accounts is owner-only; Audit log is owner/admin. See [[Accounts-And-Audit-Log]].
+**Settings panels:** General (Appearance + dashboard prefs) · Monitoring · Backups · Alerts · Security · Accounts · Audit log · Integrations · About (`?tab=settings&panel=<id>`). Appearance theme/accent syncs per signed-in account. Accounts is owner-only; Audit log is owner/admin. See [[Accounts-And-Audit-Log]].
 
 ---
 

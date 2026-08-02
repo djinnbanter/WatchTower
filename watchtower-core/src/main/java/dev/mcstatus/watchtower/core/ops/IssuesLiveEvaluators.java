@@ -520,14 +520,27 @@ public final class IssuesLiveEvaluators {
                 ? soft.get(OpsCacheSchema.SOFT_HANG_STALL_SECONDS).getAsLong()
                 : 0L;
         String dumpPath = str(soft, OpsCacheSchema.SOFT_HANG_DUMP_PATH);
+        String summary = str(soft, OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE_SUMMARY);
         StringBuilder msg = new StringBuilder("Server tick frozen");
         if (stall > 0) {
             msg.append(" for ").append(stall).append("s");
         }
         msg.append(" (phase: ").append(phase).append(")");
-        if (!dumpPath.isBlank()) {
+        if (!summary.isBlank()) {
+            msg.append(" — ").append(summary);
+        } else if (!dumpPath.isBlank()) {
             msg.append(" — hang dump saved");
         }
+        String cause = str(soft, OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE);
+        String firstStep = switch (cause) {
+            case "saving" -> "Check whether a world save or disk I/O is stuck.";
+            case "world_gen" -> "Check pregen / chunk loading / worldgen mods.";
+            case "entity_tick" -> "Check dense entity farms, mob caps, or entity-heavy mods.";
+            case "network" -> "Check connection handling / proxy / network mods.";
+            case "deadlock" ->
+                    "Capture a Support pack; a careful restart may be needed — WatchTower will not restart for you.";
+            default -> "Check whether a world save or pregen is stuck.";
+        };
         IssuesLiveRecord.Builder b = IssuesLiveRecord.builder()
                 .id("SOFT_HANG")
                 .key("SOFT_HANG")
@@ -536,10 +549,18 @@ public final class IssuesLiveEvaluators {
                 .source(IssuesLiveSchema.SOURCE_OPS)
                 .evidenceFingerprint("soft_hang:" + str(soft, OpsCacheSchema.SOFT_HANG_STARTED_AT))
                 .addEvidenceRef("ops:soft_hang")
-                .addFixStep("Check whether a world save or pregen is stuck.")
-                .addFixStep("If hang dumps are enabled, open the file under watchtower/hangs/.")
-                .addFixStep("Build a Support pack for Discord or a bug report.")
-                .addFixStep("WatchTower will not restart the server for you.");
+                .addFixStep(firstStep);
+        String suspect = str(soft, OpsCacheSchema.SOFT_HANG_SUSPECT_MOD);
+        if (!suspect.isBlank()) {
+            b.addFixStep("Hang dump hint points at " + suspect + " — treat as a lead, not proof.");
+        }
+        if (!dumpPath.isBlank()) {
+            b.addFixStep("Open the hang dump under watchtower/hangs/.");
+        } else {
+            b.addFixStep("If hang dumps are enabled, open the file under watchtower/hangs/.");
+        }
+        b.addFixStep("Build a Support pack for Discord or a bug report.");
+        b.addFixStep("WatchTower will not restart the server for you.");
         out.add(b.build());
         return out;
     }

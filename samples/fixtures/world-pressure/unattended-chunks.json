@@ -1,0 +1,21 @@
+{
+  "census": {
+    "census_at": "2026-07-29T00:11:58Z",
+    "dimensions": [
+      {
+        "id": "minecraft:the_nether",
+        "entities": 400,
+        "items": 20,
+        "living": 300,
+        "loaded_chunks": 520,
+        "forced_chunks": 24,
+        "players": 0,
+        "unattended": true,
+        "top_types": [
+          { "type": "minecraft:piglin", "count": 180 }
+        ]
+      }
+    ]
+  },
+  "rollup_rows": []
+}
