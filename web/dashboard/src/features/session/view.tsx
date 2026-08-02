@@ -1,12 +1,11 @@
 import { useMemo, useState, type ComponentType, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import BorderGlow from '@/components/border-glow/BorderGlow';
 import { ChartFrame, WtAreaChart, dailyToBklitRows } from '@/ui/charts';
 import { Clock3, Copy, Search, Users } from '@/ui/icons';
 import { api } from '@/api/client';
 import type { RouteState } from '@/app/router';
 import { FadeIn, GlareIcon, HeroWatermark, PageEnter } from '@/ui/motion';
-import { Button, EmptyState, ErrorState, MetricReadout, StatusPill } from '@/ui/patterns';
+import { Button, EmptyState, ErrorState, HeroCard, StatusPill, VitalTile } from '@/ui/patterns';
 import { asArray, asRecord, num, str, timeAgo } from '@/lib/utils';
 import { SessionActivityPlate } from './session-activity';
 import { PlayerAvatar } from '@/ui/player-avatar';
@@ -122,32 +121,6 @@ function formatPlaytime(seconds: number | null | undefined) {
   return `${s}s`;
 }
 
-function VitalTile({
-  label,
-  value,
-  format,
-  tone,
-}: {
-  label: string;
-  value: number | null;
-  format?: (n: number) => string;
-  tone?: 'default' | 'ok' | 'warn' | 'danger';
-}) {
-  if (value == null || !Number.isFinite(value)) {
-    return (
-      <div className="ss-vital">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-wt-text-low">{label}</div>
-        <div className="mt-1 font-mono text-lg font-semibold text-wt-text-low">—</div>
-      </div>
-    );
-  }
-  return (
-    <div className="ss-vital">
-      <MetricReadout label={label} value={value} format={format} size="sm" tone={tone} />
-    </div>
-  );
-}
-
 function PingBars({ ms }: { ms: number | null }) {
   if (ms == null) return <span className="text-wt-text-low">—</span>;
   const lit = ms < 40 ? 4 : ms < 80 ? 3 : ms < 150 ? 2 : 1;
@@ -213,25 +186,6 @@ function dailyPlayerAverages(
       players_avg: b.n > 0 ? Math.round((b.sum / b.n) * 10) / 10 : 0,
       players_peak: Math.round(b.peak),
     }));
-}
-
-function heroGlowProps(online: number) {
-  if (online > 0) {
-    return {
-      glowColor: '160 72 48',
-      glowIntensity: 0.5,
-      colors: ['#34d399', '#22d3ee', '#60a5fa'],
-      fillOpacity: 0.16,
-      backgroundColor: 'var(--wt-bg1)',
-    };
-  }
-  return {
-    glowColor: '210 40 55',
-    glowIntensity: 0.4,
-    colors: ['#94a3b8', '#64748b', '#38bdf8'],
-    fillOpacity: 0.12,
-    backgroundColor: 'var(--wt-bg1)',
-  };
 }
 
 function PlayerTable({ rows }: { rows: PlayerRow[] }) {
@@ -528,14 +482,10 @@ export function PageView({ route: _route }: { route: RouteState }) {
       ) : null}
 
       <FadeIn>
-        <BorderGlow
+        <HeroCard
           className="ss-hero"
-          borderRadius={4}
-          edgeSensitivity={28}
-          glowRadius={16}
-          coneSpread={18}
-          animated
-          {...heroGlowProps(playersOnline)}
+          tone={playersOnline > 0 ? 'ok' : 'info'}
+          glowIntensity={playersOnline > 0 ? 0.5 : 0.4}
         >
           <div className="ss-hero__body wt-hero-shell">
             <HeroWatermark icon={UsersIcon} tone={playersOnline > 0 ? 'ok' : 'info'} />
@@ -556,29 +506,37 @@ export function PageView({ route: _route }: { route: RouteState }) {
 
             <div className="ss-vitals">
               <VitalTile
+                className="ss-vital"
                 label="Online now"
                 value={playersOnline}
+                size="sm"
                 format={(n) => String(Math.round(n))}
                 tone={playersOnline > 0 ? 'ok' : 'default'}
               />
               <VitalTile
+                className="ss-vital"
                 label="Peak (24h)"
                 value={peakPlayers}
+                size="sm"
                 format={(n) => String(Math.round(n))}
               />
               <VitalTile
+                className="ss-vital"
                 label="Known"
                 value={knownPlayers}
+                size="sm"
                 format={(n) => String(Math.round(n))}
               />
               <VitalTile
+                className="ss-vital"
                 label="Player-hours"
                 value={playerHours}
+                size="sm"
                 format={(n) => n.toFixed(1)}
               />
             </div>
           </div>
-        </BorderGlow>
+        </HeroCard>
       </FadeIn>
 
       <FadeIn>
