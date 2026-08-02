@@ -121,4 +121,55 @@ class TomlFormModelTest {
         assertEquals(9, leaf.get("value").getAsInt());
         assertTrue(leaf.has("hint") && leaf.get("hint").getAsString().contains("Default"));
     }
+
+    @Test
+    void applyValuesPreservesLayoutAndComments() {
+        String original = """
+                #.
+                # NightConfig style header
+                #.
+
+                [general]
+                # Default: true
+                enabled = true # keep me
+                name = "alpha"
+
+                [general.limits]
+                  max = 10
+                """;
+        var r = TomlFormModel.parse(original);
+        assertTrue(r.formOk());
+        JsonObject enabled = findByPath(r.fields(), "general.enabled");
+        assertTrue(enabled != null);
+        enabled.addProperty("value", false);
+
+        String out = TomlFormModel.applyValues(original, r.fields());
+        assertTrue(out.startsWith("#."));
+        assertTrue(out.contains("# NightConfig style header"));
+        assertTrue(out.contains("enabled = false # keep me"));
+        assertTrue(out.contains("name = \"alpha\""));
+        assertTrue(out.contains("  max = 10"));
+        assertFalse(out.contains("WatchTower form rewrite"));
+
+        String[] a = original.split("\\R", -1);
+        String[] b = out.split("\\R", -1);
+        assertEquals(a.length, b.length);
+        int diffs = 0;
+        for (int i = 0; i < a.length; i++) {
+            if (!a[i].equals(b[i])) {
+                diffs++;
+                assertTrue(b[i].contains("enabled = false"));
+            }
+        }
+        assertEquals(1, diffs);
+    }
+
+    @Test
+    void applyValuesNoOpKeepsBytes() {
+        String original = "[x]\ny = 1\n";
+        var r = TomlFormModel.parse(original);
+        assertTrue(r.formOk());
+        assertEquals(original, TomlFormModel.applyValues(original, r.fields()));
+    }
+
 }

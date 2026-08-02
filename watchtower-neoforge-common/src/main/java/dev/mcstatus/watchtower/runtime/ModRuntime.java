@@ -150,6 +150,11 @@ public final class ModRuntime {
         }
 
         @Override
+        public int liveWorldCensusIntervalSeconds() {
+            return 60;
+        }
+
+        @Override
         public int liveStorageIntervalSeconds() {
             return 300;
         }

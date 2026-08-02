@@ -1,0 +1,138 @@
+/* Marketing DeskBorderGlow — Night Watch tokens. Inspired by dashboard BorderGlow; owned. */
+
+.wt-mkt-glow {
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-angle: 135deg;
+  --glow-edge: 0.28;
+  --wt-mkt-glow-color: var(--wt-accent);
+  --wt-mkt-glow-intensity: 0.55;
+  --wt-mkt-glow-radius: 220px;
+  position: relative;
+  isolation: isolate;
+  padding: 2px;
+  height: 100%;
+  min-height: 0;
+}
+
+.wt-mkt-glow__aura,
+.wt-mkt-glow__frame {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+.wt-mkt-glow__aura {
+  inset: -10px;
+  opacity: 0;
+  transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  background: radial-gradient(
+    var(--wt-mkt-glow-radius) circle at var(--glow-x) var(--glow-y),
+    color-mix(in srgb, var(--wt-mkt-glow-color) 55%, transparent),
+    transparent 70%
+  );
+  filter: blur(14px);
+}
+
+.wt-mkt-glow__frame {
+  padding: 2px;
+  background:
+    radial-gradient(
+      calc(var(--wt-mkt-glow-radius) * 0.7) circle at var(--glow-x) var(--glow-y),
+      color-mix(in srgb, var(--wt-mkt-glow-color) 90%, white),
+      transparent 62%
+    ),
+    conic-gradient(
+      from var(--glow-angle),
+      color-mix(in srgb, var(--wt-mkt-glow-color) 16%, transparent) 0deg,
+      color-mix(in srgb, var(--wt-mkt-glow-color) 50%, transparent) 40deg,
+      var(--wt-mkt-glow-color) 70deg,
+      color-mix(in srgb, var(--wt-mkt-glow-color) 85%, white) 90deg,
+      var(--wt-mkt-glow-color) 110deg,
+      color-mix(in srgb, var(--wt-mkt-glow-color) 50%, transparent) 140deg,
+      color-mix(in srgb, var(--wt-mkt-glow-color) 16%, transparent) 180deg,
+      color-mix(in srgb, var(--wt-mkt-glow-color) 10%, transparent) 360deg
+    );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0.22;
+  transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wt-mkt-glow[data-active='1'] > .wt-mkt-glow__frame {
+  opacity: calc(0.55 + 0.55 * var(--wt-mkt-glow-intensity) * var(--glow-edge));
+}
+
+.wt-mkt-glow[data-active='1'] > .wt-mkt-glow__aura {
+  opacity: calc(0.55 * var(--wt-mkt-glow-intensity) * var(--glow-edge));
+}
+
+.wt-mkt-glow__body {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.wt-mkt-glow:not(.wt-mkt-glow--live) .wt-mkt-glow__aura {
+  opacity: 0;
+}
+
+.wt-mkt-glow:not(.wt-mkt-glow--live) .wt-mkt-glow__frame {
+  background: color-mix(in srgb, var(--wt-mkt-glow-color) 45%, var(--wt-line));
+  opacity: 0.45;
+}
+
+.wt-mkt-spark {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 999px;
+  background: var(--spark-color, var(--wt-lantern));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--spark-color, var(--wt-lantern)) 40%, transparent),
+    0 0 12px color-mix(in srgb, var(--spark-color, var(--wt-lantern)) 70%, transparent);
+  animation: wt-mkt-spark-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes wt-mkt-spark-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  40% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wt-mkt-glow__aura {
+    opacity: 0 !important;
+  }
+
+  .wt-mkt-glow__frame {
+    background: color-mix(in srgb, var(--wt-mkt-glow-color) 45%, var(--wt-line));
+    opacity: 0.4;
+  }
+
+  .wt-mkt-spark {
+    animation: none;
+    opacity: 0;
+  }
+}

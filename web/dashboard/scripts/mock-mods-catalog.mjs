@@ -303,6 +303,17 @@ export function mockModsInventoryDiff(now) {
         mtime: recentMtime,
       },
     ],
+    drift_count: 1,
+    drift: [
+      {
+        jar: 'create-addons-extra-1.0.0.jar',
+        mod_id: 'createaddition',
+        version: '1.0.0',
+        prev_sha512: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        sha512: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        change: 'drift',
+      },
+    ],
   };
 }
 
@@ -311,6 +322,7 @@ export function mockModsInventoryTldr(diff) {
   if (diff.added_count) parts.push(`${diff.added_count} added`);
   if (diff.removed_count) parts.push(`${diff.removed_count} removed`);
   if (diff.changed_count) parts.push(`${diff.changed_count} updated`);
+  if (diff.drift_count) parts.push(`${diff.drift_count} drifted`);
   return `${parts.join(', ')} since last report`;
 }
 

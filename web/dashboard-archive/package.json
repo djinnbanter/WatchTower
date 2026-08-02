@@ -1,0 +1,13 @@
+{
+  "name": "watchtower-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:favicon": "node scripts/build-favicon.mjs",
+    "generate:mock": "node scripts/generate-mock-data.mjs",
+    "vendor": "node scripts/vendor-libs.mjs",
+    "preview": "node scripts/build.mjs && node scripts/generate-mock-data.mjs && node scripts/preview-server.mjs",
+    "audit": "node ../../tools/audit-dashboard-parity.mjs"
+  }
+}

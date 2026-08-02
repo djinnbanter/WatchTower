@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Backup integrity verify + test restore (1.1.20)** — Light-check zip/tar.gz backups (level.dat + region `.mca`); Verified/Suspicious/Broken chips on Backups; Verify now; auto-queue with defer under players/MSPT; optional async test restore under `watchtower/restore-verify/` only; Issue `BACKUP_VERIFY_FAILED` when newest fails. Kill-switches `BACKUP_VERIFY_*` / `BACKUP_TEST_RESTORE_ENABLED`
+- **Soft jar Disable / Enable (1.1.19)** — Mods catalog can rename top-level jars to `*.jar.disabled` (and back). Disabled jars stay listed with filters **All / Enabled / Disabled**. Admin/owner only; no Delete. Audit `mod_disabled` / `mod_enabled`; Overview **Restart needed** chip until reboot
+- **World risk badges (1.1.19)** — Conservative badge when world dimension folders, live dim namespaces, or jar `data/<modId>/dimension/` paths suggest the save may break. High risk requires confirm. Optional Issue when a disabled mod still has leftover world dimensions. Kill-switches `MOD_DISABLE_ENABLED` / `WORLD_RISK_ENABLED`
 - **Named admin accounts (1.1.18)** — per-person logins with three roles: **owner** (everything, including accounts), **admin** (operate, no account management), **viewer** (read-only). Existing installs keep their credentials and become the owner
 - **Side rail signed-in account + Sign out** — rail footer shows who is signed in and a **Sign out** control
 - **Minecraft player link** — optional UUID/name on a dashboard account; rail (and Accounts) show that player's Crafthead skin. Owner sets links in Accounts; anyone can link themselves under Security
@@ -28,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Support pack modal** — pack-type first (Quick / Server issue / WatchTower bug / Full evidence); optional note; size strip next to Build; Customize files stays advanced. Dropped the separate problem-type chip row
 - **Setup wizard is owner-only** — invited admin/viewer accounts skip the full server setup wizard after password change
 - **Acknowledgements and suppressions attribute the account name** instead of the literal `dashboard` (rows written before the update keep `dashboard`)
 - **Session activity plate** — right-column feed merges live `player_join` / `player_leave` from ops-cache activity with `join_clinic` failures (expand + **Copy fix**); replaces full-width Join clinic and Recent sessions; Issues action **Open Session activity**

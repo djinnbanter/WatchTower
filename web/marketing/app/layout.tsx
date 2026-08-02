@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             source (rail fill). Paper light theme. Geist display, JetBrains Mono for
             numerals and system chrome. 12px label floor.
           STORY: Welcome, Live vitals, Issues Fix inbox, Crashes / OOM review, Overview
-            grade, Insights schedule, standing orders, demo.
+            grade, Insights schedule, demo.
           FIRST VIEWPORT: Brand-first Welcome. Tagline, overview, CTAs. Scroll cue into
             Live gauges. No glow orbs. No centered SaaS stack.
           FORM: Ordered desk tour entries (no timeline rail). Feature names live in each h2.

@@ -42,6 +42,29 @@ class PerformanceRollupAccumulatorTest {
     }
 
     @Test
+    void finalizeRow_includesEntityChunkColumns() {
+        PerformanceRollupAccumulator acc = new PerformanceRollupAccumulator();
+        acc.addSample(20.0, 40.0, 1, 6.0, 14.0, 50.0, 19.5,
+                null, null, null, null, null, null, 1000.0, 200.0, 50.0);
+        acc.addSample(20.0, 41.0, 1, 6.0, 14.0, 50.0, 19.5,
+                null, null, null, null, null, null, 4200.0, 1180.0, 800.0);
+        JsonObject row = acc.finalizeRow(1_700_000_120L);
+        assertEquals(4200, row.get("entities_max").getAsLong());
+        assertEquals(1180, row.get("chunks_max").getAsLong());
+        assertEquals(800, row.get("unattended_chunks_max").getAsLong());
+    }
+
+    @Test
+    void finalizeRow_omitsEntityColumnsWhenNeverSupplied() {
+        PerformanceRollupAccumulator acc = new PerformanceRollupAccumulator();
+        acc.addSample(20.0, 40.0, 1, 6.0, 14.0, 50.0, 19.5);
+        JsonObject row = acc.finalizeRow(1_700_000_180L);
+        assertFalse(row.has("entities_max"));
+        assertFalse(row.has("chunks_max"));
+        assertFalse(row.has("unattended_chunks_max"));
+    }
+
+    @Test
     void p95_and_jitter_helpers() {
         List<Double> mspt = List.of(10.0, 20.0, 30.0, 40.0, 100.0);
         assertEquals(100.0, PerformanceRollupAccumulator.p95(new ArrayList<>(mspt)), 0.01);

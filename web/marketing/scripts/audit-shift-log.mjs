@@ -3,7 +3,7 @@
  * Anti-slop / Shift Log audit for web/marketing.
  * Exit 1 on failure. Run from web/marketing: node scripts/audit-shift-log.mjs
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
@@ -152,6 +152,9 @@ if (/ProductDesk/.test(featuresPage)) {
 if (/FEATURE_SURFACES/.test(featuresPage)) {
   fail.push('app/features/page.tsx: use FEATURE_CAPABILITIES, not FEATURE_SURFACES');
 }
+if (!/CapabilityCatalog/.test(featuresPage)) {
+  fail.push('app/features/page.tsx: expected CapabilityCatalog');
+}
 
 const featuresContentPath = join(ROOT, 'content/features.ts');
 const featuresContent = readFileSync(featuresContentPath, 'utf8');
@@ -160,6 +163,22 @@ if (!/FEATURE_CAPABILITIES/.test(featuresContent)) {
 }
 if (/FEATURE_SURFACES/.test(featuresContent)) {
   fail.push('content/features.ts: FEATURE_SURFACES should be removed');
+}
+if (!/tone:/.test(featuresContent)) {
+  fail.push('content/features.ts: capability tones required for instrument gauges');
+}
+
+const tilePath = join(ROOT, 'components/features/capability-tile.tsx');
+const marksPath = join(ROOT, 'components/features/capability-marks.tsx');
+const bentoPath = join(ROOT, 'components/react-bits/MagicBento.tsx');
+if (!existsSync(marksPath) || !existsSync(bentoPath)) {
+  fail.push('components: capability-marks + react-bits/MagicBento required for Features grid');
+}
+if (existsSync(tilePath)) {
+  fail.push('components/features: capability-tile superseded by MagicBento');
+}
+if (existsSync(join(ROOT, 'components/features/capability-row.tsx'))) {
+  fail.push('components/features: capability-row ledger should stay removed');
 }
 
 if (fail.length) {

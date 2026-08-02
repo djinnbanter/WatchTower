@@ -95,7 +95,27 @@ public final class CrashFingerprintGrouper {
         String stallOrPrimary = stallOrPrimary(row);
         String exceptionClass = exceptionClass(str(row, "exception"));
         String transformers = topTransformerMods(row);
-        return kind + "|" + stallOrPrimary + "|" + exceptionClass + "|" + transformers;
+        String base = kind + "|" + stallOrPrimary + "|" + exceptionClass + "|" + transformers;
+        String subtype = externalKillSubtype(row);
+        if (subtype != null && !subtype.isBlank()) {
+            return base + "|" + subtype;
+        }
+        return base;
+    }
+
+    /** Optional external_kill subtype segment — only appended when present so existing FPs stay identical. */
+    static String externalKillSubtype(JsonObject row) {
+        if (row == null) {
+            return null;
+        }
+        if (row.has("details") && row.get("details").isJsonObject()) {
+            JsonObject details = row.getAsJsonObject("details");
+            String sub = str(details, "external_kill_subtype");
+            if (sub != null && !sub.isBlank()) {
+                return sub;
+            }
+        }
+        return str(row, "subtype");
     }
 
     static String stallOrPrimary(JsonObject row) {

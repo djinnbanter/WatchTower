@@ -33,6 +33,11 @@ const SENTENCES: Record<string, (r: AuditRow) => string> = {
   account_enabled: (r) => `${r.actor} re-enabled ${r.target ?? 'an account'}`,
   account_deleted: (r) => `${r.actor} removed ${r.target ?? 'an account'}`,
   account_password_reset: (r) => `${r.actor} reset the password for ${r.target ?? 'an account'}`,
+  mod_disabled: (r) => `${r.actor} disabled jar ${r.target ?? ''}`.trim(),
+  mod_enabled: (r) => `${r.actor} enabled jar ${r.target ?? ''}`.trim(),
+  backup_verified: (r) => `${r.actor} verified backup ${r.target ?? ''}`.trim(),
+  backup_test_restore_ok: (r) => `${r.actor} test-restored ${r.target ?? ''}`.trim(),
+  backup_test_restore_cleanup: (r) => `${r.actor} cleaned test restore ${r.target ?? ''}`.trim(),
   api_write: (r) => `${r.actor} ran ${r.target ?? 'an action'}`,
   write_denied: (r) => `${r.actor} was blocked from ${r.target ?? 'a change'}`,
 };

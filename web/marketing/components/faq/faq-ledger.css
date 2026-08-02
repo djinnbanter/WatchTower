@@ -1,0 +1,130 @@
+/* FAQ ledger — Night Watch Desk field brief */
+
+.faq-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .faq-ledger {
+    gap: 3rem;
+  }
+}
+
+.faq-group__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+.faq-group__blurb {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--wt-text-mid);
+}
+
+.faq-row {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: 0.85rem 1rem;
+  padding: 1.15rem 1.15rem 1.2rem;
+}
+
+@media (min-width: 768px) {
+  .faq-row {
+    grid-template-columns: 3rem minmax(0, 1fr);
+    gap: 0.85rem 1.35rem;
+    padding: 1.25rem 1.4rem 1.35rem;
+  }
+}
+
+.faq-row + .faq-row {
+  border-top: 1px solid var(--wt-line);
+}
+
+.faq-row__index {
+  padding-top: 0.2rem;
+  font-family: var(--font-mono, 'JetBrains Mono Variable', ui-monospace, monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--wt-text-low);
+  line-height: 1.4;
+}
+
+.faq-group:first-child .faq-row:first-child .faq-row__index {
+  color: var(--wt-accent);
+}
+
+.faq-row__body {
+  min-width: 0;
+}
+
+.faq-row__q {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  color: var(--wt-text);
+}
+
+.faq-row__a {
+  margin: 0.55rem 0 0;
+  max-width: 58ch;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--wt-text-mid);
+}
+
+.faq-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+}
+
+.faq-foot__copy {
+  margin: 0;
+  max-width: 40ch;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--wt-text-mid);
+}
+
+.faq-foot__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.15rem;
+}
+
+.faq-foot__links a {
+  font-family: var(--font-mono, 'JetBrains Mono Variable', ui-monospace, monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wt-text);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--wt-text-mid) 35%, transparent);
+  padding-bottom: 0.1rem;
+  transition:
+    color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq-foot__links a:hover {
+  color: var(--wt-accent);
+  border-color: color-mix(in srgb, var(--wt-accent) 55%, transparent);
+}
+
+.faq-foot__links a:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--wt-accent) 55%, transparent);
+  outline-offset: 3px;
+}

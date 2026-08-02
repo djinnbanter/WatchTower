@@ -239,7 +239,7 @@ export function PageView({ route }: { route: RouteState }) {
   if (logsQ.isLoading) {
     return (
       <PageEnter className="lg-page">
-        <div className="h-10 w-72 animate-pulse rounded-xl bg-wt-bg2" />
+        <div className="h-10 w-72 animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
         <div className="h-[28rem] animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
       </PageEnter>
     );
@@ -324,7 +324,7 @@ export function PageView({ route }: { route: RouteState }) {
           />
           <div className="lg-viewer__body">
             {contentQ.isLoading ? (
-              <div className="m-4 h-64 animate-pulse rounded-xl bg-wt-bg2" />
+              <div className="m-4 h-64 animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
             ) : contentQ.isError ? (
               <ErrorState title="Couldn't load log content">
                 {(contentQ.error as Error)?.message}

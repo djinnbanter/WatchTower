@@ -37,16 +37,19 @@ function FooterNav({
       <ul className="m-0 flex list-none flex-col gap-3 p-0">
         {items.map((item) => (
           <li key={item.href}>
-            {item.external ? (
+            {item.external || item.href === '/demo' ? (
               <a
-                href={item.href}
+                href={item.href === '/demo' ? DEMO_URL : item.href}
                 className="wt-site-footer__link inline-block text-[0.9375rem] font-medium tracking-[-0.01em]"
+                {...(item.href === '/demo'
+                  ? { target: '_blank', rel: 'noopener noreferrer' }
+                  : null)}
               >
                 {item.label}
               </a>
             ) : (
               <Link
-                href={item.href === '/demo' ? DEMO_URL : item.href}
+                href={item.href}
                 className="wt-site-footer__link inline-block text-[0.9375rem] font-medium tracking-[-0.01em]"
               >
                 {item.label}
@@ -75,7 +78,7 @@ export function SiteFooter() {
           </p>
           <div className="mt-8">
             <MagnetHit>
-              <Cta href={DEMO_URL} withArrow>
+              <Cta href={DEMO_URL} withArrow newTab>
                 Open the demo
               </Cta>
             </MagnetHit>

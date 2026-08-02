@@ -30,7 +30,7 @@ export type FeatureCapability = {
 };
 
 export const FEATURE_LEDE =
-  'The smaller tools under each desk surface - not a second pass through Overview and Live.';
+  'The smaller tools under each dashboard surface - not a second pass through Overview and Live.';
 
 export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
@@ -195,7 +195,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'logs',
     title: 'Log tail',
-    blurb: 'latest.log triage in the desk so you are not bouncing to the host panel for every line.',
+    blurb: 'latest.log triage in the dashboard so you are not bouncing to the host panel for every line.',
     tag: 'Logs',
     weight: 'standard',
     tone: 'info',
@@ -227,7 +227,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'auth',
     title: 'Secure login + optional 2FA',
-    blurb: 'Login required by default; optional 2FA for the desk.',
+    blurb: 'Login required by default; optional 2FA for the dashboard.',
     tag: 'Settings',
     weight: 'standard',
     tone: 'ok',

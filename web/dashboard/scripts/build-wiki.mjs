@@ -22,39 +22,52 @@ const NAV = [
       'Home',
       'Installation',
       'Quick-Start-Checklist',
-      'Dashboard-Overview',
-      'Dashboard-Tabs',
       'Understanding-Data-Sources',
-      'Using-Spark-with-Watchtower',
+      'Dashboard-Tabs',
+      'Dashboard-Overview',
       'Live-Charts',
     ],
   },
   {
-    id: 'ops',
-    label: 'Day-to-day',
+    id: 'use',
+    label: 'Use the dashboard',
     pages: [
-      'Commands',
-      'Configuration',
-      'Security-and-Access',
-      'Hosting-Panels',
-      'Reading-Metrics-on-Hosted-Servers',
-      'Health-Reports',
+      'Insights',
+      'Session',
+      'Startup',
+      'Issues',
+      'Crashes',
+      'Logs',
+      'Using-Spark-with-Watchtower',
+      'Mods',
       'Backups',
-      'Scheduled-Reports',
+      'Activity',
+      'Sources',
     ],
   },
   {
-    id: 'dr',
+    id: 'wrong',
     label: 'When things go wrong',
-    pages: ['Disaster-Recovery', 'DR-CLI-Reference', 'DR-Viewer'],
+    pages: [
+      'Troubleshooting',
+      'Disaster-Recovery',
+      'DR-CLI-Reference',
+      'DR-Viewer',
+    ],
   },
   {
     id: 'ref',
     label: 'Reference',
     pages: [
-      'HTTP-API',
+      'Configuration',
+      'Security-and-Access',
+      'Commands',
+      'Health-Reports',
+      'Hosting-Panels',
+      'Reading-Metrics-on-Hosted-Servers',
+      'Crash-Rule-Packs',
       'On-disk-Files',
-      'Troubleshooting',
+      'HTTP-API',
       'Downloads-and-Releases',
       'Roadmap',
       'Changelog',
@@ -67,7 +80,8 @@ function slugFromFile(name) {
 }
 
 function titleFromMarkdown(md) {
-  const m = md.match(/^#\s+(.+)$/m);
+  const cleaned = String(md ?? '').replace(/^\uFEFF/, '');
+  const m = cleaned.match(/^#\s+(.+)$/m);
   return m ? m[1].trim() : 'Untitled';
 }
 
@@ -80,7 +94,11 @@ function build() {
   for (const name of fs.readdirSync(wikiDir)) {
     if (!name.endsWith('.md') || SKIP.has(name)) continue;
     const slug = slugFromFile(name);
-    const md = fs.readFileSync(path.join(wikiDir, name), 'utf8');
+    const md = fs
+      .readFileSync(path.join(wikiDir, name), 'utf8')
+      .replace(/^\uFEFF/, '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
     pages[slug] = {
       slug,
       title: titleFromMarkdown(md),

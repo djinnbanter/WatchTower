@@ -16,7 +16,9 @@
 | `watchtower/live-history.json` | Live chart history (seconds) |
 | `watchtower/performance-rollups.json` | Minute-by-minute history for **Insights** |
 | `watchtower/dashboard-auth.json` | Named accounts (schema 2, hashed) — **Settings → Security** / **Accounts** |
-| `watchtower/audit-log.jsonl` | Settings / ack / account / sign-in ledger — **Settings → Audit log** |
+| `watchtower/audit-log.jsonl` | Settings / ack / account / sign-in / mod disable ledger — **Settings → Audit log** |
+| `mods/*.jar.disabled` | Soft-disabled jars (WatchTower **Mods → Disable**; loader ignores until Enable + restart) |
+| `watchtower/restore-verify/` | Test-restore sandboxes only (1.1.20); never the live world |
 | `watchtower/DR-README.txt` | Emergency recovery command — updated each report |
 
 ---

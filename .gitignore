@@ -29,6 +29,13 @@ samples/validation/
 
 # Node
 **/node_modules/
+web/marketing/.next/
+web/marketing/public/screenshots/
+web/marketing/public/brand/
+web/marketing/public/demo-app/
+
+# Dashboard static demo bake (never ship in jar)
+web/dashboard/dist-demo/
 
 # Env / secrets
 .env

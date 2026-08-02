@@ -48,9 +48,10 @@ public final class ScorecardBuilder {
         JsonObject crashes = buildCrashesBlock(opsCache, facts);
         out.add("crashes", crashes);
 
-        String grade = computeGrade(facts, lowTps24h, lowTpsMinutesThreshold24h, msptWarn, msptP95, crashes);
-        out.addProperty("grade", grade);
-        out.addProperty("grade_word", gradeWord(grade));
+        GradeOutcome outcome = computeGrade(facts, lowTps24h, lowTpsMinutesThreshold24h, msptWarn, msptP95, crashes);
+        out.addProperty("grade", outcome.grade);
+        out.addProperty("grade_word", gradeWord(outcome.grade));
+        out.add("grade_reasons", outcome.reasons);
 
         return out;
     }
@@ -206,7 +207,17 @@ public final class ScorecardBuilder {
         return bestIso;
     }
 
-    private static String computeGrade(
+    private static final class GradeOutcome {
+        final String grade;
+        final JsonArray reasons;
+
+        GradeOutcome(String grade, JsonArray reasons) {
+            this.grade = grade;
+            this.reasons = reasons;
+        }
+    }
+
+    private static GradeOutcome computeGrade(
             JsonObject facts,
             int lowTps24h,
             int lowTpsThreshold,
@@ -214,27 +225,72 @@ public final class ScorecardBuilder {
             Double msptP95,
             JsonObject crashes
     ) {
-        int unreviewed = crashes.has("unreviewed") ? crashes.get("unreviewed").getAsInt() : 0;
+        JsonArray reasons = new JsonArray();
+        int unreviewed = crashes != null && crashes.has("unreviewed")
+                ? crashes.get("unreviewed").getAsInt() : 0;
         if (unreviewed > 0) {
-            return "critical";
+            JsonObject r = new JsonObject();
+            r.addProperty("code", "unreviewed_crashes");
+            r.addProperty("severity", "critical");
+            r.addProperty("message", unreviewed + " unreviewed crash report"
+                    + (unreviewed == 1 ? "" : "s"));
+            r.addProperty("tab", "crashes");
+            reasons.add(r);
+            return new GradeOutcome("critical", reasons);
         }
 
         String overall = "ok";
-        if (facts != null && facts.has("health")) {
-            overall = facts.getAsJsonObject("health").has("status")
-                    ? facts.getAsJsonObject("health").get("status").getAsString()
-                    : "ok";
+        if (facts != null && facts.has("health") && facts.get("health").isJsonObject()) {
+            JsonObject health = facts.getAsJsonObject("health");
+            if (health.has("status") && !health.get("status").isJsonNull()) {
+                overall = health.get("status").getAsString();
+            }
         }
         if ("critical".equals(overall)) {
-            return "critical";
+            JsonObject r = new JsonObject();
+            r.addProperty("code", "facts_health_critical");
+            r.addProperty("severity", "critical");
+            r.addProperty("message", "Last health report status is critical");
+            r.addProperty("tab", "overview");
+            reasons.add(r);
+            return new GradeOutcome("critical", reasons);
         }
 
-        boolean perfDegraded = lowTps24h >= lowTpsThreshold
-                || (msptP95 != null && msptP95 > msptWarn);
-        if (perfDegraded || "warning".equals(overall)) {
-            return "degraded";
+        boolean lowTps = lowTps24h >= lowTpsThreshold;
+        boolean msptHigh = msptP95 != null && msptP95 > msptWarn;
+        boolean healthWarn = "warning".equals(overall);
+
+        if (lowTps) {
+            JsonObject r = new JsonObject();
+            r.addProperty("code", "low_tps_24h");
+            r.addProperty("severity", "warning");
+            r.addProperty("message", lowTps24h + " low-TPS minute"
+                    + (lowTps24h == 1 ? "" : "s") + " in the last 24h");
+            r.addProperty("tab", "insights");
+            reasons.add(r);
         }
-        return "healthy";
+        if (msptHigh) {
+            JsonObject r = new JsonObject();
+            r.addProperty("code", "mspt_p95_24h");
+            r.addProperty("severity", "warning");
+            r.addProperty("message", "MSPT p95 "
+                    + Math.round(msptP95) + "ms exceeds warn threshold");
+            r.addProperty("tab", "insights");
+            reasons.add(r);
+        }
+        if (healthWarn) {
+            JsonObject r = new JsonObject();
+            r.addProperty("code", "facts_health_warning");
+            r.addProperty("severity", "warning");
+            r.addProperty("message", "Last health report status is warning");
+            r.addProperty("tab", "overview");
+            reasons.add(r);
+        }
+
+        if (lowTps || msptHigh || healthWarn) {
+            return new GradeOutcome("degraded", reasons);
+        }
+        return new GradeOutcome("healthy", reasons);
     }
 
     private static String gradeWord(String grade) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
@@ -7,9 +7,9 @@ import { asArray, asRecord, bool, num, str } from '@/lib/utils';
 import { Button, EmptyState, StatusPill } from '@/ui/patterns';
 import { ModsSearch } from './components';
 import {
+  applyTomlValues,
   fieldsEqual,
   flattenLeaves,
-  serializeTomlFields,
   setFieldValueByPath,
   type TomlFormField,
 } from './toml-form';
@@ -79,6 +79,43 @@ function DiffModal({
   onConfirm: () => void;
 }) {
   const rows = useMemo(() => simpleLineDiff(before, after), [before, after]);
+  /** First row index of each consecutive add/del hunk (one value edit = one jump). */
+  const changeHunks = useMemo(() => {
+    const hunks: number[] = [];
+    let inHunk = false;
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i]!.kind !== 'same') {
+        if (!inHunk) {
+          hunks.push(i);
+          inHunk = true;
+        }
+      } else {
+        inHunk = false;
+      }
+    }
+    return hunks;
+  }, [rows]);
+  const [activeChange, setActiveChange] = useState(0);
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const goToChange = (changeIdx: number) => {
+    if (changeHunks.length === 0) return;
+    const next = ((changeIdx % changeHunks.length) + changeHunks.length) % changeHunks.length;
+    setActiveChange(next);
+    const rowIdx = changeHunks[next]!;
+    rowRefs.current[rowIdx]?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  };
+
+  const isInActiveHunk = (rowIndex: number) => {
+    if (changeHunks.length === 0 || rows[rowIndex]?.kind === 'same') return false;
+    const start = changeHunks[activeChange]!;
+    if (rowIndex < start) return false;
+    for (let i = start; i <= rowIndex; i++) {
+      if (rows[i]?.kind === 'same') return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -86,6 +123,18 @@ function DiffModal({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  useEffect(() => {
+    if (changeHunks.length === 0) return;
+    setActiveChange(0);
+    const id = window.requestAnimationFrame(() => {
+      const el = rowRefs.current[changeHunks[0]!];
+      el?.scrollIntoView({ block: 'center', behavior: 'auto' });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [changeHunks]);
+
+  const changeCount = changeHunks.length;
 
   return (
     <div className="md-cfg-modal" role="dialog" aria-modal="true" aria-label="Review config diff">
@@ -96,38 +145,101 @@ function DiffModal({
             <h3>Review changes</h3>
             <p className="md-cfg-modal__path">{path}</p>
           </div>
-          <Button kind="ghost" onClick={onClose} disabled={busy}>
-            Cancel
-          </Button>
-        </header>
-        <div className="md-cfg-diff" aria-label="Line diff">
-          {rows.length === 0 ? (
-            <p className="md-cfg-diff__empty">No line changes.</p>
-          ) : (
-            rows.map((row, i) => (
-              <div key={i} className={`md-cfg-diff__row md-cfg-diff__row--${row.kind}`}>
-                <span className="md-cfg-diff__mark">
-                  {row.kind === 'add' ? '+' : row.kind === 'del' ? '−' : ' '}
+          <div className="md-cfg-modal__head-actions">
+            {changeCount > 0 ? (
+              <div className="md-cfg-diff-nav" aria-label="Jump between changed lines">
+                <span className="md-cfg-diff-nav__count">
+                  {activeChange + 1} / {changeCount} change{changeCount === 1 ? '' : 's'}
                 </span>
-                <code>{row.text || ' '}</code>
+                <Button
+                  kind="ghost"
+                  onClick={() => goToChange(activeChange - 1)}
+                  disabled={busy || changeCount < 2}
+                >
+                  Prev
+                </Button>
+                <Button
+                  kind="ghost"
+                  onClick={() => goToChange(activeChange + 1)}
+                  disabled={busy || changeCount < 2}
+                >
+                  Next
+                </Button>
               </div>
-            ))
-          )}
+            ) : null}
+            <Button kind="ghost" onClick={onClose} disabled={busy}>
+              Cancel
+            </Button>
+          </div>
+        </header>
+        <div className="md-cfg-diff-wrap">
+          <div className="md-cfg-diff" aria-label="Line diff">
+            {rows.length === 0 ? (
+              <p className="md-cfg-diff__empty">No line changes.</p>
+            ) : (
+              rows.map((row, i) => {
+                const hunkIdx = changeHunks.indexOf(i);
+                const isActive = isInActiveHunk(i);
+                return (
+                  <div
+                    key={i}
+                    ref={(el) => {
+                      rowRefs.current[i] = el;
+                    }}
+                    className={[
+                      'md-cfg-diff__row',
+                      `md-cfg-diff__row--${row.kind}`,
+                      isActive ? 'md-cfg-diff__row--active' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    data-change-index={hunkIdx >= 0 ? hunkIdx : undefined}
+                  >
+                    <span className="md-cfg-diff__mark">
+                      {row.kind === 'add' ? '+' : row.kind === 'del' ? '\u2212' : ' '}
+                    </span>
+                    <code>{row.text || ' '}</code>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          {changeCount > 0 ? (
+            <div className="md-cfg-diff-rail" aria-hidden="true">
+              {changeHunks.map((rowIdx, i) => {
+                const kind = rows[rowIdx]?.kind ?? 'add';
+                const top = rows.length <= 1 ? 0 : (rowIdx / (rows.length - 1)) * 100;
+                return (
+                  <button
+                    key={`${rowIdx}-${i}`}
+                    type="button"
+                    className={`md-cfg-diff-rail__tick md-cfg-diff-rail__tick--${kind}${
+                      i === activeChange ? ' is-active' : ''
+                    }`}
+                    style={{ top: `${top}%` }}
+                    title={`Go to change ${i + 1}`}
+                    onClick={() => goToChange(i)}
+                  />
+                );
+              })}
+            </div>
+          ) : null}
         </div>
         {error ? <p className="md-cfg-banner md-cfg-banner--danger">{error}</p> : null}
         <footer className="md-cfg-modal__foot">
           <p className="md-cfg-modal__hint">
-            WatchTower will back up the current file, then write your edit. Form saves rewrite the TOML
-            cleanly — original comments may be dropped.
+            WatchTower backs up the file, then writes only the values you changed. Comments and layout
+            stay put. Marks on the right show where to scroll.
           </p>
           <Button kind="primary" onClick={onConfirm} disabled={busy}>
-            {busy ? 'Saving…' : 'Save'}
+            {busy ? 'Saving\u2026' : 'Save'}
           </Button>
         </footer>
       </div>
     </div>
   );
 }
+
 
 function FormFieldControl({
   field,
@@ -375,13 +487,13 @@ export function ConfigsTab({
   const previewAfter = useMemo(() => {
     if (mode === 'form' && formAvailable) {
       try {
-        return serializeTomlFields(fields);
+        return applyTomlValues(baseline, fields);
       } catch {
         return draft;
       }
     }
     return draft;
-  }, [mode, formAvailable, fields, draft]);
+  }, [mode, formAvailable, fields, draft, baseline]);
 
   const dirty =
     mode === 'form' && formAvailable ? !fieldsEqual(fields, baselineFields) : draft !== baseline;
@@ -445,7 +557,7 @@ export function ConfigsTab({
     if (next === mode || !formAvailable) return;
     if (next === 'raw') {
       try {
-        setDraft(serializeTomlFields(fields));
+        setDraft(applyTomlValues(baseline, fields));
       } catch {
         /* keep draft */
       }

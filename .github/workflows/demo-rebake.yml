@@ -1,0 +1,25 @@
+name: Demo rebake
+
+# Hits a Vercel deploy hook so baked fixture timestamps stay fresh.
+# Set repository secret VERCEL_DEMO_DEPLOY_HOOK to the Deploy Hook URL
+# (Vercel project for web/dashboard static demo → Settings → Git → Deploy Hooks).
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  rebake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel deploy hook
+        env:
+          HOOK: ${{ secrets.VERCEL_DEMO_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "VERCEL_DEMO_DEPLOY_HOOK secret not set — skipping"
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK"
+          echo "Deploy hook triggered"

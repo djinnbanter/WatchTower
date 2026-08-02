@@ -101,6 +101,7 @@ Legacy deep-audit facts on disk (older installs or optional schedule) are still 
 | **Crash group** | Fingerprinted crash family on Crashes |
 | **Modrinth lookup** | Optional online mod metadata |
 | **Config audit** | Startup / Insights check of JVM and conf |
+| **Weekly ops digest** | Local week rollup on Insights → Digest (ops-cache `weekly_digest`) |
 | **DR bundle** | Disaster-recovery zip from the CLI tool |
 | **Ops scan** | One Scanning cycle writing ops-cache |
 

@@ -1,0 +1,27 @@
+{
+  "mods_light": {
+    "updated_at": "2026-07-28T12:00:00Z",
+    "trigger": "jar_change",
+    "client_only_mods": [
+      {
+        "mod_id": "iris",
+        "display_name": "Iris",
+        "version": "1.7.0",
+        "bucket": "likely_removable",
+        "confidence": "high",
+        "reason": "Known client-only shader mod",
+        "removal_advice": "Remove from the dedicated server mods folder."
+      },
+      {
+        "mod_id": "sodium",
+        "display_name": "Sodium",
+        "version": "0.5.0",
+        "bucket": "likely_removable",
+        "confidence": "medium",
+        "reason": "Often client-only but confidence not high",
+        "removal_advice": "Confirm before removing."
+      }
+    ],
+    "ignored_client_mods": {}
+  }
+}

@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { ProductDesk } from '@/components/desk/product-desk';
 import { MarginNote } from '@/components/type/margin-note';
 import { TourBrings } from '@/components/type/tour-brings';
-import { ScanText, useSpark } from '@/components/motion';
+import { useSpark } from '@/components/motion';
 import { ShiftEntry } from '@/components/shift-log/entry';
 import { useLivePulse } from '@/components/shift-log/live-pulse-context';
 import { useLogProgressContext } from '@/components/shift-log/use-log-progress';
@@ -34,11 +34,9 @@ export function CrashesEntry() {
 
   return (
     <ShiftEntry {...meta}>
-      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-12">
+      <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-12">
         <div className="min-w-0">
-          <h2 className="wt-entry text-[color:var(--wt-text)]">
-            <ScanText text="Crashes" active={activeId === 'crashes'} />
-          </h2>
+          <h2 className="wt-entry text-[color:var(--wt-text)]">Crashes</h2>
           <p className="mt-4 max-w-[48ch] text-[1.0625rem] leading-relaxed text-[color:var(--wt-text-mid)]">
             {TOUR.crashes.capability}
           </p>

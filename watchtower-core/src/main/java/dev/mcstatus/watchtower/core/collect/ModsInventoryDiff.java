@@ -31,6 +31,14 @@ public final class ModsInventoryDiff {
     }
 
     public static JsonArray buildSnapshot(String serverDir) {
+        return buildSnapshot(serverDir, null, true);
+    }
+
+    /**
+     * @param hashCache previous snapshot used to skip rehash when size+mtime match
+     * @param hashEnabled when false, omit sha512 (kill-switch)
+     */
+    public static JsonArray buildSnapshot(String serverDir, JsonArray hashCache, boolean hashEnabled) {
         JsonArray out = new JsonArray();
         Path modsDir = Path.of(serverDir, "mods");
         if (!Files.isDirectory(modsDir)) {
@@ -55,12 +63,16 @@ public final class ModsInventoryDiff {
                 row.addProperty("size", Files.size(jar));
                 FileTime mtime = Files.getLastModifiedTime(jar);
                 row.addProperty("mtime", mtime.toInstant().getEpochSecond());
+                row.addProperty("disabled", ModJarDisable.isDisabledName(entry.jarFile()));
                 rows.add(row);
             } catch (IOException ignored) {
             }
         }
         rows.sort(Comparator.comparing(o -> o.get("jar").getAsString()));
         rows.forEach(out::add);
+        if (hashEnabled) {
+            ModJarChecksumBaseline.enrichSnapshot(modsDir, out, hashCache);
+        }
         return out;
     }
 
@@ -125,13 +137,17 @@ public final class ModsInventoryDiff {
             removed.add(summaryRow(row, "removed"));
         }
 
+        JsonArray drift = ModJarChecksumBaseline.detectDrift(current, baseline);
         result.add("added", added);
         result.add("removed", removed);
         result.add("changed", changed);
+        result.add("drift", drift);
         result.addProperty("added_count", added.size());
         result.addProperty("removed_count", removed.size());
         result.addProperty("changed_count", changed.size());
-        result.addProperty("has_changes", !added.isEmpty() || !removed.isEmpty() || !changed.isEmpty());
+        result.addProperty("drift_count", drift.size());
+        result.addProperty("has_changes",
+                !added.isEmpty() || !removed.isEmpty() || !changed.isEmpty() || !drift.isEmpty());
         return result;
     }
 
@@ -173,6 +189,7 @@ public final class ModsInventoryDiff {
         int added = diff.has("added_count") ? diff.get("added_count").getAsInt() : 0;
         int removed = diff.has("removed_count") ? diff.get("removed_count").getAsInt() : 0;
         int changed = diff.has("changed_count") ? diff.get("changed_count").getAsInt() : 0;
+        int drifted = diff.has("drift_count") ? diff.get("drift_count").getAsInt() : 0;
         List<String> parts = new ArrayList<>();
         if (added > 0) {
             parts.add(added + " added");
@@ -182,6 +199,9 @@ public final class ModsInventoryDiff {
         }
         if (changed > 0) {
             parts.add(changed + " updated");
+        }
+        if (drifted > 0) {
+            parts.add(drifted + " drifted");
         }
         return String.join(", ", parts) + " since last report";
     }

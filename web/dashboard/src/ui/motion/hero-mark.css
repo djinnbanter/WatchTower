@@ -1,0 +1,73 @@
+/* Giant faded corner mark for page heroes — sits behind copy. */
+
+.wt-hero-shell {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.wt-hero-mark {
+  position: absolute;
+  right: -1.35rem;
+  bottom: -1.75rem;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  width: 10.5rem;
+  height: 10.5rem;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.14;
+  color: var(--wt-accent);
+  transform: rotate(-8deg);
+}
+
+.wt-hero-mark--ok {
+  color: var(--wt-ok);
+}
+
+.wt-hero-mark--warn {
+  color: var(--wt-warn);
+}
+
+.wt-hero-mark--danger {
+  color: var(--wt-danger);
+}
+
+.wt-hero-mark--info,
+.wt-hero-mark--accent {
+  color: var(--wt-accent);
+}
+
+.wt-hero-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wt-hero-mark--card {
+  width: 6.25rem;
+  height: 6.25rem;
+  right: -1.1rem;
+  bottom: -1.35rem;
+  opacity: 0.12;
+  transform: rotate(-10deg);
+}
+
+@media (max-width: 720px) {
+  .wt-hero-mark {
+    width: 8.25rem;
+    height: 8.25rem;
+    right: -1.6rem;
+    bottom: -1.9rem;
+    opacity: 0.11;
+  }
+
+  .wt-hero-mark--card {
+    width: 5.25rem;
+    height: 5.25rem;
+    right: -1.25rem;
+    bottom: -1.45rem;
+    opacity: 0.1;
+  }
+}

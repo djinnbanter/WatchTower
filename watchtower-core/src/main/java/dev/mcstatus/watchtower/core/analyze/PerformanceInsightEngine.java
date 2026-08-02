@@ -120,7 +120,7 @@ public final class PerformanceInsightEngine {
         }
     }
 
-    private static JsonObject buildBusyQuiet(List<JsonObject> rows) {
+    static JsonObject buildBusyQuiet(List<JsonObject> rows) {
         Map<Integer, HourBucket> buckets = new HashMap<>();
         for (JsonObject row : rows) {
             if (!row.has("ts")) {
@@ -531,7 +531,7 @@ public final class PerformanceInsightEngine {
         };
     }
 
-    static JsonArray buildHourOfWeek(List<JsonObject> rows) {
+    public static JsonArray buildHourOfWeek(List<JsonObject> rows) {
         WeekCell[][] grid = new WeekCell[7][24];
         for (int d = 0; d < 7; d++) {
             for (int h = 0; h < 24; h++) {
@@ -940,7 +940,7 @@ public final class PerformanceInsightEngine {
         return new WindowSplit(current, prior, currentStart);
     }
 
-    static long rowEpochPublic(JsonObject row) {
+    public static long rowEpochPublic(JsonObject row) {
         return rowEpoch(row);
     }
 

@@ -21,6 +21,7 @@
     "test:digest": "tsx --test src/features/insights/weekly-digest.test.ts",
     "test:storage": "tsx --test src/features/insights/panels/storage-treemap-tree.test.ts src/features/insights/panels/storage-treemap-format.test.ts",
     "test:issues": "tsx --test src/features/issues/helpers.test.ts",
+    "test:spark-map": "tsx --test src/features/spark/map-helpers.test.ts",
     "test:session": "tsx --test src/features/session/*.test.ts",
     "test:settings": "tsx --test src/app/permissions.test.ts src/app/session-store.test.ts src/app/accents.test.ts src/features/wizard/persist.test.ts src/ui/player-avatar.test.ts src/features/settings/audit-log-helpers.test.ts",
     "test:ui-consistency": "tsx --test scripts/ui-consistency-banlist.test.ts",

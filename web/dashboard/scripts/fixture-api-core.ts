@@ -10,7 +10,7 @@ import {
 } from '../src/features/crashes/groups';
 import {
   parseTomlForm,
-  serializeTomlFields,
+  applyTomlValues,
   type TomlFormField,
 } from '../src/features/mods/toml-form';
 
@@ -952,7 +952,8 @@ export async function handleFixtureRequest(
               let content: string;
               if (Array.isArray(body.fields)) {
                 try {
-                  content = serializeTomlFields(body.fields as TomlFormField[]);
+                  const existing = store[pathKey]?.content ?? '';
+                  content = applyTomlValues(existing, body.fields as TomlFormField[]);
                 } catch (e) {
                   return jsonRes(400, {
                     ok: false,

@@ -1,0 +1,22 @@
+{
+  "prev_session": {
+    "boot_at": "2026-07-28T10:00:00Z",
+    "last_alive_at": "2026-07-28T12:30:00Z",
+    "clean_stop_at": null,
+    "cgroup_oom_kill": 0,
+    "postmortem_for": null
+  },
+  "kernel": {
+    "readable": true,
+    "evidence": []
+  },
+  "cgroup_oom_kill": 0,
+  "panel_kill_events": [],
+  "now": "2026-07-28T12:35:00Z",
+  "expected": {
+    "failure_kind": "external_kill",
+    "subtype": "panel_watchdog",
+    "confidence": "medium",
+    "kernel_log_readable": true
+  }
+}

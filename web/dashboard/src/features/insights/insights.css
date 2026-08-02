@@ -1414,12 +1414,12 @@
   z-index: 2;
   max-width: 16rem;
   padding: 0.4rem 0.55rem;
-  border-radius: 6px;
+  border-radius: var(--radius-wt-lg);
   border: 1px solid var(--wt-line);
   background: var(--wt-bg1);
   font-size: 0.75rem;
   pointer-events: none;
-  box-shadow: 0 4px 16px color-mix(in srgb, #000 25%, transparent);
+  box-shadow: var(--wt-shadow);
 }
 
 .in-callout {
@@ -1791,7 +1791,7 @@
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  border-radius: 4px;
+  border-radius: var(--radius-wt);
   font-size: var(--wt-fs-xs);
   font-weight: 650;
   font-variant-numeric: tabular-nums;

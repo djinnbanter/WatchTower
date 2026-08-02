@@ -112,6 +112,11 @@ public final class NeoForgeServerContext implements ServerContext {
     }
 
     @Override
+    public WatchtowerSample.WorldCensus collectWorldCensus() {
+        return WatchtowerSampler.collectWorldCensus(server);
+    }
+
+    @Override
     public List<OnlinePlayerView> onlinePlayers() {
         List<OnlinePlayerView> out = new ArrayList<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {

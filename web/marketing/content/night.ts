@@ -1,5 +1,5 @@
 /**
- * Desk tour: eight entries in order.
+ * Desk tour: seven entries in order.
  * Surface names live in each entry h2 (railLabel kept for content audit / meta).
  * Left columns teach features; fixtures stay on desk mocks.
  * Every fixture fact must trace to content/baked/desk.ts (sources field).
@@ -13,7 +13,6 @@ export type NightEntryId =
   | 'crashes'
   | 'overview'
   | 'insights'
-  | 'orders'
   | 'close';
 
 export type NightLayout = 'split' | 'bleed' | 'ledger' | 'close';
@@ -88,15 +87,6 @@ export const NIGHT: NightEntry[] = [
     band: 'ink',
     layout: 'split',
     sources: ['TOUR.insights', 'DESK.insights.*', 'DESK.backups.rows'],
-  },
-  {
-    id: 'orders',
-    stamp: null,
-    railLabel: 'Standing orders',
-    temp: 'cool',
-    band: 'plate',
-    layout: 'ledger',
-    sources: ['PROMISES', 'NOT_OUR_JOB'],
   },
   {
     id: 'close',

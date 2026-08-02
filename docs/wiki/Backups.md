@@ -48,10 +48,12 @@ Watchtower never auto-fills a guessed path.
 
 - Hero KPIs for freshness
 - Archives list/detail (when a local folder is configured)
+- **Integrity chips** (Verified / Suspicious / Broken / Not checked) from light archive checks
+- **Verify now** and optional **Test restore** (admin/owner) — test restore extracts only under `watchtower/restore-verify/`, never the live world
 - Setup checklist
 - Storage locations summary
 
-Rescan refreshes local inventory without Support compose.
+Rescan refreshes local inventory without Support compose. New archives are light-verified in the background when the server is quiet (defer if players online or MSPT is high).
 
 **Job freshness:** open [[Sources]] → **Backup scan** to see when the poller last ran and when the next pull is due.
 

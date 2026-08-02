@@ -1,0 +1,66 @@
+/* Section nav — flat instrument strip (same language as hero tabs). */
+
+.wt-pill-nav-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.wt-pill-nav {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.wt-pill-nav__item {
+  border: 1px solid color-mix(in srgb, var(--wt-line) 92%, transparent);
+  border-radius: var(--radius-wt-sm);
+  background: color-mix(in srgb, var(--wt-bg2) 72%, transparent);
+  color: var(--wt-text-mid);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 2rem;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.wt-pill-nav__item:hover {
+  color: var(--wt-text);
+  background: color-mix(in srgb, var(--wt-bg1) 88%, transparent);
+  border-color: color-mix(in srgb, var(--wt-accent) 35%, var(--wt-line));
+}
+
+.wt-pill-nav__item.is-active {
+  background: var(--wt-accent);
+  color: var(--wt-accent-ink, #fff);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.wt-pill-nav__item:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 2px;
+}
+
+.wt-pill-nav__trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wt-pill-nav__item {
+    transition: none;
+  }
+}

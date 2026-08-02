@@ -12,6 +12,9 @@ Operator-facing notes for work after **1.1.9** and the Jul 28–30 polish that s
 
 > **Updating from 1.1.x:** your existing dashboard login keeps working and becomes the **owner** — no reset. Everyone signs in again after the restart. Pre-upgrade file kept as `watchtower/dashboard-auth.json.pre-1.1.18.bak`.
 
+- **Backup integrity verify** — Backups list shows Verified / Suspicious / Broken; Verify now; optional test restore into `watchtower/restore-verify/` only (never the live world)
+- **Soft jar Disable / Enable** — Mods can rename a jar to `*.jar.disabled` (and back). Disabled jars stay in the list; filters All / Enabled / Disabled. Restart chip on Overview until you reboot. Admin/owner only — no Delete
+- **World risk** — Badge when the save may depend on a mod (dimension folders / jar data). Extra confirm before disable. Issue if a disabled mod still has world dimension folders left behind
 - **Named admin accounts** — owner / admin / viewer; Settings → Accounts (owner adds people and hands over a one-time temp password)
 - **Audit log** — Settings → Audit log records settings, acks, suppressions, accounts, and sign-ins (`watchtower/audit-log.jsonl`, newest 2000 / 90 days)
 - **Join & pack sync clinic** — rejects for mismatched channels / missing / wrong-version mods from `latest.log`; Issues `JOIN_SYNC` + Session → **Session activity** (joins / leaves / failed joins with **Copy fix**)
@@ -24,7 +27,7 @@ Operator-facing notes for work after **1.1.9** and the Jul 28–30 polish that s
 - **Snappier shell** — lazy routes, less query thrash, tabs scroll to top on change
 - **Issues inbox** — severity groups only (Critical / Warning / Info); drift / silent-fail / world-pressure still show as Issues with the right Fix actions
 - **Mods → Log errors** — Active / Reviewed + Mark reviewed
-- **Support packs** — tighter redaction and size accounting; clearer why a grade is Degraded
+- **Support packs** — chooser is pack type + optional note + size; Customize files stays optional; tighter redaction and size accounting
 - **Screenshots** — docs assets recaptured for Overview, Live, Insights, Mods, Issues, Crashes, Spark, Backups
 
 ## [1.1.9] — 2026-07-29

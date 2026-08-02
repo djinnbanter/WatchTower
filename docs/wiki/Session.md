@@ -21,12 +21,13 @@ This is **not** a ban tool — use your server’s moderation mods/commands for 
 | **Who's here** | Online roster / vitals |
 | **Average daily players** | Peak-oriented summary |
 | **Player directory** | Searchable known players |
-| **Recent sessions** | Recent join/leave style history |
+| **Session activity** | Joins, leaves, and pack-sync rejects (**Copy fix** on failures) |
 
 | Data | Layer |
 |------|-------|
 | Online now | Watching / live poll |
 | Playtime depth | Scanning (player stats) |
+| Session activity | Watching / ops-cache activity + join clinic |
 
 ---
 
@@ -43,3 +44,4 @@ This is **not** a ban tool — use your server’s moderation mods/commands for 
 - [[Dashboard-Overview]]
 - [[Understanding-Data-Sources]]
 - [[Activity]]
+- [[Join-Clinic]]

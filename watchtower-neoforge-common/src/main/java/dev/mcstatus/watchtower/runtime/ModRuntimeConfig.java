@@ -31,6 +31,8 @@ public interface ModRuntimeConfig {
 
     int liveCountEntitiesIntervalSeconds();
 
+    int liveWorldCensusIntervalSeconds();
+
     int liveStorageIntervalSeconds();
 
     int liveFlushIntervalSeconds();
