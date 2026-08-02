@@ -11,8 +11,16 @@ public final class SupportRedactor {
 
     private static final Pattern IPV4 = Pattern.compile(
             "\\b(?:(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\b");
-    private static final Pattern IPV6 = Pattern.compile(
-            "\\b(?:[0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}\\b");
+    /**
+     * Full 8-group IPv6 (7 colons). A clock time has 2 colons and a jar manifest fingerprint has 5,
+     * so neither can reach this arity.
+     */
+    private static final Pattern IPV6_FULL = Pattern.compile(
+            "(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}(?![0-9A-Fa-f:])");
+    /** Zero-compressed IPv6. Requires "::", which timestamps and colon-separated hashes never contain. */
+    private static final Pattern IPV6_COMPRESSED = Pattern.compile(
+            "(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4}){0,6})?::"
+                    + "(?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4}){0,6})?(?![0-9A-Fa-f:])");
     private static final Pattern UUID = Pattern.compile(
             "\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b");
     private static final Pattern SECRET_ASSIGN = Pattern.compile(
@@ -50,7 +58,8 @@ public final class SupportRedactor {
             scrubbed = line;
         }
         scrubbed = IPV4.matcher(scrubbed).replaceAll("[IP_REDACTED]");
-        scrubbed = IPV6.matcher(scrubbed).replaceAll("[IP_REDACTED]");
+        scrubbed = IPV6_FULL.matcher(scrubbed).replaceAll("[IP_REDACTED]");
+        scrubbed = IPV6_COMPRESSED.matcher(scrubbed).replaceAll("[IP_REDACTED]");
         scrubbed = UUID.matcher(scrubbed).replaceAll("[UUID_REDACTED]");
         return scrubbed;
     }

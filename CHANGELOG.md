@@ -7,13 +7,178 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Maintainers:** detailed planning and changelog notes may live in local `docs/dev/` (gitignored, not on GitHub).
 
-## [Unreleased](https://github.com/djinnbanter/WatchTower/compare/v1.1.2...HEAD)
+## [Unreleased](https://github.com/djinnbanter/WatchTower/compare/v1.1.9...HEAD)
+
+> Running dump of work after **1.1.9** / off-roadmap polish that landed alongside the 1.1.3–1.1.9 feature line (Jul 28–30). Versioned ops features stay under their numbered sections below; this block holds dashboard identity, packaging, support privacy, Live stability, Storage Space map, Join clinic, named accounts, and related fixes.
+
+> **Updating from 1.1.x:** your existing dashboard login keeps working and becomes the **owner** account — no reset, no config change. Everyone signs in again after the restart, as with any server restart. The pre-upgrade credential file is kept as `watchtower/dashboard-auth.json.pre-1.1.18.bak`.
 
 ### Added
 
+- **Backup integrity verify + test restore (1.1.20)** — Light-check zip/tar.gz backups (level.dat + region `.mca`); Verified/Suspicious/Broken chips on Backups; Verify now; auto-queue with defer under players/MSPT; optional async test restore under `watchtower/restore-verify/` only; Issue `BACKUP_VERIFY_FAILED` when newest fails. Kill-switches `BACKUP_VERIFY_*` / `BACKUP_TEST_RESTORE_ENABLED`
+- **Soft jar Disable / Enable (1.1.19)** — Mods catalog can rename top-level jars to `*.jar.disabled` (and back). Disabled jars stay listed with filters **All / Enabled / Disabled**. Admin/owner only; no Delete. Audit `mod_disabled` / `mod_enabled`; Overview **Restart needed** chip until reboot
+- **World risk badges (1.1.19)** — Conservative badge when world dimension folders, live dim namespaces, or jar `data/<modId>/dimension/` paths suggest the save may break. High risk requires confirm. Optional Issue when a disabled mod still has leftover world dimensions. Kill-switches `MOD_DISABLE_ENABLED` / `WORLD_RISK_ENABLED`
+- **Named admin accounts (1.1.18)** — per-person logins with three roles: **owner** (everything, including accounts), **admin** (operate, no account management), **viewer** (read-only). Existing installs keep their credentials and become the owner
+- **Side rail signed-in account + Sign out** — rail footer shows who is signed in and a **Sign out** control
+- **Minecraft player link** — optional UUID/name on a dashboard account; rail (and Accounts) show that player's Crafthead skin. Owner sets links in Accounts; anyone can link themselves under Security
+- **Audit log (1.1.18)** — `watchtower/audit-log.jsonl` records settings changes, acknowledgements, suppressions, account management, and sign-ins (including failures and blocked writes), readable from **Settings → Audit log**
+- **Join & pack sync clinic (1.1.10)** — Parses Forge/NeoForge/Fabric join rejections from `latest.log` (`JoinRejectionSignatures` on the ops-log tail), diffs named mods against the server inventory (suppresses known client-only), writes `ops-cache.join_clinic`, opens continuous Issues `JOIN_SYNC:*` with Session deep-link, and surfaces failed joins on Session → **Session activity** with a player-safe **Copy fix**. Kill-switch `JOIN_CLINIC_ENABLED` (default on). Read-only — never changes `mods/`. Wiki `Join-Clinic.md`; fixtures under `samples/fixtures/join-clinic/`
+- **Insights Storage Space map** — WinDirStat-style squarified treemap on Insights → Storage as a new **Space map** card (meters + share tables kept). Zoom / breadcrumb drill-in; World dimensions, Logs, Other; Mods and Backups drill when sizes exist; client tree from existing `optional.storage` (+ live dimension / backup sizes). Backend `by_mods` top-40 jar sizes + Other for Mods drill. Camera zoom animation, GB/MB/KB labels, dynamic label scale, fills available width. `d3-hierarchy` + visx `ParentSize` (not nivo)
+- **Storage treemap motion / design notes** — maintainer plans/specs under `docs/superpowers/plans|specs/*storage-treemap*` (motion pass follow-ups)
+- **Scorecard `grade_reasons`** — structured codes explaining a Degraded (or similar) grade without changing grade math; Overview Needs-attention can list them; support brief open/reviewed issue counts clearer
+- **Mods → Log errors Active / Reviewed** — Mark reviewed + Active/Reviewed tabs (chrome layout stabilized so switching tabs does not jump)
+- **Dashboard timezone** already shipped in 1.1.6; Unreleased follow-ups localize more Schedule / digest / hygiene surfaces as they touch datetime helpers
+
 ### Changed
 
+- **Support pack modal** — pack-type first (Quick / Server issue / WatchTower bug / Full evidence); optional note; size strip next to Build; Customize files stays advanced. Dropped the separate problem-type chip row
+- **Setup wizard is owner-only** — invited admin/viewer accounts skip the full server setup wizard after password change
+- **Acknowledgements and suppressions attribute the account name** instead of the literal `dashboard` (rows written before the update keep `dashboard`)
+- **Session activity plate** — right-column feed merges live `player_join` / `player_leave` from ops-cache activity with `join_clinic` failures (expand + **Copy fix**); replaces full-width Join clinic and Recent sessions; Issues action **Open Session activity**
+- **Dashboard UI identity pass (Jul 29)** — accent off Linear-style periwinkle onto bold signal blue (`#4C8DFF` family); shadcn token layer aliased to `--wt-*`; radius ladder tightened; solid rail (less glass mush); lantern/logo lockup; channel colours (TPS/MSPT/heap/CPU/…) separated from status colours (ok/warn/danger) so gauges are not ambiguous; shared `.wt-plate` / `HeroCard` across Overview + ops heroes; Geist + JetBrains Mono; dead UI surface cleanup for one language
+- **Identity follow-up (evening)** — KPI hierarchy on Insights; remove static count-ups that lied; drop unused WebGL specular / `ogl` paths and unused motion bits; a11y list/keyboard fixes on catalogs; mission uptime KPI formats `1d 14h 13m` / `14h 13m 5s` without overflow
+- **Issues Active grouping** — thematic bands (Jar drift / Client-only / Script fails / World pressure) removed from inbox chrome; severity-only Critical / Warning / Info; specialized Fix actions still keyed by issue id (`MOD_JAR_DRIFT`, `SILENT_FAIL`, `WORLD_PRESSURE`, `CLIENT_ON_SERVER`, …)
+- **Startup Boot health** — hero treatment aligned with shared plates
+- **Backups / Activity / Sources heroes** — flattened chrome; hide duplicate shell H1 where the page hero already titles the tab
+- **Tab scroll reset** — changing rail route scrolls main content to top
+- **Dashboard snappiness** — `React.lazy` route splits; SpecularButton WebGL cap/pause when off-screen; shell query dedupe; fixture samples honour `minutes` / `max_points`
+- **React dashboard is canonical (de-alpha)** — production UI is `web/dashboard` (React 19 + Vite + Tailwind 4); Preact tree moved to `web/dashboard-archive`; preview APIs/profiles renamed; Gradle embed, CI, packaging audits, CONTRIBUTING / end-user docs point at the React path; alpha packaging audit scripts renamed/consolidated (`tools/audit-dashboard-packaging.mjs`, parity updates)
+- **Docs / screenshots** — recaptured Overview, Live-Metrics, Insights, Mods, Issues, Crash-Logs, spark, Backups under `docs/assets/screenshots/`; public ROADMAP / wiki pages updated for digest, world pressure, silent fail, external kill, drift, restart hygiene; new wiki pages World-Pressure, Script-Failed-Silently; maintainer roadmap realignment (`ROADMAP-AUDIT-2026-07.md`, `shipped-1.1.md`, near-term / day2 version docs, backlog-deferred, cut-log)
+- **Support compose privacy & correctness** — redact ops once for facts/brief/zip; safer IPv6 regex; ensure `facts.system`; `panel_running` unknown instead of false DOWN when unknown; absolute `server_dir`; UUID truncation in share copy; join dedupe; budget accounting includes history/rollups; soft/hard size honesty
+- **World pressure UI depth (with 1.1.9)** — Insights → World hero, classifiers, dimension cards, pies, quiet/busy/peak compare bars, forceload share, Players gauge, Spark World deep-link; chunk load breakdown (spawn estimate + vanilla `/forceload` + NeoForge mod force-loads); world compare baselines (busy-hours p95 + window peak 7d/30d)
+- **Overview restart hygiene layout** — hygiene subsection on Restart plate; incident story + digest teaser card polish; friendlier incident titles
+- **Crashes Killed chip** — external_kill filter under Host; Fix copy OOM vs panel force-kill
+
 ### Fixed
+
+- **Join clinic mock / preview** — Vite fixture API re-reads `join_clinic` (and related ops blocks) from disk mid-session so Session → Join clinic is not stuck empty after regenerating mock data
+- **Live charts harden** — tip-forced downsample; stale host/net equality guards; no blank flashes on navigate; Y-domain recovery; calmer slide/hover thrash
+- **Blank Insights after Space map Motion transition** — outlet / motion edge case that white-screened Insights after treemap enter
+- **Mission uptime KPI overflow / overlap** — clock + unit markers fit the mission band
+- **Mods Log-errors chrome shift** — Active ↔ Reviewed no longer reflows the list chrome
+- **Support bundle P0–P2** — privacy leak of raw ops into facts/brief; over-redaction of timestamps; missing system/panel/server_dir; size/budget under-count
+- **Status fragmentation** — grade reasons on Overview + clearer support brief issue lines so Degraded is explainable
+
+## [1.1.9](https://github.com/djinnbanter/WatchTower/compare/v1.1.7...v1.1.9) — 2026-07-29
+
+Artifacts: `watchtower-neoforge-1.1.9+mc1.21.jar` · `watchtower-cli-1.1.9.jar` in `releases/1.1.9/` and `releases/latest/`.
+
+> **Note:** 1.1.8 (pack pin storytelling & export) is deferred — this release skips that number.
+
+### Added
+
+- **Entity and chunk pressure + farm/item-storm storytelling** — always-on per-dimension world census folded into the tick-thread sample pass (analysis off-thread): entity totals, items vs living split, top entity types, loaded chunks, forced/forceload share; quiet-hours baseline from L1 rollups; sustained classifiers `item_storm` / `mob_spike` (unattended-loaders storytelling on World UI; unattended-as-Issue later removed to cut noise)
+- **Insights → World** — dedicated Insights nav pill: alerts strip, by-dimension cards, forceload share, entity pressure, Players `WtGauge`, quiet / busy / peak compare bars, Spark World deep-link for per-chunk proof
+- **Issues `WORLD_PRESSURE:*`** — continuous ledger rows when classifiers stay hot; Fix pane deep-links World / Spark; kill-switch `WORLD_PRESSURE_ENABLED` (default on). Read-only — never kills entities or unloads chunks
+- **Chunk load breakdown helpers** — `SpawnChunkEstimate` + NeoForge `ChunkLoadBreakdown` (spawn estimate, vanilla `/forceload`, mod force-loads) for forceload share storytelling
+- **World census sampling config** — NeoForge `liveWorldCensusIntervalSeconds` / related live sampling; fixtures under `samples/fixtures/world-pressure/`
+- **Wiki** — `World-Pressure.md`, Configuration / Insights / Roadmap / HTTP-API / On-disk-Files updates; in-app wiki rebuild
+
+### Changed
+
+- **Performance rollups** — L1 minute rows may carry `entities_max` / `chunks_max` / `unattended_chunks_max` when census has run; ops-cache `world_pressure` block holds latest census, baseline, MSPT correlation, classifiers
+- **Roadmap** — World pressure moved to Works today; pack-pin remains Coming next under deferred 1.1.8
+
+### Fixed
+
+- World pressure classifiers gated on sustained windows vs quiet baseline (avoids one-tick spikes)
+- Census collection failures degrade soft (no tick-thread throws into sampler)
+
+## [1.1.7](https://github.com/djinnbanter/WatchTower/compare/v1.1.6...v1.1.7) — 2026-07-29
+
+Artifacts: `watchtower-neoforge-1.1.7+mc1.21.jar` · `watchtower-cli-1.1.7.jar` in `releases/1.1.7/` and `releases/latest/`.
+
+### Added
+
+- **Script / datapack / KubeJS silent-fail surfacing** — `SilentFailSignatures` matches known log lines on the existing ops-log tail (KubeJS ERROR/Exception/failed, CraftTweaker ERROR, datapack `Couldn't parse data file` / element, `/reload` Failed to execute reload / Reload failed); persists `silent_fails` in ops-cache; continuous Issues `SILENT_FAIL:{kind}:{…}` with path (+ line) when present on the **same** log line
+- **Issues Active band (at ship)** — Script & datapack failures thematic section (later Unreleased: severity-only inbox; ids unchanged)
+- Kill-switch `SILENT_FAIL_DETECT_ENABLED` (default on). Does not auto-edit scripts
+- **Wiki** — `Script-Failed-Silently.md`; Configuration / Issues / Changelog; fixtures `samples/fixtures/issues-live/silent-fail.json`
+
+### Changed
+
+- `OpsLogTailScanner` / `OpsCacheWriter` / `IssuesLiveEvaluators` pipeline mirrors `MOD_JAR_DRIFT` / `EXTERNAL_KILL` pattern (dedupe, suppress, ack)
+
+### Fixed
+
+- Path capture only when co-located on the triggering line (no cross-line false paths)
+
+## [1.1.6](https://github.com/djinnbanter/WatchTower/compare/v1.1.5...v1.1.6) — 2026-07-28
+
+Artifacts: `watchtower-neoforge-1.1.6+mc1.21.jar` · `watchtower-cli-1.1.6.jar` in `releases/1.1.6/` and `releases/latest/`.
+
+### Added
+
+- **Uptime & restart hygiene advisor** — `RestartHygieneAdvisor` reads JVM uptime + recent vs prior-12h GC/heap rollups; when both look worse, Overview Restart plate suggests a maintenance restart and the next historically quiet window from Schedule evidence (UTC-canonical server-side). Advisory only — never starts, schedules, or blocks `/stop`. Kill-switch `RESTART_HYGIENE_ENABLED` (default on). Payload on Overview meta / `meta.restart_hygiene`
+- **Dashboard timezone preference** — Settings picker (`wt-timezone`: browser / UTC / IANA) via `web/dashboard` datetime helpers; localizes Insights Schedule heatmaps and restart-hygiene quiet-window display; stored rollups remain UTC
+
+### Changed
+
+- Overview Restart card layout to host hygiene subsection beside Safe / Caution / Wait checklist
+- Conf.example + Configuration wiki keys for restart hygiene
+
+### Fixed
+
+- Quiet-window suggestion uses existing hour-of-week Schedule evidence (no new backend timezone store)
+
+## [1.1.5](https://github.com/djinnbanter/WatchTower/compare/v1.1.4...v1.1.5) — 2026-07-28
+
+Artifacts: `watchtower-neoforge-1.1.5+mc1.21.jar` · `watchtower-cli-1.1.5.jar` in `releases/1.1.5/` and `releases/latest/`.
+
+### Added
+
+- **Watchdog and OOM force-kill detection** — post-mortem on the **next** boot: session heartbeat + clean-stop marker (`WatchtowerBootstrap` stopping path); if prior session vanished without a Minecraft crash report, `ExternalKillDetector` + `KernelOomProbe` classify OS/container OOM-killer vs panel watchdog / SIGKILL
+- **Crashes `failure_kind: external_kill`** — synthetic/merged entry (not wiped by file-based crash rebuild); **Killed** chip; Fix copy subtype-correct (OOM → memory limit / Insights → Configs RAM advisor; panel → raise stop/watchdog timeout); ack/review works like file crashes
+- Continuous Issues via `IssuesLiveEvaluators.fromExternalKill` when applicable
+- Kill-switch `EXTERNAL_KILL_DETECT_ENABLED` (default on)
+- Fixtures `samples/fixtures/external-kill/*`; tests `ExternalKillDetectorTest`
+
+### Changed
+
+- Crash group API merges `external_kill` block per-request so ops crash file rebuild cannot drop the verdict
+- Wiki Crashes / Configuration / Changelog
+
+### Fixed
+
+- Abrupt kill vs clean stop discriminated by clean-stop marker + heartbeat freshness (no false Killed after orderly `/stop`)
+
+## [1.1.4](https://github.com/djinnbanter/WatchTower/compare/v1.1.3...v1.1.4) — 2026-07-28
+
+Artifacts: `watchtower-neoforge-1.1.4+mc1.21.jar` · `watchtower-cli-1.1.4.jar` in `releases/1.1.4/` and `releases/latest/`.
+
+### Added
+
+- **Pack drift lock** — `ModJarChecksumBaseline` SHA-512 on mod jars vs last baseline; `ModsInventoryDiff.drift[]`; continuous Issues `MOD_JAR_DRIFT:*` when same filename + version, different hash. Copy: verify intentional swap — not labeled “corrupted.” Kill-switch `MOD_JAR_DRIFT_ENABLED` (default on)
+- **Client-only jar Issues** — high-confidence `likely_removable` from `ModSideScorer` (+ Modrinth side) → continuous `CLIENT_ON_SERVER:{mod_id}` info Issues; respects ignored client mods; kill-switch `CLIENT_ON_SERVER_ISSUES_ENABLED` (default on)
+- Issues Active thematic sections at ship (Jar drift / Client-only jars) — see Unreleased for later severity-only inbox chrome
+- Fixtures `samples/fixtures/ops-cache/mod-jar-drift-positive.json`, `samples/fixtures/issues-live/mod-jar-drift.json`, `client-on-server-band.json`; tests on diff / evaluators
+
+### Changed
+
+- Ops scan refreshes drift + client-on-server into `issues_live` on jar inventory wake
+- Wiki Issues / Mods / Configuration
+
+### Fixed
+
+- Normal Modrinth version bumps (name/version change) do not raise drift; drift is hash-only same name+version
+
+## [1.1.3](https://github.com/djinnbanter/WatchTower/compare/v1.1.2...v1.1.3) — 2026-07-28
+
+Artifacts: `watchtower-neoforge-1.1.3+mc1.21.jar` · `watchtower-cli-1.1.3.jar` in `releases/1.1.3/` and `releases/latest/`.
+
+### Added
+
+- **Weekly ops digest** — `WeeklyDigestBuilder` rolls grade, crashes, disk delta, MSPT / low-TPS trend, and mod changes into one weekly summary entry; bounded history in ops-cache (`WEEKLY_DIGEST_HISTORY_MAX`, default 8); auto cadence `WEEKLY_DIGEST_INTERVAL_DAYS` (default 7); kill-switch `WEEKLY_DIGEST_ENABLED` (default on)
+- **Insights → Digest** — full history panel + manual refresh
+- **Overview digest teaser** — dismissible card with “do this next” action; no email / webhook
+- **HTTP** — `GET` / `POST /api/weekly-digest`
+- Fixtures `samples/fixtures/ops-cache/weekly-digest-*.json`; Java `WeeklyDigestBuilderTest` + dashboard `weekly-digest.test.ts`
+- Wiki Insights / Dashboard-Overview / Configuration / HTTP-API / On-disk-Files / Understanding-Data-Sources / Roadmap; conf.example keys
+
+### Changed
+
+- Ops scan `maybeBuildWeeklyDigest` / `buildWeeklyDigest` wired through `OpsCacheWriter.applyWeeklyDigest`
+- Public ROADMAP Works today lists weekly digest
 
 ## [1.1.2](https://github.com/djinnbanter/WatchTower/compare/v1.1.0...v1.1.2) — 2026-07-26
 

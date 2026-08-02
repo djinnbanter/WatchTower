@@ -1,0 +1,20 @@
+{
+  "index": {
+    "state": "ready",
+    "built_at": "2026-07-28T10:54:15.510Z",
+    "jar_count": 48,
+    "entry_count": 18240,
+    "stale": false
+  },
+  "config": {
+    "mod_forensics_scan": true,
+    "corrupt_jar_walk": false,
+    "index_on_report": false
+  },
+  "last_report_scan": {
+    "at": "2026-07-28T10:24:15.510Z",
+    "corrupt_jars": 1,
+    "config_issues": 1,
+    "stderr_merged": true
+  }
+}

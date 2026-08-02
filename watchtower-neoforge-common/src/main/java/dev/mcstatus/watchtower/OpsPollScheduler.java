@@ -2,8 +2,6 @@ package dev.mcstatus.watchtower;
 
 import dev.mcstatus.watchtower.runtime.ServerContext;
 
-import dev.mcstatus.watchtower.core.auth.DashboardAuthStore;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -92,9 +90,7 @@ public final class OpsPollScheduler {
 
     private boolean hasAuthenticatedSession() {
         try {
-            DashboardAuthStore store = DashboardAuthServices.store();
-            boolean totp = store != null && store.totpEnabled();
-            return DashboardAuthServices.sessions().fullyAuthenticatedCount(totp) > 0;
+            return DashboardAuthServices.sessions().fullyAuthenticatedCount() > 0;
         } catch (Exception e) {
             return false;
         }

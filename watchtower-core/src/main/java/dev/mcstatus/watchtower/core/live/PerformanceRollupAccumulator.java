@@ -24,6 +24,9 @@ public final class PerformanceRollupAccumulator {
     private final List<Double> diskFreeGbSamples = new ArrayList<>();
     private final List<Double> diskWriteMbSSamples = new ArrayList<>();
     private final List<Double> diskWriteAwaitMsSamples = new ArrayList<>();
+    private final List<Double> entitySamples = new ArrayList<>();
+    private final List<Double> chunkSamples = new ArrayList<>();
+    private final List<Double> unattendedChunkSamples = new ArrayList<>();
     private boolean lowTpsFlag;
 
     public void reset() {
@@ -39,6 +42,9 @@ public final class PerformanceRollupAccumulator {
         diskFreeGbSamples.clear();
         diskWriteMbSSamples.clear();
         diskWriteAwaitMsSamples.clear();
+        entitySamples.clear();
+        chunkSamples.clear();
+        unattendedChunkSamples.clear();
         lowTpsFlag = false;
     }
 
@@ -81,6 +87,28 @@ public final class PerformanceRollupAccumulator {
             Double diskFreeGb,
             Double diskWriteMbS,
             Double diskWriteAwaitMs) {
+        addSample(tps, mspt, players, heapUsedGb, memUsedGb, cpuPct, tpsWarn,
+                heapPressurePct, gcPausePct, diskUsePct, diskFreeGb, diskWriteMbS, diskWriteAwaitMs,
+                null, null, null);
+    }
+
+    public void addSample(
+            Double tps,
+            Double mspt,
+            int players,
+            Double heapUsedGb,
+            Double memUsedGb,
+            Double cpuPct,
+            double tpsWarn,
+            Double heapPressurePct,
+            Double gcPausePct,
+            Double diskUsePct,
+            Double diskFreeGb,
+            Double diskWriteMbS,
+            Double diskWriteAwaitMs,
+            Double entities,
+            Double chunks,
+            Double unattendedChunks) {
         if (tps != null) {
             tpsSamples.add(tps);
             if (tps < tpsWarn) {
@@ -118,6 +146,15 @@ public final class PerformanceRollupAccumulator {
         if (diskWriteAwaitMs != null) {
             diskWriteAwaitMsSamples.add(diskWriteAwaitMs);
         }
+        if (entities != null) {
+            entitySamples.add(entities);
+        }
+        if (chunks != null) {
+            chunkSamples.add(chunks);
+        }
+        if (unattendedChunks != null) {
+            unattendedChunkSamples.add(unattendedChunks);
+        }
     }
 
     public boolean isEmpty() {
@@ -142,6 +179,15 @@ public final class PerformanceRollupAccumulator {
         }
         if (!playerSamples.isEmpty()) {
             row.addProperty("players_max", Collections.max(playerSamples));
+        }
+        if (!entitySamples.isEmpty()) {
+            row.addProperty("entities_max", Collections.max(entitySamples).longValue());
+        }
+        if (!chunkSamples.isEmpty()) {
+            row.addProperty("chunks_max", Collections.max(chunkSamples).longValue());
+        }
+        if (!unattendedChunkSamples.isEmpty()) {
+            row.addProperty("unattended_chunks_max", Collections.max(unattendedChunkSamples).longValue());
         }
         if (!heapUsedGbSamples.isEmpty()) {
             row.addProperty("heap_used_gb_avg", round2(avg(heapUsedGbSamples)));

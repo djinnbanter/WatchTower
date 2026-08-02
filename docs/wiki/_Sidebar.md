@@ -10,8 +10,11 @@
 **Use the dashboard**
 - [[Insights]]
 - [[Session]]
+- [[Join Clinic]]
 - [[Startup]]
 - [[Issues]]
+- [[Script Failed Silently]]
+- [[World Pressure]]
 - [[Crashes]]
 - [[Logs]]
 - [[Using Spark with Watchtower]]
@@ -29,6 +32,7 @@
 **Reference**
 - [[Configuration]]
 - [[Security and Access]]
+- [[Accounts And Audit Log]]
 - [[Commands]]
 - [[Health Reports]]
 - [[Hosting Panels]]

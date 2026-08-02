@@ -49,6 +49,10 @@ public final class WatchtowerConfig {
             .comment("How often to scan entity/chunk counts for live metrics")
             .defineInRange("liveCountEntitiesIntervalSeconds", 30, 5, 300);
 
+    public static final ModConfigSpec.IntValue LIVE_WORLD_CENSUS_INTERVAL_SECONDS = BUILDER
+            .comment("How often to run the per-dimension world-pressure census (entity types, forced chunks)")
+            .defineInRange("liveWorldCensusIntervalSeconds", 60, 30, 600);
+
     public static final ModConfigSpec.IntValue LIVE_STORAGE_INTERVAL_SECONDS = BUILDER
             .comment("How often to run storage du scan for live metrics")
             .defineInRange("liveStorageIntervalSeconds", 300, 60, 3600);

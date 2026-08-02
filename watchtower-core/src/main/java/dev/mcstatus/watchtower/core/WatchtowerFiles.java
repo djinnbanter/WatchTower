@@ -11,6 +11,7 @@ public final class WatchtowerFiles {
     /** Support-compose artifacts — excluded from BAU {@link dev.mcstatus.watchtower.core.collect.ReportArtifactFinder}. */
     public static final String SUPPORT_FACTS_INFIX = "-support-";
     public static final String OPS_CACHE_FILENAME = "ops-cache.json";
+    public static final String CONFIG_BACKUPS_DIR = "config-backups";
 
     private WatchtowerFiles() {
     }

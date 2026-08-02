@@ -45,8 +45,28 @@ public final class SupportBundlePackager {
             JsonObject environment,
             JsonArray evidenceFiles,
             JsonArray omissions,
-            String zipTimestamp
+            String zipTimestamp,
+            String opsCacheRedactedJson,
+            JsonObject qualityGate
     ) {
+        public PackageRequest(
+                Path outDir,
+                Path factsPath,
+                Path briefPath,
+                Path opsCachePath,
+                Path rollupsPath,
+                List<ExtraEntry> extras,
+                boolean composed,
+                SupportComposeOptions options,
+                JsonObject environment,
+                JsonArray evidenceFiles,
+                JsonArray omissions,
+                String zipTimestamp,
+                String opsCacheRedactedJson
+        ) {
+            this(outDir, factsPath, briefPath, opsCachePath, rollupsPath, extras, composed, options,
+                    environment, evidenceFiles, omissions, zipTimestamp, opsCacheRedactedJson, null);
+        }
     }
 
     private SupportBundlePackager() {
@@ -89,7 +109,7 @@ public final class SupportBundlePackager {
     ) throws IOException {
         return packageSupportBundle(new PackageRequest(
                 outDir, factsPath, briefPath, opsCachePath, rollupsPath, extras, composed,
-                SupportComposeOptions.quickDefaults(), null, new JsonArray(), new JsonArray(), null));
+                SupportComposeOptions.quickDefaults(), null, new JsonArray(), new JsonArray(), null, null));
     }
 
     public static BundleResult packageSupportBundle(PackageRequest req) throws IOException {
@@ -117,7 +137,7 @@ public final class SupportBundlePackager {
 
         JsonObject manifest = buildManifest(
                 factsName, briefName, opsName, rollupsName, req.composed(), options,
-                req.evidenceFiles(), req.omissions());
+                req.evidenceFiles(), req.omissions(), req.qualityGate());
 
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath))) {
             ForensicsZipUtil.addTextEntry(zos, "manifest.json", GSON.toJson(manifest));
@@ -138,7 +158,9 @@ public final class SupportBundlePackager {
                 ForensicsZipUtil.addFileEntry(zos, zipBrief, briefPath);
             }
             if (hasOpsCache) {
-                String opsJson = SupportRedactor.redactJsonText(Files.readString(req.opsCachePath()));
+                String opsJson = req.opsCacheRedactedJson() != null
+                        ? req.opsCacheRedactedJson()
+                        : SupportRedactor.redactJsonText(Files.readString(req.opsCachePath()));
                 ForensicsZipUtil.addTextEntry(zos, "watchtower/" + opsName, opsJson);
             }
             if (hasRollups && options.includeRollups()) {
@@ -184,7 +206,8 @@ public final class SupportBundlePackager {
             boolean composed,
             SupportComposeOptions options,
             JsonArray evidenceFiles,
-            JsonArray omissions
+            JsonArray omissions,
+            JsonObject qualityGate
     ) {
         JsonObject manifest = new JsonObject();
         manifest.addProperty("bundle_version", BUNDLE_VERSION);
@@ -218,6 +241,9 @@ public final class SupportBundlePackager {
         }
         manifest.add("evidence", evidenceFiles != null ? evidenceFiles : new JsonArray());
         manifest.add("omissions", omissions != null ? omissions : new JsonArray());
+        if (qualityGate != null) {
+            manifest.add("quality_gate", qualityGate);
+        }
         return manifest;
     }
 
@@ -226,7 +252,7 @@ public final class SupportBundlePackager {
         sb.append("Watchtower support bundle\n");
         sb.append("=========================\n\n");
         sb.append("Privacy: text artifacts are redacted (secrets, IPs, UUIDs). Spark profiles are binary and unredacted.\n");
-        sb.append("Never includes dashboard-auth, world/playerdata, backups, or mod jars.\n\n");
+        sb.append("Never includes dashboard-auth, the audit log, world/playerdata, backups, or mod jars.\n\n");
         if (composed) {
             sb.append("Composed from continuous Watching + Scanning data (ops-cache, rollups).\n");
             sb.append("Facts/brief in this zip are synthesized for support only — not BAU dashboard truth.\n\n");

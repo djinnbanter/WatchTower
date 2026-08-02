@@ -4,6 +4,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import dev.mcstatus.watchtower.core.analyze.SoftHangDetector;
 import dev.mcstatus.watchtower.runtime.WatchtowerSample;
 
 import java.time.Instant;
@@ -13,6 +14,7 @@ import java.util.List;
 
 /**
  * Tracks smoothed MSPT from server tick duration and session min/max/avg/p95.
+ * Also stamps last-tick wall clock + tick counter for soft-hang detection.
  */
 @EventBusSubscriber(modid = WatchtowerMod.MOD_ID)
 public final class TickMetrics {
@@ -23,6 +25,10 @@ public final class TickMetrics {
     private static boolean initialized;
     private static Instant sessionSince;
     private static final List<Double> sessionSamples = new ArrayList<>();
+
+    private static volatile long lastTickAtMs;
+    private static volatile long lastTickCount;
+    private static volatile String phase = "unknown";
 
     private TickMetrics() {
     }
@@ -47,6 +53,31 @@ public final class TickMetrics {
         if (sessionSamples.size() > MAX_SAMPLES) {
             sessionSamples.remove(0);
         }
+        lastTickAtMs = System.currentTimeMillis();
+        lastTickCount++;
+        if ("starting".equals(phase) || "loading_world".equals(phase)) {
+            phase = "ticking";
+        }
+    }
+
+    public static long lastTickAtMs() {
+        return lastTickAtMs;
+    }
+
+    public static long lastTickCount() {
+        return lastTickCount;
+    }
+
+    public static String phase() {
+        return phase;
+    }
+
+    public static void setPhase(String p) {
+        phase = p != null && !p.isBlank() ? p : "unknown";
+    }
+
+    public static SoftHangDetector.TickStamp stamp() {
+        return new SoftHangDetector.TickStamp(lastTickAtMs, lastTickCount, phase);
     }
 
     public static double smoothedMspt() {
@@ -78,5 +109,8 @@ public final class TickMetrics {
         smoothedMspt = 50.0;
         sessionSamples.clear();
         sessionSince = Instant.now();
+        lastTickAtMs = System.currentTimeMillis();
+        lastTickCount = 0L;
+        phase = "starting";
     }
 }

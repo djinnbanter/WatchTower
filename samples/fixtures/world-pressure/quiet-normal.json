@@ -1,0 +1,22 @@
+{
+  "census": {
+    "census_at": "2026-07-29T00:11:58Z",
+    "dimensions": [
+      {
+        "id": "minecraft:overworld",
+        "entities": 420,
+        "items": 40,
+        "living": 300,
+        "loaded_chunks": 180,
+        "forced_chunks": 2,
+        "players": 1,
+        "unattended": false,
+        "top_types": [
+          { "type": "minecraft:cow", "count": 80 },
+          { "type": "minecraft:item", "count": 40 }
+        ]
+      }
+    ]
+  },
+  "rollup_rows": []
+}

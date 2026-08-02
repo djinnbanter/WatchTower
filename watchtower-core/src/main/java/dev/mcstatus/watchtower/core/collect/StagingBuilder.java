@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.mcstatus.watchtower.core.analyze.DiskProjectionAnalyzer;
+import dev.mcstatus.watchtower.core.analyze.WorldRiskAnalyzer;
 import dev.mcstatus.watchtower.core.live.PerformanceRollupWriter;
 import dev.mcstatus.watchtower.core.panel.PanelLabels;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
@@ -17,7 +18,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Orchestrates staging JSON construction (ported from {@code build_staging}).
@@ -641,9 +644,46 @@ public final class StagingBuilder {
                 ModJarMetadataReader.enrichModArray(mods, serverDir);
             }
             ModNesting.foldOptionalMods(mods, serverDir);
+            mergeDisabledJarsFromDisk(mods, serverDir);
+            if (config != null && config.worldRiskEnabled()) {
+                Path serverPath = serverDir != null ? Path.of(serverDir) : null;
+                WorldRiskAnalyzer.attachToMods(mods, serverPath, Set.of());
+            }
             optional.add("mods", mods);
             ClientModDetector.apply(optional, config, serverDir);
             p.found("jars", mods.size());
+        }
+    }
+
+    /** Ensure soft-disabled jars appear in optional.mods even when native list is running-only. */
+    public static void mergeDisabledJarsFromDisk(JsonArray mods, String serverDir) {
+        if (mods == null || serverDir == null || serverDir.isBlank()) {
+            return;
+        }
+        Set<String> jars = new HashSet<>();
+        for (var el : mods) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject m = el.getAsJsonObject();
+            if (m.has("jar_file") && !m.get("jar_file").isJsonNull()) {
+                jars.add(m.get("jar_file").getAsString());
+            }
+        }
+        for (var el : ModJarMetadataReader.listModsFromDir(serverDir)) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject disk = el.getAsJsonObject();
+            if (!disk.has("disabled") || !disk.get("disabled").getAsBoolean()) {
+                continue;
+            }
+            String jar = disk.has("jar_file") ? disk.get("jar_file").getAsString() : null;
+            if (jar == null || jar.isBlank() || jars.contains(jar)) {
+                continue;
+            }
+            mods.add(disk.deepCopy());
+            jars.add(jar);
         }
     }
 

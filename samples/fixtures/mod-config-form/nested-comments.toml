@@ -1,0 +1,14 @@
+#.
+#Packmakers' control panel for internal recipe compat
+[recipes]
+	#.
+	#Allow the Mechanical Press to process entire stacks at a time.
+	bulkPressing = false
+	#.
+	#The Maximum amount of ingredients that can be used to craft Firework Rockets using Mechanical Crafters.
+	# Default: 9
+	# Range: > 1
+	maxFireworkIngredientsInCrafter = 9
+	#.
+	#Allow any stonecutting recipes to be processed by a Mechanical Saw.
+	allowStonecuttingOnSaw = true

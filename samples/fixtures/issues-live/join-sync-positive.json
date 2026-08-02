@@ -1,0 +1,26 @@
+{
+  "join_clinic": {
+    "scanned_at": "2026-07-29T20:16:00Z",
+    "new_count": 1,
+    "entries": [
+      {
+        "key": "mismatched_channel|FriendName|create,flywheel",
+        "kind": "mismatched_channel",
+        "platform": "neoforge",
+        "player": "FriendName",
+        "time": "2026-07-29T20:15:01Z",
+        "confidence": "high",
+        "reason": "mismatched channels",
+        "missing": [
+          {"mod_id": "create", "server_version": "6.0.0", "display_name": "Create"},
+          {"mod_id": "flywheel", "server_version": "1.0.0", "display_name": "Flywheel"}
+        ],
+        "extra": [],
+        "wrong_version": [],
+        "suppressed_client_only": [],
+        "vs_known_good": false,
+        "fix_copy": "Hey FriendName — install create and flywheel."
+      }
+    ]
+  }
+}

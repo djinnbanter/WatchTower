@@ -25,13 +25,13 @@ import {
   createSimState,
   stepSim,
   generateCorrelatedLiveSamples,
+  generateCorrelatedLiveSamplesSpan,
   gauss,
 } from '../src/api/mock-physics.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(root, 'data');
-const previewProfile = (process.env.PREVIEW_PROFILE || '').trim().toLowerCase();
-const isFreshPreview = previewProfile === 'fresh';
+const previewProfile = (process.env.PREVIEW_PROFILE || 'normal').trim().toLowerCase();
 
 function isoAt(ms) {
   return new Date(ms).toISOString();
@@ -105,7 +105,13 @@ function busyHoursInsightDetail(busyHours) {
 }
 
 function generateLiveBundle(now) {
-  return generateCorrelatedLiveSamples(now, { count: 720, stepMs: 30_000 });
+  // ~30d history: sparse older samples + dense last 24h for short brush windows.
+  return generateCorrelatedLiveSamplesSpan(now, {
+    spanMs: 30 * 86_400_000,
+    recentMs: 86_400_000,
+    denseStepMs: 30_000,
+    sparseStepMs: 10 * 60_000,
+  });
 }
 
 function generatePerformanceRollups(now, { hours = 24, stepSec = 60 } = {}) {
@@ -150,6 +156,11 @@ function generatePerformanceRollups(now, { hours = 24, stepSec = 60 } = {}) {
     msptP95s.push(msptPeak);
     playersMax = Math.max(playersMax, players);
     const jitter = round1(clamp(msptPeak - mspt + Math.abs(gauss()) * 2, 0.5, 40));
+    // 1.1.6: rising GC / heap in the latest 12h vs prior 12h (restart hygiene mock).
+    const ageHours = (now - t) / 3_600_000;
+    const recent12h = ageHours < 12;
+    const gcPause = recent12h ? 4.2 : 2.8;
+    const heapPressure = recent12h ? 71.0 : 69.0;
     rows.push({
       ts: isoAt(t),
       tps_avg: round2(tps),
@@ -161,6 +172,12 @@ function generatePerformanceRollups(now, { hours = 24, stepSec = 60 } = {}) {
       heap_used_gb_avg: round2(heapAcc / sub / 1024),
       mem_used_gb_avg: round2(clamp(32 - state.memAvail, 8, 28)),
       cpu_pct_avg: round1(cpuAcc / sub),
+      heap_pressure_pct_avg: round1(heapPressure),
+      heap_pressure_pct_p95: round1(heapPressure + (recent12h ? 2 : 1)),
+      gc_pause_pct_avg: round2(gcPause),
+      entities_max: Math.round(clamp(800 + players * 180 + (recent12h ? 900 : 0) + Math.abs(gauss()) * 200, 200, 6000)),
+      chunks_max: Math.round(clamp(220 + players * 40 + (recent12h ? 180 : 0) + Math.abs(gauss()) * 40, 80, 2000)),
+      unattended_chunks_max: Math.round(clamp(recent12h ? 120 + Math.abs(gauss()) * 40 : 40, 0, 800)),
       low_tps_flag: lowTps,
     });
   }
@@ -543,6 +560,33 @@ function offsetIso(now, offsetMs) {
   return isoAt(now + offsetMs);
 }
 
+/** Rolling multi-boot series for Startup "Boot times" chart (phases included). */
+function mockBootHistory(nowMs) {
+  const day = 24 * 3600_000;
+  const templates = [
+    { daysAgo: 7, total: 118.2, status: 'ok', phases: [32.4, 18.1, 36.2, 31.5] },
+    { daysAgo: 6, total: 124.6, status: 'ok', phases: [34.0, 19.4, 38.8, 32.4] },
+    { daysAgo: 5, total: 131.1, status: 'warnings', phases: [35.6, 21.2, 40.1, 34.2] },
+    { daysAgo: 4, total: 128.4, status: 'warnings', phases: [34.8, 20.5, 39.6, 33.5] },
+    { daysAgo: 3, total: 135.9, status: 'warnings', phases: [36.9, 22.8, 42.0, 34.2] },
+    { daysAgo: 2, total: 122.7, status: 'ok', phases: [33.1, 18.9, 37.4, 33.3] },
+    { daysAgo: 1, total: 129.9, status: 'warnings', phases: [35.2, 20.8, 40.4, 33.5] },
+    { daysAgo: 0, total: 142.3, status: 'warnings', phases: [38.1, 22.0, 41.5, 28.4] },
+  ];
+  const labels = [
+    ['registry', 'Registry freeze'],
+    ['datapack', 'Datapack load'],
+    ['mod_init', 'Mod initialization'],
+    ['world_load', 'World load'],
+  ];
+  return templates.map((t) => ({
+    done_at: t.daysAgo === 0 ? offsetIso(nowMs, -3 * 3600_000) : offsetIso(nowMs, -t.daysAgo * day - 4 * 3600_000),
+    total_sec: t.total,
+    status: t.status,
+    phases: labels.map(([id, label], i) => ({ id, label, sec: t.phases[i] })),
+  }));
+}
+
 function generatePerformanceInsightsMock(now, window = '7d') {
   const cfg = mockPerfWindowConfig(window);
   const heatCells = buildMockHourOfWeek(cfg.heatSampleMinutes);
@@ -567,6 +611,42 @@ function generatePerformanceInsightsMock(now, window = '7d') {
   };
 }
 
+function generateWorldPressureCompare(window = '7d') {
+  // Coherent with generateOpsCache world_pressure census (Overworld storm ~5.1k entities).
+  // Quiet = off-peak p95; busy = typical evening; peak = weekend spike; storm sits between busy and peak.
+  const peakEntities = window === '30d' ? 7200 : 5800;
+  const peakChunks = window === '30d' ? 2400 : 2050;
+  const busyEntities = window === '30d' ? 4600 : 4200;
+  const busyChunks = window === '30d' ? 1750 : 1550;
+  const quietEntities = 1800;
+  const quietChunks = 700;
+  return {
+    window,
+    quiet: {
+      entities_p50: Math.round(quietEntities * 0.78),
+      entities_p95: quietEntities,
+      chunks_p95: quietChunks,
+      sample_minutes: window === '30d' ? 4800 : 1120,
+      hours_utc: [3, 4, 5],
+    },
+    busy: {
+      entities_p50: Math.round(busyEntities * 0.82),
+      entities_p95: busyEntities,
+      chunks_p95: busyChunks,
+      sample_minutes: window === '30d' ? 5400 : 1260,
+      hours_utc: [18, 19, 20],
+    },
+    peak: {
+      entities_max: peakEntities,
+      chunks_max: peakChunks,
+      entities_at: '2026-07-26T19:40:00Z',
+      chunks_at: '2026-07-26T19:40:00Z',
+    },
+    method:
+      'quiet=p95 during Schedule quiet hours; busy=p95 during busy hours; peak=max minute in window',
+  };
+}
+
 function generatePerformanceDashboardMock(now, opsCache, window = '7d') {
   const cfg = mockPerfWindowConfig(window);
   const base = generatePerformanceInsightsMock(now, window);
@@ -584,6 +664,7 @@ function generatePerformanceDashboardMock(now, opsCache, window = '7d') {
     scorecard_perf: window === '30d'
       ? { low_tps_minutes_24h: 18, low_tps_minutes_7d: 112, mspt_p95_24h: 46 }
       : { low_tps_minutes_24h: 12, low_tps_minutes_7d: 99, mspt_p95_24h: 42 },
+    world_pressure_compare: generateWorldPressureCompare(window),
   };
 }
 
@@ -606,12 +687,82 @@ function generateCpuCores(count = 8, hostCpu = 42) {
 }
 
 function generateByDimension() {
+  // Keep dimension GB summing near world_gb (~18.4) so Overview Storage stays coherent.
   return [
-    { id: 'overworld', path: 'world', label: 'Overworld', gb: 88.1 },
-    { id: 'nether', path: 'world/DIM-1', label: 'Nether', gb: 8.2 },
-    { id: 'end', path: 'world/DIM1', label: 'End', gb: 4.1 },
-    { id: 'mod:aether/aether', path: 'world/dimensions/aether/aether', label: 'aether / aether', gb: 3.8 },
+    { id: 'overworld', path: 'world', label: 'Overworld', gb: 15.6 },
+    { id: 'nether', path: 'world/DIM-1', label: 'Nether', gb: 1.4 },
+    { id: 'end', path: 'world/DIM1', label: 'End', gb: 0.7 },
+    { id: 'mod:aether/aether', path: 'world/dimensions/aether/aether', label: 'aether / aether', gb: 0.7 },
   ];
+}
+
+function generateByLogs() {
+  // Sums to ~0.4 GB to match facts.optional.storage.logs_gb.
+  return [
+    { id: 'latest', path: 'logs/latest.log', label: 'latest.log', gb: 0.08, mb: 82 },
+    { id: 'debug', path: 'logs/debug.log', label: 'debug.log', gb: 0.05, mb: 51 },
+    { id: 'archives', path: 'logs/*.gz', label: 'Rotated archives', gb: 0.22, mb: 225 },
+    { id: 'other_logs', path: 'logs', label: 'Other log files', gb: 0.05, mb: 51 },
+  ];
+}
+
+function generateByOther() {
+  // Sums to ~2.1 GB residual of server dir after world/mods/logs.
+  return [
+    { id: 'other:libraries', path: 'libraries', label: 'libraries', gb: 0.85 },
+    { id: 'other:config', path: 'config', label: 'config', gb: 0.42 },
+    { id: 'other:versions', path: 'versions', label: 'versions', gb: 0.28 },
+    { id: 'other:crash-reports', path: 'crash-reports', label: 'crash-reports', gb: 0.18 },
+    { id: 'other:kubejs', path: 'kubejs', label: 'kubejs', gb: 0.15 },
+    { id: 'other:defaultconfigs', path: 'defaultconfigs', label: 'defaultconfigs', gb: 0.08 },
+    { id: 'other:rest', path: '.', label: 'Other folders', gb: 0.14 },
+  ];
+}
+
+/** Top jars summing to ~1.2 GB to match facts.optional.storage.mods_gb. */
+function generateByMods() {
+  const weights = [
+    ['create', 0.22],
+    ['mekanism', 0.14],
+    ['ae2', 0.11],
+    ['botania', 0.09],
+    ['alexsmobs', 0.08],
+    ['jei', 0.07],
+    ['biomesoplenty', 0.06],
+    ['sophisticatedbackpacks', 0.05],
+    ['kubejs', 0.04],
+    ['geckolib', 0.03],
+    ['supplementaries', 0.03],
+    ['farmersdelight', 0.025],
+    ['waystones', 0.02],
+    ['modernfix', 0.015],
+    ['lithium', 0.012],
+    ['spark', 0.008],
+  ];
+  const rest = Math.max(0, 1.2 - weights.reduce((s, [, w]) => s + w, 0));
+  const byId = new Map(MOCK_RUNNING_MODS.map((m) => [m.id, m]));
+  const rows = weights.map(([id, gb]) => {
+    const mod = byId.get(id);
+    const version = mod?.version ?? '1.0.0';
+    const jar = `${id}-${version}.jar`;
+    return {
+      id: `mod:${jar.toLowerCase()}`,
+      path: `mods/${jar}`,
+      label: jar,
+      gb: round2(gb),
+      mb: Math.round(gb * 1024 * 10) / 10,
+    };
+  });
+  if (rest >= 0.01) {
+    rows.push({
+      id: 'mod:rest',
+      path: 'mods',
+      label: 'Other jars',
+      gb: round2(rest),
+      mb: Math.round(rest * 1024 * 10) / 10,
+    });
+  }
+  return rows.sort((a, b) => b.gb - a.gb);
 }
 
 function latestFromSamples(samples, now, simMeta = null) {
@@ -630,6 +781,7 @@ function latestFromSamples(samples, now, simMeta = null) {
     disk_use_pct: last('disk_use_pct') ?? 42,
     world_gb: 18.4,
     java_rss_gb: round2(clamp(heapUsed / 1024 + 3.8 + players * 0.15, 6, 16)),
+    java_uptime_sec: 38 * 3600,
     by_dimension: generateByDimension(),
     sample_interval_sec: 1,
     retention_hours: 2160,
@@ -706,6 +858,33 @@ function generateOpsCache(now, performanceRollups) {
 
   const activityEvents = [
     {
+      time: offsetIso(now, -3 * 60_000),
+      type: 'mod_jar_added',
+      detail: 'create-1.21.1-6.0.0.jar',
+      source: 'scan',
+      path: 'create-1.21.1-6.0.0.jar',
+    },
+    {
+      time: offsetIso(now, -4 * 60_000),
+      type: 'config_changed',
+      detail: 'config/create-common.toml',
+      source: 'scan',
+      path: 'config/create-common.toml',
+    },
+    {
+      time: offsetIso(now, -5 * 60_000),
+      type: 'mod_disabled',
+      detail: 'dimdoors-1.21.jar → dimdoors-1.21.jar.disabled',
+      source: 'dashboard',
+      path: 'dimdoors-1.21.jar.disabled',
+    },
+    {
+      time: offsetIso(now, -6 * 60_000),
+      type: 'restart_scheduled',
+      detail: 'Server will restart in 5 minutes',
+      source: 'scan',
+    },
+    {
       time: offsetIso(now, -8 * 60_000),
       type: 'lag_incident',
       detail: 'Lag spike captured',
@@ -718,6 +897,12 @@ function generateOpsCache(now, performanceRollups) {
       detail: "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
       source: 'scan',
       ms_behind: 5200,
+    },
+    {
+      time: offsetIso(now, -8 * 60_000),
+      type: 'backup_job',
+      detail: '[Crafty] Starting backup for Example Server',
+      source: 'scan',
     },
     {
       time: offsetIso(now, -10 * 60_000),
@@ -746,16 +931,25 @@ function generateOpsCache(now, performanceRollups) {
       player: 'Steve',
     },
     {
-      time: offsetIso(now, -8 * 60_000),
-      type: 'backup_job',
-      detail: '[Crafty] Starting backup for Example Server',
+      time: offsetIso(now, -28 * 60_000),
+      type: 'mod_jar_updated',
+      detail: 'jei-1.21.1-neoforge-19.21.0.jar',
       source: 'scan',
+      path: 'jei-1.21.1-neoforge-19.21.0.jar',
     },
     {
-      time: offsetIso(now, -6 * 60_000),
-      type: 'restart_scheduled',
-      detail: 'Server will restart in 5 minutes',
+      time: offsetIso(now, -33 * 60_000),
+      type: 'mod_jar_removed',
+      detail: 'old-debug-1.0.jar',
       source: 'scan',
+      path: 'old-debug-1.0.jar',
+    },
+    {
+      time: offsetIso(now, -38 * 60_000),
+      type: 'mod_enabled',
+      detail: 'appleskin-neoforge-mc1.21-3.0.9.jar.disabled → appleskin-neoforge-mc1.21-3.0.9.jar',
+      source: 'dashboard',
+      path: 'appleskin-neoforge-mc1.21-3.0.9.jar',
     },
     {
       time: offsetIso(now, -45 * 60_000),
@@ -814,6 +1008,13 @@ function generateOpsCache(now, performanceRollups) {
       { type: 'mod_errors', label: `${modLogErrorEntries.length} mod log errors`, severity: 'warning', tab: 'mods' },
       { type: 'mods_changed', label: mockModsInventoryTldr(inventoryDiff), severity: 'info', tab: 'performance' },
       { type: 'lag', label: '1 active lag incident', severity: 'warning', tab: 'issues' },
+      {
+        type: 'join_clinic',
+        label: '3 recent pack sync join failures',
+        severity: 'warning',
+        detail: 'NotchFan42 / BuilderBob / FridayGuest — open Session → Join clinic',
+        tab: 'session',
+      },
       { type: 'log_stale', label: 'Log output stale', severity: 'warning', detail: '22 min since last log write', tab: 'issues' },
     ],
   };
@@ -823,15 +1024,76 @@ function generateOpsCache(now, performanceRollups) {
     gap_minutes: 22.4,
     last_mtime: offsetIso(now, -22 * 60_000),
   };
+  const backupsInventory = Array.from({ length: 12 }, (_, i) => {
+    const ageHours = i === 0 ? 0.3 : 24.3 * i;
+    const day = String(23 - i).padStart(2, '0');
+    const file = `2026-06-${day}_08-00-00.zip`;
+    const dir = i < 5 ? '/srv/backups/minecraft' : '/mnt/nas/mc-backups';
+    const checkedAt = offsetIso(now, -(i + 1) * 3600_000);
+    /** Varied integrity chips for Backups preview (1.1.20).
+     * Newest is suspicious so Issues → BACKUP_VERIFY_FAILED matches product rules. */
+    const verify =
+      i === 0
+        ? {
+            status: 'suspicious',
+            mode: 'light',
+            checked_at: checkedAt,
+            findings: ['archive_ok', 'has_level.dat', 'missing:region_mca'],
+          }
+        : i === 1
+          ? {
+              status: 'verified',
+              mode: 'light',
+              checked_at: checkedAt,
+              findings: ['archive_ok', 'has_level.dat', 'has_region_mca'],
+            }
+          : i === 2
+            ? {
+                status: 'broken',
+                mode: 'light',
+                checked_at: checkedAt,
+                findings: ['truncated_or_unreadable'],
+              }
+            : i === 3
+              ? {
+                  status: 'not_checked',
+                  mode: 'light',
+                  checked_at: checkedAt,
+                  findings: ['unsupported_format'],
+                }
+              : i === 4
+                ? {
+                    status: 'pending',
+                    mode: 'light',
+                    checked_at: checkedAt,
+                    findings: [],
+                  }
+                : {
+                    status: 'verified',
+                    mode: 'light',
+                    checked_at: checkedAt,
+                    findings: ['archive_ok', 'has_level.dat', 'has_region_mca'],
+                  };
+    return {
+      file,
+      path: `${dir}/${file}`,
+      size_mb: 842 - i * 5,
+      age_hours: Math.round(ageHours * 10) / 10,
+      ...(i === 0 ? { mtime: Math.floor((now - 18 * 60_000) / 1000) } : {}),
+      verify,
+    };
+  });
   const backupsLive = {
     scanned_at: offsetIso(now, -18 * 60_000),
     last_backup: {
-      file: '2026-06-23_08-00-00.zip',
+      file: backupsInventory[0].file,
+      path: backupsInventory[0].path,
       mtime: Math.floor((now - 18 * 60_000) / 1000),
-      size_mb: 842,
+      size_mb: backupsInventory[0].size_mb,
       age_hours: 0.3,
     },
-    inventory_summary: { file_count: 12, total_gb: 9.8 },
+    inventory_summary: { file_count: backupsInventory.length, total_gb: 9.8 },
+    inventory: backupsInventory,
   };
 
   return {
@@ -982,8 +1244,594 @@ function generateOpsCache(now, performanceRollups) {
       baseline_disk_use_pct: 42.0,
       delta_pct: 6.2,
       delta_free_gb: 12.4,
-      message: 'Disk use rose 6.2% since last report (12.4 GB less free)',
+      message: 'Disk use rose 6.2% since last check (12.4 GB less free)',
     },
+    weekly_digest: generateWeeklyDigest(now),
+    external_kill: {
+      detected_at: offsetIso(now, -5 * 60_000),
+      killed_at: offsetIso(now, -35 * 60_000),
+      failure_kind: 'external_kill',
+      subtype: 'oom',
+      confidence: 'high',
+      kernel_log_readable: true,
+      display_label: 'Killed by the OS out-of-memory killer',
+      plain_english:
+        'The server process was killed from outside the JVM by the OS or container out-of-memory killer. There is no Minecraft crash report because the process was terminated by the host, not by a mod exception.',
+      likely_cause: 'Container or host memory limit exceeded',
+      fix_hints: [
+        'The server process was killed by the OS or container out-of-memory killer — nothing in Minecraft crashed.',
+        'Raise the container / host memory limit, or lower -Xmx so the JVM fits under the limit.',
+        'Open Insights → Configs for the RAM sizing advisor before changing flags.',
+        'Leave 1–2 GB above -Xmx for JVM overhead and the OS.',
+      ],
+      evidence: [
+        {
+          file: 'journalctl-k',
+          line: null,
+          quote: 'Out of memory: Killed process 18432 (java) total-vm:12582912kB',
+          time: offsetIso(now, -35 * 60_000),
+        },
+      ],
+      session_boot_at: offsetIso(now, -8 * 3600_000),
+      recent: [],
+    },
+    mods_light: {
+      updated_at: offsetIso(now, -2 * 60_000),
+      trigger: 'jar_change',
+      client_only_mods: [
+        {
+          mod_id: 'iris',
+          display_name: 'Iris',
+          version: '1.7.5+1.21.1',
+          bucket: 'likely_removable',
+          confidence: 'high',
+          reason: 'Known client-only shader mod',
+          removal_advice: 'Remove from the dedicated server mods folder.',
+        },
+        {
+          mod_id: 'oculus',
+          display_name: 'Oculus',
+          version: '1.8.0',
+          bucket: 'likely_removable',
+          confidence: 'high',
+          reason: 'Client rendering / shaders — not needed on a dedicated server',
+          removal_advice: 'Safe to remove from server mods/.',
+        },
+      ],
+      client_only_mods_summary: {
+        detected: 2,
+        likely_removable_count: 2,
+        test_remove_count: 0,
+        client_warning_count: 0,
+      },
+    },
+    issues_live: [
+      {
+        id: 'BACKUP_VERIFY_FAILED',
+        key: 'BACKUP_VERIFY_FAILED',
+        severity: 'warning',
+        status: 'open',
+        first_seen: offsetIso(now, -6 * 60_000),
+        last_seen: offsetIso(now, -6 * 60_000),
+        evidence_fingerprint: 'backup:verify:suspicious',
+        source: 'ops',
+        message:
+          'Newest backup failed integrity check (suspicious): /srv/backups/minecraft/2026-06-23_08-00-00.zip',
+        evidence_refs: ['ops:backups_live'],
+        fix_steps: [
+          'Open Backups and check the integrity chip on the newest archive.',
+          'Run Verify now — if it still fails, take a fresh backup before relying on restore.',
+          'Do not treat a suspicious archive as a recovery plan until a light verify (or test restore) passes.',
+        ],
+      },
+      {
+        id: 'EXTERNAL_KILL:oom',
+        key: 'EXTERNAL_KILL:oom',
+        severity: 'warning',
+        status: 'open',
+        first_seen: offsetIso(now, -5 * 60_000),
+        last_seen: offsetIso(now, -5 * 60_000),
+        evidence_fingerprint: 'external_kill:oom',
+        source: 'ops',
+        message: 'Killed by the OS out-of-memory killer',
+        evidence_refs: ['ops:external_kill'],
+        fix_steps: [
+          'The server process was killed by the OS or container out-of-memory killer — nothing in Minecraft crashed.',
+          'Raise the container / host memory limit, or lower -Xmx so the JVM fits under the limit.',
+          'Open Insights → Configs for the RAM sizing advisor before changing flags.',
+        ],
+      },
+      {
+        id: `MOD_JAR_DRIFT:${inventoryDiff.drift?.[0]?.jar || 'create-addons-extra-1.0.0.jar'}`,
+        key: `MOD_JAR_DRIFT:${inventoryDiff.drift?.[0]?.jar || 'create-addons-extra-1.0.0.jar'}`,
+        severity: 'warning',
+        status: 'open',
+        first_seen: offsetIso(now, -2 * 60_000),
+        last_seen: offsetIso(now, -2 * 60_000),
+        evidence_fingerprint: `mod_drift:${inventoryDiff.drift?.[0]?.jar || 'create-addons-extra-1.0.0.jar'}`,
+        source: 'ops',
+        message: `\`${inventoryDiff.drift?.[0]?.jar || 'create-addons-extra-1.0.0.jar'}\` changed without a version bump — verify this was intentional.`,
+        evidence_refs: ['ops:mods_inventory'],
+        fix_steps: [
+          'Open Mods → Changes and confirm the jar swap was intentional.',
+          'If unexpected, restore the jar from a known-good backup and re-check.',
+        ],
+      },
+      {
+        id: 'SILENT_FAIL:kubejs|kubejs/server_scripts/machines.js:42',
+        key: 'SILENT_FAIL:kubejs|kubejs/server_scripts/machines.js:42',
+        severity: 'warning',
+        status: 'open',
+        first_seen: offsetIso(now, -3 * 60_000),
+        last_seen: offsetIso(now, -3 * 60_000),
+        evidence_fingerprint: 'silent_fail:kubejs|kubejs/server_scripts/machines.js:42',
+        source: 'ops',
+        message: 'KubeJS script error — `kubejs/server_scripts/machines.js:42`',
+        evidence_refs: ['ops:silent_fails'],
+        fix_steps: [
+          'Open the script at the reported path and check the last edited recipe/event handler.',
+          "Run /reload (or KubeJS's reload command) after fixing the syntax to confirm it clears.",
+        ],
+      },
+      {
+        id: 'SILENT_FAIL:reload_failed|abcdef01',
+        key: 'SILENT_FAIL:reload_failed|abcdef01',
+        severity: 'info',
+        status: 'open',
+        first_seen: offsetIso(now, -4 * 60_000),
+        last_seen: offsetIso(now, -4 * 60_000),
+        evidence_fingerprint: 'silent_fail:reload_failed|abcdef01',
+        source: 'ops',
+        message: '/reload command failed',
+        evidence_refs: ['ops:silent_fails'],
+        fix_steps: [
+          'Check the log lines immediately above this one for the underlying error.',
+          'Fix the reported file, then re-run /reload.',
+        ],
+      },
+      {
+        id: 'CLIENT_ON_SERVER:iris',
+        key: 'CLIENT_ON_SERVER:iris',
+        severity: 'info',
+        status: 'open',
+        first_seen: offsetIso(now, -2 * 60_000),
+        last_seen: offsetIso(now, -2 * 60_000),
+        evidence_fingerprint: 'client_on_server:iris',
+        source: 'ops',
+        message: 'Iris — Known client-only shader mod',
+        evidence_refs: ['ops:mods_light'],
+        fix_steps: [
+          'Open Mods → Overview (Client filter) and confirm this jar is not needed server-side.',
+          'Remove from the dedicated server mods folder.',
+        ],
+      },
+      {
+        id: 'CLIENT_ON_SERVER:oculus',
+        key: 'CLIENT_ON_SERVER:oculus',
+        severity: 'info',
+        status: 'open',
+        first_seen: offsetIso(now, -2 * 60_000),
+        last_seen: offsetIso(now, -2 * 60_000),
+        evidence_fingerprint: 'client_on_server:oculus',
+        source: 'ops',
+        message: 'Oculus — Client rendering / shaders — not needed on a dedicated server',
+        evidence_refs: ['ops:mods_light'],
+        fix_steps: [
+          'Open Mods → Overview (Client filter) and confirm this jar is not needed server-side.',
+          'Safe to remove from server mods/.',
+        ],
+      },
+      {
+        id: 'WORLD_PRESSURE:item_storm:minecraft:overworld',
+        key: 'WORLD_PRESSURE:item_storm:minecraft:overworld',
+        severity: 'warning',
+        status: 'open',
+        first_seen: offsetIso(now, -6 * 60_000),
+        last_seen: offsetIso(now, -1 * 60_000),
+        evidence_fingerprint: 'world_pressure:item_storm:minecraft:overworld',
+        source: 'ops',
+        message:
+          'Item storm in Overworld — 2,200 item entities in Overworld — 43% of entities there; total load is 2.8x quiet-hours normal.',
+        evidence_refs: ['ops:world_pressure'],
+        fix_steps: [
+          'Fly to the busiest chunks in Overworld and check hoppers/void filters on item farms',
+          'Look for broken item vacuum or overflow near forced chunks',
+          'Capture a Spark profile and open World → busy chunks for a precise hotspot',
+        ],
+      },
+      {
+        id: 'JOIN_SYNC:mismatched_channel|NotchFan42|create,flywheel',
+        key: 'JOIN_SYNC:mismatched_channel|NotchFan42|create,flywheel',
+        severity: 'warning',
+        status: 'open',
+        first_seen: offsetIso(now, -18 * 60_000),
+        last_seen: offsetIso(now, -6 * 60_000),
+        evidence_fingerprint: 'join_sync:mismatched_channel|NotchFan42|create,flywheel',
+        source: 'ops',
+        message: "NotchFan42 can't join — create, flywheel (mismatched channels)",
+        evidence_refs: ['ops:join_clinic'],
+        fix_steps: [
+          'Install/update the listed mods on the client to match the server.',
+          'Remove client mods that register network channels the server does not have.',
+          'Open Session → Join clinic and Copy fix for a player-safe list.',
+        ],
+      },
+      {
+        id: 'JOIN_SYNC:missing_mod|BuilderBob|jei,farmersdelight',
+        key: 'JOIN_SYNC:missing_mod|BuilderBob|jei,farmersdelight',
+        severity: 'warning',
+        status: 'open',
+        first_seen: offsetIso(now, -45 * 60_000),
+        last_seen: offsetIso(now, -12 * 60_000),
+        evidence_fingerprint: 'join_sync:missing_mod|BuilderBob|jei,farmersdelight',
+        source: 'ops',
+        message: "BuilderBob can't join — jei, farmersdelight (missing mods)",
+        evidence_refs: ['ops:join_clinic'],
+        fix_steps: [
+          'Install the missing mod(s) on the client (same version as the server).',
+          'Open Session → Join clinic and Copy fix for a player-safe list.',
+        ],
+      },
+      {
+        id: 'JOIN_SYNC:wrong_version|FridayGuest|supplementaries',
+        key: 'JOIN_SYNC:wrong_version|FridayGuest|supplementaries',
+        severity: 'warning',
+        status: 'open',
+        first_seen: offsetIso(now, -95 * 60_000),
+        last_seen: offsetIso(now, -25 * 60_000),
+        evidence_fingerprint: 'join_sync:wrong_version|FridayGuest|supplementaries',
+        source: 'ops',
+        message: "FridayGuest can't join — supplementaries (wrong mod versions)",
+        evidence_refs: ['ops:join_clinic'],
+        fix_steps: [
+          'Update the named mod(s) on the client to the server\'s version.',
+          'Open Session → Join clinic and Copy fix for a player-safe list.',
+        ],
+      },
+    ],
+    join_clinic: {
+      scanned_at: offsetIso(now, 0),
+      new_count: 3,
+      entries: [
+        {
+          key: 'mismatched_channel|NotchFan42|create,flywheel',
+          kind: 'mismatched_channel',
+          platform: 'neoforge',
+          player: 'NotchFan42',
+          time: offsetIso(now, -6 * 60_000),
+          confidence: 'high',
+          reason:
+            'Failed to connect to server: Incompatible mod set: mismatched channels: [create:main, flywheel:network]',
+          sample_line:
+            'NotchFan42 lost connection: Failed to connect to server: Incompatible mod set: mismatched channels: [create:main, flywheel:network]',
+          missing: [
+            { mod_id: 'create', server_version: '6.0.4', display_name: 'Create' },
+            { mod_id: 'flywheel', server_version: '1.0.2', display_name: 'Flywheel' },
+          ],
+          extra: [],
+          wrong_version: [],
+          suppressed_client_only: [],
+          vs_known_good: false,
+          fix_copy:
+            'Hey NotchFan42 — the server rejected your join (mismatched channels).\n\nInstall/update on your client:\n- create (server has 6.0.4)\n- flywheel (server has 1.0.2)\n\nAsk the admin if you need the pack download.',
+        },
+        {
+          key: 'missing_mod|BuilderBob|jei,farmersdelight',
+          kind: 'missing_mod',
+          platform: 'neoforge',
+          player: 'BuilderBob',
+          time: offsetIso(now, -12 * 60_000),
+          confidence: 'high',
+          reason: 'Mod Rejection: Missing required mods: [jei, farmersdelight]',
+          sample_line:
+            'BuilderBob lost connection: Mod Rejection: Missing required mods: [jei, farmersdelight]',
+          missing: [
+            { mod_id: 'jei', server_version: '19.21.0', display_name: 'Just Enough Items' },
+            { mod_id: 'farmersdelight', server_version: '1.2.7', display_name: "Farmer's Delight" },
+          ],
+          extra: [],
+          wrong_version: [],
+          suppressed_client_only: [],
+          vs_known_good: false,
+          fix_copy:
+            "Hey BuilderBob — the server rejected your join (missing mods).\n\nInstall/update on your client:\n- jei (server has 19.21.0)\n- farmersdelight (server has 1.2.7)\n\nAsk the admin if you need the pack download.",
+        },
+        {
+          key: 'wrong_version|FridayGuest|supplementaries',
+          kind: 'wrong_version',
+          platform: 'neoforge',
+          player: 'FridayGuest',
+          time: offsetIso(now, -25 * 60_000),
+          confidence: 'high',
+          reason:
+            'Incompatible client: Mod mismatch: supplementaries@3.1.14 required, client has 3.0.9',
+          sample_line:
+            'FridayGuest lost connection: Incompatible client: Mod mismatch: supplementaries@3.1.14 required, client has 3.0.9',
+          missing: [],
+          extra: [],
+          wrong_version: [
+            {
+              mod_id: 'supplementaries',
+              server_version: '3.1.14',
+              client_version: '3.0.9',
+              display_name: 'Supplementaries',
+            },
+          ],
+          suppressed_client_only: [],
+          vs_known_good: true,
+          fix_copy:
+            'Hey FridayGuest — the server rejected your join (wrong mod versions).\n\nInstall/update on your client:\n- supplementaries → need 3.1.14 (you have 3.0.9)\n\nNote: server jars have drifted since the last baseline — confirm the pack pin with an admin.\n\nAsk the admin if you need the pack download.',
+        },
+        {
+          key: 'mismatched_channel|Alex|create',
+          kind: 'mismatched_channel',
+          platform: 'neoforge',
+          player: 'Alex',
+          time: offsetIso(now, -78 * 60_000),
+          confidence: 'high',
+          reason: 'Incompatible mod set: mismatched channels: [create:main]',
+          sample_line:
+            'Alex lost connection: Failed to connect to server: Incompatible mod set: mismatched channels: [create:main]',
+          missing: [{ mod_id: 'create', server_version: '6.0.4', display_name: 'Create' }],
+          extra: [{ mod_id: 'sodiumextras' }],
+          wrong_version: [],
+          suppressed_client_only: [
+            { mod_id: 'modmenu', bucket: 'likely_removable' },
+          ],
+          vs_known_good: false,
+          fix_copy:
+            'Hey Alex — the server rejected your join (mismatched channels).\n\nInstall/update on your client:\n- create (server has 6.0.4)\n\nRemove these client-only extras (not on the server):\n- sodiumextras\n\nAsk the admin if you need the pack download.',
+        },
+        {
+          key: 'missing_mod|Steve|jei',
+          kind: 'missing_mod',
+          platform: 'neoforge',
+          player: 'Steve',
+          time: offsetIso(now, -140 * 60_000),
+          confidence: 'high',
+          reason: 'Mod Rejection: Missing required mods: [jei]',
+          sample_line: 'Steve lost connection: Mod Rejection: Missing required mods: [jei]',
+          missing: [
+            { mod_id: 'jei', server_version: '19.21.0', display_name: 'Just Enough Items' },
+          ],
+          extra: [],
+          wrong_version: [],
+          suppressed_client_only: [],
+          vs_known_good: false,
+          fix_copy:
+            'Hey Steve — the server rejected your join (missing mods).\n\nInstall/update on your client:\n- jei (server has 19.21.0)\n\nAsk the admin if you need the pack download.',
+        },
+      ],
+    },
+    world_pressure: {
+      scanned_at: offsetIso(now, 0),
+      census_at: offsetIso(now, -2_000),
+      learning: false,
+      correlated_with_mspt: true,
+      correlation: {
+        high_entity_mspt_p95: 58.4,
+        low_entity_mspt_p95: 24.1,
+        ratio: 2.4,
+        minutes: 420,
+        correlated: true,
+      },
+      // Story: quiet night (1 player exploring Nether). Overworld farm hub stays awake almost
+      // entirely from spawn tickets + /forceload + NeoForge mod force-loads (small leftover =
+      // other DistanceManager tickets). Mining is nearly all Create-style mod loaders (flag demo).
+      // Overworld entities sit between busy p95 (4200) and 7d peak (5800) so the alert bars read as a storm.
+      // Totals: 5800 entities, 688 chunks. Quiet ~1800 / busy ~4200 / peak ~5800 entities.
+      dimensions: [
+        {
+          id: 'minecraft:overworld',
+          label: 'Overworld',
+          entities: 5100,
+          items: 2200,
+          living: 2600,
+          // spawnChunkRadius 4 → 9×9 = 81; farm /forceload ring; Create loaders around base
+          loaded_chunks: 312,
+          spawn_chunks: 81,
+          forced_chunks: 24,
+          mod_forced_chunks: 168,
+          players: 0,
+          unattended: true,
+          top_types: [
+            { type: 'minecraft:item', count: 2200 },
+            { type: 'minecraft:cow', count: 850 },
+            { type: 'minecraft:chicken', count: 500 },
+            { type: 'minecraft:zombie', count: 380 },
+          ],
+          baseline: {
+            entities_p50: 1400,
+            entities_p95: 1800,
+            chunks_p95: 700,
+            sample_minutes: 640,
+          },
+        },
+        {
+          id: 'create:mining',
+          label: 'Mining',
+          entities: 420,
+          items: 25,
+          living: 380,
+          // Empty of players; almost everything held by NeoForge force-load tickets
+          loaded_chunks: 280,
+          spawn_chunks: 0,
+          forced_chunks: 8,
+          mod_forced_chunks: 240,
+          players: 0,
+          unattended: true,
+          top_types: [
+            { type: 'minecraft:zombie', count: 180 },
+            { type: 'minecraft:bat', count: 95 },
+            { type: 'minecraft:skeleton', count: 70 },
+            { type: 'minecraft:item', count: 25 },
+          ],
+          baseline: {
+            entities_p50: 1400,
+            entities_p95: 1800,
+            chunks_p95: 700,
+            sample_minutes: 640,
+          },
+        },
+        {
+          id: 'minecraft:the_nether',
+          label: 'Nether',
+          entities: 280,
+          items: 8,
+          living: 250,
+          // One player → most of loaded is player view/simulation (not in the three buckets)
+          loaded_chunks: 96,
+          spawn_chunks: 0,
+          forced_chunks: 2,
+          mod_forced_chunks: 6,
+          players: 1,
+          unattended: false,
+          top_types: [
+            { type: 'minecraft:piglin', count: 90 },
+            { type: 'minecraft:zombified_piglin', count: 70 },
+            { type: 'minecraft:magma_cube', count: 28 },
+            { type: 'minecraft:ghast', count: 6 },
+          ],
+          baseline: {
+            entities_p50: 1400,
+            entities_p95: 1800,
+            chunks_p95: 700,
+            sample_minutes: 640,
+          },
+        },
+      ],
+      classifiers: [
+        {
+          kind: 'item_storm',
+          dimension: 'minecraft:overworld',
+          severity: 'warning',
+          sustained_scans: 4,
+          first_seen: offsetIso(now, -6 * 60_000),
+          last_seen: offsetIso(now, -1 * 60_000),
+          headline: 'Item storm in Overworld',
+          detail:
+            '2,200 item entities in Overworld — 43% of entities there; total load is 2.8x quiet-hours normal.',
+          evidence: {
+            items: 2200,
+            entities: 5100,
+            loaded_chunks: 312,
+            forced_chunks: 24,
+            spawn_chunks: 81,
+            mod_forced_chunks: 168,
+          },
+          next_steps: [
+            'Fly to the busiest chunks in Overworld and check hoppers/void filters on item farms',
+            'Look for broken item vacuum or overflow near forced chunks',
+            'Capture a Spark profile and open World → busy chunks for a precise hotspot',
+          ],
+        },
+      ],
+      streaks: {
+        'item_storm:minecraft:overworld': 4,
+      },
+    },
+  };
+}
+
+function generateWeeklyDigest(now) {
+  const week = 7 * 24 * 3600_000;
+  const entries = [
+    {
+      id: `digest-${new Date(now).toISOString().slice(0, 10)}`,
+      generated_at: offsetIso(now, 0),
+      trigger: 'auto',
+      window_days: 7,
+      period_start: offsetIso(now, -week),
+      period_end: offsetIso(now, 0),
+      grade: 'healthy',
+      grade_word: 'Healthy',
+      grade_prev: 'degraded',
+      grade_trend: 'improved',
+      crashes: { count: 1, top_mod_id: 'create', top_mod_count: 1 },
+      disk: { use_pct: 48.2, growth_gb_7d_est: 8.4, days_until_full: 210.5 },
+      performance: {
+        trend: 'better',
+        mspt_avg: 38.1,
+        mspt_avg_prior: 45.2,
+        mspt_delta_pct: -15.7,
+        low_tps_minutes: 18,
+        low_tps_minutes_prior: 48,
+        sample_minutes: 9840,
+        sample_minutes_prior: 9700,
+      },
+      mods: { added: 1, removed: 0, changed: 2 },
+      top_action: {
+        code: 'CANT_KEEP_UP',
+        severity: 'warning',
+        message: "Can't keep up! appeared 3 times in the lookback window.",
+        tab_link: 'issues',
+      },
+      summary:
+        "This week: grade Healthy, 1 crash (create), disk ≈+8.4 GB, MSPT down 16% vs last week. Do this next: Can't keep up! appeared 3 times in the lookback window.",
+    },
+    {
+      id: `digest-${new Date(now - week).toISOString().slice(0, 10)}`,
+      generated_at: offsetIso(now, -week),
+      trigger: 'auto',
+      window_days: 7,
+      period_start: offsetIso(now, -2 * week),
+      period_end: offsetIso(now, -week),
+      grade: 'degraded',
+      grade_word: 'Degraded',
+      grade_prev: 'healthy',
+      grade_trend: 'worse',
+      crashes: { count: 2, top_mod_id: 'create', top_mod_count: 2 },
+      disk: { use_pct: 45.0, growth_gb_7d_est: 14.7, days_until_full: 173.5 },
+      performance: {
+        trend: 'worse',
+        mspt_avg: 45.2,
+        mspt_avg_prior: 38.1,
+        mspt_delta_pct: 18.6,
+        low_tps_minutes: 48,
+        low_tps_minutes_prior: 31,
+        sample_minutes: 9700,
+        sample_minutes_prior: 9600,
+      },
+      mods: { added: 3, removed: 2, changed: 4 },
+      top_action: {
+        code: 'CANT_KEEP_UP',
+        severity: 'warning',
+        message: "Can't keep up! appeared 3 times in the lookback window.",
+        tab_link: 'issues',
+      },
+      summary:
+        "This week: grade Degraded, 2 crashes (both create), disk ≈+14.7 GB, MSPT up 19% vs last week. Do this next: Can't keep up! appeared 3 times in the lookback window.",
+    },
+    {
+      id: `digest-${new Date(now - 2 * week).toISOString().slice(0, 10)}`,
+      generated_at: offsetIso(now, -2 * week),
+      trigger: 'auto',
+      window_days: 7,
+      period_start: offsetIso(now, -3 * week),
+      period_end: offsetIso(now, -2 * week),
+      grade: 'healthy',
+      grade_word: 'Healthy',
+      grade_trend: 'unknown',
+      crashes: { count: 0 },
+      disk: { use_pct: 42.0, growth_gb_7d_est: 3.2, days_until_full: 280.0 },
+      performance: {
+        trend: 'steady',
+        mspt_avg: 38.1,
+        mspt_avg_prior: 37.5,
+        mspt_delta_pct: 1.6,
+        low_tps_minutes: 12,
+        low_tps_minutes_prior: 10,
+        sample_minutes: 9600,
+        sample_minutes_prior: 9500,
+      },
+      mods: { added: 0, removed: 0, changed: 1 },
+      top_action: null,
+      summary: 'This week: grade Healthy, 0 crashes, disk ≈+3.2 GB, MSPT steady.',
+    },
+  ];
+  return {
+    updated_at: offsetIso(now, 0),
+    history: entries,
   };
 }
 
@@ -1109,6 +1957,40 @@ function generateOverviewMeta(now, opsCache, performanceRollups, envelope) {
       heap_max_gb: (envelope.latest?.heap_mb?.max ?? 8192) / 1024,
       message: 'Native memory (RSS) is elevated vs Java heap max — possible off-heap/native leak; check mods using JNI or large direct buffers.',
     },
+    safe_restart: {
+      verdict: 'caution',
+      headline: 'Restart with caution',
+      summary: 'Players online and pregen active — wait for a quieter window if you can.',
+      reasons: [
+        { label: 'Players online', detail: '2 players connected', tab: 'live' },
+        { label: 'Pregen running', detail: 'Chunky overworld ~44%', tab: 'insights' },
+      ],
+    },
+    restart_hygiene: (() => {
+      // Next quiet window: tomorrow 03:00-05:00 UTC (canonical; UI localizes).
+      const start = new Date(now);
+      start.setUTCDate(start.getUTCDate() + 1);
+      start.setUTCHours(3, 0, 0, 0);
+      const end = new Date(start.getTime() + 2 * 3600_000);
+      return {
+        active: true,
+        severity: 'info',
+        headline: 'Consider a maintenance restart',
+        uptime_sec: 38 * 3600,
+        signals: [
+          { id: 'gc_rising', current: 4.2, prior: 2.8, delta_pct: 50.0 },
+          { id: 'heap_stable', current: 71.0, prior: 69.0 },
+        ],
+        quiet_window: {
+          next_start_at: start.toISOString().replace(/\.\d{3}Z$/, 'Z'),
+          next_end_at: end.toISOString().replace(/\.\d{3}Z$/, 'Z'),
+          avg_players: 0.2,
+          avg_mspt: 24.0,
+          sample_minutes: 42,
+        },
+        checked_at: isoAt(now),
+      };
+    })(),
   };
 }
 
@@ -1132,6 +2014,9 @@ const performanceRollups7d = generatePerformanceRollups(now, { hours: 168, stepS
 const performanceRollups30d = generatePerformanceRollups(now, { hours: 720, stepSec: 300 });
 const cpuCores = generateCpuCores(8, latest.host_cpu_pct);
 const byDimension = generateByDimension();
+const byLogs = generateByLogs();
+const byOther = generateByOther();
+const byMods = generateByMods();
 
 function chunkyPregenMock(now) {
   return {
@@ -1193,7 +2078,14 @@ const envelope = {
   cpu_count: cpuCores.length,
   storage: {
     world_gb: latest.world_gb,
+    mods_gb: 1.2,
+    logs_gb: 0.4,
+    total_gb: 22.1,
+    delta_mb_24h: 128,
     by_dimension: byDimension,
+    by_logs: byLogs,
+    by_other: byOther,
+    by_mods: byMods,
   },
 };
 
@@ -1468,7 +2360,6 @@ function writeCrashReportFixtures() {
 }
 
 function patchFactsModFixtures() {
-  if (isFreshPreview) return;
   const factsPath = join(dataDir, 'facts.json');
   const facts = JSON.parse(readFileSync(factsPath, 'utf8'));
   if (!facts.optional) facts.optional = {};
@@ -1501,6 +2392,7 @@ function patchFactsModFixtures() {
       { mod_id: 'examplemod', kind: 'mod_runtime', blocking: false },
     ],
     compare_to_last_boot: { delta_sec: 12.4, direction: 'slower' },
+    boot_history: mockBootHistory(Date.now()),
   };
   facts.optional.fml_issues = [
     {
@@ -1905,9 +2797,12 @@ function patchFactsModFixtures() {
   ];
   facts.optional.connector_warnings = [
     {
-      mod_id: 'fabric_api_stub',
-      message: 'Fabric-looking jar on NeoForge without Connector — may be client leftover',
-      severity: 'warning',
+      mod_id: 'connector',
+      kind: 'connector_present',
+      severity: 'info',
+      boot_only: true,
+      blocking: false,
+      message: 'Sinytra Connector loaded — Fabric mods can be unstable.',
     },
   ];
   facts.optional.security_flags = [];
@@ -2017,9 +2912,7 @@ writeFileSync(join(dataDir, 'forensics-config-health.json'), `${JSON.stringify({
     },
   ],
 }, null, 2)}\n`);
-if (!isFreshPreview) {
-  writeReportsIndex(now);
-}
+writeReportsIndex(now);
 writeCrashContextFixtures();
 writeCrashReportFixtures();
 copyFileSync(
@@ -2027,29 +2920,27 @@ copyFileSync(
   join(dataDir, 'server-icon.png'),
 );
 
-if (isFreshPreview) {
-  writeFileSync(join(dataDir, 'reports-index.json'), `${JSON.stringify({ reports: [] }, null, 2)}\n`);
-  console.log('  PREVIEW_PROFILE=fresh — empty reports-index.json');
-}
 if (mockIncident?.id) {
   const incidentsDir = join(dataDir, 'incidents');
   mkdirSync(incidentsDir, { recursive: true });
   writeFileSync(join(incidentsDir, `${mockIncident.id}.json`), `${JSON.stringify(mockIncident, null, 2)}\n`);
 }
 
-const fixtureDir = join(root, '..', '..', 'samples', 'fixtures', 'performance-insights');
-try {
-  mkdirSync(fixtureDir, { recursive: true });
-  writeFileSync(
-    join(fixtureDir, 'l1-week-normal.json'),
-    `${JSON.stringify(generateWeekNormalFixture(now), null, 2)}\n`,
-  );
-  writeFileSync(
-    join(fixtureDir, 'l1-sticky-lag.json'),
-    `${JSON.stringify(generateStickyLagFixture(now), null, 2)}\n`,
-  );
-} catch (e) {
-  console.warn('Could not write samples/fixtures:', e.message);
+if (process.env.UPDATE_SHARED_FIXTURES === '1') {
+  const fixtureDir = join(root, '..', '..', 'samples', 'fixtures', 'performance-insights');
+  try {
+    mkdirSync(fixtureDir, { recursive: true });
+    writeFileSync(
+      join(fixtureDir, 'l1-week-normal.json'),
+      `${JSON.stringify(generateWeekNormalFixture(now), null, 2)}\n`,
+    );
+    writeFileSync(
+      join(fixtureDir, 'l1-sticky-lag.json'),
+      `${JSON.stringify(generateStickyLagFixture(now), null, 2)}\n`,
+    );
+  } catch (e) {
+    console.warn('Could not write samples/fixtures:', e.message);
+  }
 }
 
 console.log(`Wrote mock live fixtures (${samples.tps.length} points per series, ${performanceRollups.rows.length} rollup rows / 24h) to data/`);
@@ -2059,7 +2950,7 @@ console.log(`  + performance-insights.json (7d overview poll)`);
 console.log(`  + performance-insights-30d.json (30d overview poll)`);
 console.log(`  + performance-dashboard.json (full Insights tab payload, 7d)`);
 console.log(`  + performance-dashboard-30d.json (Insights tab payload, 30d)`);
-console.log(`  + ops-cache.json (activity ledger, lag_issues, mod_log_errors, running_mods, mod_issues, right_now, log_stale, backups_live)`);
+console.log(`  + ops-cache.json (activity ledger, lag_issues, mod_log_errors, running_mods, mod_issues, world_pressure, join_clinic, right_now, log_stale, backups_live)`);
 console.log(`  + overview-meta.json (scorecard, crash/lag/mod TLDR, right_now, log_stale_tldr)`);
 console.log(`  + issues-peek.json`);
 console.log(`  + facts.json (crash summaries, forensics, config health, CA parity kinds)`);
@@ -2067,13 +2958,15 @@ console.log(`  + forensics-status.json / forensics-find-class.json / forensics-c
 console.log(`  + crash-contexts.json + crash-reports/*.txt`);
 if (mockIncident?.id) console.log(`  + incidents/${mockIncident.id}.json`);
 
-const sparkMocks = spawnSync(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', [':watchtower-core:sparkAuditFixtures', '-q'], {
-  cwd: join(root, '..', '..'),
-  stdio: 'inherit',
-  shell: process.platform === 'win32',
-});
-if (sparkMocks.status !== 0) {
-  console.warn('sparkAuditFixtures failed — using existing golden JSON if present');
+if (process.env.UPDATE_SHARED_FIXTURES === '1') {
+  const sparkMocks = spawnSync(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', [':watchtower-core:sparkAuditFixtures', '-q'], {
+    cwd: join(root, '..', '..'),
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  });
+  if (sparkMocks.status !== 0) {
+    console.warn('sparkAuditFixtures failed — using existing golden JSON if present');
+  }
 }
 const sparkMocksNode = spawnSync(process.execPath, ['scripts/generate-spark-mocks.mjs'], {
   cwd: root,
@@ -2083,4 +2976,19 @@ if (sparkMocksNode.status !== 0) {
   console.warn('generate-spark-mocks.mjs failed');
 } else {
   console.log('  + spark-profiles.json, spark-profile-mocks.json');
+}
+
+try {
+  await import('./patch-alpha-fixtures.mjs');
+} catch (e) {
+  if (e?.code !== 'ERR_MODULE_NOT_FOUND') console.warn(e);
+}
+
+try {
+  const { applyProfile } = await import('./apply-preview-profile.mjs');
+  applyProfile(previewProfile, { now });
+  console.log(`  PREVIEW_PROFILE=${previewProfile}`);
+} catch (e) {
+  console.error(`Could not apply PREVIEW_PROFILE=${previewProfile}:`, e.message || e);
+  process.exitCode = 1;
 }

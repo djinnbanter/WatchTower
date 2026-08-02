@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "username": "mira",
+  "disabled": false,
+  "password": {
+    "algorithm": "pbkdf2-sha256",
+    "iterations": 120000,
+    "salt": "QOO23HbE39fcQNFePLvfnA\u003d\u003d",
+    "hash": "n84yR/8/PTZAOdXJdCGsQpLJwfz4bOIWjJZ6vga6DDY\u003d"
+  },
+  "must_change_password": false,
+  "totp_enabled": true,
+  "totp_secret_enc": "SFZVZYoqj+o4QPkgCSE5c0aNCuclg97e7qwiyng6SJTga+HF9fTHjvN3/MmkMSPpPEg48e1kWqDsb4m8",
+  "recovery_code_hashes": [
+    "pzSl/jzCQKZjrxSZbnY+Fg\u003d\u003d$Dwy/UxwEhKT0Jdhd4oHQtKbyB5r24XoT0ANddfZlkoA\u003d",
+    "o65DpJF5C2w08x0Y68L73Q\u003d\u003d$gVrJMqCgtkvm0n7Skwrder6RR6im4Jx+5Cogx8mZs+U\u003d",
+    "Nb95FQhsC04j+qspeI/9pw\u003d\u003d$zXeD+Nd0+1MFHyt5674OLOSacGAMEe+0wPqrAq+xLfQ\u003d",
+    "J6LLHJ18KUcxFPmT12Y9vw\u003d\u003d$8nEJLVl/CtZ8qDWz+2R5vs+prTLDP7suD9qtSaN+wVA\u003d",
+    "mOgJ33APT9u7+i/g496FlQ\u003d\u003d$7z+w3BrjkpnQ2RwNl4bxetr5TIDrCzq9kiecExwVXUc\u003d",
+    "7CdHEitj4KnOdAhF/OSTNg\u003d\u003d$sSRKVp4PJHXuKeUrZ9w1+Iy6r/4RTYyX7IL58TjTHDk\u003d",
+    "6X7Fw0QVxLNObPY0+ItwUg\u003d\u003d$WbqfJDOnBUHR2Bs50FmF7J6Q6w2WXCzkpbXyaJMg0U4\u003d",
+    "SpN7NKG9KQgJIJSp+cGmOQ\u003d\u003d$lB76n1n/RA7GRrXMuyuBtYRjIN4MHeGuXV5OM+cYv0E\u003d"
+  ],
+  "created_at": "2026-07-30T09:07:40.142012400Z",
+  "password_changed_at": "2026-07-30T09:07:40.176571600Z"
+}

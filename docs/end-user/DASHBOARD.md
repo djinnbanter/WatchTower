@@ -7,8 +7,23 @@
 - **[Live Charts](https://github.com/djinnbanter/WatchTower/wiki/Live-Charts)**
 - **[HTTP API](https://github.com/djinnbanter/WatchTower/wiki/HTTP-API)**
 - **[Security and Access](https://github.com/djinnbanter/WatchTower/wiki/Security-and-Access)**
+- **[Accounts and Audit Log](https://github.com/djinnbanter/WatchTower/wiki/Accounts-And-Audit-Log)**
 
-Source: [`docs/wiki/`](../../docs/wiki/) · UI code: `web/dashboard-alpha/`
+Source: [`docs/wiki/`](../../docs/wiki/) · UI code: `web/dashboard/`
+
+### Settings panels
+
+Open **Settings** (gear) or `?tab=settings&panel=<id>`:
+
+| Panel | Who | Notes |
+|-------|-----|-------|
+| General, Monitoring, Backups, Alerts, Integrations | owner / admin | Viewers see read-only chrome where applicable |
+| Security | signed-in user | Password, username, 2FA for your own account |
+| Accounts | owner | Add people, change roles, reset temp passwords |
+| Audit log | owner / admin | Who changed settings, acks, suppressions, accounts, sign-ins |
+| About | anyone signed in | Install facts + relaunch setup wizard |
+
+Details: wiki [Accounts and Audit Log](https://github.com/djinnbanter/WatchTower/wiki/Accounts-And-Audit-Log).
 
 ### Mod forensics / jdeps (1.0.17)
 

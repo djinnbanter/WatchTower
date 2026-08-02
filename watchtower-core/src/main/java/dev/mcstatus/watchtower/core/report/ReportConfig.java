@@ -37,6 +37,8 @@ public final class ReportConfig {
     private final String backupDir;
     private final List<String> backupDirs;
     private final int backupWarnDays;
+    /** Hours before newest backup is treated as stale (Issues + dashboard chips). */
+    private final int backupStaleHours;
     private final String stateFile;
     private final int cpuSampleIntervalMs;
     private final String panelDetected;
@@ -83,6 +85,10 @@ public final class ReportConfig {
     private final String backupWebhookToken;
     private final boolean backupSuppressLocalMissing;
     private final boolean backupTrackingEnabled;
+    private final boolean backupVerifyAuto;
+    private final boolean backupVerifyDeferWhenPlayers;
+    private final int backupVerifyMaxMspt;
+    private final boolean backupTestRestoreEnabled;
     private final int lagIncidentCooldownSec;
     private final boolean lagIncidentEnabled;
     private final int incidentMaxFiles;
@@ -105,6 +111,26 @@ public final class ReportConfig {
     private final int incidentStoryWindowMin;
     private final int incidentStoryLookbackHours;
     private final int incidentStoryMax;
+    private final boolean weeklyDigestEnabled;
+    private final int weeklyDigestIntervalDays;
+    private final int weeklyDigestHistoryMax;
+    private final boolean modJarDriftEnabled;
+    private final boolean clientOnServerIssuesEnabled;
+    private final boolean externalKillDetectEnabled;
+    private final boolean softHangEnabled;
+    private final int softHangSeconds;
+    private final boolean softHangThreadDump;
+    private final int softHangCooldownMin;
+    private final boolean restartHygieneEnabled;
+    private final boolean silentFailDetectEnabled;
+    private final boolean worldPressureEnabled;
+    private final boolean chunkWritePressureEnabled;
+    private final int chunkWriteGrowthChunks;
+    private final int chunkWriteSustainedScans;
+    private final boolean joinClinicEnabled;
+    private final boolean modDisableEnabled;
+    private final boolean modConfigEditEnabled;
+    private final boolean worldRiskEnabled;
     private final boolean configAuditEnabled;
     private final int reportRetentionCount;
     private final int reportRetentionDays;
@@ -144,6 +170,7 @@ public final class ReportConfig {
         this.backupDir = b.backupDir;
         this.backupDirs = List.copyOf(b.backupDirs);
         this.backupWarnDays = b.backupWarnDays;
+        this.backupStaleHours = b.backupStaleHours;
         this.stateFile = b.stateFile;
         this.cpuSampleIntervalMs = b.cpuSampleIntervalMs;
         this.panelDetected = b.panelDetected;
@@ -190,6 +217,10 @@ public final class ReportConfig {
         this.backupWebhookToken = b.backupWebhookToken;
         this.backupSuppressLocalMissing = b.backupSuppressLocalMissing;
         this.backupTrackingEnabled = b.backupTrackingEnabled;
+        this.backupVerifyAuto = b.backupVerifyAuto;
+        this.backupVerifyDeferWhenPlayers = b.backupVerifyDeferWhenPlayers;
+        this.backupVerifyMaxMspt = b.backupVerifyMaxMspt;
+        this.backupTestRestoreEnabled = b.backupTestRestoreEnabled;
         this.lagIncidentCooldownSec = b.lagIncidentCooldownSec;
         this.lagIncidentEnabled = b.lagIncidentEnabled;
         this.incidentMaxFiles = b.incidentMaxFiles;
@@ -212,6 +243,26 @@ public final class ReportConfig {
         this.incidentStoryWindowMin = b.incidentStoryWindowMin;
         this.incidentStoryLookbackHours = b.incidentStoryLookbackHours;
         this.incidentStoryMax = b.incidentStoryMax;
+        this.weeklyDigestEnabled = b.weeklyDigestEnabled;
+        this.weeklyDigestIntervalDays = b.weeklyDigestIntervalDays;
+        this.weeklyDigestHistoryMax = b.weeklyDigestHistoryMax;
+        this.modJarDriftEnabled = b.modJarDriftEnabled;
+        this.clientOnServerIssuesEnabled = b.clientOnServerIssuesEnabled;
+        this.externalKillDetectEnabled = b.externalKillDetectEnabled;
+        this.softHangEnabled = b.softHangEnabled;
+        this.softHangSeconds = b.softHangSeconds;
+        this.softHangThreadDump = b.softHangThreadDump;
+        this.softHangCooldownMin = b.softHangCooldownMin;
+        this.restartHygieneEnabled = b.restartHygieneEnabled;
+        this.silentFailDetectEnabled = b.silentFailDetectEnabled;
+        this.worldPressureEnabled = b.worldPressureEnabled;
+        this.chunkWritePressureEnabled = b.chunkWritePressureEnabled;
+        this.chunkWriteGrowthChunks = b.chunkWriteGrowthChunks;
+        this.chunkWriteSustainedScans = b.chunkWriteSustainedScans;
+        this.joinClinicEnabled = b.joinClinicEnabled;
+        this.modDisableEnabled = b.modDisableEnabled;
+        this.modConfigEditEnabled = b.modConfigEditEnabled;
+        this.worldRiskEnabled = b.worldRiskEnabled;
         this.configAuditEnabled = b.configAuditEnabled;
         this.reportRetentionCount = b.reportRetentionCount;
         this.reportRetentionDays = b.reportRetentionDays;
@@ -261,6 +312,7 @@ public final class ReportConfig {
         b.backupDir = env.getOrDefault("BACKUP_DIR", "");
         b.backupDirs = parseCsvPaths(env.get("BACKUP_DIRS"));
         b.backupWarnDays = parseInt(env.get("BACKUP_WARN_DAYS"), 7);
+        b.backupStaleHours = Math.max(1, Math.min(720, parseInt(env.get("BACKUP_STALE_HOURS"), 24)));
         b.stateFile = env.getOrDefault("STATE_FILE", "");
         b.cpuSampleIntervalMs = parseInt(env.get("CPU_SAMPLE_INTERVAL_MS"), 200);
         b.panelDetected = env.getOrDefault("PANEL_DETECTED", "unknown");
@@ -312,6 +364,10 @@ public final class ReportConfig {
         b.backupWebhookToken = env.getOrDefault("BACKUP_WEBHOOK_TOKEN", "");
         b.backupSuppressLocalMissing = isTruthy(env.get("BACKUP_SUPPRESS_LOCAL_MISSING"), true);
         b.backupTrackingEnabled = isTruthy(env.get("BACKUP_TRACKING_ENABLED"), true);
+        b.backupVerifyAuto = isTruthy(env.get("BACKUP_VERIFY_AUTO"), true);
+        b.backupVerifyDeferWhenPlayers = isTruthy(env.get("BACKUP_VERIFY_DEFER_WHEN_PLAYERS"), true);
+        b.backupVerifyMaxMspt = parseInt(env.get("BACKUP_VERIFY_MAX_MSPT"), 40);
+        b.backupTestRestoreEnabled = isTruthy(env.get("BACKUP_TEST_RESTORE_ENABLED"), true);
         b.lagIncidentCooldownSec = parseInt(env.get("LAG_INCIDENT_COOLDOWN_SEC"), 180);
         b.lagIncidentEnabled = isTruthy(env.get("LAG_INCIDENT_ENABLED"), true);
         b.incidentMaxFiles = parseInt(env.get("INCIDENT_MAX_FILES"), 50);
@@ -334,6 +390,26 @@ public final class ReportConfig {
         b.incidentStoryWindowMin = parseInt(env.get("INCIDENT_STORY_WINDOW_MIN"), 30);
         b.incidentStoryLookbackHours = parseInt(env.get("INCIDENT_STORY_LOOKBACK_HOURS"), 48);
         b.incidentStoryMax = parseInt(env.get("INCIDENT_STORY_MAX"), 10);
+        b.weeklyDigestEnabled = isTruthy(env.get("WEEKLY_DIGEST_ENABLED"), true);
+        b.weeklyDigestIntervalDays = parseInt(env.get("WEEKLY_DIGEST_INTERVAL_DAYS"), 7);
+        b.weeklyDigestHistoryMax = parseInt(env.get("WEEKLY_DIGEST_HISTORY_MAX"), 8);
+        b.modJarDriftEnabled = isTruthy(env.get("MOD_JAR_DRIFT_ENABLED"), true);
+        b.clientOnServerIssuesEnabled = isTruthy(env.get("CLIENT_ON_SERVER_ISSUES_ENABLED"), true);
+        b.externalKillDetectEnabled = isTruthy(env.get("EXTERNAL_KILL_DETECT_ENABLED"), true);
+        b.softHangEnabled = isTruthy(env.get("SOFT_HANG_ENABLED"), true);
+        b.softHangSeconds = parseInt(env.get("SOFT_HANG_SECONDS"), 90);
+        b.softHangThreadDump = isTruthy(env.get("SOFT_HANG_THREAD_DUMP"), false);
+        b.softHangCooldownMin = parseInt(env.get("SOFT_HANG_COOLDOWN_MIN"), 15);
+        b.restartHygieneEnabled = isTruthy(env.get("RESTART_HYGIENE_ENABLED"), true);
+        b.silentFailDetectEnabled = isTruthy(env.get("SILENT_FAIL_DETECT_ENABLED"), true);
+        b.worldPressureEnabled = isTruthy(env.get("WORLD_PRESSURE_ENABLED"), true);
+        b.chunkWritePressureEnabled = isTruthy(env.get("CHUNK_WRITE_PRESSURE_ENABLED"), true);
+        b.chunkWriteGrowthChunks = parseInt(env.get("CHUNK_WRITE_GROWTH_CHUNKS"), 48);
+        b.chunkWriteSustainedScans = parseInt(env.get("CHUNK_WRITE_SUSTAINED_SCANS"), 3);
+        b.joinClinicEnabled = isTruthy(env.get("JOIN_CLINIC_ENABLED"), true);
+        b.modDisableEnabled = isTruthy(env.get("MOD_DISABLE_ENABLED"), true);
+        b.modConfigEditEnabled = isTruthy(env.get("MOD_CONFIG_EDIT_ENABLED"), true);
+        b.worldRiskEnabled = isTruthy(env.get("WORLD_RISK_ENABLED"), true);
         b.configAuditEnabled = isTruthy(env.get("CONFIG_AUDIT_ENABLED"), true);
         b.reportRetentionCount = parseInt(env.get("REPORT_RETENTION_COUNT"), ReportRetentionPolicy.DEFAULT_RETENTION_COUNT);
         b.reportRetentionDays = parseInt(env.get("REPORT_RETENTION_DAYS"), ReportRetentionPolicy.DEFAULT_RETENTION_DAYS);
@@ -512,6 +588,7 @@ public final class ReportConfig {
     public String backupDir() { return backupDir; }
     public List<String> backupDirs() { return backupDirs; }
     public int backupWarnDays() { return backupWarnDays; }
+    public int backupStaleHours() { return backupStaleHours; }
     public String stateFile() { return stateFile; }
     public int cpuSampleIntervalMs() { return cpuSampleIntervalMs; }
     public String panelDetected() { return panelDetected; }
@@ -558,6 +635,10 @@ public final class ReportConfig {
     public String backupWebhookToken() { return backupWebhookToken; }
     public boolean backupSuppressLocalMissing() { return backupSuppressLocalMissing; }
     public boolean backupTrackingEnabled() { return backupTrackingEnabled; }
+    public boolean backupVerifyAuto() { return backupVerifyAuto; }
+    public boolean backupVerifyDeferWhenPlayers() { return backupVerifyDeferWhenPlayers; }
+    public int backupVerifyMaxMspt() { return backupVerifyMaxMspt; }
+    public boolean backupTestRestoreEnabled() { return backupTestRestoreEnabled; }
     public boolean isExternalBackupConfigured() {
         if (backupWebhookToken != null && !backupWebhookToken.isBlank()) {
             return true;
@@ -592,6 +673,26 @@ public final class ReportConfig {
     public int incidentStoryWindowMin() { return incidentStoryWindowMin; }
     public int incidentStoryLookbackHours() { return incidentStoryLookbackHours; }
     public int incidentStoryMax() { return incidentStoryMax; }
+    public boolean weeklyDigestEnabled() { return weeklyDigestEnabled; }
+    public int weeklyDigestIntervalDays() { return weeklyDigestIntervalDays; }
+    public int weeklyDigestHistoryMax() { return weeklyDigestHistoryMax; }
+    public boolean modJarDriftEnabled() { return modJarDriftEnabled; }
+    public boolean clientOnServerIssuesEnabled() { return clientOnServerIssuesEnabled; }
+    public boolean externalKillDetectEnabled() { return externalKillDetectEnabled; }
+    public boolean softHangEnabled() { return softHangEnabled; }
+    public int softHangSeconds() { return softHangSeconds; }
+    public boolean softHangThreadDump() { return softHangThreadDump; }
+    public int softHangCooldownMin() { return softHangCooldownMin; }
+    public boolean restartHygieneEnabled() { return restartHygieneEnabled; }
+    public boolean silentFailDetectEnabled() { return silentFailDetectEnabled; }
+    public boolean worldPressureEnabled() { return worldPressureEnabled; }
+    public boolean chunkWritePressureEnabled() { return chunkWritePressureEnabled; }
+    public int chunkWriteGrowthChunks() { return chunkWriteGrowthChunks; }
+    public int chunkWriteSustainedScans() { return chunkWriteSustainedScans; }
+    public boolean joinClinicEnabled() { return joinClinicEnabled; }
+    public boolean modDisableEnabled() { return modDisableEnabled; }
+    public boolean modConfigEditEnabled() { return modConfigEditEnabled; }
+    public boolean worldRiskEnabled() { return worldRiskEnabled; }
     public boolean configAuditEnabled() { return configAuditEnabled; }
     public int reportRetentionCount() { return reportRetentionCount; }
     public int reportRetentionDays() { return reportRetentionDays; }
@@ -631,6 +732,7 @@ public final class ReportConfig {
         private String backupDir = "";
         private List<String> backupDirs = List.of();
         private int backupWarnDays = 7;
+        private int backupStaleHours = 24;
         private String stateFile = "";
         private int cpuSampleIntervalMs = 200;
         private String panelDetected = "unknown";
@@ -677,6 +779,10 @@ public final class ReportConfig {
         private String backupWebhookToken = "";
         private boolean backupSuppressLocalMissing = true;
         private boolean backupTrackingEnabled = true;
+        private boolean backupVerifyAuto = true;
+        private boolean backupVerifyDeferWhenPlayers = true;
+        private int backupVerifyMaxMspt = 40;
+        private boolean backupTestRestoreEnabled = true;
         private int lagIncidentCooldownSec = 180;
         private boolean lagIncidentEnabled = true;
         private int incidentMaxFiles = 50;
@@ -699,6 +805,26 @@ public final class ReportConfig {
         private int incidentStoryWindowMin = 30;
         private int incidentStoryLookbackHours = 48;
         private int incidentStoryMax = 10;
+        private boolean weeklyDigestEnabled = true;
+        private int weeklyDigestIntervalDays = 7;
+        private int weeklyDigestHistoryMax = 8;
+        private boolean modJarDriftEnabled = true;
+        private boolean clientOnServerIssuesEnabled = true;
+        private boolean externalKillDetectEnabled = true;
+        private boolean softHangEnabled = true;
+        private int softHangSeconds = 90;
+        private boolean softHangThreadDump;
+        private int softHangCooldownMin = 15;
+        private boolean restartHygieneEnabled = true;
+        private boolean silentFailDetectEnabled = true;
+        private boolean worldPressureEnabled = true;
+        private boolean chunkWritePressureEnabled = true;
+        private int chunkWriteGrowthChunks = 48;
+        private int chunkWriteSustainedScans = 3;
+        private boolean joinClinicEnabled = true;
+        private boolean modDisableEnabled = true;
+        private boolean modConfigEditEnabled = true;
+        private boolean worldRiskEnabled = true;
         private boolean configAuditEnabled = true;
         private int reportRetentionCount = ReportRetentionPolicy.DEFAULT_RETENTION_COUNT;
         private int reportRetentionDays = ReportRetentionPolicy.DEFAULT_RETENTION_DAYS;
@@ -742,11 +868,16 @@ public final class ReportConfig {
         public Builder backupDirs(List<String> v) { this.backupDirs = v != null ? v : List.of(); return this; }
         public Builder backupDirs(String... paths) { this.backupDirs = List.of(paths); return this; }
         public Builder backupWarnDays(int v) { this.backupWarnDays = v; return this; }
+        public Builder backupStaleHours(int v) { this.backupStaleHours = v; return this; }
         public Builder backupPollMin(int v) { this.backupPollMin = v; return this; }
         public Builder backupExternalMarker(String v) { this.backupExternalMarker = v != null ? v : ""; return this; }
         public Builder backupWebhookToken(String v) { this.backupWebhookToken = v != null ? v : ""; return this; }
         public Builder backupSuppressLocalMissing(boolean v) { this.backupSuppressLocalMissing = v; return this; }
         public Builder backupTrackingEnabled(boolean v) { this.backupTrackingEnabled = v; return this; }
+        public Builder backupVerifyAuto(boolean v) { this.backupVerifyAuto = v; return this; }
+        public Builder backupVerifyDeferWhenPlayers(boolean v) { this.backupVerifyDeferWhenPlayers = v; return this; }
+        public Builder backupVerifyMaxMspt(int v) { this.backupVerifyMaxMspt = v; return this; }
+        public Builder backupTestRestoreEnabled(boolean v) { this.backupTestRestoreEnabled = v; return this; }
         public Builder stateFile(String v) { this.stateFile = v; return this; }
         public Builder cpuSampleIntervalMs(int v) { this.cpuSampleIntervalMs = v; return this; }
         public Builder panelDetected(String v) { this.panelDetected = v; return this; }
@@ -795,6 +926,26 @@ public final class ReportConfig {
         public Builder incidentStoryWindowMin(int v) { this.incidentStoryWindowMin = v; return this; }
         public Builder incidentStoryLookbackHours(int v) { this.incidentStoryLookbackHours = v; return this; }
         public Builder incidentStoryMax(int v) { this.incidentStoryMax = v; return this; }
+        public Builder weeklyDigestEnabled(boolean v) { this.weeklyDigestEnabled = v; return this; }
+        public Builder weeklyDigestIntervalDays(int v) { this.weeklyDigestIntervalDays = v; return this; }
+        public Builder weeklyDigestHistoryMax(int v) { this.weeklyDigestHistoryMax = v; return this; }
+        public Builder modJarDriftEnabled(boolean v) { this.modJarDriftEnabled = v; return this; }
+        public Builder clientOnServerIssuesEnabled(boolean v) { this.clientOnServerIssuesEnabled = v; return this; }
+        public Builder externalKillDetectEnabled(boolean v) { this.externalKillDetectEnabled = v; return this; }
+        public Builder softHangEnabled(boolean v) { this.softHangEnabled = v; return this; }
+        public Builder softHangSeconds(int v) { this.softHangSeconds = v; return this; }
+        public Builder softHangThreadDump(boolean v) { this.softHangThreadDump = v; return this; }
+        public Builder softHangCooldownMin(int v) { this.softHangCooldownMin = v; return this; }
+        public Builder restartHygieneEnabled(boolean v) { this.restartHygieneEnabled = v; return this; }
+        public Builder silentFailDetectEnabled(boolean v) { this.silentFailDetectEnabled = v; return this; }
+        public Builder worldPressureEnabled(boolean v) { this.worldPressureEnabled = v; return this; }
+        public Builder chunkWritePressureEnabled(boolean v) { this.chunkWritePressureEnabled = v; return this; }
+        public Builder chunkWriteGrowthChunks(int v) { this.chunkWriteGrowthChunks = v; return this; }
+        public Builder chunkWriteSustainedScans(int v) { this.chunkWriteSustainedScans = v; return this; }
+        public Builder joinClinicEnabled(boolean v) { this.joinClinicEnabled = v; return this; }
+        public Builder modDisableEnabled(boolean v) { this.modDisableEnabled = v; return this; }
+        public Builder modConfigEditEnabled(boolean v) { this.modConfigEditEnabled = v; return this; }
+        public Builder worldRiskEnabled(boolean v) { this.worldRiskEnabled = v; return this; }
         public Builder configAuditEnabled(boolean v) { this.configAuditEnabled = v; return this; }
         public Builder reportRetentionCount(int v) { this.reportRetentionCount = v; return this; }
         public Builder reportRetentionDays(int v) { this.reportRetentionDays = v; return this; }
@@ -888,11 +1039,16 @@ public final class ReportConfig {
             this.backupDir = c.backupDir();
             this.backupDirs = c.backupDirs();
             this.backupWarnDays = c.backupWarnDays();
+            this.backupStaleHours = c.backupStaleHours();
             this.backupPollMin = c.backupPollMin();
             this.backupExternalMarker = c.backupExternalMarker();
             this.backupWebhookToken = c.backupWebhookToken();
             this.backupSuppressLocalMissing = c.backupSuppressLocalMissing();
             this.backupTrackingEnabled = c.backupTrackingEnabled();
+            this.backupVerifyAuto = c.backupVerifyAuto();
+            this.backupVerifyDeferWhenPlayers = c.backupVerifyDeferWhenPlayers();
+            this.backupVerifyMaxMspt = c.backupVerifyMaxMspt();
+            this.backupTestRestoreEnabled = c.backupTestRestoreEnabled();
             this.stateFile = c.stateFile();
             this.cpuSampleIntervalMs = c.cpuSampleIntervalMs();
             this.panelDetected = c.panelDetected();
@@ -956,6 +1112,26 @@ public final class ReportConfig {
             this.incidentStoryWindowMin = c.incidentStoryWindowMin();
             this.incidentStoryLookbackHours = c.incidentStoryLookbackHours();
             this.incidentStoryMax = c.incidentStoryMax();
+            this.weeklyDigestEnabled = c.weeklyDigestEnabled();
+            this.weeklyDigestIntervalDays = c.weeklyDigestIntervalDays();
+            this.weeklyDigestHistoryMax = c.weeklyDigestHistoryMax();
+            this.modJarDriftEnabled = c.modJarDriftEnabled();
+            this.clientOnServerIssuesEnabled = c.clientOnServerIssuesEnabled();
+            this.externalKillDetectEnabled = c.externalKillDetectEnabled();
+            this.softHangEnabled = c.softHangEnabled();
+            this.softHangSeconds = c.softHangSeconds();
+            this.softHangThreadDump = c.softHangThreadDump();
+            this.softHangCooldownMin = c.softHangCooldownMin();
+            this.restartHygieneEnabled = c.restartHygieneEnabled();
+            this.silentFailDetectEnabled = c.silentFailDetectEnabled();
+            this.worldPressureEnabled = c.worldPressureEnabled();
+            this.chunkWritePressureEnabled = c.chunkWritePressureEnabled();
+            this.chunkWriteGrowthChunks = c.chunkWriteGrowthChunks();
+            this.chunkWriteSustainedScans = c.chunkWriteSustainedScans();
+            this.joinClinicEnabled = c.joinClinicEnabled();
+            this.modDisableEnabled = c.modDisableEnabled();
+            this.modConfigEditEnabled = c.modConfigEditEnabled();
+            this.worldRiskEnabled = c.worldRiskEnabled();
             this.configAuditEnabled = c.configAuditEnabled();
             this.reportRetentionCount = c.reportRetentionCount();
             this.reportRetentionDays = c.reportRetentionDays();

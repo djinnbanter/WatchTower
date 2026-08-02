@@ -35,6 +35,14 @@ public interface ServerContext {
 
     WatchtowerSample.Sample collectSample();
 
+    /**
+     * Per-dimension entity/chunk census for world-pressure analysis.
+     * Must be called on the server tick thread. Default is empty (no census).
+     */
+    default WatchtowerSample.WorldCensus collectWorldCensus() {
+        return WatchtowerSample.WorldCensus.empty();
+    }
+
     List<OnlinePlayerView> onlinePlayers();
 
     double smoothedMspt();

@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.mcstatus.watchtower.core.analyze.GcAdvisor;
 import dev.mcstatus.watchtower.core.analyze.PerformanceInsightEngine;
+import dev.mcstatus.watchtower.core.analyze.RamSizingAdvisor;
 import dev.mcstatus.watchtower.core.collect.DimensionStorageScanner;
 import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.collect.ExtrasCollector;
@@ -48,6 +49,7 @@ public final class LiveMetricsService {
     private final PerCoreCpuSampler perCoreCpuSampler = new PerCoreCpuSampler();
     private ServerContext boundServer;
     private long lastEntityScanEpoch;
+    private long lastWorldCensusEpoch;
     private long lastStorageScanEpoch;
     private long lastPregenTailEpoch;
     private long lastThermalScanEpoch;
@@ -77,6 +79,8 @@ public final class LiveMetricsService {
     private final LivePregenTailer pregenTailer = new LivePregenTailer();
     private long entities = -1;
     private long chunks = -1;
+    private long lastCensusUnattendedChunks = -1;
+    private volatile JsonObject cachedWorldCensus;
     private final AtomicReference<JsonObject> cachedStorage = new AtomicReference<>(new JsonObject());
     private final AtomicReference<JsonObject> cachedThermal = new AtomicReference<>(new JsonObject());
     private volatile String cachedPanelId = "unknown";
@@ -204,6 +208,30 @@ public final class LiveMetricsService {
         boundServer = null;
     }
 
+    /** Latest world-pressure census JSON, or null if none yet. Safe to read off-thread. */
+    public JsonObject latestWorldCensus() {
+        JsonObject c = cachedWorldCensus;
+        return c != null ? c.deepCopy() : null;
+    }
+
+    /** Latest DH pregen peek, or null. Safe to read off-thread. */
+    public JsonObject latestDhPregen() {
+        JsonObject dh = pregenTailer.getDhPregen();
+        return dh != null ? dh.deepCopy() : null;
+    }
+
+    /** Latest Chunky pregen peek, or null. Safe to read off-thread. */
+    public JsonObject latestChunkyPregen() {
+        JsonObject chunky = pregenTailer.getChunkyPregen();
+        return chunky != null ? chunky.deepCopy() : null;
+    }
+
+    /** Latest disk I/O probe peek ({@code write_await_ms} / {@code write_mb_s}), or null. */
+    public JsonObject latestDiskIo() {
+        JsonObject diskIo = cachedDiskIo.get();
+        return diskIo != null ? diskIo.deepCopy() : null;
+    }
+
     public JsonObject getLiveResponse() {
         JsonObject body = store.getLatestWithMeta();
         JsonObject dh = pregenTailer.getDhPregen();
@@ -243,7 +271,47 @@ public final class LiveMetricsService {
         if (cachedJavaRssGb != null) {
             body.addProperty("java_rss_gb", cachedJavaRssGb);
         }
+        attachRamEnvelope(body);
         return body;
+    }
+
+    private static void attachRamEnvelope(JsonObject body) {
+        if (body == null) {
+            return;
+        }
+        JsonObject latest = body.has("latest") && body.get("latest").isJsonObject()
+                ? body.getAsJsonObject("latest") : body;
+        double hostMem = Double.NaN;
+        double xmx = Double.NaN;
+        String ramSource = null;
+        if (latest.has("mem_total_gb") && !latest.get("mem_total_gb").isJsonNull()) {
+            hostMem = latest.get("mem_total_gb").getAsDouble();
+        }
+        if (latest.has("ram_source") && !latest.get("ram_source").isJsonNull()) {
+            ramSource = latest.get("ram_source").getAsString();
+        }
+        if (latest.has("java_xmx_gb") && !latest.get("java_xmx_gb").isJsonNull()) {
+            xmx = latest.get("java_xmx_gb").getAsDouble();
+        }
+        if (Double.isNaN(xmx) && latest.has("jvm_health_live") && latest.get("jvm_health_live").isJsonObject()) {
+            JsonObject jh = latest.getAsJsonObject("jvm_health_live");
+            if (jh.has("xmx_gb") && !jh.get("xmx_gb").isJsonNull()) {
+                xmx = jh.get("xmx_gb").getAsDouble();
+            } else if (jh.has("heap_max_gb") && !jh.get("heap_max_gb").isJsonNull()) {
+                xmx = jh.get("heap_max_gb").getAsDouble();
+            }
+        }
+        if (Double.isNaN(xmx) && latest.has("heap_mb") && latest.get("heap_mb").isJsonObject()) {
+            JsonObject heap = latest.getAsJsonObject("heap_mb");
+            if (heap.has("max") && !heap.get("max").isJsonNull()) {
+                xmx = heap.get("max").getAsDouble() / 1024.0;
+            }
+        }
+        JsonObject snap = RamSizingAdvisor.envelopeSnapshot(hostMem, xmx, ramSource);
+        if (snap.has("envelope")
+                && !RamSizingAdvisor.ENVELOPE_UNKNOWN.equals(snap.get("envelope").getAsString())) {
+            body.add("ram_envelope", snap);
+        }
     }
 
     public void recordTick(ServerContext server) {
@@ -315,7 +383,10 @@ public final class LiveMetricsService {
             }
         }
         rollupAccumulator.addSample(tps, mspt, players, heapGb, memUsed, cpu, tpsWarn,
-                heapPressurePct, gcPausePct, diskUse, diskFree, diskWriteMbS, diskWriteAwait);
+                heapPressurePct, gcPausePct, diskUse, diskFree, diskWriteMbS, diskWriteAwait,
+                entities >= 0 ? (double) entities : null,
+                chunks >= 0 ? (double) chunks : null,
+                lastCensusUnattendedChunks >= 0 ? (double) lastCensusUnattendedChunks : null);
     }
 
     private void flushOpenRollupMinute(long minuteEpoch) {
@@ -363,15 +434,42 @@ public final class LiveMetricsService {
     }
 
     private void refreshSlowMetrics(ServerContext server, long now) {
-        int entityInterval = configInt(30, () -> ModRuntime.config().liveCountEntitiesIntervalSeconds());
-        if (now - lastEntityScanEpoch >= entityInterval && ModRuntime.config().countEntities()) {
-            lastEntityScanEpoch = now;
+        int censusInterval = configInt(60, () -> ModRuntime.config().liveWorldCensusIntervalSeconds());
+        boolean censusDue = ModRuntime.config().countEntities()
+                && now - lastWorldCensusEpoch >= censusInterval;
+        if (censusDue) {
+            lastWorldCensusEpoch = now;
+            lastEntityScanEpoch = now; // supersede plain entity scan
             try {
-                WatchtowerSample.Sample sample = server.collectSample();
-                entities = sample.entities();
-                chunks = sample.chunks();
+                WatchtowerSample.WorldCensus census = server.collectWorldCensus();
+                cachedWorldCensus = worldCensusToJson(census);
+                long entitySum = 0;
+                long chunkSum = 0;
+                long unattended = 0;
+                for (WatchtowerSample.DimensionCensus d : census.dimensions()) {
+                    entitySum += d.entities();
+                    chunkSum += d.loadedChunks();
+                    if (d.players() == 0) {
+                        unattended += d.loadedChunks();
+                    }
+                }
+                entities = entitySum;
+                chunks = chunkSum;
+                lastCensusUnattendedChunks = unattended;
             } catch (Exception e) {
-                ModRuntime.logger().debug("Live entity scan failed: {}", e.toString());
+                ModRuntime.logger().debug("Live world census failed: {}", e.toString());
+            }
+        } else {
+            int entityInterval = configInt(30, () -> ModRuntime.config().liveCountEntitiesIntervalSeconds());
+            if (now - lastEntityScanEpoch >= entityInterval && ModRuntime.config().countEntities()) {
+                lastEntityScanEpoch = now;
+                try {
+                    WatchtowerSample.Sample sample = server.collectSample();
+                    entities = sample.entities();
+                    chunks = sample.chunks();
+                } catch (Exception e) {
+                    ModRuntime.logger().debug("Live entity scan failed: {}", e.toString());
+                }
             }
         }
 
@@ -724,6 +822,12 @@ public final class LiveMetricsService {
         if (storage.has("by_dimension")) {
             o.add("by_dimension", storage.getAsJsonArray("by_dimension").deepCopy());
         }
+        if (storage.has("by_mods")) {
+            o.add("by_mods", storage.getAsJsonArray("by_mods").deepCopy());
+        }
+        if (storage.has("mods_gb")) {
+            o.add("mods_gb", storage.get("mods_gb"));
+        }
         if (lastStorageScanEpoch > 0) {
             o.addProperty("storage_age_sec", Math.max(0, now - lastStorageScanEpoch));
         }
@@ -748,6 +852,45 @@ public final class LiveMetricsService {
         } catch (IllegalStateException e) {
             return fallback;
         }
+    }
+
+    /** Map glue census DTO → JSON for ops-cache / analyzer (no Minecraft types). */
+    static JsonObject worldCensusToJson(WatchtowerSample.WorldCensus census) {
+        JsonObject out = new JsonObject();
+        if (census == null) {
+            out.add("dimensions", new JsonArray());
+            return out;
+        }
+        if (census.takenAt() != null) {
+            out.addProperty("census_at", census.takenAt().toString());
+        }
+        JsonArray dims = new JsonArray();
+        for (WatchtowerSample.DimensionCensus d : census.dimensions()) {
+            JsonObject row = new JsonObject();
+            row.addProperty("id", d.id());
+            row.addProperty("entities", d.entities());
+            row.addProperty("items", d.items());
+            row.addProperty("living", d.living());
+            row.addProperty("loaded_chunks", d.loadedChunks());
+            row.addProperty("forced_chunks", d.forcedChunks());
+            row.addProperty("spawn_chunks", d.spawnChunks());
+            row.addProperty("mod_forced_chunks", d.modForcedChunks());
+            row.addProperty("players", d.players());
+            row.addProperty("unattended", d.players() == 0 && d.loadedChunks() > 0);
+            JsonArray top = new JsonArray();
+            if (d.topTypes() != null) {
+                for (WatchtowerSample.TypeCount tc : d.topTypes()) {
+                    JsonObject t = new JsonObject();
+                    t.addProperty("type", tc.type());
+                    t.addProperty("count", tc.count());
+                    top.add(t);
+                }
+            }
+            row.add("top_types", top);
+            dims.add(row);
+        }
+        out.add("dimensions", dims);
+        return out;
     }
 
     private static double round1(double v) {

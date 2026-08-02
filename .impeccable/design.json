@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-30T08:43:00.000Z",
+  "title": "Design System: WatchTower",
+  "extensions": {
+    "colorMeta": {
+      "signal-blue": {
+        "role": "primary",
+        "displayName": "Signal Blue",
+        "canonical": "#4C8DFF",
+        "tonalRamp": ["#0A0F1C", "#132445", "#1B4FE0", "#3A6FF0", "#4C8DFF", "#5B9BFF", "#8BB4FF", "#D6E6FF"]
+      },
+      "lantern-amber": {
+        "role": "secondary",
+        "displayName": "Lantern Amber",
+        "canonical": "#F5A524",
+        "tonalRamp": ["#3D2A0A", "#6B4510", "#B4690E", "#D4891A", "#F5A524", "#F7B84A", "#FBD48A", "#FEF0D0"]
+      },
+      "bg0-dark": {
+        "role": "neutral",
+        "displayName": "Page Night",
+        "canonical": "#14171e",
+        "tonalRamp": ["#000000", "#0A0C10", "#14171e", "#1A1E27", "#222833", "#2e3543", "#3b4354", "#5a6478"]
+      },
+      "ok": {
+        "role": "status",
+        "displayName": "Status OK",
+        "canonical": "#34d399",
+        "tonalRamp": ["#064E3B", "#0F766E", "#1f9d63", "#34d399", "#6EE7B7", "#A7F3D0", "#D1FAE5", "#ECFDF5"]
+      },
+      "danger": {
+        "role": "status",
+        "displayName": "Status Danger",
+        "canonical": "#f87171",
+        "tonalRamp": ["#7F1D1D", "#B91C1C", "#d14343", "#f87171", "#FCA5A5", "#FECACA", "#FEE2E2", "#FEF2F2"]
+      },
+      "ch-tps": {
+        "role": "channel",
+        "displayName": "Channel TPS",
+        "canonical": "#4FB286",
+        "tonalRamp": ["#1A3D2E", "#2A5F45", "#3A8F6A", "#4FB286", "#6BC49A", "#93D6B5", "#C5EAD6", "#E8F7EF"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Rare page-scale titles." },
+      "headline": { "displayName": "Headline", "purpose": "Mission / section titles." },
+      "title": { "displayName": "Title", "purpose": "Card and section heads." },
+      "body": { "displayName": "Body", "purpose": "Primary ops copy." },
+      "label": { "displayName": "Label", "purpose": "Uppercase instrument captions." },
+      "mono": { "displayName": "Mono metric", "purpose": "Tabular vitals and KPIs." }
+    },
+    "shadows": [
+      {
+        "name": "plate-lift-dark",
+        "value": "0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 6px 16px rgba(0, 0, 0, 0.4)",
+        "purpose": "Resting plate/card elevation on dark theme."
+      },
+      {
+        "name": "plate-lift-black",
+        "value": "0 1px 0 rgba(255, 255, 255, 0.045) inset, 0 8px 20px rgba(0, 0, 0, 0.55)",
+        "purpose": "OLED black theme card separation from pure black page."
+      },
+      {
+        "name": "plate-lift-light",
+        "value": "0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 6px 16px rgba(15, 23, 42, 0.1)",
+        "purpose": "Resting plate elevation on light theme."
+      }
+    ],
+    "motion": [
+      {
+        "name": "enter",
+        "value": "wt-enter 220ms ease",
+        "purpose": "Page/section enter: 8px rise + fade; honor prefers-reduced-motion."
+      },
+      {
+        "name": "fade",
+        "value": "wt-fade 180ms ease",
+        "purpose": "Outlet / soft fades."
+      },
+      {
+        "name": "hero-glow-intensity",
+        "value": "0.55",
+        "purpose": "Default HeroCard / BorderGlow intensity."
+      }
+    ],
+    "breakpoints": [
+      { "name": "live-wide", "value": "1200px", "purpose": "Live network / host temps side-by-side." },
+      { "name": "rail", "value": "220px", "purpose": "Fixed rail width (not a media query)." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Signal Blue control action — scarce, compact.",
+      "html": "<button type=\"button\" class=\"ds-btn-primary\">Build support pack</button>",
+      "css": ".ds-btn-primary { background: var(--wt-accent, #4C8DFF); color: var(--wt-accent-ink, #0A0F1C); padding: 8px 14px; border: none; border-radius: 4px; font: 600 0.875rem/1.2 \"Geist Variable\", ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: filter 160ms ease, background 160ms ease; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:focus-visible { outline: 2px solid color-mix(in srgb, var(--wt-accent, #4C8DFF) 55%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary / chrome action on tonal plate.",
+      "html": "<button type=\"button\" class=\"ds-btn-ghost\">Refresh</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: var(--wt-text, #f3f5f8); padding: 8px 12px; border: 1px solid color-mix(in srgb, var(--wt-line, #fff) 100%, transparent); border-radius: 4px; font: 500 0.875rem/1.2 \"Geist Variable\", ui-sans-serif, system-ui, sans-serif; cursor: pointer; } .ds-btn-ghost:hover { background: color-mix(in srgb, var(--wt-bg2, #2e3543) 80%, transparent); } .ds-btn-ghost:focus-visible { outline: 2px solid color-mix(in srgb, var(--wt-accent, #4C8DFF) 45%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Plate Card",
+      "kind": "card",
+      "refersTo": "plate-card",
+      "description": "Quiet glass plate — tonal bg1 on bg0, hairline, tight radius.",
+      "html": "<div class=\"ds-plate\"><div class=\"ds-plate__label\">Disk used</div><div class=\"ds-plate__value\">72%</div></div>",
+      "css": ".ds-plate { background: var(--wt-bg1, #222833); color: var(--wt-text, #f3f5f8); border: 1px solid color-mix(in srgb, var(--wt-line, #fff) 100%, transparent); border-radius: 4px; padding: 16px; box-shadow: var(--wt-shadow, 0 1px 0 rgba(255,255,255,0.06) inset, 0 6px 16px rgba(0,0,0,0.4)); } .ds-plate__label { font: 600 0.6875rem/1.3 \"Geist Variable\", sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: var(--wt-text-low, #8a92a1); } .ds-plate__value { margin-top: 4px; font: 600 1.5rem/1.2 \"JetBrains Mono Variable\", ui-monospace, monospace; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Rail Nav Item",
+      "kind": "nav",
+      "refersTo": "rail-nav",
+      "description": "Rail link; active fills Signal Blue solid.",
+      "html": "<nav class=\"ds-rail\"><a class=\"ds-rail__item\" href=\"#\">Live</a><a class=\"ds-rail__item ds-rail__item--active\" href=\"#\">Overview</a></nav>",
+      "css": ".ds-rail { display: flex; flex-direction: column; gap: 4px; width: 200px; padding: 8px; background: var(--wt-bg1, #222833); border-radius: 4px; } .ds-rail__item { display: block; padding: 8px 12px; border-radius: 2px; color: var(--wt-text-mid, #b8bfcc); font: 500 0.875rem/1.2 \"Geist Variable\", sans-serif; text-decoration: none; } .ds-rail__item:hover { background: color-mix(in srgb, var(--wt-bg2, #2e3543) 90%, transparent); color: var(--wt-text, #f3f5f8); } .ds-rail__item--active { background: var(--wt-accent, #4C8DFF); color: var(--wt-accent-ink, #0A0F1C); font-weight: 600; } .ds-rail__item:focus-visible { outline: 2px solid color-mix(in srgb, var(--wt-accent, #4C8DFF) 50%, transparent); outline-offset: 1px; }"
+    },
+    {
+      "name": "Metric Readout",
+      "kind": "custom",
+      "refersTo": "metric-readout",
+      "description": "Instrument caption + mono value.",
+      "html": "<div class=\"ds-metric\"><div class=\"ds-metric__label\">TPS</div><div class=\"ds-metric__value\">19.9<span class=\"ds-metric__unit\">t/s</span></div></div>",
+      "css": ".ds-metric__label { font: 600 0.6875rem/1.3 \"Geist Variable\", sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: var(--wt-text-low, #8a92a1); } .ds-metric__value { margin-top: 4px; font: 600 1.875rem/1.15 \"JetBrains Mono Variable\", ui-monospace, monospace; font-variant-numeric: tabular-nums; color: var(--wt-ch-tps, #4FB286); } .ds-metric__unit { margin-left: 4px; font-size: 1rem; color: var(--wt-text-low, #8a92a1); font-weight: 500; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "chip-status",
+      "description": "Compact severity / provenance chip.",
+      "html": "<span class=\"ds-chip ds-chip--warn\">Warning</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 2px; font: 600 0.6875rem/1.3 \"Geist Variable\", sans-serif; letter-spacing: 0.04em; background: var(--wt-bg2, #2e3543); color: var(--wt-text-mid, #b8bfcc); } .ds-chip--warn { color: var(--wt-warn, #F5A524); background: color-mix(in srgb, var(--wt-warn, #F5A524) 16%, transparent); } .ds-chip--ok { color: var(--wt-ok, #34d399); background: color-mix(in srgb, var(--wt-ok, #34d399) 16%, transparent); } .ds-chip--danger { color: var(--wt-danger, #f87171); background: color-mix(in srgb, var(--wt-danger, #f87171) 16%, transparent); }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": null,
+      "description": "Search / filter field on tonal well.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field__label\">Search</span><input class=\"ds-field__input\" type=\"search\" placeholder=\"Filter issues\" /></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; font: 500 0.8125rem/1.3 \"Geist Variable\", sans-serif; color: var(--wt-text-mid, #b8bfcc); } .ds-field__input { background: var(--wt-bg2, #2e3543); color: var(--wt-text, #f3f5f8); border: 1px solid color-mix(in srgb, var(--wt-line, #fff) 100%, transparent); border-radius: 4px; padding: 8px 10px; font: 400 0.9375rem/1.3 \"Geist Variable\", sans-serif; } .ds-field__input:focus { outline: none; border-color: color-mix(in srgb, var(--wt-accent, #4C8DFF) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--wt-accent, #4C8DFF) 22%, transparent); } .ds-field__input::placeholder { color: var(--wt-text-low, #8a92a1); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Night Watch Desk",
+    "overview": "WatchTower’s dashboard is a night-shift ops desk: precise instruments under lantern warmth, Signal Blue for control chrome, and quiet tonal plates instead of loud SaaS glass. The operator arrives under stress (lag, crash, disk pressure); every surface must answer “is it okay?” and “what next?” before it tries to look impressive.\n\nPersonality is precise — dense enough to triage, never cluttered for decoration. Form language mixes tight instruments (sharp 2–6px corners, mono metrics, high scanability) with quiet glass (tonal bg0→bg3 layering, soft inset hairlines, restrained hero glow keyed to status — not periwinkle mush or sparkle spam). Brand mark is the lantern / stone tower; display spelling is WatchTower.",
+    "keyCharacteristics": [
+      "Operate-mode density: list+detail inboxes, mission band, Live charts",
+      "Signal Blue accent + Lantern Amber brand warmth",
+      "Status colours never share hues with instrument channel colours",
+      "Three themes: light, dark (default ops), black (OLED)",
+      "Motion respects prefers-reduced-motion; glow intensity ~0.55 on heroes"
+    ],
+    "rules": [
+      { "name": "The Channel ≠ Status Rule", "body": "Instrument channel colours must not reuse ok/warn/danger hexes.", "section": "colors" },
+      { "name": "The Scarce Accent Rule", "body": "Signal Blue is control chrome (≤~10% of a screen’s colour mass).", "section": "colors" },
+      { "name": "The No AI-SaaS Chrome Rule", "body": "No periwinkle-on-glass clichés, sparkle-as-brand, or decorative purple/indigo defaults.", "section": "colors" },
+      { "name": "The Mono-for-Numbers Rule", "body": "Live vitals, gauges, and KPI values use JetBrains Mono + tabular nums.", "section": "typography" },
+      { "name": "The Flat-at-Rest Rule", "body": "One inset hairline + one soft drop; glow is for hero status, not every widget.", "section": "elevation" },
+      { "name": "The Tight Corner Rule", "body": "New cards and controls default to 4px; avoid 12–16px friendly SaaS radii.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do keep Signal Blue scarce and purposeful (rail active, primary actions, focus).",
+      "Do separate channel colours from status colours in every new chart or dial.",
+      "Do use Geist for UI copy and JetBrains Mono for comparable numbers.",
+      "Do prefer tonal bg steps + hairlines over heavy glass blur stacks.",
+      "Do respect prefers-reduced-motion for enter/glow/shimmer.",
+      "Do spell the product WatchTower in chrome you touch."
+    ],
+    "donts": [
+      "Don't reintroduce periwinkle / purple-indigo AI dashboard palettes.",
+      "Don't use large pill radii or multi-layer drop shadows as default card chrome.",
+      "Don't put decorative gradients or sparkle text on triage surfaces.",
+      "Don't invent a second Skin (Aero/Sass); themes are light / dark / black only.",
+      "Don't imply the UI can restart the server, download jars, or auto-clean the world."
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+"Server thread" #1 prio=5 tid=0x1 nid=0x1 runnable
+   java.lang.Thread.State: RUNNABLE
+	at net.minecraft.world.entity.Entity.tick(Entity.java:100)
+	at net.minecraft.world.level.entity.EntityTickList.forEach(EntityTickList.java:50)
+	at net.minecraft.server.level.ServerLevel.tick(ServerLevel.java:200)
+	at net.minecraft.server.MinecraftServer.tickChildren(MinecraftServer.java:900)
+	at net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:850)
+	at java.lang.Thread.run(Thread.java:840)
+
+"ForkJoinPool.commonPool-worker-1" #2 prio=5 tid=0x2 nid=0x2 waiting
+   java.lang.Thread.State: WAITING
+	at jdk.internal.misc.Unsafe.park(Native Method)

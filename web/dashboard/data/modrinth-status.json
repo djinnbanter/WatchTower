@@ -1,0 +1,74 @@
+{
+  "enabled": true,
+  "running": false,
+  "stage": "done",
+  "stage_label": "Modrinth scan complete",
+  "stage_detail": null,
+  "progress": {
+    "done": 8,
+    "total": 8
+  },
+  "batch": {
+    "index": 2,
+    "count": 2,
+    "size": 128
+  },
+  "eta_seconds": null,
+  "last_run": {
+    "started_at": "2026-08-01T21:22:16.533Z",
+    "finished_at": "2026-08-01T21:22:24.533Z",
+    "duration_ms": 8000,
+    "success": true
+  },
+  "history": [
+    {
+      "started_at": "2026-07-31T21:22:37.533Z",
+      "finished_at": "2026-07-31T21:22:44.533Z",
+      "duration_ms": 7000,
+      "success": true,
+      "matched": 38,
+      "outdated": 3
+    },
+    {
+      "started_at": "2026-08-01T21:22:16.533Z",
+      "finished_at": "2026-08-01T21:22:24.533Z",
+      "duration_ms": 8000,
+      "success": true,
+      "matched": 38,
+      "outdated": 3
+    }
+  ],
+  "stats": {
+    "jars_considered": 42,
+    "matched": 38,
+    "unresolved": 4,
+    "outdated": 3,
+    "coverage_pct": 90,
+    "cache_hit_rate": 72,
+    "cache_entries": 40,
+    "api_requests": 6,
+    "rate_limit_waits": 0,
+    "rps": 5,
+    "hash_batches": 1,
+    "project_batches": 1,
+    "truncated": false,
+    "side_tag_mix": {
+      "server_required": 12,
+      "client_only": 8,
+      "both": 14,
+      "other": 4
+    },
+    "top_outdated": [
+      {
+        "mod_id": "create",
+        "title": "Create"
+      },
+      {
+        "mod_id": "flywheel",
+        "title": "Flywheel"
+      }
+    ]
+  },
+  "success": true,
+  "error": null
+}

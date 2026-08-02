@@ -41,6 +41,7 @@ public final class SupportBundleCatalog {
         out.add("logs", listLogs(req.serverDir()));
         out.add("crashes", listCrashes(req.serverDir(), req.opsCachePath()));
         out.add("spark", listSpark(req.sparkUploadDir()));
+        out.add("hangs", listHangs(req.serverDir()));
         out.add("stores", listStores(req));
         return out;
     }
@@ -141,6 +142,36 @@ public final class SupportBundleCatalog {
                             JsonObject row = new JsonObject();
                             row.addProperty("name", p.getFileName().toString());
                             row.addProperty("source_path", "watchtower/spark-upload/" + p.getFileName());
+                            row.addProperty("size", Files.size(p));
+                            row.addProperty("mtime", mtime(p) / 1000L);
+                            arr.add(row);
+                        } catch (IOException ignored) {
+                        }
+                    });
+        }
+        return arr;
+    }
+
+    private static JsonArray listHangs(Path serverDir) throws IOException {
+        JsonArray arr = new JsonArray();
+        if (serverDir == null) {
+            return arr;
+        }
+        Path hangs = serverDir.resolve("watchtower").resolve("hangs");
+        if (!Files.isDirectory(hangs)) {
+            return arr;
+        }
+        try (var stream = Files.list(hangs)) {
+            stream.filter(p -> {
+                        String n = p.getFileName().toString();
+                        return Files.isRegularFile(p) && (n.endsWith(".txt") || n.endsWith(".log"));
+                    })
+                    .sorted(Comparator.comparingLong(SupportBundleCatalog::mtime).reversed())
+                    .forEach(p -> {
+                        try {
+                            JsonObject row = new JsonObject();
+                            row.addProperty("name", p.getFileName().toString());
+                            row.addProperty("path", "watchtower/hangs/" + p.getFileName());
                             row.addProperty("size", Files.size(p));
                             row.addProperty("mtime", mtime(p) / 1000L);
                             arr.add(row);

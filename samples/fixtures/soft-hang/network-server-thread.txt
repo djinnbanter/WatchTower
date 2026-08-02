@@ -1,0 +1,7 @@
+"Server thread" #1 prio=5 tid=0x1 nid=0x1 runnable
+   java.lang.Thread.State: RUNNABLE
+	at net.minecraft.network.Connection.tick(Connection.java:200)
+	at net.minecraft.network.protocol.PacketListener.handle(PacketListener.java:40)
+	at net.minecraft.server.network.ServerGamePacketListenerImpl.tick(ServerGamePacketListenerImpl.java:150)
+	at net.minecraft.server.MinecraftServer.tickChildren(MinecraftServer.java:900)
+	at java.lang.Thread.run(Thread.java:840)
