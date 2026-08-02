@@ -3,7 +3,7 @@ import BorderGlow from '@/components/border-glow/BorderGlow';
 import { Button, EmptyState, Section, StatusPill, useCappedList } from '@/ui/patterns';
 import { PieChart } from '@/ui/charts';
 import { WtGauge } from '@/ui/charts/wt-gauges';
-import { Activity, AlertTriangle, HardDrive, Map, Network, Package, Users, Zap } from '@/ui/icons';
+import { Activity, AlertTriangle, ArrowUpRight, HardDrive, Map, Network, Package, Users, Zap } from '@/ui/icons';
 import { navigate } from '@/app/router';
 import { entityTypeLabel, worldDimensionLabel } from '@/features/spark/model';
 import { asArray, asRecord, num, str } from '@/lib/utils';
