@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "installCommand": "npm ci",
+  "installCommand": "npm install",
   "buildCommand": "npm run build:demo",
   "outputDirectory": "dist-demo",
   "rewrites": [
