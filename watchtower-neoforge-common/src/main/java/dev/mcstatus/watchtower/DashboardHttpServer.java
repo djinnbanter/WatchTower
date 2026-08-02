@@ -1759,6 +1759,8 @@ public final class DashboardHttpServer {
 
             Double xmxGb = null;
             String xmxSource = null;
+            Double hostMemGb = null;
+            String ramSource = null;
             try {
                 JsonObject liveResp = LiveMetricsService.get().getLiveResponse();
                 if (liveResp != null && liveResp.has("latest") && liveResp.get("latest").isJsonObject()) {
@@ -1780,6 +1782,26 @@ public final class DashboardHttpServer {
                             xmxSource = "live";
                         }
                     }
+                    if (latest.has("mem_total_gb") && !latest.get("mem_total_gb").isJsonNull()) {
+                        hostMemGb = latest.get("mem_total_gb").getAsDouble();
+                    }
+                    if (latest.has("ram_source") && !latest.get("ram_source").isJsonNull()) {
+                        ramSource = latest.get("ram_source").getAsString();
+                    }
+                    if (latest.has("java_xmx_gb") && !latest.get("java_xmx_gb").isJsonNull() && xmxGb == null) {
+                        xmxGb = latest.get("java_xmx_gb").getAsDouble();
+                        xmxSource = "live";
+                    }
+                }
+                if (liveResp != null && liveResp.has("ram_envelope") && liveResp.get("ram_envelope").isJsonObject()) {
+                    JsonObject env = liveResp.getAsJsonObject("ram_envelope");
+                    if (hostMemGb == null && env.has("host_mem_gb") && !env.get("host_mem_gb").isJsonNull()) {
+                        hostMemGb = env.get("host_mem_gb").getAsDouble();
+                    }
+                    if ((ramSource == null || ramSource.isBlank())
+                            && env.has("ram_source") && !env.get("ram_source").isJsonNull()) {
+                        ramSource = env.get("ram_source").getAsString();
+                    }
                 }
             } catch (Exception ignored) {
             }
@@ -1794,6 +1816,16 @@ public final class DashboardHttpServer {
                         xmxGb = jh.get("heap_max_gb").getAsDouble();
                         xmxSource = "report";
                     }
+                }
+            }
+            if (hostMemGb == null && facts != null && facts.has("system") && facts.get("system").isJsonObject()) {
+                JsonObject system = facts.getAsJsonObject("system");
+                if (system.has("mem_total_gb") && !system.get("mem_total_gb").isJsonNull()) {
+                    hostMemGb = system.get("mem_total_gb").getAsDouble();
+                }
+                if ((ramSource == null || ramSource.isBlank())
+                        && system.has("ram_source") && !system.get("ram_source").isJsonNull()) {
+                    ramSource = system.get("ram_source").getAsString();
                 }
             }
 
@@ -1871,7 +1903,8 @@ public final class DashboardHttpServer {
                     diskFreeGb, diskUsePct, storageOptional,
                     config.diskFillWarnDays(), config.diskFillLookbackHours(),
                     config.diskFillMinSpanHours(), config.diskFillOutlierGb(),
-                    config.diskIoLatencyWarnMs());
+                    config.diskIoLatencyWarnMs(),
+                    hostMemGb, ramSource);
             JsonObject out = PerformanceDashboardBuilder.build(rows, window, config.msptWarn(), config.tpsWarn(), ctx);
             sendJson(ex, 200, out);
         } catch (Exception e) {

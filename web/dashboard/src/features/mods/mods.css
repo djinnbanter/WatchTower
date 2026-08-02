@@ -689,7 +689,7 @@ button.md-status__chip:hover {
   align-items: center;
   justify-content: center;
   height: 1.35rem;
-  border-radius: 0.4rem;
+  border-radius: var(--radius-wt);
   background: color-mix(in srgb, var(--wt-bg2) 80%, transparent);
   border: 1px solid color-mix(in srgb, var(--wt-line) 85%, transparent);
   font-size: var(--wt-fs-xs);
@@ -1381,7 +1381,7 @@ button.md-status__chip:hover {
   align-items: center;
   gap: 0.3rem;
   padding: 0.18rem 0.15rem;
-  border-radius: 0.4rem;
+  border-radius: var(--radius-wt);
   min-height: 1.6rem;
 }
 
@@ -1659,7 +1659,7 @@ button.md-status__chip:hover {
   justify-content: center;
   width: 1.55rem;
   height: 1.55rem;
-  border-radius: 0.45rem;
+  border-radius: var(--radius-wt);
   border: 1px solid color-mix(in srgb, var(--wt-line) 90%, transparent);
   background: color-mix(in srgb, var(--wt-bg2) 70%, transparent);
   color: var(--wt-text-mid);
@@ -1806,7 +1806,7 @@ button.md-status__chip:hover {
   justify-content: center;
   width: 1.15rem;
   height: 1.15rem;
-  border-radius: 0.35rem;
+  border-radius: var(--radius-wt);
   font-size: var(--wt-fs-sm);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -3256,12 +3256,20 @@ button.md-status__chip:hover {
   color: var(--wt-text);
 }
 
+/* ModsSearch uses flex:1 for toolbar rows; in this column it must not grow vertically. */
+.md-cfg-editor > .md-search {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 100%;
+}
+
 .md-cfg-form {
   flex: 1 1 auto;
-  min-height: 14rem;
+  min-height: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   gap: 0.55rem;
 }
 
@@ -3444,6 +3452,7 @@ button.md-status__chip:hover {
 
 .md-cfg-diff {
   flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
   overflow: auto;
   border: 1px solid color-mix(in srgb, var(--wt-line) 90%, transparent);
@@ -3481,6 +3490,86 @@ button.md-status__chip:hover {
   opacity: 0.75;
   user-select: none;
 }
+
+
+.md-cfg-modal__head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.md-cfg-diff-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.md-cfg-diff-nav__count {
+  margin-right: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--wt-text-low);
+  white-space: nowrap;
+}
+
+.md-cfg-diff-wrap {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 0.35rem;
+}
+
+.md-cfg-diff-rail {
+  position: relative;
+  flex: 0 0 0.55rem;
+  align-self: stretch;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--wt-line) 55%, transparent);
+}
+
+.md-cfg-diff-rail__tick {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0.35rem;
+  margin-top: -0.175rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transform: scaleX(1);
+}
+
+.md-cfg-diff-rail__tick--add {
+  background: color-mix(in srgb, var(--wt-ok) 85%, #000 15%);
+}
+
+.md-cfg-diff-rail__tick--del {
+  background: color-mix(in srgb, var(--wt-danger) 85%, #000 15%);
+}
+
+.md-cfg-diff-rail__tick.is-active {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.md-cfg-diff__row--same {
+  opacity: 0.72;
+}
+
+.md-cfg-diff__row--add,
+.md-cfg-diff__row--del {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--wt-accent) 55%, transparent);
+}
+
+.md-cfg-diff__row--active {
+  outline: 1px solid color-mix(in srgb, var(--wt-accent) 55%, transparent);
+  outline-offset: -1px;
+}
+
 
 .md-forensics__finding-path--link {
   display: inline;

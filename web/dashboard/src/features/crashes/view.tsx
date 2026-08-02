@@ -7,11 +7,11 @@ import {
 } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { navigate, type RouteState } from '@/app/router';
 import { useSessionStore } from '@/state/session';
 import { FadeIn, HeroWatermark, PageEnter } from '@/ui/motion';
-import { Button, ErrorState, HeroCard, HeroTabNav, MetricReadout, StatusPill } from '@/ui/patterns';
+import { Button, ErrorState, HeroCard, HeroTabNav, StatusPill, VitalTile } from '@/ui/patterns';
 import { Bug } from '@/ui/icons';
 import { asRecord, num } from '@/lib/utils';
 import {
@@ -28,8 +28,6 @@ import { CrashQueue } from './queue';
 import { CrashTools } from './tools';
 import './crashes.css';
 
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
-
 const VIEWS = [
   { id: 'review', label: 'Review' },
   { id: 'reviewed', label: 'Reviewed' },
@@ -39,30 +37,6 @@ const VIEWS = [
 type ViewId = (typeof VIEWS)[number]['id'];
 type IconCmp = ComponentType<{ size?: number; className?: string }>;
 const BugIcon = Bug as IconCmp;
-
-function VitalTile({
-  label,
-  value,
-  tone = 'default',
-  format,
-}: {
-  label: string;
-  value: number;
-  tone?: 'default' | 'ok' | 'warn' | 'danger';
-  format?: (n: number) => string;
-}) {
-  return (
-    <div className="cr-vital">
-      <MetricReadout
-        label={label}
-        value={value}
-        format={format ?? ((n) => String(Math.round(n)))}
-        size="sm"
-        tone={tone}
-      />
-    </div>
-  );
-}
 
 function nextReviewFingerprint(
   enriched: ReturnType<typeof enrichGroups>,
@@ -378,79 +352,87 @@ export function PageView({ route }: { route: RouteState }) {
         >
           <div className="cr-hero__body wt-hero-shell">
             <HeroWatermark icon={BugIcon} tone={needsReview > 0 ? 'danger' : 'ok'} />
-            <div className="cr-hero__head">
-              <div>
-                <div className="cr-hero__title">
-                  <h2>Crash inbox</h2>
-                  <StatusPill tone={heroTone === 'ok' ? 'ok' : heroTone}>
-                    {waiting ? 'Waiting' : needsReview > 0 ? `${needsReview} to review` : 'Clear'}
-                  </StatusPill>
+            <div className="cr-hero__main">
+              <div className="cr-hero__head">
+                <div>
+                  <div className="cr-hero__title">
+                    <h2>Crash inbox</h2>
+                    <StatusPill tone={heroTone === 'ok' ? 'ok' : heroTone}>
+                      {waiting ? 'Waiting' : needsReview > 0 ? `${needsReview} to review` : 'Clear'}
+                    </StatusPill>
+                  </div>
+                  <p className="cr-hero__hint">
+                    {waiting
+                      ? 'Crash scan will fill this inbox when reports appear on disk.'
+                      : 'Grouped by fingerprint — mark reviewed when triaged. / search · j/k move · r mark group'}
+                  </p>
                 </div>
-                <p className="cr-hero__hint">
-                  {waiting
-                    ? 'Crash scan will fill this inbox when reports appear on disk.'
-                    : 'Grouped by fingerprint — mark reviewed when triaged. / search · j/k move · r mark group'}
-                </p>
+              </div>
+
+              <HeroTabNav
+                layoutGroupId="cr-views"
+                className="cr-hero__tabs"
+                aria-label="Crash views"
+                value={resolvedView}
+                items={VIEWS.map((v) => ({
+                  id: v.id,
+                  label: v.label,
+                  count: v.id === 'review' ? needsReview : null,
+                }))}
+                onChange={(id) =>
+                  navigate({
+                    tab: 'crashes',
+                    view: id,
+                    group: id === 'tools' ? null : selectedFp,
+                  })
+                }
+              />
+
+              <div className="cr-hero__search-row">
+                <input
+                  ref={searchRef}
+                  className="cr-search cr-search--hero"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search crashes…"
+                  aria-label="Search crashes"
+                  disabled={resolvedView === 'tools'}
+                />
+                {resolvedView === 'review' && unreviewedFiles > 0 ? (
+                  <Button
+                    disabled={!canWrite || busy}
+                    title={canWrite ? undefined : VIEW_ONLY_TITLE}
+                    onClick={markAll}
+                  >
+                    Mark all reviewed
+                  </Button>
+                ) : null}
               </div>
             </div>
 
-            <HeroTabNav
-              layoutGroupId="cr-views"
-              className="cr-hero__tabs"
-              aria-label="Crash views"
-              value={resolvedView}
-              items={VIEWS.map((v) => ({
-                id: v.id,
-                label: v.label,
-                count: v.id === 'review' ? needsReview : null,
-              }))}
-              onChange={(id) =>
-                navigate({
-                  tab: 'crashes',
-                  view: id,
-                  group: id === 'tools' ? null : selectedFp,
-                })
-              }
-            />
-
-            <div className="cr-hero__search-row">
-              <input
-                ref={searchRef}
-                className="cr-search cr-search--hero"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search crashes…"
-                aria-label="Search crashes"
-                disabled={resolvedView === 'tools'}
-              />
-              {resolvedView === 'review' && unreviewedFiles > 0 ? (
-                <Button
-                  disabled={!canWrite || busy}
-                  title={canWrite ? undefined : VIEW_ONLY_TITLE}
-                  onClick={markAll}
-                >
-                  Mark all reviewed
-                </Button>
-              ) : null}
-            </div>
-
-            <div className="cr-vitals">
+            <div className="cr-vitals" aria-label="Crash inbox vitals">
               <VitalTile
+                className="cr-vital"
                 label="Needs review"
                 value={needsReview}
+                size="sm"
                 tone={needsReview ? 'danger' : 'default'}
               />
               <VitalTile
+                className="cr-vital"
                 label="Unreviewed files"
                 value={unreviewedFiles}
+                size="sm"
                 tone={unreviewedFiles ? 'warn' : 'default'}
               />
               <VitalTile
+                className="cr-vital"
                 label="Latest age"
                 value={latestAt ? 1 : 0}
+                size="sm"
                 format={() => (latestAt ? formatAge(latestAt) : '—')}
               />
-              <VitalTile label="Reviewed" value={reviewedCount} tone="default" />
+              <VitalTile className="cr-vital" label="Reviewed" value={reviewedCount} size="sm" tone="default" />
             </div>
           </div>
         </HeroCard>

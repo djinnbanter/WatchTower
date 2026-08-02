@@ -452,7 +452,7 @@
 
 .is-panel-tab {
   border: none;
-  border-radius: 0.45rem;
+  border-radius: var(--radius-wt);
   padding: 0.28rem 0.65rem;
   font-size: 0.72rem;
   font-weight: 650;

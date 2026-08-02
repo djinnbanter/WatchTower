@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { navigate, type RouteState } from '@/app/router';
 import { useSessionStore } from '@/state/session';
 import { FadeIn, HeroWatermark, PageEnter } from '@/ui/motion';
-import { Button, ErrorState, HeroCard, HeroTabNav, MetricReadout, StatusPill } from '@/ui/patterns';
+import { Button, ErrorState, HeroCard, HeroTabNav, StatusPill, VitalTile } from '@/ui/patterns';
 import { AlertTriangle } from '@/ui/icons';
 import { asArray, asRecord, str } from '@/lib/utils';
 import {
@@ -23,8 +23,6 @@ import { IssuesQueue } from './queue';
 import { IssuesTools, nextActiveKey, type SuppressionRow } from './tools';
 import './issues.css';
 
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
-
 const VIEWS = [
   { id: 'active', label: 'Active' },
   { id: 'reviewed', label: 'Reviewed' },
@@ -38,28 +36,6 @@ const WarnIcon = AlertTriangle as IconCmp;
 function bootPanelFromRoute(panel: string | undefined): string | null {
   if (panel === 'boot' || panel === 'boot-warn' || panel === 'boot-error') return panel;
   return null;
-}
-
-function VitalTile({
-  label,
-  value,
-  tone = 'default',
-}: {
-  label: string;
-  value: number;
-  tone?: 'default' | 'ok' | 'warn' | 'danger';
-}) {
-  return (
-    <div className="is-vital">
-      <MetricReadout
-        label={label}
-        value={value}
-        format={(n) => String(Math.round(n))}
-        size="md"
-        tone={tone}
-      />
-    </div>
-  );
 }
 
 export function PageView({ route }: { route: RouteState }) {
@@ -316,7 +292,12 @@ export function PageView({ route }: { route: RouteState }) {
                 items={VIEWS.map((v) => ({
                   id: v.id,
                   label: v.label,
-                  count: v.id === 'active' ? activeAll.length : null,
+                  count:
+                    v.id === 'active'
+                      ? activeAll.length
+                      : v.id === 'reviewed'
+                        ? reviewedAll.length
+                        : null,
                 }))}
                 onChange={(id) =>
                   navigate({
@@ -359,10 +340,10 @@ export function PageView({ route }: { route: RouteState }) {
             </div>
 
             <div className="is-vitals" aria-label="Issue severity counts">
-              <VitalTile label="Critical" value={heroCritical} tone={heroCritical ? 'danger' : 'default'} />
-              <VitalTile label="Warning" value={heroWarning} tone={heroWarning ? 'warn' : 'default'} />
-              <VitalTile label="Info" value={heroInfo} tone="default" />
-              <VitalTile label="Reviewed" value={reviewedAll.length} tone="default" />
+              <VitalTile className="is-vital" label="Critical" value={heroCritical} tone={heroCritical ? 'danger' : 'default'} />
+              <VitalTile className="is-vital" label="Warning" value={heroWarning} tone={heroWarning ? 'warn' : 'default'} />
+              <VitalTile className="is-vital" label="Info" value={heroInfo} tone="default" />
+              <VitalTile className="is-vital" label="Reviewed" value={reviewedAll.length} tone="default" />
             </div>
           </div>
         </HeroCard>

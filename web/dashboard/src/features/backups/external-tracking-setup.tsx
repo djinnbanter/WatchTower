@@ -3,13 +3,11 @@
  */
 import { useEffect, useState } from 'react';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { FolderBrowseModal } from '@/features/backups/folder-browse';
 import { parseBackupDirs } from '@/features/backups/local-folder-setup';
 import { Button } from '@/ui/patterns';
 import { asRecord, bool, str } from '@/lib/utils';
-
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 
 export const TRACKING_OPTS = [
   { value: 'folder', label: 'Folder on this server' },
@@ -142,48 +140,49 @@ export function ExternalTrackingSetup({
         <p className="mt-1 text-xs text-wt-text-low">
           For backups that never land on this disk — panel jobs, S3, or cloud sync.
         </p>
-        <p className="mt-2 rounded-lg border border-wt-warn/35 bg-wt-warn/10 px-3 py-2 text-xs text-wt-text-mid">
+        <p className="mt-2 rounded-[var(--radius-wt)] border border-wt-warn/35 bg-wt-warn/10 px-3 py-2 text-xs text-wt-text-mid">
           <strong className="font-semibold text-wt-warn">Alpha</strong> — panel / cloud backup
           tracking is experimental and may not work reliably on every host. Prefer a local backup
           folder when you can; treat webhook / marker setup as best-effort for now.
         </p>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-wt-text-low">
-          How should Watchtower track backups?
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {TRACKING_OPTS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => {
-                setMode(opt.value);
-                setError('');
-              }}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
-                mode === opt.value
-                  ? 'border-wt-accent bg-wt-accent text-white'
-                  : 'border-wt-line bg-wt-bg2/50 text-wt-text-mid hover:border-wt-accent/40 hover:text-wt-text'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-        {!mode ? (
-          <p className="text-xs text-wt-text-low">Pick an option — nothing is enabled until you save.</p>
-        ) : null}
-        {trackingOff ? (
-          <p className="text-xs text-wt-text-low">
-            Backup Issues and Overview alerts stay off. Folder paths are kept if you re-enable later.
+      <div className="wt-plate space-y-4 p-4">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-wt-text-low">
+            How should Watchtower track backups?
           </p>
-        ) : null}
-      </div>
+          <div className="flex flex-wrap gap-1.5">
+            {TRACKING_OPTS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  setMode(opt.value);
+                  setError('');
+                }}
+                className={`rounded-[var(--radius-wt)] border px-3 py-1.5 text-sm font-medium transition ${
+                  mode === opt.value
+                    ? 'border-wt-accent bg-wt-accent text-white'
+                    : 'border-wt-line bg-wt-bg2/50 text-wt-text-mid hover:border-wt-accent/40 hover:text-wt-text'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {!mode ? (
+            <p className="text-xs text-wt-text-low">Pick an option — nothing is enabled until you save.</p>
+          ) : null}
+          {trackingOff ? (
+            <p className="text-xs text-wt-text-low">
+              Backup Issues and Overview alerts stay off. Folder paths are kept if you re-enable later.
+            </p>
+          ) : null}
+        </div>
 
-      {showExternal ? (
-        <div className="space-y-3 rounded-xl border border-wt-line bg-wt-bg2/40 p-4">
+        {showExternal ? (
+          <div className="space-y-3 border-t border-wt-line pt-4">
           <ol className="list-decimal space-y-1 pl-4 text-xs text-wt-text-low">
             <li>Save below to generate a webhook token (if you do not have one yet).</li>
             <li>Copy the webhook URL into your panel’s “after backup” task or cron script.</li>
@@ -201,7 +200,7 @@ export function ExternalTrackingSetup({
                 value={markerPath}
                 placeholder="watchtower/backup-heartbeat.json"
                 onChange={(e) => setMarkerPath(e.target.value)}
-                className="min-w-0 flex-1 rounded-xl border border-wt-line bg-wt-bg1 px-3 py-2 font-mono text-sm outline-none focus:border-wt-accent"
+                className="min-w-0 flex-1 rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 px-3 py-2 font-mono text-sm outline-none focus:border-wt-accent"
               />
               <Button
                 kind="default"
@@ -230,7 +229,7 @@ export function ExternalTrackingSetup({
               {WEBHOOK_EVENTS.map((t) => (
                 <li
                   key={t}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-wt-line bg-wt-bg1/60 px-2.5 py-2"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1/60 px-2.5 py-2"
                 >
                   <code className="font-mono text-xs text-wt-text">/api/backups/heartbeat/{t}</code>
                   <Button kind="ghost" onClick={() => copyWebhook(t)}>
@@ -256,14 +255,15 @@ export function ExternalTrackingSetup({
           >
             {testing ? 'Testing…' : 'Test it worked'}
           </Button>
-        </div>
-      ) : null}
+          </div>
+        ) : null}
+      </div>
 
       {error ? <p className="text-sm text-wt-danger">{error}</p> : null}
       {info ? <p className="text-sm text-wt-ok">{info}</p> : null}
 
       <Button
-        kind="primary"
+        kind="default"
         disabled={!canWrite || !mode || saving}
         title={canWrite ? undefined : VIEW_ONLY_TITLE}
         onClick={() => void handleSave()}

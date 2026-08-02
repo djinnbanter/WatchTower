@@ -23,6 +23,7 @@
     "test:issues": "tsx --test src/features/issues/helpers.test.ts",
     "test:session": "tsx --test src/features/session/*.test.ts",
     "test:settings": "tsx --test src/app/permissions.test.ts src/app/session-store.test.ts src/app/accents.test.ts src/features/wizard/persist.test.ts src/ui/player-avatar.test.ts src/features/settings/audit-log-helpers.test.ts",
+    "test:ui-consistency": "tsx --test scripts/ui-consistency-banlist.test.ts",
     "audit:packaging": "node ../../tools/audit-dashboard-packaging.mjs",
     "audit:parity": "node ../../tools/audit-dashboard-parity.mjs"
   },

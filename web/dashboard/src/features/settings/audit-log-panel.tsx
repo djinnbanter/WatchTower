@@ -3,13 +3,22 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { useDashboardTimezone } from '@/app/timezone';
 import { FadeIn, Stagger } from '@/ui/motion';
-import { Button, EmptyState, ErrorState, Section, StatusPill, useCappedList } from '@/ui/patterns';
+import {
+  Button,
+  EmptyState,
+  ErrorState,
+  HeroTabNav,
+  Section,
+  StatusPill,
+  useCappedList,
+} from '@/ui/patterns';
 import {
   auditTone,
   describeAuditEvent,
   groupAuditRowsByDay,
   parseAuditRows,
   type AuditRow,
+  type AuditTone,
 } from './audit-log-helpers';
 
 const PAGE_CAP = 30;
@@ -32,6 +41,11 @@ const CHANGE_EVENTS = new Set([
   'issue_unsuppressed',
   'crash_acked',
   'crash_unacked',
+  'mod_disabled',
+  'mod_enabled',
+  'backup_verified',
+  'backup_test_restore_ok',
+  'backup_test_restore_cleanup',
   'api_write',
 ]);
 
@@ -73,38 +87,46 @@ function formatRailTime(iso: string, timeZone: string): string {
   }
 }
 
-function toneLabel(tone: ReturnType<typeof auditTone>): string | null {
+function toneLabel(tone: AuditTone): string | null {
   if (tone === 'danger') return 'Blocked';
   if (tone === 'warn') return 'Failed';
   return null;
 }
 
-function rowMeta(row: AuditRow): string | null {
-  const bits: string[] = [];
-  if (row.detail) bits.push(row.detail);
-  if (row.ip) bits.push(row.ip);
-  if (row.role) bits.push(row.role);
-  return bits.length ? bits.join(' · ') : null;
+function MetaChips({ row }: { row: AuditRow }) {
+  const chips: { key: string; text: string }[] = [];
+  if (row.detail) chips.push({ key: 'detail', text: row.detail });
+  if (row.ip) chips.push({ key: 'ip', text: row.ip });
+  if (row.role) chips.push({ key: 'role', text: row.role });
+  if (!chips.length) return null;
+  return (
+    <div className="st-ledger__meta">
+      {chips.map((c) => (
+        <span key={c.key} className="st-ledger__chip">
+          {c.text}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function LedgerRow({ row, timeZone }: { row: AuditRow; timeZone: string }) {
   const tone = auditTone(row);
   const pill = toneLabel(tone);
-  const meta = rowMeta(row);
   return (
-    <article className="st-ledger__row">
+    <article className={`st-ledger__row st-ledger__row--${tone}`}>
       <time className="st-ledger__time" dateTime={row.at}>
         {formatRailTime(row.at, timeZone)}
       </time>
-      <span className="st-ledger__who" aria-hidden>
+      <span className={`st-ledger__who st-ledger__who--${tone}`} aria-hidden>
         {actorInitial(row.actor)}
       </span>
       <div className="st-ledger__text">
         <div className="st-ledger__sentence">
-          <span>{describeAuditEvent(row)}</span>
+          <span className="st-ledger__action">{describeAuditEvent(row)}</span>
           {pill ? <StatusPill tone={tone}>{pill}</StatusPill> : null}
         </div>
-        {meta ? <div className="st-ledger__meta">{meta}</div> : null}
+        <MetaChips row={row} />
       </div>
     </article>
   );
@@ -129,6 +151,23 @@ export function AuditLogPanel() {
     [rows, band],
   );
 
+  const bandCounts = useMemo(() => {
+    const counts: Record<BandId, number> = {
+      all: rows.length,
+      changes: 0,
+      accounts: 0,
+      signins: 0,
+      blocked: 0,
+    };
+    for (const row of rows) {
+      for (const b of BANDS) {
+        if (b.id === 'all') continue;
+        if (matchesBand(row, b.id)) counts[b.id] += 1;
+      }
+    }
+    return counts;
+  }, [rows]);
+
   const list = useCappedList(filtered, PAGE_CAP);
   const groups = useMemo(
     () => groupAuditRowsByDay(list.shown, resolvedZone),
@@ -147,7 +186,7 @@ export function AuditLogPanel() {
   if (q.isLoading) {
     return (
       <div className="grid gap-3">
-        <div className="h-8 w-64 animate-pulse rounded-xl bg-wt-bg2" />
+        <div className="h-8 w-64 animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
         <div className="h-72 animate-pulse rounded-[var(--radius-wt)] bg-wt-bg2" />
       </div>
     );
@@ -161,6 +200,20 @@ export function AuditLogPanel() {
     );
   }
 
+  const daySections = groups.map((g) => (
+    <section key={g.day} className="st-ledger__day" aria-label={g.day}>
+      <h3 className="st-ledger__day-label">
+        <span>{g.day}</span>
+        <span className="st-ledger__day-count">{g.rows.length}</span>
+      </h3>
+      <div className="st-ledger__day-body">
+        {g.rows.map((row) => (
+          <LedgerRow key={row.id} row={row} timeZone={resolvedZone} />
+        ))}
+      </div>
+    </section>
+  ));
+
   const body =
     rows.length === 0 ? (
       <EmptyState title="Nothing recorded yet">
@@ -168,47 +221,28 @@ export function AuditLogPanel() {
       </EmptyState>
     ) : (
       <div className="st-ledger">
-        <div className="st-ledger__bands" role="tablist" aria-label="Audit log filter">
-          {BANDS.map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              role="tab"
-              aria-selected={band === b.id}
-              className="st-ledger__band"
-              onClick={() => setBand(b.id)}
-            >
-              {b.label}
-            </button>
-          ))}
-        </div>
+        <HeroTabNav
+          layoutGroupId="st-audit-bands"
+          className="st-ledger__bands"
+          stretch={false}
+          aria-label="Audit log filter"
+          value={band}
+          items={BANDS.map((b) => ({
+            id: b.id,
+            label: b.label,
+            count: bandCounts[b.id],
+          }))}
+          onChange={(id) => setBand(id as BandId)}
+        />
 
         {filtered.length === 0 ? (
           <EmptyState title={`No ${BANDS.find((b) => b.id === band)?.label.toLowerCase() ?? ''} events`}>
             Try All, or wait for the next change.
           </EmptyState>
         ) : applyStagger ? (
-          <Stagger delayMs={40}>
-            {groups.map((g) => (
-              <section key={g.day} className="st-ledger__day" aria-label={g.day}>
-                <h3 className="st-ledger__day-label">{g.day}</h3>
-                {g.rows.map((row) => (
-                  <LedgerRow key={row.id} row={row} timeZone={resolvedZone} />
-                ))}
-              </section>
-            ))}
-          </Stagger>
+          <Stagger delayMs={40}>{daySections}</Stagger>
         ) : (
-          <div>
-            {groups.map((g) => (
-              <section key={g.day} className="st-ledger__day" aria-label={g.day}>
-                <h3 className="st-ledger__day-label">{g.day}</h3>
-                {g.rows.map((row) => (
-                  <LedgerRow key={row.id} row={row} timeZone={resolvedZone} />
-                ))}
-              </section>
-            ))}
-          </div>
+          <div className="st-ledger__days">{daySections}</div>
         )}
 
         {list.more > 0 ? (

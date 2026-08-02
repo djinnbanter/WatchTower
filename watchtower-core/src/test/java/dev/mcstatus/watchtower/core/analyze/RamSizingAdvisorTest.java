@@ -120,6 +120,70 @@ class RamSizingAdvisorTest {
         assertEquals(RamSizingAdvisor.VERDICT_OVER, ram.get("verdict").getAsString());
     }
 
+    @Test
+    void classifyEnvelopeBands() {
+        assertEquals(RamSizingAdvisor.ENVELOPE_LOW, RamSizingAdvisor.classifyEnvelope(8.0, 6.0));
+        assertEquals(RamSizingAdvisor.ENVELOPE_CRITICAL, RamSizingAdvisor.classifyEnvelope(8.0, 7.0));
+        assertEquals(RamSizingAdvisor.ENVELOPE_CRITICAL, RamSizingAdvisor.classifyEnvelope(8.0, 7.2));
+        assertEquals(RamSizingAdvisor.ENVELOPE_OK, RamSizingAdvisor.classifyEnvelope(16.0, 8.0));
+        assertEquals(RamSizingAdvisor.ENVELOPE_UNKNOWN, RamSizingAdvisor.classifyEnvelope(Double.NaN, 8.0));
+    }
+
+    @Test
+    void eightGigHostSixGigXmxIsEnvelopeTight() {
+        JsonObject stats = baseStats(5.0, 40.0);
+        JsonObject out = RamSizingAdvisor.evaluate(
+                "7d", stats, 6.0, "live", GcAdvisor.VERDICT_HEALTHY, 8.0, "cgroup_v2");
+        assertEquals(RamSizingAdvisor.VERDICT_ENVELOPE_TIGHT, out.get("verdict").getAsString());
+        assertEquals(RamSizingAdvisor.ENVELOPE_LOW, out.get("envelope").getAsString());
+        assertEquals("cgroup_v2", out.get("ram_source").getAsString());
+        assertEquals(8.0, out.get("host_mem_gb").getAsDouble(), 0.01);
+        assertEquals(2.0, out.get("outside_headroom_gb").getAsDouble(), 0.01);
+        assertTrue(out.get("ram_upgrade_blocked").getAsBoolean());
+        assertTrue(out.has("suggested_xmx_gb_max"));
+        assertTrue(out.get("suggested_xmx_gb_max").getAsLong()
+                <= Math.round(RamSizingAdvisor.safeXmxMaxGb(8.0)));
+        String advice = out.get("advice").getAsString().toLowerCase();
+        assertTrue(advice.contains("oom") || advice.contains("outside") || advice.contains("headroom")
+                || advice.contains("container") || advice.contains("-xmx"));
+    }
+
+    @Test
+    void sevenOfEightIsCriticalEnvelope() {
+        JsonObject stats = baseStats(5.0, 40.0);
+        JsonObject out = RamSizingAdvisor.evaluate(
+                "7d", stats, 7.0, "live", GcAdvisor.VERDICT_HEALTHY, 8.0, "cgroup_v2");
+        assertEquals(RamSizingAdvisor.VERDICT_ENVELOPE_TIGHT, out.get("verdict").getAsString());
+        assertEquals(RamSizingAdvisor.ENVELOPE_CRITICAL, out.get("envelope").getAsString());
+    }
+
+    @Test
+    void underProvisionedClampedToEnvelope() {
+        JsonObject stats = baseStats(11.0, 92.0);
+        JsonObject out = RamSizingAdvisor.evaluate(
+                "7d", stats, 12.0, "live", GcAdvisor.VERDICT_HEAP_BOUND, 32.0, "proc");
+        assertEquals(RamSizingAdvisor.VERDICT_UNDER, out.get("verdict").getAsString());
+        long maxSuggest = out.get("suggested_xmx_gb_max").getAsLong();
+        assertTrue(maxSuggest <= Math.round(RamSizingAdvisor.safeXmxMaxGb(32.0)));
+    }
+
+    @Test
+    void unknownHostKeepsLegacyUnderPath() {
+        JsonObject stats = baseStats(11.0, 92.0);
+        JsonObject out = RamSizingAdvisor.evaluate(
+                "7d", stats, 12.0, "live", GcAdvisor.VERDICT_HEAP_BOUND);
+        assertEquals(RamSizingAdvisor.VERDICT_UNDER, out.get("verdict").getAsString());
+        assertEquals(RamSizingAdvisor.ENVELOPE_UNKNOWN, out.get("envelope").getAsString());
+    }
+
+    @Test
+    void envelopeSnapshotCritical() {
+        JsonObject snap = RamSizingAdvisor.envelopeSnapshot(8.0, 7.0, "cgroup_v2");
+        assertEquals(RamSizingAdvisor.ENVELOPE_CRITICAL, snap.get("envelope").getAsString());
+        assertEquals(8.0, snap.get("host_mem_gb").getAsDouble(), 0.01);
+        assertEquals("cgroup_v2", snap.get("ram_source").getAsString());
+    }
+
     private static JsonObject baseStats(double peakGb, double pressureP95) {
         JsonObject stats = new JsonObject();
         stats.addProperty("sufficient_data", true);
