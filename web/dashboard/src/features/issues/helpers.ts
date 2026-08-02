@@ -286,6 +286,11 @@ export function enrichSoftHangFromOps(item: IssueItem, ops: Record<string, unkno
     soft_hang_stall_seconds: stall,
     soft_hang_dump_path: dumpPath || null,
     soft_hang_active: soft.active === true,
+    soft_hang_likely_cause: str(soft.likely_cause) || null,
+    soft_hang_likely_cause_summary: str(soft.likely_cause_summary) || null,
+    soft_hang_likely_cause_confidence: str(soft.likely_cause_confidence) || null,
+    soft_hang_suspect_mod: str(soft.suspect_mod) || null,
+    soft_hang_suspect_mod_note: str(soft.suspect_mod_note) || null,
   };
   const detailBits = [
     stall > 0 ? `Stalled about ${stall}s` : null,

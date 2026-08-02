@@ -404,6 +404,28 @@ export function IssuesQueue({
                         <div className="is-metric__value">{str(selected.metrics.soft_hang_phase)}</div>
                       </div>
                     ) : null}
+                    {selected.metrics.soft_hang_likely_cause_summary != null ? (
+                      <div className="is-metric">
+                        <div className="is-metric__label">Likely cause</div>
+                        <div className="is-metric__value">
+                          {str(selected.metrics.soft_hang_likely_cause_summary)}
+                          {str(selected.metrics.soft_hang_likely_cause_confidence)
+                            ? ` (${str(selected.metrics.soft_hang_likely_cause_confidence)})`
+                            : ''}
+                        </div>
+                      </div>
+                    ) : null}
+                    {str(selected.metrics?.soft_hang_suspect_mod) ? (
+                      <div className="is-metric">
+                        <div className="is-metric__label">Suspect mod</div>
+                        <div className="is-metric__value">
+                          {str(selected.metrics.soft_hang_suspect_mod)}
+                          {str(selected.metrics.soft_hang_suspect_mod_note)
+                            ? ` — ${str(selected.metrics.soft_hang_suspect_mod_note)}`
+                            : ''}
+                        </div>
+                      </div>
+                    ) : null}
                     {selected.metrics.tps != null ? (
                       <div className="is-metric">
                         <div className="is-metric__label">TPS</div>

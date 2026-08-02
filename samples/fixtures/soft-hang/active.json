@@ -9,6 +9,11 @@
     "last_tick_at": "2026-08-02T00:00:00Z",
     "tick_count": 1200,
     "dump_path": null,
-    "recovered_at": null
+    "recovered_at": null,
+    "likely_cause": "entity_tick",
+    "likely_cause_summary": "Looks stuck while ticking entities",
+    "likely_cause_confidence": "low",
+    "suspect_mod": null,
+    "suspect_mod_note": null
   }
 }

@@ -1262,13 +1262,14 @@
       "last_seen": "2026-08-02T00:00:48Z",
       "evidence_fingerprint": "soft_hang:2026-08-02T00:00:00Z",
       "source": "ops",
-      "message": "Server tick frozen for 48s (phase: ticking)",
+      "message": "Server tick frozen for 48s (phase: ticking) — Looks stuck while ticking entities",
       "evidence_refs": [
         "ops:soft_hang"
       ],
       "fix_steps": [
-        "Check whether a world save or pregen is stuck.",
-        "If hang dumps are enabled, open the file under watchtower/hangs/.",
+        "Check dense entity farms, mob caps, or entity-heavy mods.",
+        "Hang dump hint points at examplelag — treat as a lead, not proof.",
+        "Open the hang dump under watchtower/hangs/.",
         "Build a Support pack for Discord or a bug report.",
         "WatchTower will not restart the server for you."
       ]
@@ -1777,6 +1778,11 @@
     "last_tick_at": "2026-08-02T00:00:00Z",
     "tick_count": 1200,
     "dump_path": "watchtower/hangs/hang-preview.txt",
-    "recovered_at": null
+    "recovered_at": null,
+    "likely_cause": "entity_tick",
+    "likely_cause_summary": "Looks stuck while ticking entities",
+    "likely_cause_confidence": "medium",
+    "suspect_mod": "examplelag",
+    "suspect_mod_note": "Hint from the hang dump — not proof."
   }
 }
