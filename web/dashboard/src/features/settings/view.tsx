@@ -299,12 +299,18 @@ export function PageView({ route }: { route: RouteState }) {
 
   return (
     <PageEnter className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex flex-wrap gap-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div
+          className="inline-flex flex-wrap gap-1"
+          role="tablist"
+          aria-label="Settings sections"
+        >
           {PANELS.filter((p) => panelVisible(p.id, canWrite, isOwner)).map((p) => (
             <button
               key={p.id}
               type="button"
+              role="tab"
+              aria-selected={panel === p.id}
               onClick={() => navigate({ tab: 'settings', panel: p.id })}
               className={`inline-flex items-center gap-1.5 rounded-[var(--radius-wt-sm)] border px-3 py-1.5 text-sm font-medium transition ${
                 panel === p.id
@@ -318,7 +324,7 @@ export function PageView({ route }: { route: RouteState }) {
           ))}
         </div>
         {showSave ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {saveMutation.isError ? (
               <StatusPill tone="danger">
                 {(saveMutation.error as Error)?.message || 'Save failed'}
