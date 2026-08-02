@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ModIssuePeekBuilderTest {
 
@@ -33,5 +34,46 @@ class ModIssuePeekBuilderTest {
         assertEquals(2, peek.size());
         assertEquals("broken_mod", peek.get(0).getAsJsonObject().get("mod_id").getAsString());
         assertFalse(peek.get(0).getAsJsonObject().get("id").getAsString().contains("client_noise"));
+    }
+
+    @Test
+    void recipeWarnFloodsDoNotBuryRealLoggerErrors() {
+        JsonArray errors = new JsonArray();
+
+        JsonObject createfood = new JsonObject();
+        createfood.addProperty("mod_id", "createfood");
+        createfood.addProperty("total", 50_000);
+        createfood.addProperty("top_category", "recipe_parse");
+        createfood.addProperty("category_label", "recipe parse");
+        errors.add(createfood);
+
+        JsonObject kubejs = new JsonObject();
+        kubejs.addProperty("mod_id", "kubejs");
+        kubejs.addProperty("total", 1_000);
+        kubejs.addProperty("top_category", "recipe_parse");
+        kubejs.addProperty("category_label", "recipe parse");
+        errors.add(kubejs);
+
+        JsonObject othermod = new JsonObject();
+        othermod.addProperty("mod_id", "othermod");
+        othermod.addProperty("total", 3);
+        othermod.addProperty("top_category", "logger_error");
+        othermod.addProperty("category_label", "error");
+        errors.add(othermod);
+
+        JsonArray peek = ModIssuePeekBuilder.buildPeekEntries(errors);
+        assertFalse(peek.isEmpty());
+        assertEquals("othermod", peek.get(0).getAsJsonObject().get("mod_id").getAsString(),
+                "real logger_error must outrank recipe WARN floods");
+
+        int floodSlots = 0;
+        for (int i = 0; i < peek.size(); i++) {
+            String modId = peek.get(i).getAsJsonObject().get("mod_id").getAsString();
+            if ("createfood".equals(modId) || "kubejs".equals(modId)) {
+                floodSlots++;
+            }
+        }
+        assertTrue(floodSlots <= 1, "at most one recipe flood row may remain in peek");
+        assertTrue(peek.size() >= 2, "ERROR plus one collapsed flood should both appear when slots remain");
     }
 }

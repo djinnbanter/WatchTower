@@ -64,4 +64,18 @@ class ModErrorCategoryTest {
         assertNotNull(hit);
         assertEquals("someweirdmod", hit.primaryMod());
     }
+
+    @Test
+    void kubejsFailedToParseRecipeWarnIsRecipeParse() {
+        ModErrorCategory.Hit hit = ModErrorCategory.classify(
+                "[15:33:12] [WARN] KubeRecipe.java#90: Failed to parse recipe "
+                        + "'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'! "
+                        + "Falling back to vanilla: Failed to read required component");
+        assertNotNull(hit, "KubeJS dump-style recipe WARN must classify");
+        assertEquals("recipe_parse", hit.category().id());
+        assertEquals("createfood", hit.primaryMod());
+        assertEquals(
+                "createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]",
+                hit.recipeId());
+    }
 }

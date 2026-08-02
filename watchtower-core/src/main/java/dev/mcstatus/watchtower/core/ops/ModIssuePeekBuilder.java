@@ -21,6 +21,8 @@ public final class ModIssuePeekBuilder {
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     private static final int MAX_PEEK_ENTRIES = 5;
+    /** Volume at which recipe WARN aggregates are treated as flood noise in peek. */
+    private static final int RECIPE_FLOOD_TOTAL_THRESHOLD = 100;
 
     private ModIssuePeekBuilder() {
     }
@@ -50,15 +52,47 @@ public final class ModIssuePeekBuilder {
                 .thenComparing(Comparator.<JsonObject>comparingInt(
                         o -> o.has("total") ? o.get("total").getAsInt() : 0).reversed()));
 
+        // Prefer actionable rows; allow at most one recipe WARN flood if slots remain.
+        List<JsonObject> selected = new ArrayList<>();
+        List<JsonObject> floods = new ArrayList<>();
+        for (JsonObject row : ranked) {
+            if (isRecipeFlood(row)) {
+                floods.add(row);
+            } else {
+                selected.add(row);
+            }
+        }
+        if (selected.size() < MAX_PEEK_ENTRIES && !floods.isEmpty()) {
+            selected.add(floods.get(0));
+        }
+
         JsonArray out = new JsonArray();
         int seq = seqBase;
-        for (JsonObject row : ranked) {
+        for (JsonObject row : selected) {
             if (out.size() >= MAX_PEEK_ENTRIES) {
                 break;
             }
             out.add(buildPeekEntry(row, seq++));
         }
         return out;
+    }
+
+    /**
+     * High-volume recipe parse/format noise that should not occupy every peek slot.
+     */
+    static boolean isRecipeFlood(JsonObject row) {
+        if (row == null) {
+            return false;
+        }
+        int total = row.has("total") ? row.get("total").getAsInt() : 0;
+        if (total < RECIPE_FLOOD_TOTAL_THRESHOLD) {
+            return false;
+        }
+        String cat = row.has("top_category") ? row.get("top_category").getAsString() : "";
+        return "recipe_parse".equals(cat)
+                || "recipe_format".equals(cat)
+                || "recipe_compat".equals(cat)
+                || "recipe_missing_item".equals(cat);
     }
 
     public static JsonObject buildPeekEntry(JsonObject modErrorRow) {
