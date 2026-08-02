@@ -483,6 +483,65 @@ class IssuesLiveEvaluatorsTest {
     }
 
     @Test
+    void fromDbAddonFailProducesSignalWithAclFix() {
+        JsonObject cache = new JsonObject();
+        JsonObject optional = new JsonObject();
+        JsonObject block = new JsonObject();
+        block.addProperty("active", true);
+        block.addProperty("issue_id", "signal_db_addon_fail");
+        block.addProperty("kind", "db_addon_acl");
+        block.addProperty("primary_mod", "grieflogger");
+        block.addProperty("detail",
+                "GriefLogger disabled — MariaDB host ACL (1130) blocked database access");
+        optional.add("db_addon_fail", block);
+        cache.add("optional", optional);
+
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromDbAddonFail(cache);
+        assertEquals(1, rows.size());
+        assertEquals("SIGNAL_DB_ADDON_FAIL", rows.get(0).normalizedKey());
+        assertEquals("warning", rows.get(0).severity());
+        assertTrue(rows.get(0).message().toLowerCase().contains("mariadb")
+                || rows.get(0).message().toLowerCase().contains("1130"));
+        assertFalse(rows.get(0).fixSteps().isEmpty());
+        assertTrue(rows.get(0).fixSteps().stream()
+                .anyMatch(s -> s.toLowerCase().contains("1130") || s.toLowerCase().contains("acl")
+                        || s.toLowerCase().contains("mariadb")));
+    }
+
+    @Test
+    void fromDbAddonFailAttributesGlraConnection() {
+        JsonObject cache = new JsonObject();
+        JsonObject optional = new JsonObject();
+        JsonObject block = new JsonObject();
+        block.addProperty("active", true);
+        block.addProperty("kind", "db_addon_connection");
+        block.addProperty("primary_mod", "griefloggerrollbackaddon");
+        block.addProperty("detail",
+                "GriefLogger Rollback Addon (griefloggerrollbackaddon) database connection failed");
+        optional.add("db_addon_fail", block);
+        cache.add("optional", optional);
+
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromDbAddonFail(cache);
+        assertEquals(1, rows.size());
+        assertEquals("SIGNAL_DB_ADDON_FAIL", rows.get(0).normalizedKey());
+        assertTrue(rows.get(0).fixSteps().stream()
+                .anyMatch(s -> s.toLowerCase().contains("griefloggerrollbackaddon")
+                        || s.toLowerCase().contains("rollback")));
+    }
+
+    @Test
+    void clearingDbAddonFailResolvesSignal() {
+        String t0 = "2026-08-02T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("signal_db_addon_fail").message("db").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> "SIGNAL_DB_ADDON_FAIL".equals(r.normalizedKey()))
+                        .findFirst().orElseThrow().status());
+    }
+
+    @Test
     void fromJoinClinicProducesJoinSyncKey() throws Exception {
         JsonObject cache = loadFixture("samples/fixtures/issues-live/join-sync-positive.json");
         List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromJoinClinic(cache, true);

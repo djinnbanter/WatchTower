@@ -2,6 +2,7 @@ package dev.mcstatus.watchtower.core.collect;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.analyze.DbAddonSignatures;
 import dev.mcstatus.watchtower.core.analyze.JadeSidecarAnalyzer;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
 import dev.mcstatus.watchtower.core.report.ReportProgress;
@@ -207,6 +208,7 @@ public final class LogScanner {
         if (!modLogErrors.isEmpty()) {
             staging.getAsJsonObject("optional").add("mod_log_errors", modLogErrors);
         }
+        emitDbAddonFail(staging, state);
         JsonArray clientWarnings = state.clientLogAttributor.toJsonArray();
         if (!clientWarnings.isEmpty()) {
             staging.getAsJsonObject("optional").add("client_class_warnings_by_mod", clientWarnings);
@@ -333,6 +335,7 @@ public final class LogScanner {
         state.modLogAnalyzer.processLine(rel, lineNo, stripped, inBootWindow);
         state.clientLogAttributor.processLine(stripped);
         accumulateFml(stripped, state);
+        maybeRecordDbAddon(stripped, rel, lineNo, ts, state);
 
         if (ts != null && CollectSupport.epochSeconds(ts) >= cutoff) {
             mc.addProperty("log_had_activity_in_window", true);
@@ -674,6 +677,8 @@ public final class LogScanner {
         int successfulJoins;
         boolean loginStormEmitted;
         final List<JsonObject> loginDisconnectEvidence = new ArrayList<>();
+        DbAddonSignatures.Hit dbAddonBest;
+        final List<JsonObject> dbAddonEvidence = new ArrayList<>();
 
         ScanState(ZonedDateTime now, List<Pattern> errorIgnore, Set<String> knownModIds) {
             this.now = now;
@@ -689,6 +694,74 @@ public final class LogScanner {
             this.loginDisconnects = 0;
             this.successfulJoins = 0;
             this.loginStormEmitted = false;
+            this.dbAddonBest = null;
+        }
+    }
+
+    private static void maybeRecordDbAddon(
+            String stripped, String rel, int lineNo, ZonedDateTime ts, ScanState state) {
+        DbAddonSignatures.Hit hit = DbAddonSignatures.match(stripped);
+        if (hit == null) {
+            return;
+        }
+        if (state.dbAddonEvidence.size() < 5) {
+            state.dbAddonEvidence.add(
+                    CollectSupport.evidence(rel, lineNo, stripped, ts != null ? CollectSupport.iso(ts) : null));
+        }
+        state.dbAddonBest = preferDbAddonHit(state.dbAddonBest, hit);
+    }
+
+    /** Prefer MariaDB ACL core-disable over GLRA connection-only fails when both appear. */
+    static DbAddonSignatures.Hit preferDbAddonHit(DbAddonSignatures.Hit current, DbAddonSignatures.Hit next) {
+        if (next == null) {
+            return current;
+        }
+        if (current == null) {
+            return next;
+        }
+        if (DbAddonSignatures.KIND_ACL.equals(next.kind())
+                && !DbAddonSignatures.KIND_ACL.equals(current.kind())) {
+            return next;
+        }
+        return current;
+    }
+
+    private static void emitDbAddonFail(JsonObject staging, ScanState state) {
+        if (state.dbAddonBest == null) {
+            return;
+        }
+        DbAddonSignatures.Hit best = state.dbAddonBest;
+        String detail;
+        if (DbAddonSignatures.KIND_ACL.equals(best.kind())) {
+            detail = "GriefLogger disabled — MariaDB host ACL (1130) blocked database access";
+        } else {
+            detail = "GriefLogger Rollback Addon (griefloggerrollbackaddon) database connection failed";
+        }
+        JsonObject ev = new JsonObject();
+        ev.addProperty("time", CollectSupport.iso(state.now));
+        ev.addProperty("type", "db_addon_fail");
+        ev.addProperty("source", "log");
+        ev.addProperty("detail", detail);
+        ev.addProperty("importance", 8);
+        ev.addProperty("kind", best.kind());
+        ev.addProperty("primary_mod", best.modId());
+        JsonArray evArr = new JsonArray();
+        for (JsonObject evidence : state.dbAddonEvidence) {
+            evArr.add(evidence.deepCopy());
+        }
+        ev.add("evidence", evArr);
+        CollectSupport.appendEvent(staging, ev);
+
+        JsonObject optional = staging.getAsJsonObject("optional");
+        if (optional != null) {
+            JsonObject summary = new JsonObject();
+            summary.addProperty("active", true);
+            summary.addProperty("issue_id", DbAddonSignatures.ISSUE_ID);
+            summary.addProperty("kind", best.kind());
+            summary.addProperty("primary_mod", best.modId());
+            summary.addProperty("detail", detail);
+            summary.add("evidence", evArr.deepCopy());
+            optional.add("db_addon_fail", summary);
         }
     }
 

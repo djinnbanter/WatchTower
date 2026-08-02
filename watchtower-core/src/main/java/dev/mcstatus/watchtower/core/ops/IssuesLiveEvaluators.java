@@ -3,6 +3,7 @@ package dev.mcstatus.watchtower.core.ops;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.analyze.DbAddonSignatures;
 import dev.mcstatus.watchtower.core.analyze.DiskProjectionAnalyzer;
 import dev.mcstatus.watchtower.core.collect.JoinRejectionSignatures;
 import dev.mcstatus.watchtower.core.collect.SilentFailSignatures;
@@ -935,6 +936,92 @@ public final class IssuesLiveEvaluators {
         return out;
     }
 
+    /**
+     * GriefLogger MariaDB ACL / GLRA DB-addon failure from optional.db_addon_fail or activity events.
+     * Issue id {@code signal_db_addon_fail}.
+     */
+    public static List<IssuesLiveRecord> fromDbAddonFail(JsonObject cache) {
+        List<IssuesLiveRecord> out = new ArrayList<>();
+        if (cache == null) {
+            return out;
+        }
+        JsonObject block = null;
+        if (cache.has("optional") && cache.get("optional").isJsonObject()) {
+            JsonObject optional = cache.getAsJsonObject("optional");
+            if (optional.has("db_addon_fail") && optional.get("db_addon_fail").isJsonObject()) {
+                block = optional.getAsJsonObject("db_addon_fail");
+            }
+        }
+        if (block == null && cache.has("db_addon_fail") && cache.get("db_addon_fail").isJsonObject()) {
+            block = cache.getAsJsonObject("db_addon_fail");
+        }
+        JsonObject eventHit = null;
+        if (cache.has(OpsCacheSchema.ACTIVITY) && cache.get(OpsCacheSchema.ACTIVITY).isJsonObject()) {
+            JsonObject activity = cache.getAsJsonObject(OpsCacheSchema.ACTIVITY);
+            if (activity.has(OpsCacheSchema.ACTIVITY_EVENTS)
+                    && activity.get(OpsCacheSchema.ACTIVITY_EVENTS).isJsonArray()) {
+                for (JsonElement el : activity.getAsJsonArray(OpsCacheSchema.ACTIVITY_EVENTS)) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject ev = el.getAsJsonObject();
+                    if ("db_addon_fail".equals(str(ev, OpsCacheSchema.EVENT_TYPE))) {
+                        eventHit = ev;
+                    }
+                }
+            }
+        }
+        if (block == null && eventHit == null) {
+            return out;
+        }
+        if (block != null && block.has("active") && !bool(block, "active")) {
+            return out;
+        }
+        String kind = block != null ? str(block, "kind") : "";
+        if (kind.isBlank() && eventHit != null) {
+            kind = str(eventHit, "kind");
+        }
+        String primaryMod = block != null ? str(block, "primary_mod") : "";
+        if (primaryMod.isBlank() && eventHit != null) {
+            primaryMod = str(eventHit, "primary_mod");
+        }
+        if (primaryMod.isBlank()) {
+            primaryMod = DbAddonSignatures.KIND_ACL.equals(kind)
+                    ? DbAddonSignatures.MOD_GRIEFLOGGER
+                    : DbAddonSignatures.MOD_GLRA;
+        }
+        String detail = block != null ? str(block, "detail") : "";
+        if (detail.isBlank() && eventHit != null) {
+            detail = str(eventHit, OpsCacheSchema.EVENT_DETAIL);
+        }
+        if (detail.isBlank()) {
+            if (DbAddonSignatures.KIND_ACL.equals(kind)) {
+                detail = "GriefLogger disabled — MariaDB host ACL (1130) blocked database access";
+            } else {
+                detail = "GriefLogger database addon connection failed (" + primaryMod + ")";
+            }
+        }
+        String msg = detail;
+        if (!msg.toLowerCase(Locale.ROOT).contains("mariadb")
+                && !msg.toLowerCase(Locale.ROOT).contains("database")) {
+            msg = detail + " Check MariaDB / DB config.";
+        }
+        String fp = "db_addon_fail:" + kind + ":" + primaryMod;
+        IssuesLiveRecord.Builder b = IssuesLiveRecord.builder()
+                .id(DbAddonSignatures.ISSUE_ID)
+                .key(DbAddonSignatures.ISSUE_ID)
+                .severity("warning")
+                .message(msg)
+                .source(IssuesLiveSchema.SOURCE_OPS)
+                .evidenceFingerprint(fp)
+                .addEvidenceRef("ops:db_addon_fail");
+        for (String step : DbAddonSignatures.fixStepsFor(kind)) {
+            b.addFixStep(step);
+        }
+        out.add(b.build());
+        return out;
+    }
+
     private static int arraySize(JsonObject o, String k) {
         if (o != null && o.has(k) && o.get(k).isJsonArray()) {
             return o.getAsJsonArray(k).size();
@@ -1153,6 +1240,7 @@ public final class IssuesLiveEvaluators {
         detected.addAll(fromWorldPressure(cache, worldPressureEnabled));
         detected.addAll(fromJoinClinic(cache, joinClinicEnabled));
         detected.addAll(fromLoginStorm(cache));
+        detected.addAll(fromDbAddonFail(cache));
         detected.addAll(fromWorldRiskDisabled(cache, worldRiskEnabled));
 
         List<IssuesLiveRecord> cur = existing;
@@ -1217,6 +1305,10 @@ public final class IssuesLiveEvaluators {
                 cur = IssuesLiveStore.resolve(cur, k, nowIso);
             }
             if (("SIGNAL_LOGIN_STORM".equals(k) || k.startsWith("JOINABILITY:LOGIN_STORM"))
+                    && !detectedKeys.contains(k)) {
+                cur = IssuesLiveStore.resolve(cur, k, nowIso);
+            }
+            if (("SIGNAL_DB_ADDON_FAIL".equals(k) || k.startsWith("SIGNAL_DB_ADDON"))
                     && !detectedKeys.contains(k)) {
                 cur = IssuesLiveStore.resolve(cur, k, nowIso);
             }
