@@ -1,6 +1,6 @@
 {
   "schema": "crash-intelligence-v1",
-  "failure_kinds": ["mod_runtime","mod_load_dependency","mod_load_script","world_nbt_corrupt","watchdog","watchdog_followup","watchdog_pregen","host_resource","loader","unknown"],
+  "failure_kinds": ["mod_runtime","mod_load_dependency","mod_load_script","world_nbt_corrupt","watchdog","watchdog_followup","watchdog_pregen","host_resource","loader","unknown","api_version_mismatch","shutdown_noise"],
   "cases": {
     "create-npe": {
       "file": "create-npe.txt",
@@ -55,6 +55,30 @@
       "expected": {
         "same_incident_id": true,
         "followup_failure_kind": "watchdog_followup"
+      }
+    },
+    "opac-nsm-command": {
+      "file": "opac-nsm-command.txt",
+      "expected": {
+        "failure_kind": "api_version_mismatch",
+        "primary_mod_id": "opac_better_commands",
+        "category": "mod"
+      }
+    },
+    "opac-nsm-listener": {
+      "file": "opac-nsm-listener.txt",
+      "expected": {
+        "failure_kind": "api_version_mismatch",
+        "primary_mod_id": "opac_better_commands",
+        "category": "mod"
+      }
+    },
+    "spark-shutdown-profiler": {
+      "file": "spark-shutdown-profiler.txt",
+      "expected": {
+        "failure_kind": "shutdown_noise",
+        "primary_mod_id": "spark",
+        "category": "mod"
       }
     }
   }
