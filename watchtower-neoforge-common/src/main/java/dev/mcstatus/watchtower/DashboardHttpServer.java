@@ -138,6 +138,7 @@ public final class DashboardHttpServer {
             "/api/accounts/update",
             "/api/accounts/delete",
             "/api/accounts/reset-password",
+            "/api/accounts/me/appearance",
             "/api/mods/disable",
             "/api/mods/enable",
             "/api/mods/configs",
@@ -272,6 +273,7 @@ public final class DashboardHttpServer {
             server.createContext("/api/accounts/reset-password", this::handleAccountResetPassword);
             server.createContext("/api/accounts/delete", this::handleAccountDelete);
             server.createContext("/api/accounts/me/minecraft", this::handleMyMinecraftLink);
+            server.createContext("/api/accounts/me/appearance", this::handleMyAppearance);
             server.createContext("/api/audit-log", this::handleAuditLog);
             server.setExecutor(Executors.newCachedThreadPool(r -> {
                 Thread t = new Thread(r, "watchtower-http");
@@ -457,6 +459,11 @@ public final class DashboardHttpServer {
     private void handleMyMinecraftLink(HttpExchange ex) throws IOException {
         // Self-service: viewers may link their own skin (bypass write gate).
         DashboardAuthHttp.handleMyMinecraftLink(ex);
+    }
+
+    private void handleMyAppearance(HttpExchange ex) throws IOException {
+        // Self-service: any signed-in role may sync their own theme/accent.
+        DashboardAuthHttp.handleMyAppearance(ex);
     }
 
     private void handleAuditLog(HttpExchange ex) throws IOException {

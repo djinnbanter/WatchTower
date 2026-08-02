@@ -29,6 +29,10 @@ public final class DashboardAuthRecord {
     public String minecraft_uuid;
     /** Last known Minecraft name for display (max 16). */
     public String minecraft_name;
+    /** UI theme mode: light|dark|black|system. Null → client default dark. */
+    public String ui_theme;
+    /** UI accent preset id. Null → signal. */
+    public String ui_accent;
 
     public DashboardAuthRecord() {
     }

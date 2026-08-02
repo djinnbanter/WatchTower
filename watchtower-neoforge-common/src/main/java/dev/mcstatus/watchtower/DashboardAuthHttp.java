@@ -537,6 +537,42 @@ public final class DashboardAuthHttp {
         }
     }
 
+    /** Any fully authenticated user may save their own theme/accent prefs. */
+    public static void handleMyAppearance(HttpExchange ex) throws IOException {
+        if (!"PUT".equalsIgnoreCase(ex.getRequestMethod())) {
+            sendText(ex, 405, "Method not allowed");
+            return;
+        }
+        SessionManager.SessionState session = requireSession(ex, false, false);
+        if (session == null) {
+            return;
+        }
+        JsonObject body = parseBody(ex);
+        String ip = clientIp(ex);
+        DashboardAuthStore store = DashboardAuthServices.store();
+        if (store == null) {
+            sendJson(ex, 503, errorJson("auth_unavailable", "Accounts unavailable"));
+            return;
+        }
+        try {
+            String theme = text(body, "theme");
+            String accent = text(body, "accent");
+            store.updateAppearance(session.accountId(), theme, accent);
+            DashboardAuthRecord account = store.findById(session.accountId());
+            DashboardAudit.record("appearance_saved", session, session.username(),
+                    theme + "/" + accent, ip);
+            JsonObject out = new JsonObject();
+            out.addProperty("ok", true);
+            if (account != null) {
+                out.addProperty("ui_theme", account.ui_theme);
+                out.addProperty("ui_accent", account.ui_accent);
+            }
+            sendJson(ex, 200, out);
+        } catch (IllegalArgumentException e) {
+            sendJson(ex, 400, errorJson("invalid_appearance", e.getMessage()));
+        }
+    }
+
     private static void putMinecraftLink(JsonObject out, DashboardAuthRecord account) {
         if (account == null) {
             return;
@@ -764,6 +800,14 @@ public final class DashboardAuthHttp {
         out.addProperty("can_manage_accounts", session.role().canManageAccounts());
         out.addProperty("fully_authenticated", session.isFullyAuthenticated());
         putMinecraftLink(out, account);
+        if (account != null) {
+            if (account.ui_theme != null && !account.ui_theme.isBlank()) {
+                out.addProperty("ui_theme", account.ui_theme);
+            }
+            if (account.ui_accent != null && !account.ui_accent.isBlank()) {
+                out.addProperty("ui_accent", account.ui_accent);
+            }
+        }
         if (hostname != null) {
             out.addProperty("hostname", hostname);
         }

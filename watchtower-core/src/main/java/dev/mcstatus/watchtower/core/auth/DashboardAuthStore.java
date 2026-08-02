@@ -218,6 +218,38 @@ public final class DashboardAuthStore {
         save();
     }
 
+    /** Persist dashboard appearance prefs for an account. */
+    public void updateAppearance(String accountId, String theme, String accent) throws IOException {
+        DashboardAuthRecord r = requireAccount(accountId);
+        r.ui_theme = normalizeUiTheme(theme);
+        r.ui_accent = normalizeUiAccent(accent);
+        save();
+    }
+
+    static String normalizeUiTheme(String theme) {
+        if (theme == null || theme.isBlank()) {
+            throw new IllegalArgumentException("theme required");
+        }
+        String t = theme.trim().toLowerCase();
+        if (!t.equals("light") && !t.equals("dark") && !t.equals("black") && !t.equals("system")) {
+            throw new IllegalArgumentException("invalid theme: " + theme);
+        }
+        return t;
+    }
+
+    static String normalizeUiAccent(String accent) {
+        if (accent == null || accent.isBlank()) {
+            throw new IllegalArgumentException("accent required");
+        }
+        String a = accent.trim().toLowerCase();
+        switch (a) {
+            case "signal", "amber", "teal", "violet", "rose", "green", "coral", "slate" -> {
+                return a;
+            }
+            default -> throw new IllegalArgumentException("invalid accent: " + accent);
+        }
+    }
+
     private static String nullToEmpty(String value) {
         return value == null ? "" : value;
     }
