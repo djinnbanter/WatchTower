@@ -37,7 +37,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'health-grade',
     title: 'Health grade + restart advice',
     blurb:
-      'Letter grade, needs-attention list, and Safe / Caution / Wait restart advice. It does not restart the server for you.',
+      'Letter grade, plain reasons when it is not Strong, and Safe / Caution / Wait restart advice. Long uptime plus worse GC can suggest a quiet maintenance window. WatchTower does not restart the server for you.',
     tag: 'Overview',
     weight: 'lead',
     tone: 'danger',
@@ -89,7 +89,8 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'gc-ram',
     title: 'GC / JVM + RAM advice',
-    blurb: 'GC pause share of wall, flags profile, and a conservative do-I-need-more-RAM card.',
+    blurb:
+      'GC pause share of wall time, JVM flags profile, and RAM advice that uses your host or container memory limit - not a one-size guess.',
     tag: 'Live',
     weight: 'standard',
     tone: 'heap',
@@ -121,7 +122,8 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'mods-modrinth',
     title: 'Mod inventory + Modrinth hints',
-    blurb: 'Jar inventory, conflicts, and Modrinth lookup hints. Modrinth never downloads jars for you.',
+    blurb:
+      'Installed jars, conflicts, Modrinth lookup hints, and mod log errors with Active / Reviewed. Modrinth never downloads jars for you.',
     tag: 'Mods',
     weight: 'standard',
     tone: 'accent',
@@ -135,9 +137,28 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     tone: 'warn',
   },
   {
+    id: 'jar-disable',
+    title: 'Soft jar disable / enable',
+    blurb:
+      'Rename a mod jar to `*.jar.disabled` so it skips the next boot (or rename it back). Filter All / Enabled / Disabled. High world risk asks you to confirm first. Admins only - no delete.',
+    tag: 'Mods',
+    weight: 'standard',
+    tone: 'warn',
+  },
+  {
+    id: 'mod-configs',
+    title: 'Mods → Configs',
+    blurb:
+      'Edit files under the server `config/` folder from the dashboard. TOML gets a form when WatchTower can parse it; otherwise you edit the raw text. Saves create a backup and support undo. Admins only.',
+    tag: 'Mods',
+    weight: 'standard',
+    tone: 'accent',
+  },
+  {
     id: 'schedule-load',
     title: 'Schedule + load trends',
-    blurb: 'Busy vs quiet hours and load patterns so you plan restarts around real pressure.',
+    blurb:
+      'Busy vs quiet hours so you plan restarts around real load. Times follow the timezone you set in the dashboard.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'players',
@@ -146,6 +167,14 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'storage-runway',
     title: 'Storage + disk runway',
     blurb: 'Dimension storage scan plus roughly how many days of disk left - not just a percent full.',
+    tag: 'Insights',
+    weight: 'standard',
+    tone: 'disk',
+  },
+  {
+    id: 'storage-space-map',
+    title: 'Storage space map',
+    blurb: 'A treemap of what is using disk space. Drill into World, Logs, Mods, or Backups.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'disk',
@@ -176,10 +205,18 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     alpha: true,
   },
   {
+    id: 'spark-map',
+    title: 'Spark Map',
+    blurb: 'Pan and zoom chunk heat from the selected Spark profile. Click a chunk for details.',
+    tag: 'Spark',
+    weight: 'standard',
+    tone: 'lantern',
+  },
+  {
     id: 'backups',
     title: 'Backup health',
     blurb:
-      'See whether local backup folders look present and fresh. Panel and cloud backup tracking is Alpha - do not fully trust it yet.',
+      'See whether local backups look present and fresh, then verify zip/tar.gz integrity. Optional test restore only under `watchtower/restore-verify/` - never into the live world.',
     tag: 'Backups',
     weight: 'standard',
     tone: 'ok',
@@ -219,10 +256,19 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'accounts',
     title: 'Named accounts + audit log',
-    blurb: 'Owner / admin / viewer logins with an audit log under Settings.',
+    blurb:
+      'Owner / admin / viewer logins, optional Minecraft player link on the side rail, Sign out, and a Settings audit log of account and settings changes.',
     tag: 'Settings',
     weight: 'standard',
     tone: 'accent',
+  },
+  {
+    id: 'theme-accent',
+    title: 'Theme + accent',
+    blurb: 'Light, Dark, Black, or System, plus an accent color. Saved per signed-in account.',
+    tag: 'Settings',
+    weight: 'standard',
+    tone: 'info',
   },
   {
     id: 'auth',

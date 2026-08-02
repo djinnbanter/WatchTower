@@ -52,12 +52,16 @@ export const FEATURE_BENTO_MORE: FeatureBentoMoreCell[] = [
   { id: 'mods-modrinth', media: 'overlay', span: 'two' },
   { id: 'jar-drift', media: 'overlay', span: 'one' },
 
+  { id: 'jar-disable', media: 'overlay', span: 'half' },
+  { id: 'mod-configs', media: 'overlay', span: 'half' },
+
   { id: 'external-kill', media: 'overlay', span: 'one' },
   { id: 'silent-fails', media: 'overlay', span: 'one' },
   { id: 'logs', media: 'overlay', span: 'one' },
 
   { id: 'schedule-load', media: 'chart', span: 'one' },
-  { id: 'storage-runway', media: 'chart', span: 'two' },
+  { id: 'storage-runway', media: 'chart', span: 'one' },
+  { id: 'storage-space-map', media: 'overlay', span: 'one' },
 
   { id: 'activity', media: 'overlay', span: 'two' },
   { id: 'weekly-digest', media: 'overlay', span: 'one' },
@@ -65,11 +69,14 @@ export const FEATURE_BENTO_MORE: FeatureBentoMoreCell[] = [
   { id: 'config-audit', media: 'overlay', span: 'one' },
   { id: 'backups', media: 'overlay', span: 'two' },
 
+  { id: 'spark-map', media: 'overlay', span: 'one' },
   { id: 'startup', media: 'overlay', span: 'one' },
   { id: 'sources', media: 'overlay', span: 'one' },
-  { id: 'accounts', media: 'overlay', span: 'one' },
 
+  { id: 'accounts', media: 'overlay', span: 'one' },
+  { id: 'theme-accent', media: 'overlay', span: 'one' },
   { id: 'auth', media: 'overlay', span: 'one' },
+
   { id: 'help', media: 'overlay', span: 'one' },
-  { id: 'cli-dr', media: 'overlay', span: 'one' },
+  { id: 'cli-dr', media: 'overlay', span: 'two' },
 ];
