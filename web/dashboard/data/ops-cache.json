@@ -5,8 +5,50 @@
   "ops_cache_seq": 4,
   "activity": {
     "scanned_at": "2026-08-01T21:23:21.780Z",
-    "new_count": 9,
+    "new_count": 15,
     "events": [
+      {
+        "time": "2026-08-01T21:20:51.780Z",
+        "type": "mod_jar_added",
+        "detail": "create-1.21.1-6.0.0.jar",
+        "source": "scan",
+        "path": "create-1.21.1-6.0.0.jar"
+      },
+      {
+        "time": "2026-08-01T21:19:51.780Z",
+        "type": "config_changed",
+        "detail": "config/create-common.toml",
+        "source": "scan",
+        "path": "config/create-common.toml"
+      },
+      {
+        "time": "2026-08-01T21:18:51.780Z",
+        "type": "mod_disabled",
+        "detail": "dimdoors-1.21.jar → dimdoors-1.21.jar.disabled",
+        "source": "dashboard",
+        "path": "dimdoors-1.21.jar.disabled"
+      },
+      {
+        "time": "2026-08-01T20:55:51.780Z",
+        "type": "mod_jar_updated",
+        "detail": "jei-1.21.1-neoforge-19.21.0.jar",
+        "source": "scan",
+        "path": "jei-1.21.1-neoforge-19.21.0.jar"
+      },
+      {
+        "time": "2026-08-01T20:50:51.780Z",
+        "type": "mod_jar_removed",
+        "detail": "old-debug-1.0.jar",
+        "source": "scan",
+        "path": "old-debug-1.0.jar"
+      },
+      {
+        "time": "2026-08-01T20:45:51.780Z",
+        "type": "mod_enabled",
+        "detail": "appleskin-neoforge-mc1.21-3.0.9.jar.disabled → appleskin-neoforge-mc1.21-3.0.9.jar",
+        "source": "dashboard",
+        "path": "appleskin-neoforge-mc1.21-3.0.9.jar"
+      },
       {
         "time": "2026-08-01T21:15:51.780Z",
         "type": "lag_incident",
@@ -1812,10 +1854,12 @@
     "meters": {
       "write_await_ms": 120,
       "write_warn_ms": 50,
+      "write_mb_s": 15,
       "pregen_active": true,
       "pregen_label": "Chunky",
       "pregen_rate": "120/s",
       "chunk_growth_label": "+40",
+      "growth_hot_chunks": 48,
       "prev_loaded_chunks": 688
     }
   },
