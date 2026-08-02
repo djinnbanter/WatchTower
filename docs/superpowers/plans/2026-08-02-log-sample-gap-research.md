@@ -4,7 +4,9 @@
 
 **Goal:** Build a reusable sample-gap research toolkit, then run it on a user log/crash dump to produce an incident timeline, WatchTower replay gap matrix, ingestion checklist, and ranked fixture backlog — without changing product classifiers/scanners in this pass. Ground truth requires an **AI forensic deep-read of every corpus file (start→end, every line)**, then a **three-way cross-check** against scripted census and WatchTower replay.
 
-**Pilot census-only status:** Tasks 1–11 completed for `2026-08-02-new-samples` (scripts + census + replay + draft backlog) — see `docs/superpowers/research-runs/2026-08-02-new-samples/REPORT.md`. **Does NOT satisfy the revised forensic deep-read requirement.** Execute **Tasks F1–F6** (below) on that sample before treating the pilot as done under the current spec.
+**Pilot census-only status:** Complete — Tasks 1–11 for `2026-08-02-new-samples` (scripts + census + replay + draft backlog) — see `docs/superpowers/research-runs/2026-08-02-new-samples/REPORT.md`.
+
+**Pilot forensic status:** **Complete** — Tasks F1–F6 deep-read (47/47) + cross-check; see `docs/superpowers/research-runs/2026-08-02-new-samples/forensic/` + `REPORT.md`.
 
 **Architecture:** Parameterized playbook. Each run takes `SAMPLE_ROOT` + `RUN_ID`, writes isolated artifacts under `docs/superpowers/research-runs/<RUN_ID>/`, and reuses Node census/inventory scripts plus a Java crash/narrator replay harness gated by `-Dwt.sample.root=…`. After census, the agent deep-reads every non-duplicate scannable file and triangulates AI findings vs scripts vs WatchTower. Timeline-first forensics; ingestion checklist is a required appendix every run.
 
@@ -737,9 +739,9 @@ git commit -m "docs(research): refresh gaps and backlog after forensic triangula
 - Consumes: all prior artifacts including `forensic/`
 - Produces: REPORT stating forensic deep-read complete; verification bar fully ticked under revised spec
 
-- [ ] **Step 1: Update REPORT** — add forensic package + cross-check pointers; executive summary must mention deep-read + triangulation
-- [ ] **Step 2: Tick revised verification bar** (see Global / Spec — includes manifest + cross-check)
-- [ ] **Step 3: Commit**
+- [x] **Step 1: Update REPORT** — add forensic package + cross-check pointers; executive summary must mention deep-read + triangulation
+- [x] **Step 2: Tick revised verification bar** (see Global / Spec — includes manifest + cross-check)
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/superpowers/research-runs/<RUN_ID>/REPORT.md tools/sample-gap-research/README.md
@@ -990,13 +992,15 @@ refresh timeline/gaps/backlog/REPORT). Write artifacts under
 Do not treat census alone as ground truth.
 ```
 
-- [ ] **Step 2: Update pilot status in this plan header**
+- [x] **Step 2: Update pilot status in this plan header**
 
-When F1–F6 finish for the pilot, replace the census-only status line with:
+Pilot header set to:
 
 ```markdown
 **Pilot forensic status:** Complete — see `docs/superpowers/research-runs/2026-08-02-new-samples/forensic/` + `REPORT.md`
 ```
+
+(Census-only status kept as Complete; forensic status set Complete after F1–F6.)
 
 - [ ] **Step 3: Commit**
 
