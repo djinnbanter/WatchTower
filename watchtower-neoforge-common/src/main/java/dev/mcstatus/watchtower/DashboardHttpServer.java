@@ -3859,18 +3859,23 @@ public final class DashboardHttpServer {
                 send(ex, 400, "text/plain", "path required");
                 return;
             }
-            if (!body.has("content") || body.get("content").isJsonNull()) {
-                send(ex, 400, "text/plain", "content required");
-                return;
-            }
             if (!body.has("expected_mtime") || body.get("expected_mtime").isJsonNull()) {
                 send(ex, 400, "text/plain", "expected_mtime required");
                 return;
             }
             String path = body.get("path").getAsString().trim();
-            String content = body.get("content").getAsString();
             long expectedMtime = body.get("expected_mtime").getAsLong();
-            JsonObject result = ModConfigService.save(serverDir, watchtowerDir, path, content, expectedMtime);
+            JsonObject result;
+            if (body.has("fields") && body.get("fields").isJsonArray()) {
+                result = ModConfigService.saveFields(
+                        serverDir, watchtowerDir, path, body.getAsJsonArray("fields"), expectedMtime);
+            } else if (body.has("content") && !body.get("content").isJsonNull()) {
+                String content = body.get("content").getAsString();
+                result = ModConfigService.save(serverDir, watchtowerDir, path, content, expectedMtime);
+            } else {
+                send(ex, 400, "text/plain", "content or fields required");
+                return;
+            }
             DashboardAudit.record("config_saved", DashboardAuthHttp.sessionOf(ex), path, path,
                     DashboardAuthHttp.clientIp(ex));
             sendJson(ex, 200, result);

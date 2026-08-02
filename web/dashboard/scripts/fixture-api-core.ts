@@ -8,6 +8,11 @@ import {
   mergeCrashRows,
   type CrashRow,
 } from '../src/features/crashes/groups';
+import {
+  parseTomlForm,
+  serializeTomlFields,
+  type TomlFormField,
+} from '../src/features/mods/toml-form';
 
 export type FixtureResponse = { status: number; contentType: string; body: string | Buffer };
 export type FixtureSession = Record<string, unknown>;
@@ -150,6 +155,34 @@ function modConfigListPayload(store: Record<string, ModConfigEntry>) {
     }))
     .sort((a, b) => a.path.localeCompare(b.path));
   return { files };
+}
+
+function modConfigReadPayload(pathParam: string, entry: ModConfigEntry) {
+  const base = {
+    path: pathParam,
+    content: entry.content,
+    mtime: entry.mtime,
+    size: Buffer.byteLength(entry.content, 'utf8'),
+    secret_hint: secretHintText(entry.content),
+    parse_warnings: [] as string[],
+  };
+  if (!pathParam.toLowerCase().endsWith('.toml')) {
+    return { ...base, editor: 'raw' as const };
+  }
+  const pr = parseTomlForm(entry.content);
+  if (pr.formOk) {
+    return {
+      ...base,
+      editor: 'form' as const,
+      fields: pr.fields,
+      parse_warnings: pr.warnings,
+    };
+  }
+  return {
+    ...base,
+    editor: 'raw' as const,
+    parse_warnings: pr.warnings,
+  };
 }
 
 function applyModJarOverrides(ops: Record<string, unknown>, session: Record<string, unknown>) {
@@ -898,14 +931,7 @@ export async function handleFixtureRequest(
                 if (!entry) {
                   return jsonRes(404, { ok: false, error: 'not_found', message: `not found: ${pathParam}` });
                 }
-                return jsonRes(200, {
-                  path: pathParam,
-                  content: entry.content,
-                  mtime: entry.mtime,
-                  size: Buffer.byteLength(entry.content, 'utf8'),
-                  secret_hint: secretHintText(entry.content),
-                  parse_warnings: [],
-                });
+                return jsonRes(200, modConfigReadPayload(pathParam, entry));
               }
               return jsonRes(200, modConfigListPayload(store));
             }
@@ -918,13 +944,25 @@ export async function handleFixtureRequest(
               if (!pathKey.startsWith('config/')) {
                 return jsonRes(400, { ok: false, error: 'bad_path', message: 'path must be under config/' });
               }
-              if (!('content' in body)) {
-                return jsonRes(400, { ok: false, error: 'content required' });
-              }
               if (!('expected_mtime' in body)) {
                 return jsonRes(400, { ok: false, error: 'expected_mtime required' });
               }
-              const content = String(body.content ?? '');
+              let content: string;
+              if (Array.isArray(body.fields)) {
+                try {
+                  content = serializeTomlFields(body.fields as TomlFormField[]);
+                } catch (e) {
+                  return jsonRes(400, {
+                    ok: false,
+                    error: 'bad_fields',
+                    message: e instanceof Error ? e.message : 'invalid fields',
+                  });
+                }
+              } else if ('content' in body) {
+                content = String(body.content ?? '');
+              } else {
+                return jsonRes(400, { ok: false, error: 'content or fields required' });
+              }
               const expected = Number(body.expected_mtime);
               const existing = store[pathKey];
               if (existing && existing.mtime !== expected) {

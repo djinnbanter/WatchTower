@@ -257,8 +257,13 @@ export const api = {
   /** Read one config file by relative path (config/...). */
   modsConfigRead: (path: string) =>
     apiFetch<Record<string, unknown>>(`/api/mods/configs?path=${encodeURIComponent(path)}`),
-  /** Save config text with mtime check; creates a timestamped backup first. */
-  modsConfigSave: (payload: { path: string; content: string; expected_mtime: number }) =>
+  /** Save config text or form fields with mtime check; creates a timestamped backup first. */
+  modsConfigSave: (payload: {
+    path: string;
+    expected_mtime: number;
+    content?: string;
+    fields?: unknown[];
+  }) =>
     apiFetch<Record<string, unknown>>('/api/mods/configs', {
       method: 'PUT',
       body: JSON.stringify(payload),
