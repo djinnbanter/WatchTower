@@ -29,6 +29,14 @@ import { asRecord, bool, num, str, totpQrSrc } from '@/lib/utils';
 import { useDashboardTimezone } from '@/app/timezone';
 import { AccountsPanel } from './accounts-panel';
 import { AuditLogPanel } from './audit-log-panel';
+import {
+  NumberField,
+  ReadOnlyField,
+  SettingsPair,
+  SettingsStack,
+  TextField,
+  ToggleField,
+} from './fields';
 import { SelfMinecraftLink } from './minecraft-link';
 import './settings.css';
 
@@ -142,52 +150,6 @@ function formsEqual(a: FormState, b: FormState): boolean {
   return true;
 }
 
-function ToggleField({
-  label,
-  hint,
-  value,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  hint?: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-center justify-between gap-4 wt-form-row px-4 py-3 ${
-        disabled ? 'opacity-60' : ''
-      }`}
-    >
-      <div className="min-w-0">
-        <div className="text-sm font-medium">{label}</div>
-        {hint ? <div className="mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={value}
-        aria-disabled={disabled || undefined}
-        disabled={disabled}
-        onClick={() => {
-          if (!disabled) onChange(!value);
-        }}
-        className={`relative h-6 w-11 shrink-0 overflow-hidden rounded-full transition ${
-          value ? 'bg-wt-accent' : 'bg-wt-bg3'
-        } ${disabled ? 'cursor-not-allowed' : ''}`}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-            value ? 'translate-x-5' : 'translate-x-0'
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
-
 function TimezonePreferenceField() {
   const { preference, resolvedZone, setBrowser, setUtc, setIana, availableZones } =
     useDashboardTimezone();
@@ -270,83 +232,6 @@ function TimezonePreferenceField() {
           </span>
         </span>
       </label>
-    </div>
-  );
-}
-
-function NumberField({
-  label,
-  hint,
-  value,
-  unit,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  hint?: string;
-  value: number;
-  unit?: string;
-  onChange: (v: number) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <label
-      className={`block wt-form-row px-4 py-3 ${
-        disabled ? 'opacity-60' : ''
-      }`}
-    >
-      <div className="text-sm font-medium">{label}</div>
-      {hint ? <div className="mb-1.5 mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
-      <div className="mt-1.5 flex items-center gap-2">
-        <input
-          type="number"
-          disabled={disabled}
-          value={Number.isFinite(value) ? value : 0}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-28 rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 px-2.5 py-1.5 font-mono text-sm outline-none focus-visible:border-wt-accent focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--wt-accent)_35%,transparent)] disabled:cursor-not-allowed"
-        />
-        {unit ? <span className="text-xs text-wt-text-low">{unit}</span> : null}
-      </div>
-    </label>
-  );
-}
-
-function TextField({
-  label,
-  hint,
-  value,
-  onChange,
-  type = 'text',
-  autoComplete,
-}: {
-  label: string;
-  hint?: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: 'text' | 'password';
-  autoComplete?: string;
-}) {
-  return (
-    <label className="block wt-form-row px-4 py-3">
-      <div className="text-sm font-medium">{label}</div>
-      {hint ? <div className="mb-1.5 mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
-      <input
-        type={type}
-        value={value}
-        autoComplete={autoComplete}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 w-full rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 px-2.5 py-1.5 text-sm outline-none focus-visible:border-wt-accent focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--wt-accent)_35%,transparent)]"
-      />
-    </label>
-  );
-}
-
-function ReadOnlyField({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="wt-form-row px-4 py-3">
-      <div className="text-sm font-medium">{label}</div>
-      {hint ? <div className="mt-0.5 text-xs text-wt-text-low">{hint}</div> : null}
-      <div className="mt-1.5 font-mono text-sm text-wt-text">{value || '—'}</div>
     </div>
   );
 }
