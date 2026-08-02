@@ -17,7 +17,7 @@ export function Close() {
                 className="pointer-events-none absolute inset-0"
                 style={{
                   background:
-                    'radial-gradient(36rem 20rem at 12% 100%, var(--wt-glow-lantern), transparent 62%), radial-gradient(28rem 16rem at 88% 0%, var(--wt-glow-accent), transparent 58%)',
+                    'radial-gradient(36rem 18rem at 50% 120%, var(--wt-zenith), transparent 55%), radial-gradient(36rem 20rem at 12% 100%, var(--wt-glow-lantern), transparent 62%), radial-gradient(28rem 16rem at 88% 0%, var(--wt-glow-accent), transparent 58%)',
                 }}
               />
               <div className="relative grid gap-8 md:grid-cols-2 md:items-center md:gap-10 lg:gap-14">
