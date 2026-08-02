@@ -11,6 +11,8 @@ public enum ModErrorCategory {
     RECIPE_MISSING_ITEM("recipe_missing_item", 3),
     RECIPE_COMPAT("recipe_compat", 2),
     RECIPE_FORMAT("recipe_format", 2),
+    /** Dump-style KubeJS / datapack WARN floods (`Failed to parse recipe …`). */
+    RECIPE_PARSE("recipe_parse", 0),
     REGISTRY_MISSING("registry_missing", 2),
     LOOT_PARSE("loot_parse", 2),
     MOD_CORRUPT("mod_corrupt", 4),
@@ -52,6 +54,7 @@ public enum ModErrorCategory {
             case RECIPE_MISSING_ITEM -> "missing item";
             case RECIPE_COMPAT -> "recipe compat";
             case RECIPE_FORMAT -> "recipe format";
+            case RECIPE_PARSE -> "recipe parse";
             case REGISTRY_MISSING -> "registry";
             case LOOT_PARSE -> "loot parse";
             case MOD_CORRUPT -> "corrupt jar";
@@ -67,8 +70,10 @@ public enum ModErrorCategory {
         };
     }
 
-    private static final Pattern RECIPE_PARSE = Pattern.compile(
+    private static final Pattern RECIPE_LOADING = Pattern.compile(
             "Parsing error loading recipe\\s+(\\S+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern RECIPE_FAILED_PARSE = Pattern.compile(
+            "Failed to parse recipe\\s+'([^']+)'", Pattern.CASE_INSENSITIVE);
     private static final Pattern UNKNOWN_ITEM = Pattern.compile(
             "Unknown item '([^']+)'", Pattern.CASE_INSENSITIVE);
     private static final Pattern PROVIDED_BY_MOD = Pattern.compile(
@@ -136,7 +141,14 @@ public enum ModErrorCategory {
             return new Hit(MOD_LOAD_FAILED, modId != null ? modId : "unknown", null, null);
         }
 
-        Matcher recipe = RECIPE_PARSE.matcher(line);
+        Matcher failedParse = RECIPE_FAILED_PARSE.matcher(line);
+        if (failedParse.find()) {
+            String recipeId = failedParse.group(1).strip();
+            String owner = namespaceOf(recipeId);
+            return new Hit(RECIPE_PARSE, owner, integrationMod(recipeId), recipeId);
+        }
+
+        Matcher recipe = RECIPE_LOADING.matcher(line);
         if (recipe.find()) {
             String recipeId = recipe.group(1).strip();
             String owner = namespaceOf(recipeId);

@@ -8,6 +8,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class IssuesLiveEvaluatorsTest {
@@ -442,6 +443,141 @@ class IssuesLiveEvaluatorsTest {
         assertEquals(1, rows.size());
         assertEquals("WORLD_PRESSURE:PREGEN_OUTRUNNING_DISK:MINECRAFT:OVERWORLD", rows.get(0).normalizedKey());
         assertTrue(rows.get(0).fixSteps().get(0).toLowerCase().contains("pregen"));
+    }
+
+    @Test
+    void fromLoginStormProducesSignalLoginStorm() {
+        JsonObject cache = new JsonObject();
+        JsonObject activity = new JsonObject();
+        JsonArray events = new JsonArray();
+        JsonObject ev = new JsonObject();
+        ev.addProperty(OpsCacheSchema.EVENT_TYPE, "login_storm");
+        ev.addProperty(OpsCacheSchema.EVENT_DETAIL,
+                "25 login disconnects vs 1 join — server up but unjoinable");
+        ev.addProperty("login_disconnects", 25);
+        ev.addProperty("successful_joins", 1);
+        events.add(ev);
+        activity.add(OpsCacheSchema.ACTIVITY_EVENTS, events);
+        cache.add(OpsCacheSchema.ACTIVITY, activity);
+
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromLoginStorm(cache);
+        assertEquals(1, rows.size());
+        assertEquals("SIGNAL_LOGIN_STORM", rows.get(0).normalizedKey());
+        assertEquals("warning", rows.get(0).severity());
+        assertTrue(rows.get(0).message().toLowerCase().contains("unjoinable")
+                || rows.get(0).message().toLowerCase().contains("cannot finish login"));
+        assertFalse(rows.get(0).fixSteps().isEmpty());
+        assertTrue(rows.get(0).fixSteps().stream()
+                .anyMatch(s -> s.toLowerCase().contains("login") || s.toLowerCase().contains("auth")));
+    }
+
+    @Test
+    void clearingLoginStormResolvesSignal() {
+        String t0 = "2026-08-02T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("signal_login_storm").message("storm").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> "SIGNAL_LOGIN_STORM".equals(r.normalizedKey()))
+                        .findFirst().orElseThrow().status());
+    }
+
+    @Test
+    void fromDbAddonFailProducesSignalWithAclFix() {
+        JsonObject cache = new JsonObject();
+        JsonObject optional = new JsonObject();
+        JsonObject block = new JsonObject();
+        block.addProperty("active", true);
+        block.addProperty("issue_id", "signal_db_addon_fail");
+        block.addProperty("kind", "db_addon_acl");
+        block.addProperty("primary_mod", "grieflogger");
+        block.addProperty("detail",
+                "GriefLogger disabled — MariaDB host ACL (1130) blocked database access");
+        optional.add("db_addon_fail", block);
+        cache.add("optional", optional);
+
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromDbAddonFail(cache);
+        assertEquals(1, rows.size());
+        assertEquals("SIGNAL_DB_ADDON_FAIL", rows.get(0).normalizedKey());
+        assertEquals("warning", rows.get(0).severity());
+        assertTrue(rows.get(0).message().toLowerCase().contains("mariadb")
+                || rows.get(0).message().toLowerCase().contains("1130"));
+        assertFalse(rows.get(0).fixSteps().isEmpty());
+        assertTrue(rows.get(0).fixSteps().stream()
+                .anyMatch(s -> s.toLowerCase().contains("1130") || s.toLowerCase().contains("acl")
+                        || s.toLowerCase().contains("mariadb")));
+    }
+
+    @Test
+    void fromDbAddonFailAttributesGlraConnection() {
+        JsonObject cache = new JsonObject();
+        JsonObject optional = new JsonObject();
+        JsonObject block = new JsonObject();
+        block.addProperty("active", true);
+        block.addProperty("kind", "db_addon_connection");
+        block.addProperty("primary_mod", "griefloggerrollbackaddon");
+        block.addProperty("detail",
+                "GriefLogger Rollback Addon (griefloggerrollbackaddon) database connection failed");
+        optional.add("db_addon_fail", block);
+        cache.add("optional", optional);
+
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromDbAddonFail(cache);
+        assertEquals(1, rows.size());
+        assertEquals("SIGNAL_DB_ADDON_FAIL", rows.get(0).normalizedKey());
+        assertTrue(rows.get(0).fixSteps().stream()
+                .anyMatch(s -> s.toLowerCase().contains("griefloggerrollbackaddon")
+                        || s.toLowerCase().contains("rollback")));
+    }
+
+    @Test
+    void clearingDbAddonFailResolvesSignal() {
+        String t0 = "2026-08-02T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("signal_db_addon_fail").message("db").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> "SIGNAL_DB_ADDON_FAIL".equals(r.normalizedKey()))
+                        .findFirst().orElseThrow().status());
+    }
+
+    @Test
+    void fromGlCreateNpeProducesDistinctSignal() {
+        JsonObject cache = new JsonObject();
+        JsonObject optional = new JsonObject();
+        JsonObject block = new JsonObject();
+        block.addProperty("active", true);
+        block.addProperty("issue_id", "signal_gl_create_npe");
+        block.addProperty("kind", "grieflogger_create_compat");
+        block.addProperty("primary_mod", "grieflogger");
+        block.addProperty("detail",
+                "GriefLogger × Create mounted-storage NPE (menuProvider null) — FATAL task without crash-report");
+        optional.add("gl_create_npe", block);
+        cache.add("optional", optional);
+
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromGlCreateNpe(cache);
+        assertEquals(1, rows.size());
+        assertEquals("SIGNAL_GL_CREATE_NPE", rows.get(0).normalizedKey());
+        assertNotEquals("SIGNAL_DB_ADDON_FAIL", rows.get(0).normalizedKey());
+        assertEquals("warning", rows.get(0).severity());
+        assertFalse(rows.get(0).fixSteps().isEmpty());
+        String joined = String.join(" ", rows.get(0).fixSteps()).toLowerCase();
+        assertTrue(joined.contains("menuprovider") || joined.contains("mounted")
+                || joined.contains("contraption") || joined.contains("create"));
+        assertTrue(joined.contains("fatal") || joined.contains("crash"));
+    }
+
+    @Test
+    void clearingGlCreateNpeResolvesSignal() {
+        String t0 = "2026-08-02T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("signal_gl_create_npe").message("compat").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> "SIGNAL_GL_CREATE_NPE".equals(r.normalizedKey()))
+                        .findFirst().orElseThrow().status());
     }
 
     @Test

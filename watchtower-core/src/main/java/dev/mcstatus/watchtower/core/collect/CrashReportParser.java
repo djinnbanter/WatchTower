@@ -31,7 +31,8 @@ public final class CrashReportParser {
     /** NeoForge/Fabric stack frame: {@code TRANSFORMER/modid@version/...}. */
     private static final Pattern TRANSFORMER_MOD = Pattern.compile(
             "TRANSFORMER/([a-z][\\w-]*)@[\\w.+-]+/", Pattern.CASE_INSENSITIVE);
-    private static final Pattern STACK_FRAME = Pattern.compile("^\\tat\\s+(\\S+)\\((.+?)\\)");
+    /** Stack frame line after strip(); leading tab is removed before match. */
+    private static final Pattern STACK_FRAME = Pattern.compile("^at\\s+(\\S+)\\((.+?)\\)");
     private static final Pattern MOD_FILE = Pattern.compile("Mod File:\\s*(.+)", Pattern.CASE_INSENSITIVE);
     private static final int MAX_FRAMES = 8;
     /** Corrupted watchdog counters exceed ~41 days in ms; fall back to nominal 60s. */

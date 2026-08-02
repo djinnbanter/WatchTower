@@ -1,0 +1,23 @@
+[
+  {
+    "mod_id": "createfood",
+    "total": 50000,
+    "top_category": "recipe_parse",
+    "category_label": "recipe parse",
+    "sample_line": "[WARN] KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/leather_soup_bowl_from_filling_leather_soup[create:filling]'!"
+  },
+  {
+    "mod_id": "kubejs",
+    "total": 1000,
+    "top_category": "recipe_parse",
+    "category_label": "recipe parse",
+    "sample_line": "[WARN] KubeRecipe.java#90: Failed to parse recipe 'createfood:create/filling/mutton_taco_lettuce_taco_sauce_from_filling_taco_sauce[create:filling]'!"
+  },
+  {
+    "mod_id": "othermod",
+    "total": 3,
+    "top_category": "logger_error",
+    "category_label": "error",
+    "sample_line": "[Server thread/ERROR] [othermod/]: Something exploded"
+  }
+]

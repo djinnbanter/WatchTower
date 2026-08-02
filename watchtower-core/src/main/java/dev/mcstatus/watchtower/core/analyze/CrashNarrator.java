@@ -249,12 +249,40 @@ public final class CrashNarrator {
                     false);
         }
 
+        if (CrashClassifier.FK_SHUTDOWN_NOISE.equals(failureKind)) {
+            return new Narrative(
+                    "Spark hit an inactive profiler while the server was stopping — this is shutdown-path noise, not mid-play instability.",
+                    "Shutdown noise",
+                    "high",
+                    classification.fixHints(),
+                    false);
+        }
+
+        if (CrashClassifier.FK_API_VERSION_MISMATCH.equals(failureKind)) {
+            return new Narrative(
+                    "OPAC Better Commands and OpenPartiesAndClaims versions do not match — Better Commands called an OPAC API method that is missing.",
+                    "Mod API version mismatch",
+                    "high",
+                    classification.fixHints(),
+                    false);
+        }
+
         if ("mod".equals(classification.category()) && (suspect != null || classification.primaryModId() != null)
                 && CrashClassifier.FK_MOD_RUNTIME.equals(failureKind)) {
             String mod = suspect != null ? suspect : classification.primaryModId();
             JsonObject details = classification.details();
             String createIssue = details != null && details.has("create_issue") && !details.get("create_issue").isJsonNull()
                     ? details.get("create_issue").getAsString() : null;
+            if (isSableBodyRemovedSave(mod, crash, combined, exception)) {
+                return new Narrative(
+                        "Sable crashed while saving a sublevel (" + mod
+                                + ") — a physics body was already removed, often tied to a stale Create carriage. "
+                                + "Primary blame stays on Sable, not Create.",
+                        "Sable sublevel save",
+                        "medium",
+                        hintsSableBodyRemoved(),
+                        false);
+            }
             String plain;
             if ("create".equals(mod) && CrashClassifier.CREATE_ISSUE_CONTRAPTION.equals(createIssue)) {
                 plain = "Create contraption collision (" + mod
@@ -331,6 +359,115 @@ public final class CrashNarrator {
         row.addProperty("confidence", narrative.confidence());
         row.addProperty("manual_review", narrative.manualReview());
         row.add("fix_hints", narrative.fixHints());
+    }
+
+    /**
+     * Rewrite follow-up watchdog rows after {@link IncidentChainBuilder#link} so Fix text
+     * points at the prior crash / inherited primary instead of c2me / Chunky-only advice.
+     */
+    public static void enrichAfterChain(JsonArray summaries) {
+        if (summaries == null) {
+            return;
+        }
+        for (JsonElement el : summaries) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            if (!CrashClassifier.FK_WATCHDOG_FOLLOWUP.equals(str(row, "failure_kind"))) {
+                continue;
+            }
+            String paired = str(row, "paired_primary_file");
+            String mod = str(row, "primary_mod_id");
+            StringBuilder plain = new StringBuilder("Watchdog follow-up after the prior crash");
+            if (mod != null && !mod.isBlank()) {
+                plain.append(" (").append(mod).append(")");
+            }
+            if (paired != null && !paired.isBlank()) {
+                plain.append(" — see ").append(paired);
+            }
+            plain.append(". Fix the earlier crash first; this hang is aftermath, not a separate root cause.");
+            row.addProperty("plain_english", plain.toString());
+            row.addProperty("likely_cause", "Watchdog follow-up");
+            row.addProperty("confidence", "high");
+            row.addProperty("manual_review", false);
+            JsonArray hints = new JsonArray();
+            hints.add("Open the paired crash report and fix that mod first");
+            if (row.has("missing_server_thread")
+                    && !row.get("missing_server_thread").isJsonNull()
+                    && row.get("missing_server_thread").getAsBoolean()) {
+                hints.add("Thread dump has no Server thread — tick loop already dead after the prior crash");
+            }
+            row.add("fix_hints", hints);
+        }
+    }
+
+    /**
+     * Sable body-removed during sublevel save (FB-04). Keep primary on sable_rapier —
+     * Create carriage is context only.
+     */
+    private static boolean isSableBodyRemovedSave(
+            String mod, JsonObject crash, String combined, String exception) {
+        String blob = narratorScanBlob(crash, combined, exception);
+        boolean bodyEvidence = blob.contains("body has been removed")
+                || blob.contains("sublevelserializer");
+        if (!bodyEvidence) {
+            return false;
+        }
+        if ("sable_rapier".equals(mod) || "sable".equals(mod)) {
+            return true;
+        }
+        return blob.contains("sable_rapier")
+                || blob.contains("dev.ryanhcode.sable")
+                || blob.contains("/sable@")
+                || blob.contains("sable.physics")
+                || blob.contains("sable.sublevel");
+    }
+
+    private static String narratorScanBlob(JsonObject crash, String combined, String exception) {
+        StringBuilder sb = new StringBuilder();
+        if (combined != null) {
+            sb.append(combined).append(' ');
+        }
+        if (exception != null) {
+            sb.append(exception.toLowerCase(Locale.ROOT)).append(' ');
+        }
+        if (crash != null) {
+            appendLower(sb, str(crash, "root_exception"));
+            appendLower(sb, str(crash, "caused_by"));
+            appendLower(sb, str(crash, "stack"));
+            appendLower(sb, str(crash, "summary"));
+            if (crash.has("stack_frames") && crash.get("stack_frames").isJsonArray()) {
+                for (JsonElement el : crash.getAsJsonArray("stack_frames")) {
+                    if (el == null || el.isJsonNull()) {
+                        continue;
+                    }
+                    if (el.isJsonPrimitive()) {
+                        appendLower(sb, el.getAsString());
+                    } else if (el.isJsonObject()) {
+                        JsonObject frame = el.getAsJsonObject();
+                        appendLower(sb, str(frame, "raw"));
+                        appendLower(sb, str(frame, "class"));
+                        appendLower(sb, str(frame, "method"));
+                        appendLower(sb, str(frame, "mod_id"));
+                    }
+                }
+            }
+        }
+        return sb.toString().toLowerCase(Locale.ROOT);
+    }
+
+    private static void appendLower(StringBuilder sb, String value) {
+        if (value != null && !value.isBlank()) {
+            sb.append(value.toLowerCase(Locale.ROOT)).append(' ');
+        }
+    }
+
+    private static JsonArray hintsSableBodyRemoved() {
+        return toArray(List.of(
+                "Inspect Sable sublevel save data (world/sublevels, sable_sub_level_occupancy.dat) for a stale physics body.",
+                "If a Create carriage was active in the Shtreimel snapshot, stop or break that carriage, then retry — do not blame Create as primary.",
+                "Update sable_rapier / Sable when a fixed build is available."));
     }
 
     private static boolean isWatchdog(String combined, String exception, String root) {

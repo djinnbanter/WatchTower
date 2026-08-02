@@ -20,7 +20,7 @@ public final class IncidentChainBuilder {
     /**
      * Pair mod_runtime / category=mod primaries with a subsequent watchdog within 120s.
      * Mutates summaries in place: shared {@code incident_id}, follow-up {@code failure_kind}
-     * {@code watchdog_followup}, and {@code paired_primary_file}.
+     * {@code watchdog_followup}, {@code paired_primary_file}, and primary mod ids from the prior crash.
      */
     public static void link(JsonArray summaries) {
         if (summaries == null || summaries.size() < 2) {
@@ -75,8 +75,47 @@ public final class IncidentChainBuilder {
                 follow.addProperty("incident_id", incidentId);
                 follow.addProperty("paired_primary_file", strOr(primary, "file", ""));
                 follow.addProperty("failure_kind", CrashClassifier.FK_WATCHDOG_FOLLOWUP);
+                String primaryMod = strOr(primary, "primary_mod_id", strOr(primary, "suspect_mod_id", ""));
+                if (!primaryMod.isEmpty()) {
+                    follow.addProperty("primary_mod_id", primaryMod);
+                    follow.addProperty("suspect_mod_id", primaryMod);
+                }
+                if (!followTextContainsServerThread(follow)) {
+                    follow.addProperty("missing_server_thread", true);
+                }
                 break;
             }
+        }
+    }
+
+    private static boolean followTextContainsServerThread(JsonObject follow) {
+        StringBuilder sb = new StringBuilder();
+        append(sb, str(follow, "exception"));
+        append(sb, str(follow, "description"));
+        append(sb, str(follow, "summary"));
+        append(sb, str(follow, "stack"));
+        if (follow.has("stack_frames") && follow.get("stack_frames").isJsonArray()) {
+            for (JsonElement el : follow.getAsJsonArray("stack_frames")) {
+                if (el == null || el.isJsonNull()) {
+                    continue;
+                }
+                if (el.isJsonPrimitive()) {
+                    append(sb, el.getAsString());
+                } else if (el.isJsonObject()) {
+                    JsonObject frame = el.getAsJsonObject();
+                    append(sb, str(frame, "raw"));
+                    append(sb, str(frame, "class"));
+                    append(sb, str(frame, "method"));
+                    append(sb, str(frame, "mod_id"));
+                }
+            }
+        }
+        return sb.toString().contains("Server thread");
+    }
+
+    private static void append(StringBuilder sb, String value) {
+        if (value != null && !value.isBlank()) {
+            sb.append(value).append(' ');
         }
     }
 

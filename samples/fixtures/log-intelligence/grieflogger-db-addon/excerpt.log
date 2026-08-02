@@ -1,0 +1,6 @@
+[29Jul2026 15:01:12.170] [modloading-worker-0/ERROR] [com.daqem.grieflogger.GriefLogger/]: Failed to connect to MySQL database
+Caused by: com.mysql.cj.exceptions.CJException: null,  message from server: "Host '172.19.0.1' is not allowed to connect to this MariaDB server"
+[29Jul2026 15:01:12.171] [modloading-worker-0/ERROR] [com.daqem.grieflogger.GriefLogger/]: Failed to connect to database, disabling GriefLogger... Host '172.19.0.1' is not allowed to connect — Error: 1130-HY000
+[29Jul2026 15:01:13.793] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed for type MARIADB
+[29Jul2026 15:01:13.794] [modloading-worker-0/ERROR] [eu.pankraz01.glra.GriefloggerRollbackAddon/]: [griefloggerrollbackaddon] Database connection failed; disabling Grieflogger Rollback Addon functionality
+[29Jul2026 15:01:17.503] [luckperms-hikari connection adder/WARN] [me.lucko.luckperms.lib.mariadb.message.server.ErrorPacket/]: Error: 1130-HY000: Host '172.19.0.1' is not allowed to connect to this MariaDB server

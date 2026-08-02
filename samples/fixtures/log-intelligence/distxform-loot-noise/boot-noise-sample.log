@@ -1,0 +1,5 @@
+[02Aug2026 15:33:01.362] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class com/mojang/blaze3d/systems/RenderSystem for invalid dist DEDICATED_SERVER
+[02Aug2026 15:33:01.398] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class net/minecraft/client/Options for invalid dist DEDICATED_SERVER
+[02Aug2026 15:33:10.688] [Worker-Main-14/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan
+[02Aug2026 15:33:10.691] [Worker-Main-14/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:railways:blocks/track_twilightforest_darkwood - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: railways:track_twilightforest_darkwood
+[29Jul2026 15:01:05.123] [Server thread/ERROR] [grieflogger/]: Database connection failed

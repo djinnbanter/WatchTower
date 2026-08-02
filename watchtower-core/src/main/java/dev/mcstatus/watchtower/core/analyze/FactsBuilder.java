@@ -983,6 +983,7 @@ public final class FactsBuilder {
             summaries.add(row);
         }
         IncidentChainBuilder.link(summaries);
+        CrashNarrator.enrichAfterChain(summaries);
         optional.add("crash_summaries", summaries);
         if (!allRuleHits.isEmpty()) {
             optional.add("crash_rule_hits", allRuleHits);

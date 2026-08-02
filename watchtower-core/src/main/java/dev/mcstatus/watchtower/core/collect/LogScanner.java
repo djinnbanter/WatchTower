@@ -2,10 +2,14 @@ package dev.mcstatus.watchtower.core.collect;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.analyze.DbAddonSignatures;
+import dev.mcstatus.watchtower.core.analyze.GriefLoggerCreateCompatSignatures;
+import dev.mcstatus.watchtower.core.analyze.JadeSidecarAnalyzer;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
 import dev.mcstatus.watchtower.core.report.ReportProgress;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -58,6 +62,18 @@ public final class LogScanner {
             String rel = CollectSupport.relLogPath(serverDir, logPath);
             p.units(index, total);
             p.detail("Scanning log " + index + "/" + total + ": " + rel);
+            if (isJadeSidecar(logPath)) {
+                try {
+                    String jadeText = Files.readString(logPath, StandardCharsets.UTF_8);
+                    JsonObject jade = JadeSidecarAnalyzer.analyze(jadeText);
+                    if (jade != null) {
+                        staging.getAsJsonObject("optional").add("jade_sidecar", jade);
+                    }
+                } catch (IOException ignored) {
+                    // skip unreadable jade sidecar
+                }
+                continue;
+            }
             try {
                 GzipLineReader.forEachLine(logPath, (lineNo, line) ->
                         processLine(staging, mc, cutoff, rel, lineNo, line, state));
@@ -193,6 +209,8 @@ public final class LogScanner {
         if (!modLogErrors.isEmpty()) {
             staging.getAsJsonObject("optional").add("mod_log_errors", modLogErrors);
         }
+        emitDbAddonFail(staging, state);
+        emitGlCreateNpe(staging, state);
         JsonArray clientWarnings = state.clientLogAttributor.toJsonArray();
         if (!clientWarnings.isEmpty()) {
             staging.getAsJsonObject("optional").add("client_class_warnings_by_mod", clientWarnings);
@@ -316,9 +334,11 @@ public final class LogScanner {
             state.bootLines.add(stripped);
         }
 
-        state.modLogAnalyzer.processLine(stripped, inBootWindow);
+        state.modLogAnalyzer.processLine(rel, lineNo, stripped, inBootWindow);
         state.clientLogAttributor.processLine(stripped);
         accumulateFml(stripped, state);
+        maybeRecordDbAddon(stripped, rel, lineNo, ts, state);
+        maybeRecordGlCreateNpe(stripped, rel, lineNo, ts, state);
 
         if (ts != null && CollectSupport.epochSeconds(ts) >= cutoff) {
             mc.addProperty("log_had_activity_in_window", true);
@@ -454,17 +474,29 @@ public final class LogScanner {
         if (ts != null) {
             Matcher jm = LogPatterns.PLAYER_JOIN.matcher(stripped);
             if (jm.find()) {
+                state.successfulJoins++;
                 state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "join", jm.group(1).strip()));
             } else {
                 Matcher jmb = LogPatterns.PLAYER_JOIN_BRACKET.matcher(stripped);
                 if (jmb.find()) {
+                    state.successfulJoins++;
                     state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "join", jmb.group(1).strip()));
                 } else {
                     Matcher jme = LogPatterns.PLAYER_JOIN_ENTITY.matcher(stripped);
                     if (jme.find()) {
+                        state.successfulJoins++;
                         state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "join", jme.group(1).strip()));
                     }
                 }
+            }
+            boolean loginDisconnect = LogPatterns.LOGIN_DISCONNECT.matcher(stripped).find();
+            if (loginDisconnect) {
+                state.loginDisconnects++;
+                if (state.loginDisconnectEvidence.size() < 5) {
+                    state.loginDisconnectEvidence.add(
+                            CollectSupport.evidence(rel, lineNo, stripped, CollectSupport.iso(ts)));
+                }
+                maybeEmitLoginStorm(staging, state, ts);
             }
             Matcher lm = LogPatterns.PLAYER_LEAVE.matcher(stripped);
             if (lm.find()) {
@@ -473,10 +505,50 @@ public final class LogScanner {
                 Matcher lmb = LogPatterns.PLAYER_LEAVE_BRACKET.matcher(stripped);
                 if (lmb.find()) {
                     recordLeave(staging, state, ts, lmb.group(1).strip(), rel, lineNo, stripped);
-                } else if (LogPatterns.PLAYER_DISCONNECT.matcher(stripped).find()) {
+                } else if (!loginDisconnect && LogPatterns.PLAYER_DISCONNECT.matcher(stripped).find()) {
+                    // Avoid double-counting login-path disconnects as in-game leave storms.
                     recordLeave(staging, state, ts, "?", rel, lineNo, stripped);
                 }
             }
+        }
+    }
+
+    /** Threshold: ≥20 login disconnects and joins ≤ 10% of those disconnects (scan window). */
+    static boolean isLoginStorm(int loginDisconnects, int successfulJoins) {
+        return loginDisconnects >= 20 && successfulJoins * 10 <= loginDisconnects;
+    }
+
+    private static void maybeEmitLoginStorm(JsonObject staging, ScanState state, ZonedDateTime ts) {
+        if (state.loginStormEmitted || !isLoginStorm(state.loginDisconnects, state.successfulJoins)) {
+            return;
+        }
+        state.loginStormEmitted = true;
+        String joinWord = state.successfulJoins == 1 ? "join" : "joins";
+        JsonObject ev = new JsonObject();
+        ev.addProperty("time", CollectSupport.iso(ts));
+        ev.addProperty("type", "login_storm");
+        ev.addProperty("source", "log");
+        ev.addProperty("detail", state.loginDisconnects + " login disconnects vs "
+                + state.successfulJoins + " " + joinWord + " — server up but unjoinable");
+        ev.addProperty("importance", 9);
+        ev.addProperty("login_disconnects", state.loginDisconnects);
+        ev.addProperty("successful_joins", state.successfulJoins);
+        JsonArray evArr = new JsonArray();
+        for (JsonObject evidence : state.loginDisconnectEvidence) {
+            evArr.add(evidence.deepCopy());
+        }
+        ev.add("evidence", evArr);
+        CollectSupport.appendEvent(staging, ev);
+
+        JsonObject optional = staging.getAsJsonObject("optional");
+        if (optional != null) {
+            JsonObject summary = new JsonObject();
+            summary.addProperty("active", true);
+            summary.addProperty("issue_id", "signal_login_storm");
+            summary.addProperty("login_disconnects", state.loginDisconnects);
+            summary.addProperty("successful_joins", state.successfulJoins);
+            summary.addProperty("detail", CollectSupport.getString(ev, "detail"));
+            optional.add("login_storm", summary);
         }
     }
 
@@ -604,6 +676,15 @@ public final class LogScanner {
         boolean fmlAccumulating;
         final List<Long> recentLeaveEpochs = new ArrayList<>();
         boolean disconnectStormEmitted;
+        int loginDisconnects;
+        int successfulJoins;
+        boolean loginStormEmitted;
+        final List<JsonObject> loginDisconnectEvidence = new ArrayList<>();
+        DbAddonSignatures.Hit dbAddonBest;
+        final List<JsonObject> dbAddonEvidence = new ArrayList<>();
+        GriefLoggerCreateCompatSignatures.Hit glCreateHit;
+        final List<String> glCreateWindow = new ArrayList<>();
+        final List<JsonObject> glCreateEvidence = new ArrayList<>();
 
         ScanState(ZonedDateTime now, List<Pattern> errorIgnore, Set<String> knownModIds) {
             this.now = now;
@@ -616,7 +697,155 @@ public final class LogScanner {
             this.mapRenderLastLine = null;
             this.fmlAccumulating = false;
             this.disconnectStormEmitted = false;
+            this.loginDisconnects = 0;
+            this.successfulJoins = 0;
+            this.loginStormEmitted = false;
+            this.dbAddonBest = null;
+            this.glCreateHit = null;
         }
+    }
+
+    private static void maybeRecordDbAddon(
+            String stripped, String rel, int lineNo, ZonedDateTime ts, ScanState state) {
+        DbAddonSignatures.Hit hit = DbAddonSignatures.match(stripped);
+        if (hit == null) {
+            return;
+        }
+        if (state.dbAddonEvidence.size() < 5) {
+            state.dbAddonEvidence.add(
+                    CollectSupport.evidence(rel, lineNo, stripped, ts != null ? CollectSupport.iso(ts) : null));
+        }
+        state.dbAddonBest = preferDbAddonHit(state.dbAddonBest, hit);
+    }
+
+    /** Prefer MariaDB ACL core-disable over GLRA connection-only fails when both appear. */
+    static DbAddonSignatures.Hit preferDbAddonHit(DbAddonSignatures.Hit current, DbAddonSignatures.Hit next) {
+        if (next == null) {
+            return current;
+        }
+        if (current == null) {
+            return next;
+        }
+        if (DbAddonSignatures.KIND_ACL.equals(next.kind())
+                && !DbAddonSignatures.KIND_ACL.equals(current.kind())) {
+            return next;
+        }
+        return current;
+    }
+
+    private static void emitDbAddonFail(JsonObject staging, ScanState state) {
+        if (state.dbAddonBest == null) {
+            return;
+        }
+        DbAddonSignatures.Hit best = state.dbAddonBest;
+        String detail;
+        if (DbAddonSignatures.KIND_ACL.equals(best.kind())) {
+            detail = "GriefLogger disabled — MariaDB host ACL (1130) blocked database access";
+        } else {
+            detail = "GriefLogger Rollback Addon (griefloggerrollbackaddon) database connection failed";
+        }
+        JsonObject ev = new JsonObject();
+        ev.addProperty("time", CollectSupport.iso(state.now));
+        ev.addProperty("type", "db_addon_fail");
+        ev.addProperty("source", "log");
+        ev.addProperty("detail", detail);
+        ev.addProperty("importance", 8);
+        ev.addProperty("kind", best.kind());
+        ev.addProperty("primary_mod", best.modId());
+        JsonArray evArr = new JsonArray();
+        for (JsonObject evidence : state.dbAddonEvidence) {
+            evArr.add(evidence.deepCopy());
+        }
+        ev.add("evidence", evArr);
+        CollectSupport.appendEvent(staging, ev);
+
+        JsonObject optional = staging.getAsJsonObject("optional");
+        if (optional != null) {
+            JsonObject summary = new JsonObject();
+            summary.addProperty("active", true);
+            summary.addProperty("issue_id", DbAddonSignatures.ISSUE_ID);
+            summary.addProperty("kind", best.kind());
+            summary.addProperty("primary_mod", best.modId());
+            summary.addProperty("detail", detail);
+            summary.add("evidence", evArr.deepCopy());
+            optional.add("db_addon_fail", summary);
+        }
+    }
+
+    private static final int GL_CREATE_WINDOW = 80;
+
+    private static void maybeRecordGlCreateNpe(
+            String stripped, String rel, int lineNo, ZonedDateTime ts, ScanState state) {
+        if (state.glCreateWindow.size() >= GL_CREATE_WINDOW) {
+            state.glCreateWindow.remove(0);
+        }
+        state.glCreateWindow.add(stripped);
+        if (state.glCreateHit != null) {
+            return;
+        }
+        String low = stripped.toLowerCase(java.util.Locale.ROOT);
+        if (!(low.contains("containerhandler")
+                || low.contains("menuprovider")
+                || low.contains("contraption_interact")
+                || low.contains("mounteditemstorage")
+                || low.contains("mountedstoragemanager"))) {
+            return;
+        }
+        GriefLoggerCreateCompatSignatures.Hit hit =
+                GriefLoggerCreateCompatSignatures.match(String.join("\n", state.glCreateWindow));
+        if (hit == null) {
+            return;
+        }
+        state.glCreateHit = hit;
+        if (state.glCreateEvidence.size() < 5) {
+            state.glCreateEvidence.add(
+                    CollectSupport.evidence(rel, lineNo, stripped, ts != null ? CollectSupport.iso(ts) : null));
+        }
+    }
+
+    private static void emitGlCreateNpe(JsonObject staging, ScanState state) {
+        if (state.glCreateHit == null) {
+            return;
+        }
+        GriefLoggerCreateCompatSignatures.Hit hit = state.glCreateHit;
+        String detail = "GriefLogger × Create mounted-storage NPE (menuProvider null / contraption_interact) — FATAL task, no crash-report";
+        JsonObject ev = new JsonObject();
+        ev.addProperty("time", CollectSupport.iso(state.now));
+        ev.addProperty("type", "gl_create_npe");
+        ev.addProperty("source", "log");
+        ev.addProperty("detail", detail);
+        ev.addProperty("importance", 7);
+        ev.addProperty("kind", hit.kind());
+        ev.addProperty("primary_mod", hit.modId());
+        JsonArray evArr = new JsonArray();
+        for (JsonObject evidence : state.glCreateEvidence) {
+            evArr.add(evidence.deepCopy());
+        }
+        ev.add("evidence", evArr);
+        CollectSupport.appendEvent(staging, ev);
+
+        JsonObject optional = staging.getAsJsonObject("optional");
+        if (optional != null) {
+            JsonObject summary = new JsonObject();
+            summary.addProperty("active", true);
+            summary.addProperty("issue_id", GriefLoggerCreateCompatSignatures.ISSUE_ID);
+            summary.addProperty("kind", hit.kind());
+            summary.addProperty("primary_mod", hit.modId());
+            summary.addProperty("detail", detail);
+            summary.addProperty("tag_contraption_interact", true);
+            summary.addProperty("tag_menu_provider", true);
+            summary.addProperty("tag_mounted_storage", true);
+            summary.add("evidence", evArr.deepCopy());
+            optional.add("gl_create_npe", summary);
+        }
+    }
+
+    private static boolean isJadeSidecar(Path logPath) {
+        if (logPath == null) {
+            return false;
+        }
+        String name = logPath.getFileName() != null ? logPath.getFileName().toString() : "";
+        return "JadeErrorOutput.txt".equalsIgnoreCase(name);
     }
 
     private static Set<String> knownModIdsFromJars(String serverDir) {

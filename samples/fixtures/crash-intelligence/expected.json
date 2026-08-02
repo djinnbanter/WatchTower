@@ -1,6 +1,6 @@
 {
   "schema": "crash-intelligence-v1",
-  "failure_kinds": ["mod_runtime","mod_load_dependency","mod_load_script","world_nbt_corrupt","watchdog","watchdog_followup","watchdog_pregen","host_resource","loader","unknown"],
+  "failure_kinds": ["mod_runtime","mod_load_dependency","mod_load_script","world_nbt_corrupt","watchdog","watchdog_followup","watchdog_pregen","host_resource","loader","unknown","api_version_mismatch","shutdown_noise"],
   "cases": {
     "create-npe": {
       "file": "create-npe.txt",
@@ -54,7 +54,56 @@
       "files": ["create-npe.txt", "create-npe-paired-watchdog.txt"],
       "expected": {
         "same_incident_id": true,
-        "followup_failure_kind": "watchdog_followup"
+        "followup_failure_kind": "watchdog_followup",
+        "followup_primary_mod_id": "create"
+      }
+    },
+    "opac-nsm-command": {
+      "file": "opac-nsm-command.txt",
+      "expected": {
+        "failure_kind": "api_version_mismatch",
+        "primary_mod_id": "opac_better_commands",
+        "category": "mod"
+      }
+    },
+    "opac-nsm-listener": {
+      "file": "opac-nsm-listener.txt",
+      "expected": {
+        "failure_kind": "api_version_mismatch",
+        "primary_mod_id": "opac_better_commands",
+        "category": "mod"
+      }
+    },
+    "spark-shutdown-profiler": {
+      "file": "spark-shutdown-profiler.txt",
+      "expected": {
+        "failure_kind": "shutdown_noise",
+        "primary_mod_id": "spark",
+        "category": "mod"
+      }
+    },
+    "sable-body-removed-save": {
+      "file": "sable-body-removed-save.txt",
+      "expected": {
+        "failure_kind": "mod_runtime",
+        "primary_mod_id": "sable_rapier",
+        "category": "mod"
+      }
+    },
+    "opac-watchdog-2043-pair": {
+      "files": ["opac-nsm-listener.txt", "watchdog-opac-followup-2043.txt"],
+      "expected": {
+        "same_incident_id": true,
+        "followup_failure_kind": "watchdog_followup",
+        "followup_primary_mod_id": "opac_better_commands"
+      }
+    },
+    "sable-watchdog-2150-pair": {
+      "files": ["sable-body-removed-save.txt", "watchdog-sable-followup-2150.txt"],
+      "expected": {
+        "same_incident_id": true,
+        "followup_failure_kind": "watchdog_followup",
+        "followup_primary_mod_id": "sable_rapier"
       }
     }
   }

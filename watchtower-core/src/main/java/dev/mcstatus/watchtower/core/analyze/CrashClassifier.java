@@ -44,6 +44,10 @@ public final class CrashClassifier {
     public static final String FK_HOST_RESOURCE = "host_resource";
     /** External force-kill (OS OOM-killer or panel watchdog) — no Minecraft crash report. */
     public static final String FK_EXTERNAL_KILL = "external_kill";
+    /** OPAC Better Commands calling a missing OpenPartiesAndClaims API method. */
+    public static final String FK_API_VERSION_MISMATCH = "api_version_mismatch";
+    /** Spark / similar stop-path noise (not mid-play instability). */
+    public static final String FK_SHUTDOWN_NOISE = "shutdown_noise";
     public static final String FK_LOADER = "loader";
     public static final String FK_UNKNOWN = "unknown";
 
@@ -307,6 +311,26 @@ public final class CrashClassifier {
                 suspect = primary;
             }
             String linked = primary != null ? primary : suspect;
+
+            if (isSparkShutdownNoise(scanText, combined, stackText)) {
+                return new Classification(
+                        "mod",
+                        FK_SHUTDOWN_NOISE,
+                        "spark",
+                        "spark",
+                        null,
+                        hintsShutdownNoise());
+            }
+            if (isOpacApiVersionMismatch(scanText, combined, exception, linked, suspect, stackText)) {
+                return new Classification(
+                        "mod",
+                        FK_API_VERSION_MISMATCH,
+                        "opac_better_commands",
+                        "opac_better_commands",
+                        null,
+                        hintsApiVersionMismatch());
+            }
+
             JsonObject details = enrichModRuntimeDetails(scanText, linked, exception);
             return new Classification(
                     "mod",
@@ -1230,6 +1254,43 @@ public final class CrashClassifier {
         };
     }
 
+    private static boolean isSparkShutdownNoise(String scanText, String combined, String stackText) {
+        String blob = ((scanText != null ? scanText : "") + " "
+                + (combined != null ? combined : "") + " "
+                + (stackText != null ? stackText : "")).toLowerCase(Locale.ROOT);
+        if (!blob.contains("profiler job no longer active")) {
+            return false;
+        }
+        return blob.contains("handleserverstopping")
+                || blob.contains("neoforgeserversparkplugin")
+                || (blob.contains("ondisable") && blob.contains("spark"));
+    }
+
+    private static boolean isOpacApiVersionMismatch(
+            String scanText,
+            String combined,
+            String exception,
+            String primary,
+            String suspect,
+            String stackText) {
+        String blob = ((scanText != null ? scanText : "") + " "
+                + (combined != null ? combined : "") + " "
+                + (stackText != null ? stackText : "") + " "
+                + (exception != null ? exception : "")).toLowerCase(Locale.ROOT);
+        if (!blob.contains("nosuchmethoderror")) {
+            return false;
+        }
+        boolean opacCaller = "opac_better_commands".equals(primary)
+                || "opac_better_commands".equals(suspect)
+                || blob.contains("opac_better_commands");
+        if (!opacCaller) {
+            return false;
+        }
+        return blob.contains("xaero.pac")
+                || blob.contains("getplayerconfigs")
+                || blob.contains("openpartiesandclaims");
+    }
+
     private static boolean isWatchdog(String combined, String exception, String root) {
         if (combined.contains("serverhangwatchdog") || combined.contains("single server tick took")) {
             return true;
@@ -1658,6 +1719,18 @@ public final class CrashClassifier {
                 "Read the full crash report under crash-reports/ for the root exception.",
                 "Search the mod id or exception online or in your pack's issue tracker.",
                 "Acknowledge after review if the crash is historical and already resolved."));
+    }
+
+    private static JsonArray hintsApiVersionMismatch() {
+        return toArray(List.of(
+                "Align OPAC Better Commands with the installed OpenPartiesAndClaims version.",
+                "Or remove opac_better_commands until it is compatible with your OPAC build."));
+    }
+
+    private static JsonArray hintsShutdownNoise() {
+        return toArray(List.of(
+                "This happened on the server shutdown or stop path — treat it as low-priority shutdown hygiene, not a mid-play crash.",
+                "Safe to acknowledge if the server was already stopping; no urgent Spark update needed for this alone."));
     }
 
     private static JsonArray toArray(List<String> hints) {
