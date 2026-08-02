@@ -36,7 +36,7 @@ Active groups by severity only (**Critical** → **Warning** → **Info**). Pack
 Kill-switches: `MOD_JAR_DRIFT_ENABLED`, `CLIENT_ON_SERVER_ISSUES_ENABLED`, `SILENT_FAIL_DETECT_ENABLED`, `WORLD_PRESSURE_ENABLED`, `JOIN_CLINIC_ENABLED`, `SOFT_HANG_ENABLED` in `watchtower.conf` — see [[Configuration]].
 
 
-If the server process is up but ticks stop, WatchTower raises **Server tick frozen** (`SOFT_HANG`) with phase and how long it has been stuck. Optional hang dumps land under `watchtower/hangs/` when `SOFT_HANG_THREAD_DUMP=true`. WatchTower never restarts the server for you.
+If the server process is up but ticks stop, WatchTower raises **Server tick frozen** (`SOFT_HANG`) with phase and how long it has been stuck. Optional hang dumps land under `watchtower/hangs/` when `SOFT_HANG_THREAD_DUMP=true`. When a hang dump is available, WatchTower also shows a likely cause category and may hint at a suspect mod — treat that as a lead, not proof. WatchTower never restarts the server for you.
 ---
 
 ## What to do next
