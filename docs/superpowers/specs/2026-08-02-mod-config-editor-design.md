@@ -4,6 +4,8 @@
 **Date:** 2026-08-02  
 **Roadmap:** `docs/dev/roadmap/versions/1.1.19-1.1.29-change-safety-and-recovery.md` §1.1.25
 
+> **Editor UX superseded:** TOML form editor + raw fallback is defined in [`2026-08-02-mod-config-form-editor-design.md`](2026-08-02-mod-config-form-editor-design.md). This doc still owns sandbox roots, backup/undo, kill-switch, and API routes.
+
 ## Product job
 
 Admin+ can safely edit mod config files under server `config/` from **Mods → Configs**, with mandatory backup and undo. Not a generic filesystem editor; not `server.properties` apply (stays Insights → Configs).
@@ -12,7 +14,7 @@ Admin+ can safely edit mod config files under server `config/` from **Mods → C
 
 | Decision | Choice |
 |----------|--------|
-| Editor | Raw monospace only — no structured TOML forms |
+| Editor | See form-editor design — TOML form when parseable; raw otherwise |
 | Roots | `config/` only |
 | Secrets | Mask in list/snippets; real bytes in editor; audit = path only |
 | Save | Diff → backup → write; mtime conflict → 409; max 512 KiB |
