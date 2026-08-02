@@ -202,6 +202,28 @@ class IssuesLiveEvaluatorsTest {
     }
 
     @Test
+    void fromSoftHangIncludesLikelyCauseInMessageAndSteps() {
+        JsonObject cache = new JsonObject();
+        JsonObject soft = new JsonObject();
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_ACTIVE, true);
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_PHASE, "ticking");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_STALL_SECONDS, 48);
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_STARTED_AT, "2026-08-02T00:00:00Z");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE, "entity_tick");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE_SUMMARY, "Looks stuck while ticking entities");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_LIKELY_CAUSE_CONFIDENCE, "medium");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_SUSPECT_MOD, "example");
+        soft.addProperty(OpsCacheSchema.SOFT_HANG_DUMP_PATH, "watchtower/hangs/hang-x.txt");
+        cache.add(OpsCacheSchema.SOFT_HANG, soft);
+        IssuesLiveRecord r = IssuesLiveEvaluators.fromSoftHang(cache).getFirst();
+        assertTrue(r.message().contains("Looks stuck while ticking entities"));
+        assertFalse(r.message().contains("example"));
+        assertTrue(r.fixSteps().stream().anyMatch(s ->
+                s.contains("entity") || s.contains("farm") || s.contains("mob")));
+        assertTrue(r.fixSteps().stream().anyMatch(s -> s.contains("example") && s.contains("lead")));
+    }
+
+    @Test
     void evaluateAndMergeResolvesSoftHangWhenInactive() {
         String t0 = "2026-08-02T00:00:00Z";
         IssuesLiveRecord open = IssuesLiveRecord.builder()
