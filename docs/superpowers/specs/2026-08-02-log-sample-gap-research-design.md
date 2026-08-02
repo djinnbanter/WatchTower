@@ -3,7 +3,19 @@
 **Status:** Approved for planning (2026-08-02)  
 **Size:** Medium (research only; no product code in this pass)  
 **Platforms:** NeoForge 1.21.x / Java 21 (sample pack is 1.21.1 / NeoForge 21.1.x)  
-**Sample root:** `samples/new samples 02.08.2026/`
+**Sample root (first run):** `samples/new samples 02.08.2026/`
+
+## Reuse (future sample dumps)
+
+This is a **playbook**, not a one-shot. For any new user dump:
+
+1. Drop files under `samples/<label>/` (expect `logs/` + optional `crash-reports/`; sidecars allowed).
+2. Set run inputs: `SAMPLE_ROOT`, `RUN_ID` (date + short label), optional notes.
+3. Tell the agent: *“Run the log sample gap research playbook on `samples/<label>/` per `docs/superpowers/specs/2026-08-02-log-sample-gap-research-design.md` and `docs/superpowers/plans/2026-08-02-log-sample-gap-research.md`.”*
+4. Artifacts land in `docs/superpowers/research-runs/<RUN_ID>/` — do not overwrite prior runs.
+5. Product classifier/scanner code still stays out of scope unless a **separate** implementation plan is opened from that run’s fixture backlog.
+
+Locked decisions (full corpus, code map + runtime replay, full operator-path scoring, timeline-first + ingestion appendix) apply to every run unless this spec is explicitly revised.
 
 ## Problem
 
