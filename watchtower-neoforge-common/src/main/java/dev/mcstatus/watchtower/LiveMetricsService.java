@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.mcstatus.watchtower.core.analyze.GcAdvisor;
 import dev.mcstatus.watchtower.core.analyze.PerformanceInsightEngine;
+import dev.mcstatus.watchtower.core.analyze.RamSizingAdvisor;
 import dev.mcstatus.watchtower.core.collect.DimensionStorageScanner;
 import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.collect.ExtrasCollector;
@@ -270,7 +271,47 @@ public final class LiveMetricsService {
         if (cachedJavaRssGb != null) {
             body.addProperty("java_rss_gb", cachedJavaRssGb);
         }
+        attachRamEnvelope(body);
         return body;
+    }
+
+    private static void attachRamEnvelope(JsonObject body) {
+        if (body == null) {
+            return;
+        }
+        JsonObject latest = body.has("latest") && body.get("latest").isJsonObject()
+                ? body.getAsJsonObject("latest") : body;
+        double hostMem = Double.NaN;
+        double xmx = Double.NaN;
+        String ramSource = null;
+        if (latest.has("mem_total_gb") && !latest.get("mem_total_gb").isJsonNull()) {
+            hostMem = latest.get("mem_total_gb").getAsDouble();
+        }
+        if (latest.has("ram_source") && !latest.get("ram_source").isJsonNull()) {
+            ramSource = latest.get("ram_source").getAsString();
+        }
+        if (latest.has("java_xmx_gb") && !latest.get("java_xmx_gb").isJsonNull()) {
+            xmx = latest.get("java_xmx_gb").getAsDouble();
+        }
+        if (Double.isNaN(xmx) && latest.has("jvm_health_live") && latest.get("jvm_health_live").isJsonObject()) {
+            JsonObject jh = latest.getAsJsonObject("jvm_health_live");
+            if (jh.has("xmx_gb") && !jh.get("xmx_gb").isJsonNull()) {
+                xmx = jh.get("xmx_gb").getAsDouble();
+            } else if (jh.has("heap_max_gb") && !jh.get("heap_max_gb").isJsonNull()) {
+                xmx = jh.get("heap_max_gb").getAsDouble();
+            }
+        }
+        if (Double.isNaN(xmx) && latest.has("heap_mb") && latest.get("heap_mb").isJsonObject()) {
+            JsonObject heap = latest.getAsJsonObject("heap_mb");
+            if (heap.has("max") && !heap.get("max").isJsonNull()) {
+                xmx = heap.get("max").getAsDouble() / 1024.0;
+            }
+        }
+        JsonObject snap = RamSizingAdvisor.envelopeSnapshot(hostMem, xmx, ramSource);
+        if (snap.has("envelope")
+                && !RamSizingAdvisor.ENVELOPE_UNKNOWN.equals(snap.get("envelope").getAsString())) {
+            body.add("ram_envelope", snap);
+        }
     }
 
     public void recordTick(ServerContext server) {
