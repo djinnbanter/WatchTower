@@ -1040,4 +1040,4 @@ git commit -m "docs: freeze reusable sample-gap research agent prompt"
 
 ## Plain English (end user)
 
-You get a repeatable lab procedure: drop a user’s logs in `samples/…`, run the playbook, and the agent **reads every file start to finish**, compares that careful read to counting scripts and to what WatchTower would say, then writes a folder of gaps and golden-fixture ideas. The pilot census-only pass is not enough under the revised rules until Tasks F1–F6 finish on that dump.
+You get a repeatable lab procedure: drop a user’s logs in `samples/…`, run the playbook, and the agent **reads every file start to finish**, compares that careful read to counting scripts and to what WatchTower would say, then writes a folder of gaps and golden-fixture ideas. The pilot sample (`2026-08-02-new-samples`) has finished both the census pass and Tasks F1–F6 forensic deep-read.
