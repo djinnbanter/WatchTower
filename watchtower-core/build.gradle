@@ -62,6 +62,14 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named('test', Test).configure {
     useJUnitPlatform()
+    def wtSampleRoot = System.getProperty('wt.sample.root')
+    if (wtSampleRoot != null) {
+        systemProperty 'wt.sample.root', wtSampleRoot
+    }
+    def wtResearchOut = System.getProperty('wt.research.out')
+    if (wtResearchOut != null) {
+        systemProperty 'wt.research.out', wtResearchOut
+    }
 }
 
 tasks.named('jar', Jar) {
