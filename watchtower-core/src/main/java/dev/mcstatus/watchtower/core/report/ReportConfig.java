@@ -125,8 +125,11 @@ public final class ReportConfig {
     private final boolean silentFailDetectEnabled;
     private final boolean worldPressureEnabled;
     private final boolean chunkWritePressureEnabled;
+    private final int chunkWriteGrowthChunks;
+    private final int chunkWriteSustainedScans;
     private final boolean joinClinicEnabled;
     private final boolean modDisableEnabled;
+    private final boolean modConfigEditEnabled;
     private final boolean worldRiskEnabled;
     private final boolean configAuditEnabled;
     private final int reportRetentionCount;
@@ -254,8 +257,11 @@ public final class ReportConfig {
         this.silentFailDetectEnabled = b.silentFailDetectEnabled;
         this.worldPressureEnabled = b.worldPressureEnabled;
         this.chunkWritePressureEnabled = b.chunkWritePressureEnabled;
+        this.chunkWriteGrowthChunks = b.chunkWriteGrowthChunks;
+        this.chunkWriteSustainedScans = b.chunkWriteSustainedScans;
         this.joinClinicEnabled = b.joinClinicEnabled;
         this.modDisableEnabled = b.modDisableEnabled;
+        this.modConfigEditEnabled = b.modConfigEditEnabled;
         this.worldRiskEnabled = b.worldRiskEnabled;
         this.configAuditEnabled = b.configAuditEnabled;
         this.reportRetentionCount = b.reportRetentionCount;
@@ -398,8 +404,11 @@ public final class ReportConfig {
         b.silentFailDetectEnabled = isTruthy(env.get("SILENT_FAIL_DETECT_ENABLED"), true);
         b.worldPressureEnabled = isTruthy(env.get("WORLD_PRESSURE_ENABLED"), true);
         b.chunkWritePressureEnabled = isTruthy(env.get("CHUNK_WRITE_PRESSURE_ENABLED"), true);
+        b.chunkWriteGrowthChunks = parseInt(env.get("CHUNK_WRITE_GROWTH_CHUNKS"), 48);
+        b.chunkWriteSustainedScans = parseInt(env.get("CHUNK_WRITE_SUSTAINED_SCANS"), 3);
         b.joinClinicEnabled = isTruthy(env.get("JOIN_CLINIC_ENABLED"), true);
         b.modDisableEnabled = isTruthy(env.get("MOD_DISABLE_ENABLED"), true);
+        b.modConfigEditEnabled = isTruthy(env.get("MOD_CONFIG_EDIT_ENABLED"), true);
         b.worldRiskEnabled = isTruthy(env.get("WORLD_RISK_ENABLED"), true);
         b.configAuditEnabled = isTruthy(env.get("CONFIG_AUDIT_ENABLED"), true);
         b.reportRetentionCount = parseInt(env.get("REPORT_RETENTION_COUNT"), ReportRetentionPolicy.DEFAULT_RETENTION_COUNT);
@@ -678,8 +687,11 @@ public final class ReportConfig {
     public boolean silentFailDetectEnabled() { return silentFailDetectEnabled; }
     public boolean worldPressureEnabled() { return worldPressureEnabled; }
     public boolean chunkWritePressureEnabled() { return chunkWritePressureEnabled; }
+    public int chunkWriteGrowthChunks() { return chunkWriteGrowthChunks; }
+    public int chunkWriteSustainedScans() { return chunkWriteSustainedScans; }
     public boolean joinClinicEnabled() { return joinClinicEnabled; }
     public boolean modDisableEnabled() { return modDisableEnabled; }
+    public boolean modConfigEditEnabled() { return modConfigEditEnabled; }
     public boolean worldRiskEnabled() { return worldRiskEnabled; }
     public boolean configAuditEnabled() { return configAuditEnabled; }
     public int reportRetentionCount() { return reportRetentionCount; }
@@ -807,8 +819,11 @@ public final class ReportConfig {
         private boolean silentFailDetectEnabled = true;
         private boolean worldPressureEnabled = true;
         private boolean chunkWritePressureEnabled = true;
+        private int chunkWriteGrowthChunks = 48;
+        private int chunkWriteSustainedScans = 3;
         private boolean joinClinicEnabled = true;
         private boolean modDisableEnabled = true;
+        private boolean modConfigEditEnabled = true;
         private boolean worldRiskEnabled = true;
         private boolean configAuditEnabled = true;
         private int reportRetentionCount = ReportRetentionPolicy.DEFAULT_RETENTION_COUNT;
@@ -925,8 +940,11 @@ public final class ReportConfig {
         public Builder silentFailDetectEnabled(boolean v) { this.silentFailDetectEnabled = v; return this; }
         public Builder worldPressureEnabled(boolean v) { this.worldPressureEnabled = v; return this; }
         public Builder chunkWritePressureEnabled(boolean v) { this.chunkWritePressureEnabled = v; return this; }
+        public Builder chunkWriteGrowthChunks(int v) { this.chunkWriteGrowthChunks = v; return this; }
+        public Builder chunkWriteSustainedScans(int v) { this.chunkWriteSustainedScans = v; return this; }
         public Builder joinClinicEnabled(boolean v) { this.joinClinicEnabled = v; return this; }
         public Builder modDisableEnabled(boolean v) { this.modDisableEnabled = v; return this; }
+        public Builder modConfigEditEnabled(boolean v) { this.modConfigEditEnabled = v; return this; }
         public Builder worldRiskEnabled(boolean v) { this.worldRiskEnabled = v; return this; }
         public Builder configAuditEnabled(boolean v) { this.configAuditEnabled = v; return this; }
         public Builder reportRetentionCount(int v) { this.reportRetentionCount = v; return this; }
@@ -1108,8 +1126,11 @@ public final class ReportConfig {
             this.silentFailDetectEnabled = c.silentFailDetectEnabled();
             this.worldPressureEnabled = c.worldPressureEnabled();
             this.chunkWritePressureEnabled = c.chunkWritePressureEnabled();
+            this.chunkWriteGrowthChunks = c.chunkWriteGrowthChunks();
+            this.chunkWriteSustainedScans = c.chunkWriteSustainedScans();
             this.joinClinicEnabled = c.joinClinicEnabled();
             this.modDisableEnabled = c.modDisableEnabled();
+            this.modConfigEditEnabled = c.modConfigEditEnabled();
             this.worldRiskEnabled = c.worldRiskEnabled();
             this.configAuditEnabled = c.configAuditEnabled();
             this.reportRetentionCount = c.reportRetentionCount();
