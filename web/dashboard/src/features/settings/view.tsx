@@ -577,21 +577,23 @@ export function PageView({ route }: { route: RouteState }) {
       {panel === 'alerts' ? (
         <div className="space-y-6">
           <Section title="Disk alerts" hint="When disk use, runway, or write latency looks bad, Issues and Overview warn you.">
-            <div className="grid gap-3 md:grid-cols-2">
-              <NumberField
-                label="Disk warning"
-                unit="%"
-                hint="Warn when disk used percent is at or above this (typical 85)"
-                value={num(form.disk_warn_pct)}
-                onChange={(v) => set('disk_warn_pct', v)}
-              />
-              <NumberField
-                label="Disk fill warning"
-                unit="days"
-                hint="Raise an Issue when estimated days-until-full is at or below this"
-                value={num(form.disk_fill_warn_days)}
-                onChange={(v) => set('disk_fill_warn_days', v)}
-              />
+            <SettingsStack>
+              <SettingsPair>
+                <NumberField
+                  label="Disk warning"
+                  unit="%"
+                  hint="Warn when disk used percent is at or above this (typical 85)"
+                  value={num(form.disk_warn_pct)}
+                  onChange={(v) => set('disk_warn_pct', v)}
+                />
+                <NumberField
+                  label="Disk fill warning"
+                  unit="days"
+                  hint="Raise an Issue when estimated days-until-full is at or below this"
+                  value={num(form.disk_fill_warn_days)}
+                  onChange={(v) => set('disk_fill_warn_days', v)}
+                />
+              </SettingsPair>
               <NumberField
                 label="Disk write latency warning"
                 unit="ms"
@@ -599,53 +601,59 @@ export function PageView({ route }: { route: RouteState }) {
                 value={num(form.disk_io_latency_warn_ms)}
                 onChange={(v) => set('disk_io_latency_warn_ms', v)}
               />
-            </div>
+            </SettingsStack>
           </Section>
           <Section
             title="Chunk write / pregen"
             hint="When write latency stays high or chunks grow too fast during pregen, Insights → World and Issues warn you. WatchTower cannot read JVM save-queue depth — latency is the signal."
           >
-            <div className="grid gap-3 md:grid-cols-2">
-              <ToggleField
-                label="Chunk write pressure"
-                hint="Classify save backlog, pregen outrunning disk, and heavy chunk growth"
-                value={bool(form.chunk_write_pressure_enabled, true)}
-                onChange={(v) => set('chunk_write_pressure_enabled', v)}
-              />
-              <NumberField
-                label="Heavy growth threshold"
-                unit="chunks"
-                hint="Warn when loaded chunks jump by this many between scans while players are online (typical 48)"
-                value={num(form.chunk_write_growth_chunks, 48)}
-                onChange={(v) => set('chunk_write_growth_chunks', v)}
-              />
+            <SettingsStack>
+              <SettingsPair>
+                <ToggleField
+                  label="Chunk write pressure"
+                  hint="Classify save backlog, pregen outrunning disk, and heavy chunk growth"
+                  value={bool(form.chunk_write_pressure_enabled, true)}
+                  onChange={(v) => set('chunk_write_pressure_enabled', v)}
+                />
+                <NumberField
+                  label="Heavy growth threshold"
+                  unit="chunks"
+                  hint="Warn when loaded chunks jump by this many between scans while players are online (typical 48)"
+                  value={num(form.chunk_write_growth_chunks, 48)}
+                  onChange={(v) => set('chunk_write_growth_chunks', v)}
+                />
+              </SettingsPair>
               <NumberField
                 label="Sustained scans"
+                unit="scans"
                 hint="How many ops scans in a row before raising an Issue (typical 3)"
                 value={num(form.chunk_write_sustained_scans, 3)}
                 onChange={(v) => set('chunk_write_sustained_scans', v)}
               />
-            </div>
+            </SettingsStack>
           </Section>
           <Section
             title="Report retention"
             hint="Old facts/brief files are pruned using both limits — whichever is tighter wins."
           >
-            <div className="grid gap-3 md:grid-cols-2">
-              <NumberField
-                label="Keep reports for"
-                unit="days"
-                hint="Delete report artifacts older than this many days"
-                value={num(form.report_retention_days)}
-                onChange={(v) => set('report_retention_days', v)}
-              />
-              <NumberField
-                label="Keep at most"
-                hint="Maximum number of report artifacts to keep"
-                value={num(form.report_retention_count)}
-                onChange={(v) => set('report_retention_count', v)}
-              />
-            </div>
+            <SettingsStack>
+              <SettingsPair>
+                <NumberField
+                  label="Keep reports for"
+                  unit="days"
+                  hint="Delete report artifacts older than this many days"
+                  value={num(form.report_retention_days)}
+                  onChange={(v) => set('report_retention_days', v)}
+                />
+                <NumberField
+                  label="Keep at most"
+                  unit="reports"
+                  hint="Maximum number of report artifacts to keep"
+                  value={num(form.report_retention_count)}
+                  onChange={(v) => set('report_retention_count', v)}
+                />
+              </SettingsPair>
+            </SettingsStack>
           </Section>
         </div>
       ) : null}
@@ -662,46 +670,51 @@ export function PageView({ route }: { route: RouteState }) {
             title="Modrinth"
             hint="Optional jar identity and update checks. Watchtower never downloads jars — scans only send SHA-512 hashes."
           >
-            <div className="grid gap-3 md:grid-cols-2">
-              <ToggleField
-                label="Modrinth lookups"
-                hint="Allow dedicated Modrinth scans from Mods → Modrinth"
-                value={modrinthOn}
-                onChange={(v) => {
-                  set('modrinth_lookup', v);
-                  if (!v) set('modrinth_auto_scan_on_mod_changes', false);
-                }}
-              />
-              <ToggleField
-                label="Auto-scan when mods change"
-                hint={
-                  modrinthOn
-                    ? 'Start a Modrinth scan when jars are added, removed, or updated'
-                    : 'Turn on Modrinth lookups first'
-                }
-                value={bool(form.modrinth_auto_scan_on_mod_changes)}
-                onChange={(v) => set('modrinth_auto_scan_on_mod_changes', v)}
-                disabled={!modrinthOn}
-              />
-            </div>
+            <SettingsStack>
+              <SettingsPair>
+                <ToggleField
+                  label="Modrinth lookups"
+                  hint="Allow Modrinth scans from Mods → Modrinth"
+                  value={modrinthOn}
+                  onChange={(v) => {
+                    set('modrinth_lookup', v);
+                    if (!v) set('modrinth_auto_scan_on_mod_changes', false);
+                  }}
+                />
+                <ToggleField
+                  label="Auto-scan when mods change"
+                  hint={
+                    modrinthOn
+                      ? 'Scan when jars are added, removed, or updated'
+                      : 'Turn on Modrinth lookups first'
+                  }
+                  value={bool(form.modrinth_auto_scan_on_mod_changes)}
+                  onChange={(v) => set('modrinth_auto_scan_on_mod_changes', v)}
+                  disabled={!modrinthOn}
+                />
+              </SettingsPair>
+            </SettingsStack>
           </Section>
           <Section title="Spark" hint="Profiler integration. Auto-capture timing lives under Monitoring → Spark on lag.">
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="wt-form-row px-4 py-3">
-                <div className="text-sm font-medium">Spark mod</div>
-                <div className="mt-1.5">
-                  <StatusPill tone={sparkLoaded ? 'ok' : 'warn'}>
-                    {sparkLoaded ? 'Installed' : 'Not installed'}
-                  </StatusPill>
+            <SettingsStack>
+              <SettingsPair>
+                <div className="st-row">
+                  <div className="st-row__label">Spark mod</div>
+                  <div className="st-row__hint">Detected from the running server — install Spark to enable</div>
+                  <div className="mt-1.5">
+                    <StatusPill tone={sparkLoaded ? 'ok' : 'warn'}>
+                      {sparkLoaded ? 'Installed' : 'Not installed'}
+                    </StatusPill>
+                  </div>
                 </div>
-              </div>
-              <ToggleField
-                label="Spark enabled"
-                hint="Allow Watchtower to list profiles, import links, and auto-capture"
-                value={sparkEnabled}
-                onChange={(v) => set('spark_enabled', v)}
-              />
-            </div>
+                <ToggleField
+                  label="Spark enabled"
+                  hint="Allow Watchtower to use Spark (profiles, auto-capture)"
+                  value={sparkEnabled}
+                  onChange={(v) => set('spark_enabled', v)}
+                />
+              </SettingsPair>
+            </SettingsStack>
           </Section>
         </div>
       ) : null}
