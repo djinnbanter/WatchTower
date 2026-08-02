@@ -124,6 +124,7 @@ public final class ReportConfig {
     private final boolean restartHygieneEnabled;
     private final boolean silentFailDetectEnabled;
     private final boolean worldPressureEnabled;
+    private final boolean chunkWritePressureEnabled;
     private final boolean joinClinicEnabled;
     private final boolean modDisableEnabled;
     private final boolean worldRiskEnabled;
@@ -252,6 +253,7 @@ public final class ReportConfig {
         this.restartHygieneEnabled = b.restartHygieneEnabled;
         this.silentFailDetectEnabled = b.silentFailDetectEnabled;
         this.worldPressureEnabled = b.worldPressureEnabled;
+        this.chunkWritePressureEnabled = b.chunkWritePressureEnabled;
         this.joinClinicEnabled = b.joinClinicEnabled;
         this.modDisableEnabled = b.modDisableEnabled;
         this.worldRiskEnabled = b.worldRiskEnabled;
@@ -395,6 +397,7 @@ public final class ReportConfig {
         b.restartHygieneEnabled = isTruthy(env.get("RESTART_HYGIENE_ENABLED"), true);
         b.silentFailDetectEnabled = isTruthy(env.get("SILENT_FAIL_DETECT_ENABLED"), true);
         b.worldPressureEnabled = isTruthy(env.get("WORLD_PRESSURE_ENABLED"), true);
+        b.chunkWritePressureEnabled = isTruthy(env.get("CHUNK_WRITE_PRESSURE_ENABLED"), true);
         b.joinClinicEnabled = isTruthy(env.get("JOIN_CLINIC_ENABLED"), true);
         b.modDisableEnabled = isTruthy(env.get("MOD_DISABLE_ENABLED"), true);
         b.worldRiskEnabled = isTruthy(env.get("WORLD_RISK_ENABLED"), true);
@@ -674,6 +677,7 @@ public final class ReportConfig {
     public boolean restartHygieneEnabled() { return restartHygieneEnabled; }
     public boolean silentFailDetectEnabled() { return silentFailDetectEnabled; }
     public boolean worldPressureEnabled() { return worldPressureEnabled; }
+    public boolean chunkWritePressureEnabled() { return chunkWritePressureEnabled; }
     public boolean joinClinicEnabled() { return joinClinicEnabled; }
     public boolean modDisableEnabled() { return modDisableEnabled; }
     public boolean worldRiskEnabled() { return worldRiskEnabled; }
@@ -802,6 +806,7 @@ public final class ReportConfig {
         private boolean restartHygieneEnabled = true;
         private boolean silentFailDetectEnabled = true;
         private boolean worldPressureEnabled = true;
+        private boolean chunkWritePressureEnabled = true;
         private boolean joinClinicEnabled = true;
         private boolean modDisableEnabled = true;
         private boolean worldRiskEnabled = true;
@@ -919,6 +924,7 @@ public final class ReportConfig {
         public Builder restartHygieneEnabled(boolean v) { this.restartHygieneEnabled = v; return this; }
         public Builder silentFailDetectEnabled(boolean v) { this.silentFailDetectEnabled = v; return this; }
         public Builder worldPressureEnabled(boolean v) { this.worldPressureEnabled = v; return this; }
+        public Builder chunkWritePressureEnabled(boolean v) { this.chunkWritePressureEnabled = v; return this; }
         public Builder joinClinicEnabled(boolean v) { this.joinClinicEnabled = v; return this; }
         public Builder modDisableEnabled(boolean v) { this.modDisableEnabled = v; return this; }
         public Builder worldRiskEnabled(boolean v) { this.worldRiskEnabled = v; return this; }
@@ -1101,6 +1107,7 @@ public final class ReportConfig {
             this.restartHygieneEnabled = c.restartHygieneEnabled();
             this.silentFailDetectEnabled = c.silentFailDetectEnabled();
             this.worldPressureEnabled = c.worldPressureEnabled();
+            this.chunkWritePressureEnabled = c.chunkWritePressureEnabled();
             this.joinClinicEnabled = c.joinClinicEnabled();
             this.modDisableEnabled = c.modDisableEnabled();
             this.worldRiskEnabled = c.worldRiskEnabled();

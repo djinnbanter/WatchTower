@@ -65,6 +65,7 @@ public final class OpsCacheSchema {
     public static final String WORLD_PRESSURE_DIMENSIONS = "dimensions";
     public static final String WORLD_PRESSURE_CLASSIFIERS = "classifiers";
     public static final String WORLD_PRESSURE_STREAKS = "streaks";
+    public static final String WORLD_PRESSURE_METERS = "meters";
 
     public static final String RIGHT_NOW_UPDATED_AT = "updated_at";
     public static final String RIGHT_NOW_SIGNALS = "signals";
