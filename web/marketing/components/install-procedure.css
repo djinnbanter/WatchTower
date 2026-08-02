@@ -186,55 +186,100 @@
   word-break: break-all;
 }
 
-/* Signature: dashboard URL instrument */
+/* Signature: dashboard URL as browser chrome */
 .install-url {
-  position: relative;
   margin-top: 1.15rem;
-  padding: 1.15rem 1.2rem 1.2rem 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--wt-accent) 32%, var(--wt-line));
+  border: 1px solid var(--wt-line);
   border-radius: var(--wt-radius-md);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--wt-accent) 10%, var(--wt-bg2)) 0%,
-      var(--wt-bg2) 58%
-    );
+  background: var(--wt-bg1);
   overflow: hidden;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--wt-text) 4%, transparent);
 }
 
-.install-url::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--wt-accent);
+.install-url__chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--wt-line);
+  background: color-mix(in srgb, var(--wt-bg2) 78%, transparent);
 }
 
-.install-url__label {
-  margin: 0;
+.install-url__chrome span {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--wt-bg3);
+  border: 1px solid var(--wt-line);
+  flex-shrink: 0;
+}
+
+.install-url__chrome span:nth-child(1) {
+  background: color-mix(in srgb, var(--wt-danger) 55%, var(--wt-bg2));
+}
+
+.install-url__chrome span:nth-child(2) {
+  background: color-mix(in srgb, var(--wt-warn) 55%, var(--wt-bg2));
+}
+
+.install-url__chrome span:nth-child(3) {
+  background: color-mix(in srgb, var(--wt-ok) 55%, var(--wt-bg2));
+}
+
+.install-url__chrome em {
+  margin-left: 0.4rem;
+  font-style: normal;
   font-family: var(--font-mono, 'JetBrains Mono Variable', ui-monospace, monospace);
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--wt-text-low);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.install-url__address {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.65rem 0.7rem 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--wt-accent) 28%, var(--wt-line));
+  border-radius: calc(var(--wt-radius-md) - 2px);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--wt-accent) 8%, var(--wt-bg2)) 0%,
+      var(--wt-bg2) 100%
+    );
+}
+
+.install-url__lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   color: var(--wt-accent);
+  opacity: 0.9;
 }
 
 .install-url__value {
-  margin: 0.55rem 0 0;
+  margin: 0;
+  min-width: 0;
   font-family: var(--font-mono, 'JetBrains Mono Variable', ui-monospace, monospace);
-  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  font-size: clamp(0.95rem, 2.2vw, 1.2rem);
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--wt-text);
-  line-height: 1.25;
+  line-height: 1.3;
   word-break: break-all;
 }
 
 .install-url__hint {
-  margin: 0.65rem 0 0;
+  margin: 0;
+  padding: 0 0.85rem 0.85rem;
   max-width: 48ch;
   font-size: 0.8125rem;
   line-height: 1.45;
