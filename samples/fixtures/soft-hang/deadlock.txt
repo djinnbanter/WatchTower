@@ -1,0 +1,13 @@
+"Server thread" #1 prio=5 tid=0x1 nid=0x1 waiting on <0xabc>
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at java.lang.Object.wait(Native Method)
+	- waiting to lock <0xabc> (a java.lang.Object)
+	- locked <0xdef> (a java.lang.Object)
+	at net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:850)
+
+"Worker thread" #2 prio=5 tid=0x2 nid=0x2 waiting on <0xdef>
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at java.lang.Object.wait(Native Method)
+	- waiting to lock <0xdef> (a java.lang.Object)
+	- locked <0xabc> (a java.lang.Object)
+	at com.example.worker.Worker.run(Worker.java:10)
