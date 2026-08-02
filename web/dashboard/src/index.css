@@ -791,6 +791,14 @@ a {
   box-shadow: var(--wt-shadow);
 }
 
+/* Shared settings/wizard form row — tight plate, not rounded-xl SaaS */
+.wt-form-row {
+  border: 1px solid var(--wt-line);
+  border-radius: var(--radius-wt);
+  background: color-mix(in srgb, var(--wt-bg2) 50%, transparent);
+  padding: 0.75rem 1rem;
+}
+
 /*
  * CSS-only specular CTA chrome (.wt-specular-cta / .ov-specular-cta).
  */

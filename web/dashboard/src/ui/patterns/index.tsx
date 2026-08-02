@@ -94,6 +94,78 @@ export function MetricReadout({
   );
 }
 
+export type VitalTileTone = 'default' | 'ok' | 'warn' | 'danger';
+
+export type VitalTileProps = {
+  label: string;
+  value?: number | null;
+  format?: (n: number) => string;
+  tone?: VitalTileTone;
+  size?: 'sm' | 'md';
+  text?: string | null;
+  className?: string;
+};
+
+export function VitalTile({
+  label,
+  value,
+  format,
+  tone = 'default',
+  size = 'md',
+  text,
+  className,
+}: VitalTileProps) {
+  if (text != null) {
+    const textTone =
+      tone === 'ok'
+        ? 'text-wt-ok'
+        : tone === 'warn'
+          ? 'text-wt-warn'
+          : tone === 'danger'
+            ? 'text-wt-danger'
+            : 'text-wt-text';
+    return (
+      <div className={cn(className)}>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-wt-text-low">
+          {label}
+        </div>
+        <div
+          className={cn(
+            'mt-1 font-mono font-semibold tabular-nums',
+            size === 'sm' ? 'text-lg' : 'text-3xl',
+            textTone,
+          )}
+        >
+          {text}
+        </div>
+      </div>
+    );
+  }
+
+  if (value == null || !Number.isFinite(value)) {
+    return (
+      <div className={cn(className)}>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-wt-text-low">
+          {label}
+        </div>
+        <div className="mt-1 font-mono text-lg font-semibold text-wt-text-low">—</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn(className)}>
+      <MetricReadout
+        label={label}
+        value={value}
+        format={format ?? ((n) => String(Math.round(n)))}
+        size={size}
+        tone={tone}
+      />
+    </div>
+  );
+}
+
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg2/50 px-4 py-8 text-center">
@@ -116,10 +188,12 @@ export function StatusPill({
   children,
   tone = 'neutral',
   title,
+  className,
 }: {
   children: ReactNode;
   tone?: 'neutral' | 'ok' | 'warn' | 'danger' | 'info';
   title?: string;
+  className?: string;
 }) {
   const tones = {
     neutral: 'border-wt-line bg-wt-bg2 text-wt-text-mid',
@@ -132,8 +206,9 @@ export function StatusPill({
     <span
       title={title}
       className={cn(
-        'inline-flex max-w-full items-center truncate rounded-[var(--radius-wt-sm)] border px-1.5 py-0.5 text-[11px] font-semibold tracking-wide',
+        'inline-flex shrink-0 items-center whitespace-nowrap rounded-[var(--radius-wt-sm)] border px-1.5 py-0.5 text-[11px] font-semibold tracking-wide',
         tones[tone],
+        className,
       )}
     >
       {children}
