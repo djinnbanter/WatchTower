@@ -126,22 +126,24 @@ function secretHintText(text: string): boolean {
 }
 
 function loadModConfigStore(session: FixtureSession): Record<string, ModConfigEntry> {
-  if (session.modConfigs && typeof session.modConfigs === 'object') {
-    return session.modConfigs as Record<string, ModConfigEntry>;
-  }
   const disk = asRecord(readJson('mod-configs.json'));
   const files = asRecord(disk.files);
-  const store: Record<string, ModConfigEntry> = {};
+  const existing =
+    session.modConfigs && typeof session.modConfigs === 'object'
+      ? ({ ...(session.modConfigs as Record<string, ModConfigEntry>) } as Record<string, ModConfigEntry>)
+      : {};
+  // Keep in-session edits/backups, but pick up newly added fixture files from disk.
   for (const [path, raw] of Object.entries(files)) {
+    if (existing[path]) continue;
     const row = asRecord(raw);
-    store[path] = {
+    existing[path] = {
       content: String(row.content ?? ''),
       mtime: Number(row.mtime ?? Math.floor(Date.now() / 1000)),
       backups: [],
     };
   }
-  session.modConfigs = store;
-  return store;
+  session.modConfigs = existing;
+  return existing;
 }
 
 function modConfigListPayload(store: Record<string, ModConfigEntry>) {
@@ -1144,15 +1146,52 @@ export async function handleFixtureRequest(
 
           if (method === 'GET' && pathOnly === '/api/auth/session') {
             const role = previewRoleFromUrl(url);
+            const appearance =
+              session.appearance && typeof session.appearance === 'object'
+                ? (session.appearance as Record<string, unknown>)
+                : {};
             return jsonRes(200, {
               authenticated: true,
+              fully_authenticated: true,
               username: role === 'owner' ? 'ella' : role === 'admin' ? 'marco' : 'sam',
               preview: true,
               must_change_password: false,
               role,
+              can_write: role === 'owner' || role === 'admin',
               minecraft_uuid: '069a79f4-44e9-4726-a5be-fca90e38aaf5',
               minecraft_name: role === 'owner' ? 'Ella' : role === 'admin' ? 'Marco' : 'Sam',
+              ...(typeof appearance.ui_theme === 'string' ? { ui_theme: appearance.ui_theme } : {}),
+              ...(typeof appearance.ui_accent === 'string' ? { ui_accent: appearance.ui_accent } : {}),
             });
+          }
+
+          if (method === 'PUT' && pathOnly === '/api/accounts/me/appearance') {
+            const body = (requestBody && typeof requestBody === 'object' ? requestBody : {}) as Record<
+              string,
+              unknown
+            >;
+            const theme = String(body.theme ?? '').trim().toLowerCase();
+            const accent = String(body.accent ?? '').trim().toLowerCase();
+            const themes = new Set(['light', 'dark', 'black', 'system']);
+            const accents = new Set([
+              'signal',
+              'amber',
+              'teal',
+              'violet',
+              'rose',
+              'green',
+              'coral',
+              'slate',
+            ]);
+            if (!themes.has(theme) || !accents.has(accent)) {
+              return jsonRes(400, {
+                ok: false,
+                error: 'invalid_appearance',
+                message: 'invalid theme or accent',
+              });
+            }
+            session.appearance = { ui_theme: theme, ui_accent: accent };
+            return jsonRes(200, { ok: true, ui_theme: theme, ui_accent: accent });
           }
 
           if (method === 'GET' && pathOnly === '/api/accounts') {

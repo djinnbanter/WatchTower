@@ -30,7 +30,7 @@ The dashboard exposes a REST API on the same port as the UI (default **8787**). 
 | `/api/auth/totp/disable` | POST | `{ password, code }` |
 | `/api/auth/recovery/regenerate` | POST | `{ password, code }` — new recovery codes |
 
-Session JSON (`GET /api/auth/session` and login responses) includes `role` (`owner` / `admin` / `viewer`) when authenticated. When a Minecraft player is linked, it also includes `minecraft_uuid` and `minecraft_name`. Viewers get 403 `read_only_account` on every non-GET `/api/*` write except self-service routes such as `/api/accounts/me/minecraft`. Account-management routes need `owner` or return 403 `owner_required`. If auth failed to initialize, protected routes return 503 `auth_unavailable` (recovery: `/watchtower dashboard reset-password`).
+Session JSON (`GET /api/auth/session` and login responses) includes `role` (`owner` / `admin` / `viewer`) when authenticated. When a Minecraft player is linked, it also includes `minecraft_uuid` and `minecraft_name`. Appearance prefs (`ui_theme`, `ui_accent`) are included when set on the account. Viewers get 403 `read_only_account` on every non-GET `/api/*` write except self-service routes such as `/api/accounts/me/minecraft` and `/api/accounts/me/appearance`. Account-management routes need `owner` or return 403 `owner_required`. If auth failed to initialize, protected routes return 503 `auth_unavailable` (recovery: `/watchtower dashboard reset-password`).
 
 ---
 
@@ -42,6 +42,7 @@ Session JSON (`GET /api/auth/session` and login responses) includes `role` (`own
 | `/api/accounts` | POST | owner | `{ username, role }` → `{ ok, id, username, role, temp_password }` (temp password shown once) |
 | `/api/accounts/update` | POST | owner | `{ id, role?, disabled?, minecraft_uuid?, minecraft_name?, clear_minecraft? }` — role/disable ends sessions; Minecraft fields are optional |
 | `/api/accounts/me/minecraft` | POST | any signed-in | `{ uuid, name }` or `{ clear: true }` — link/unlink self only (viewers allowed) |
+| `/api/accounts/me/appearance` | PUT | any signed-in | `{ theme, accent }` — `theme`: `light`\|`dark`\|`black`\|`system`; `accent`: `signal`\|`amber`\|`teal`\|`violet`\|`rose`\|`green`\|`coral`\|`slate` (viewers allowed) |
 | `/api/accounts/reset-password` | POST | owner | `{ id, clear_2fa? }` → `{ ok, temp_password }`; ends that account’s sessions |
 | `/api/accounts/delete` | POST | owner | `{ id }` — refuses self-delete and last owner |
 | `/api/audit-log` | GET | owner or admin | `?limit=` (default 200, max 2000) → `{ entries, truncated, retention_days: 90, max_entries: 2000 }` |
