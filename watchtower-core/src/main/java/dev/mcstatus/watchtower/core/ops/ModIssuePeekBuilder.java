@@ -23,6 +23,8 @@ public final class ModIssuePeekBuilder {
     private static final int MAX_PEEK_ENTRIES = 5;
     /** Volume at which recipe WARN aggregates are treated as flood noise in peek. */
     private static final int RECIPE_FLOOD_TOTAL_THRESHOLD = 100;
+    /** Volume at which boot spam (DISTXFORM, loot parse) is demoted in peek. */
+    private static final int BOOT_NOISE_FLOOD_TOTAL_THRESHOLD = 50;
 
     private ModIssuePeekBuilder() {
     }
@@ -52,11 +54,11 @@ public final class ModIssuePeekBuilder {
                 .thenComparing(Comparator.<JsonObject>comparingInt(
                         o -> o.has("total") ? o.get("total").getAsInt() : 0).reversed()));
 
-        // Prefer actionable rows; allow at most one recipe WARN flood if slots remain.
+        // Prefer actionable rows; allow at most one noise flood if slots remain.
         List<JsonObject> selected = new ArrayList<>();
         List<JsonObject> floods = new ArrayList<>();
         for (JsonObject row : ranked) {
-            if (isRecipeFlood(row)) {
+            if (isNoiseFlood(row)) {
                 floods.add(row);
             } else {
                 selected.add(row);
@@ -78,21 +80,24 @@ public final class ModIssuePeekBuilder {
     }
 
     /**
-     * High-volume recipe parse/format noise that should not occupy every peek slot.
+     * High-volume boot/recipe noise that should not occupy every peek slot.
      */
-    static boolean isRecipeFlood(JsonObject row) {
+    static boolean isNoiseFlood(JsonObject row) {
         if (row == null) {
             return false;
         }
         int total = row.has("total") ? row.get("total").getAsInt() : 0;
-        if (total < RECIPE_FLOOD_TOTAL_THRESHOLD) {
-            return false;
-        }
         String cat = row.has("top_category") ? row.get("top_category").getAsString() : "";
-        return "recipe_parse".equals(cat)
+        if ("recipe_parse".equals(cat)
                 || "recipe_format".equals(cat)
                 || "recipe_compat".equals(cat)
-                || "recipe_missing_item".equals(cat);
+                || "recipe_missing_item".equals(cat)) {
+            return total >= RECIPE_FLOOD_TOTAL_THRESHOLD;
+        }
+        if ("client_on_server".equals(cat) || "loot_parse".equals(cat)) {
+            return total >= BOOT_NOISE_FLOOD_TOTAL_THRESHOLD;
+        }
+        return false;
     }
 
     public static JsonObject buildPeekEntry(JsonObject modErrorRow) {

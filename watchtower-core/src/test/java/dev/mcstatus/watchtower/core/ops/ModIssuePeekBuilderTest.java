@@ -76,4 +76,50 @@ class ModIssuePeekBuilderTest {
         assertTrue(floodSlots <= 1, "at most one recipe flood row may remain in peek");
         assertTrue(peek.size() >= 2, "ERROR plus one collapsed flood should both appear when slots remain");
     }
+
+    @Test
+    void distxformAndLootFloodsDoNotBuryRealLoggerErrors() {
+        JsonArray errors = new JsonArray();
+
+        JsonObject lootFlood = new JsonObject();
+        lootFlood.addProperty("mod_id", "dndecor");
+        lootFlood.addProperty("total", 27_272);
+        lootFlood.addProperty("top_category", "loot_parse");
+        lootFlood.addProperty("category_label", "loot parse");
+        lootFlood.addProperty("sample_line",
+                "Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan");
+        errors.add(lootFlood);
+
+        JsonObject distxformFlood = new JsonObject();
+        distxformFlood.addProperty("mod_id", "c2me_client_uncapvd");
+        distxformFlood.addProperty("total", 1_896);
+        distxformFlood.addProperty("top_category", "client_on_server");
+        distxformFlood.addProperty("category_label", "client-only class blocked");
+        distxformFlood.addProperty("sample_line",
+                "Attempted to load class net/minecraft/client/Options for invalid dist DEDICATED_SERVER");
+        errors.add(distxformFlood);
+
+        JsonObject realError = new JsonObject();
+        realError.addProperty("mod_id", "grieflogger");
+        realError.addProperty("total", 3);
+        realError.addProperty("top_category", "logger_error");
+        realError.addProperty("category_label", "error");
+        realError.addProperty("sample_line", "[Server thread/ERROR] [grieflogger/]: Database connection failed");
+        errors.add(realError);
+
+        JsonArray peek = ModIssuePeekBuilder.buildPeekEntries(errors);
+        assertFalse(peek.isEmpty());
+        assertEquals("grieflogger", peek.get(0).getAsJsonObject().get("mod_id").getAsString(),
+                "real logger_error must outrank DISTXFORM and loot-parse floods");
+
+        int floodSlots = 0;
+        for (int i = 0; i < peek.size(); i++) {
+            String modId = peek.get(i).getAsJsonObject().get("mod_id").getAsString();
+            if ("dndecor".equals(modId) || "c2me_client_uncapvd".equals(modId)) {
+                floodSlots++;
+            }
+        }
+        assertTrue(floodSlots <= 1, "at most one boot-noise flood row may remain in peek");
+        assertTrue(peek.size() >= 2, "ERROR plus one collapsed flood should both appear when slots remain");
+    }
 }

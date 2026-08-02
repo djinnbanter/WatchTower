@@ -1,0 +1,30 @@
+[
+  {
+    "mod_id": "dndecor",
+    "total": 27272,
+    "top_category": "loot_parse",
+    "category_label": "loot parse",
+    "sample_line": "[02Aug2026 15:33:10.688] [Worker-Main-14/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:dndecor:blocks/rose_large_fan - Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: dndecor:rose_large_fan"
+  },
+  {
+    "mod_id": "railways",
+    "total": 4200,
+    "top_category": "loot_parse",
+    "category_label": "loot parse",
+    "sample_line": "[02Aug2026 15:33:10.691] [Worker-Main-14/ERROR] [net.minecraft.world.level.storage.loot.LootDataType/]: Couldn't parse element ResourceKey[minecraft:root / minecraft:loot_table]:railways:blocks/track_twilightforest_darkwood - Unknown registry key"
+  },
+  {
+    "mod_id": "c2me_client_uncapvd",
+    "total": 1896,
+    "top_category": "client_on_server",
+    "category_label": "client-only class blocked",
+    "sample_line": "[02Aug2026 15:33:01.398] [main/ERROR] [net.neoforged.fml.common.asm.RuntimeDistCleaner/DISTXFORM]: Attempted to load class net/minecraft/client/Options for invalid dist DEDICATED_SERVER"
+  },
+  {
+    "mod_id": "grieflogger",
+    "total": 3,
+    "top_category": "logger_error",
+    "category_label": "error",
+    "sample_line": "[29Jul2026 15:01:05.123] [Server thread/ERROR] [grieflogger/]: Database connection failed"
+  }
+]
