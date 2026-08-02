@@ -892,7 +892,7 @@ export async function handleFixtureRequest(
           if (pathOnly === '/api/mods/configs') {
             const store = loadModConfigStore(session);
             if (method === 'GET') {
-              const pathParam = url.searchParams.get('path');
+              const pathParam = new URL(url, 'http://127.0.0.1').searchParams.get('path');
               if (pathParam) {
                 const entry = store[pathParam];
                 if (!entry) {
