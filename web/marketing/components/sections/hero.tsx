@@ -22,14 +22,9 @@ export function Hero() {
 
   return (
     <section className="relative isolate overflow-hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(48rem 32rem at 12% 18%, var(--wt-glow-lantern), transparent 62%), radial-gradient(40rem 28rem at 88% 8%, var(--wt-glow-accent), transparent 58%)',
-        }}
-      />
+      <div aria-hidden className="wt-hero-night" />
+      <div aria-hidden className="wt-hero-stars" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 wt-block-grid opacity-70" />
       <DeskDotGrid />
       <div
         aria-hidden
@@ -63,6 +58,7 @@ export function Hero() {
               Get it on Modrinth
             </Cta>
           </motion.div>
+          <div aria-hidden className="wt-grass-strip mt-5" />
         </div>
 
         <motion.div

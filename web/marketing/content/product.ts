@@ -23,7 +23,7 @@ export const HERO_OVERVIEW =
 
 /** Hero context strip. Source: PRODUCT.md local-first / dedicated host / no required cloud. */
 export const HERO_CONTEXT =
-  'Local-first · dedicated host · no cloud required';
+  'NeoForge · dedicated host · no cloud required';
 
 /** Scroll cue into the Live dashboard beat. */
 export const SCROLL_CUE = 'Scroll the dashboard';
