@@ -10,16 +10,6 @@ Full downloads: [GitHub Releases](https://github.com/djinnbanter/WatchTower/rele
 
 _(empty)_
 
-## [1.2.0-beta.2] — 2026-08-02
-
-**Artifacts:** `watchtower-neoforge-1.2.0-beta.2+mc1.21.jar` · `watchtower-cli-1.2.0-beta.2.jar`
-
-Release: [v1.2.0-beta.2](https://github.com/djinnbanter/WatchTower/releases/tag/v1.2.0-beta.2) (**pre-release / beta**)
-
-> **Hotfix for beta.1:** if the server died at module resolve with a Checker Framework / Groovy clash, use this jar instead.
-
-- **Boot fix** — stop shipping Checker Framework classes inside WatchTower’s nested core JAR (they collided with other mods on NeoForge)
-
 ## [1.2.0-beta.1] — 2026-08-02
 
 **Artifacts:** `watchtower-neoforge-1.2.0-beta.1+mc1.21.jar` · `watchtower-cli-1.2.0-beta.1.jar`
@@ -52,6 +42,7 @@ Release: [v1.2.0-beta.1](https://github.com/djinnbanter/WatchTower/releases/tag/
 - **Support packs** — chooser is pack type + optional note + size; Customize files stays optional; tighter redaction and size accounting
 - **Settings Appearance** — theme and accent on one row
 - **Screenshots** — docs assets recaptured for Overview, Live, Insights, Mods, Issues, Crashes, Spark, Backups
+- **Boot fix (replaced jars)** — do not ship Checker Framework inside nested core (was colliding with other NeoForge mods at start)
 
 ## [1.1.9] — 2026-07-29
 
