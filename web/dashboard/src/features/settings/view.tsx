@@ -29,14 +29,7 @@ import { asRecord, bool, num, str, totpQrSrc } from '@/lib/utils';
 import { useDashboardTimezone } from '@/app/timezone';
 import { AccountsPanel } from './accounts-panel';
 import { AuditLogPanel } from './audit-log-panel';
-import {
-  NumberField,
-  ReadOnlyField,
-  SettingsPair,
-  SettingsStack,
-  TextField,
-  ToggleField,
-} from './fields';
+import { NumberField, ReadOnlyField, TextField, ToggleField } from './fields';
 import { SelfMinecraftLink } from './minecraft-link';
 import './settings.css';
 
