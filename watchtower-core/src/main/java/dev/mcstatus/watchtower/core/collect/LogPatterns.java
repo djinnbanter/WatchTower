@@ -97,6 +97,13 @@ public final class LogPatterns {
             "^-- Mod loading issue(?: for: ([\\w.-]+))? --\\s*$");
     public static final Pattern PLAYER_DISCONNECT = Pattern.compile(
             "lost connection:|Disconnecting|disconnected", Pattern.CASE_INSENSITIVE);
+    /**
+     * Login-path disconnect (ServerLoginPacketListenerImpl) — distinct from in-game leaves.
+     * Matches Jul 29 style: {@code ...ServerLoginPacketListenerImpl/]: name (/ip) lost connection: Disconnected}.
+     */
+    public static final Pattern LOGIN_DISCONNECT = Pattern.compile(
+            "ServerLoginPacketListenerImpl.*(?:lost connection:\\s*Disconnected|\\bDisconnected\\b)",
+            Pattern.CASE_INSENSITIVE);
 
     public static final List<String> BACKUP_SUFFIXES = List.of(".tar.gz", ".tgz", ".tar", ".zip", ".7z");
 

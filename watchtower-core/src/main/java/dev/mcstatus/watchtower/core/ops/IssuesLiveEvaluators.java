@@ -845,6 +845,96 @@ public final class IssuesLiveEvaluators {
         return out;
     }
 
+    /**
+     * Joinability signal: login-path disconnect storm from activity events or optional.login_storm.
+     * Issue id {@code signal_login_storm} (JOINABILITY posture — server up but players cannot finish login).
+     */
+    public static List<IssuesLiveRecord> fromLoginStorm(JsonObject cache) {
+        List<IssuesLiveRecord> out = new ArrayList<>();
+        if (cache == null) {
+            return out;
+        }
+        JsonObject best = null;
+        if (cache.has(OpsCacheSchema.ACTIVITY) && cache.get(OpsCacheSchema.ACTIVITY).isJsonObject()) {
+            JsonObject activity = cache.getAsJsonObject(OpsCacheSchema.ACTIVITY);
+            if (activity.has(OpsCacheSchema.ACTIVITY_EVENTS)
+                    && activity.get(OpsCacheSchema.ACTIVITY_EVENTS).isJsonArray()) {
+                for (JsonElement el : activity.getAsJsonArray(OpsCacheSchema.ACTIVITY_EVENTS)) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject ev = el.getAsJsonObject();
+                    if ("login_storm".equals(str(ev, OpsCacheSchema.EVENT_TYPE))) {
+                        best = ev;
+                    }
+                }
+            }
+        }
+        JsonObject optionalStorm = null;
+        if (cache.has("optional") && cache.get("optional").isJsonObject()) {
+            JsonObject optional = cache.getAsJsonObject("optional");
+            if (optional.has("login_storm") && optional.get("login_storm").isJsonObject()) {
+                optionalStorm = optional.getAsJsonObject("login_storm");
+            }
+        }
+        // Also accept top-level login_storm block if writers place it there.
+        if (optionalStorm == null && cache.has("login_storm") && cache.get("login_storm").isJsonObject()) {
+            optionalStorm = cache.getAsJsonObject("login_storm");
+        }
+        if (best == null && optionalStorm == null) {
+            return out;
+        }
+        if (optionalStorm != null && optionalStorm.has("active") && !bool(optionalStorm, "active")) {
+            return out;
+        }
+        String detail = best != null ? str(best, OpsCacheSchema.EVENT_DETAIL) : "";
+        if (detail.isBlank() && optionalStorm != null) {
+            detail = str(optionalStorm, "detail");
+        }
+        if (detail.isBlank()) {
+            detail = "Players cannot finish login — server is up but unjoinable.";
+        }
+        int disconnects = 0;
+        int joins = 0;
+        if (best != null) {
+            if (best.has("login_disconnects") && best.get("login_disconnects").isJsonPrimitive()) {
+                disconnects = best.get("login_disconnects").getAsInt();
+            }
+            if (best.has("successful_joins") && best.get("successful_joins").isJsonPrimitive()) {
+                joins = best.get("successful_joins").getAsInt();
+            }
+        }
+        if (optionalStorm != null) {
+            if (disconnects == 0 && optionalStorm.has("login_disconnects")
+                    && optionalStorm.get("login_disconnects").isJsonPrimitive()) {
+                disconnects = optionalStorm.get("login_disconnects").getAsInt();
+            }
+            if (joins == 0 && optionalStorm.has("successful_joins")
+                    && optionalStorm.get("successful_joins").isJsonPrimitive()) {
+                joins = optionalStorm.get("successful_joins").getAsInt();
+            }
+        }
+        String msg = detail;
+        if (!msg.toLowerCase(Locale.ROOT).contains("cannot finish login")
+                && !msg.toLowerCase(Locale.ROOT).contains("unjoinable")) {
+            msg = detail + " Players cannot finish login.";
+        }
+        String fp = "login_storm:" + disconnects + ":" + joins;
+        IssuesLiveRecord.Builder b = IssuesLiveRecord.builder()
+                .id("signal_login_storm")
+                .key("signal_login_storm")
+                .severity("warning")
+                .message(msg)
+                .source(IssuesLiveSchema.SOURCE_OPS)
+                .evidenceFingerprint(fp)
+                .addEvidenceRef("ops:activity")
+                .addFixStep("Players cannot finish login — check auth/login mods and force-spawn settings.")
+                .addFixStep("Check firewall / proxy / whitelist rules that drop connections during login.")
+                .addFixStep("Compare pack sync (Session → Join clinic) if clients disconnect mid-handshake.");
+        out.add(b.build());
+        return out;
+    }
+
     private static int arraySize(JsonObject o, String k) {
         if (o != null && o.has(k) && o.get(k).isJsonArray()) {
             return o.getAsJsonArray(k).size();
@@ -1062,6 +1152,7 @@ public final class IssuesLiveEvaluators {
         detected.addAll(fromSilentFails(cache, silentFailDetectEnabled));
         detected.addAll(fromWorldPressure(cache, worldPressureEnabled));
         detected.addAll(fromJoinClinic(cache, joinClinicEnabled));
+        detected.addAll(fromLoginStorm(cache));
         detected.addAll(fromWorldRiskDisabled(cache, worldRiskEnabled));
 
         List<IssuesLiveRecord> cur = existing;
@@ -1123,6 +1214,10 @@ public final class IssuesLiveEvaluators {
                 cur = IssuesLiveStore.resolve(cur, k, nowIso);
             }
             if (k.startsWith("JOIN_SYNC") && !detectedKeys.contains(k)) {
+                cur = IssuesLiveStore.resolve(cur, k, nowIso);
+            }
+            if (("SIGNAL_LOGIN_STORM".equals(k) || k.startsWith("JOINABILITY:LOGIN_STORM"))
+                    && !detectedKeys.contains(k)) {
                 cur = IssuesLiveStore.resolve(cur, k, nowIso);
             }
             if (k.startsWith("WORLD_RISK_DISABLED") && !detectedKeys.contains(k)) {

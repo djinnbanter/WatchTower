@@ -445,6 +445,44 @@ class IssuesLiveEvaluatorsTest {
     }
 
     @Test
+    void fromLoginStormProducesSignalLoginStorm() {
+        JsonObject cache = new JsonObject();
+        JsonObject activity = new JsonObject();
+        JsonArray events = new JsonArray();
+        JsonObject ev = new JsonObject();
+        ev.addProperty(OpsCacheSchema.EVENT_TYPE, "login_storm");
+        ev.addProperty(OpsCacheSchema.EVENT_DETAIL,
+                "25 login disconnects vs 1 join — server up but unjoinable");
+        ev.addProperty("login_disconnects", 25);
+        ev.addProperty("successful_joins", 1);
+        events.add(ev);
+        activity.add(OpsCacheSchema.ACTIVITY_EVENTS, events);
+        cache.add(OpsCacheSchema.ACTIVITY, activity);
+
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromLoginStorm(cache);
+        assertEquals(1, rows.size());
+        assertEquals("SIGNAL_LOGIN_STORM", rows.get(0).normalizedKey());
+        assertEquals("warning", rows.get(0).severity());
+        assertTrue(rows.get(0).message().toLowerCase().contains("unjoinable")
+                || rows.get(0).message().toLowerCase().contains("cannot finish login"));
+        assertFalse(rows.get(0).fixSteps().isEmpty());
+        assertTrue(rows.get(0).fixSteps().stream()
+                .anyMatch(s -> s.toLowerCase().contains("login") || s.toLowerCase().contains("auth")));
+    }
+
+    @Test
+    void clearingLoginStormResolvesSignal() {
+        String t0 = "2026-08-02T12:00:00Z";
+        List<IssuesLiveRecord> open = IssuesLiveStore.upsert(List.of(),
+                IssuesLiveRecord.builder().id("signal_login_storm").message("storm").build(), t0);
+        JsonObject empty = new JsonObject();
+        List<IssuesLiveRecord> after = IssuesLiveEvaluators.evaluateAndMerge(empty, open, true, t0);
+        assertEquals(IssuesLiveSchema.STATUS_RESOLVED,
+                after.stream().filter(r -> "SIGNAL_LOGIN_STORM".equals(r.normalizedKey()))
+                        .findFirst().orElseThrow().status());
+    }
+
+    @Test
     void fromJoinClinicProducesJoinSyncKey() throws Exception {
         JsonObject cache = loadFixture("samples/fixtures/issues-live/join-sync-positive.json");
         List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromJoinClinic(cache, true);

@@ -468,17 +468,29 @@ public final class LogScanner {
         if (ts != null) {
             Matcher jm = LogPatterns.PLAYER_JOIN.matcher(stripped);
             if (jm.find()) {
+                state.successfulJoins++;
                 state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "join", jm.group(1).strip()));
             } else {
                 Matcher jmb = LogPatterns.PLAYER_JOIN_BRACKET.matcher(stripped);
                 if (jmb.find()) {
+                    state.successfulJoins++;
                     state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "join", jmb.group(1).strip()));
                 } else {
                     Matcher jme = LogPatterns.PLAYER_JOIN_ENTITY.matcher(stripped);
                     if (jme.find()) {
+                        state.successfulJoins++;
                         state.playerRawEvents.add(new PlayerTracker.PlayerRawEvent(ts, "join", jme.group(1).strip()));
                     }
                 }
+            }
+            boolean loginDisconnect = LogPatterns.LOGIN_DISCONNECT.matcher(stripped).find();
+            if (loginDisconnect) {
+                state.loginDisconnects++;
+                if (state.loginDisconnectEvidence.size() < 5) {
+                    state.loginDisconnectEvidence.add(
+                            CollectSupport.evidence(rel, lineNo, stripped, CollectSupport.iso(ts)));
+                }
+                maybeEmitLoginStorm(staging, state, ts);
             }
             Matcher lm = LogPatterns.PLAYER_LEAVE.matcher(stripped);
             if (lm.find()) {
@@ -487,10 +499,50 @@ public final class LogScanner {
                 Matcher lmb = LogPatterns.PLAYER_LEAVE_BRACKET.matcher(stripped);
                 if (lmb.find()) {
                     recordLeave(staging, state, ts, lmb.group(1).strip(), rel, lineNo, stripped);
-                } else if (LogPatterns.PLAYER_DISCONNECT.matcher(stripped).find()) {
+                } else if (!loginDisconnect && LogPatterns.PLAYER_DISCONNECT.matcher(stripped).find()) {
+                    // Avoid double-counting login-path disconnects as in-game leave storms.
                     recordLeave(staging, state, ts, "?", rel, lineNo, stripped);
                 }
             }
+        }
+    }
+
+    /** Threshold: ≥20 login disconnects and joins ≤ 10% of those disconnects (scan window). */
+    static boolean isLoginStorm(int loginDisconnects, int successfulJoins) {
+        return loginDisconnects >= 20 && successfulJoins * 10 <= loginDisconnects;
+    }
+
+    private static void maybeEmitLoginStorm(JsonObject staging, ScanState state, ZonedDateTime ts) {
+        if (state.loginStormEmitted || !isLoginStorm(state.loginDisconnects, state.successfulJoins)) {
+            return;
+        }
+        state.loginStormEmitted = true;
+        String joinWord = state.successfulJoins == 1 ? "join" : "joins";
+        JsonObject ev = new JsonObject();
+        ev.addProperty("time", CollectSupport.iso(ts));
+        ev.addProperty("type", "login_storm");
+        ev.addProperty("source", "log");
+        ev.addProperty("detail", state.loginDisconnects + " login disconnects vs "
+                + state.successfulJoins + " " + joinWord + " — server up but unjoinable");
+        ev.addProperty("importance", 9);
+        ev.addProperty("login_disconnects", state.loginDisconnects);
+        ev.addProperty("successful_joins", state.successfulJoins);
+        JsonArray evArr = new JsonArray();
+        for (JsonObject evidence : state.loginDisconnectEvidence) {
+            evArr.add(evidence.deepCopy());
+        }
+        ev.add("evidence", evArr);
+        CollectSupport.appendEvent(staging, ev);
+
+        JsonObject optional = staging.getAsJsonObject("optional");
+        if (optional != null) {
+            JsonObject summary = new JsonObject();
+            summary.addProperty("active", true);
+            summary.addProperty("issue_id", "signal_login_storm");
+            summary.addProperty("login_disconnects", state.loginDisconnects);
+            summary.addProperty("successful_joins", state.successfulJoins);
+            summary.addProperty("detail", CollectSupport.getString(ev, "detail"));
+            optional.add("login_storm", summary);
         }
     }
 
@@ -618,6 +670,10 @@ public final class LogScanner {
         boolean fmlAccumulating;
         final List<Long> recentLeaveEpochs = new ArrayList<>();
         boolean disconnectStormEmitted;
+        int loginDisconnects;
+        int successfulJoins;
+        boolean loginStormEmitted;
+        final List<JsonObject> loginDisconnectEvidence = new ArrayList<>();
 
         ScanState(ZonedDateTime now, List<Pattern> errorIgnore, Set<String> knownModIds) {
             this.now = now;
@@ -630,6 +686,9 @@ public final class LogScanner {
             this.mapRenderLastLine = null;
             this.fmlAccumulating = false;
             this.disconnectStormEmitted = false;
+            this.loginDisconnects = 0;
+            this.successfulJoins = 0;
+            this.loginStormEmitted = false;
         }
     }
 
