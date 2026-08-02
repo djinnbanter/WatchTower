@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a reusable sample-gap research toolkit, then run it on a user log/crash dump to produce an incident timeline, WatchTower replay gap matrix, ingestion checklist, and ranked fixture backlog — without changing product classifiers/scanners in this pass.
+**Goal:** Build a reusable sample-gap research toolkit, then run it on a user log/crash dump to produce an incident timeline, WatchTower replay gap matrix, ingestion checklist, and ranked fixture backlog — without changing product classifiers/scanners in this pass. Ground truth requires an **AI forensic deep-read of every corpus file (start→end, every line)**, then a **three-way cross-check** against scripted census and WatchTower replay.
 
-**First run status:** Complete — see `docs/superpowers/research-runs/2026-08-02-new-samples/REPORT.md`
+**Pilot census-only status:** Tasks 1–11 completed for `2026-08-02-new-samples` (scripts + census + replay + draft backlog) — see `docs/superpowers/research-runs/2026-08-02-new-samples/REPORT.md`. **Does NOT satisfy the revised forensic deep-read requirement.** Execute **Tasks F1–F6** (below) on that sample before treating the pilot as done under the current spec.
 
-**Architecture:** Parameterized playbook. Each run takes `SAMPLE_ROOT` + `RUN_ID`, writes isolated artifacts under `docs/superpowers/research-runs/<RUN_ID>/`, and reuses Node census/inventory scripts plus a Java crash/narrator replay harness gated by `-Dwt.sample.root=…`. Timeline-first forensics; ingestion checklist is a required appendix every run.
+**Architecture:** Parameterized playbook. Each run takes `SAMPLE_ROOT` + `RUN_ID`, writes isolated artifacts under `docs/superpowers/research-runs/<RUN_ID>/`, and reuses Node census/inventory scripts plus a Java crash/narrator replay harness gated by `-Dwt.sample.root=…`. After census, the agent deep-reads every non-duplicate scannable file and triangulates AI findings vs scripts vs WatchTower. Timeline-first forensics; ingestion checklist is a required appendix every run.
 
-**Tech Stack:** Node.js (corpus inventory/census), Java 21 + Gradle `:watchtower-core:test` (crash parse/classify/narrate replay), Markdown reports.
+**Tech Stack:** Node.js (corpus inventory/census), Java 21 + Gradle `:watchtower-core:test` (crash parse/classify/narrate replay), Markdown forensic notes + reports.
 
 **Spec:** [docs/superpowers/specs/2026-08-02-log-sample-gap-research-design.md](../specs/2026-08-02-log-sample-gap-research-design.md)
 
@@ -18,20 +18,23 @@
 2. Choose `RUN_ID` = `YYYY-MM-DD-<short-label>` (never reuse an existing run folder).
 3. Tell the agent:
 
-> Run the log sample gap research playbook on `samples/<label>/` with `RUN_ID=<id>` per `docs/superpowers/specs/2026-08-02-log-sample-gap-research-design.md` and this plan. Skip Tasks 1–4 if the toolkit already exists and still matches the plan; execute Tasks 5–11 for the new run.
+> Run the log sample gap research playbook on `samples/<label>/` with `RUN_ID=<id>` per `docs/superpowers/specs/2026-08-02-log-sample-gap-research-design.md` and this plan. Skip Tasks 1–4 if the toolkit already exists and still matches the plan; execute Tasks 5–11 **and** Tasks F1–F6 (AI forensic deep-read + cross-check + timeline/gap refresh). Do not treat census alone as ground truth.
 
-4. Review `docs/superpowers/research-runs/<RUN_ID>/REPORT.md` + `fixture-backlog.md`. Open a separate implementation plan only if you want code fixes.
+4. Review `docs/superpowers/research-runs/<RUN_ID>/REPORT.md`, `forensic/cross-check.md`, and `fixture-backlog.md`. Open a separate implementation plan only if you want code fixes.
 
 ## Global Constraints
 
 - Research only: no product classifier/scanner/narrator/UI behavior changes in this pass (test/tools harnesses allowed).
-- Full corpus every run — all rotates, debug*, kubejs, Jade, nested archives; dedupe archives before counts.
+- Full corpus every run — all rotates, debug*, kubejs, Jade, nested archives; dedupe archives before counts **and** before deep-read.
+- **AI forensic deep-read is mandatory:** every non-duplicate scannable file, start→end, every line; write per-file notes + `forensic/manifest.json` with `read_complete: true` for each.
+- Scripted census is a **companion** for counts/coverage — never a substitute for deep-read.
+- **Three-way cross-check required:** AI forensic notes ↔ census ↔ WatchTower replay/code map; document disagreements in `forensic/cross-check.md`.
 - Verification = code map + runtime replay; do not invent WatchTower output.
 - Gap scoring = full operator path (kind + surfacing + Fix/advice quality).
 - Advisory only forever; plain English; display brand **WatchTower**; no Modrinth download claims; no auto-restart.
 - NeoForge 1.21.x / Java 21 primary lane for replay harness.
 - WatchTower log lines in the pack are not the incident unless evidence says so.
-- Every run writes a fresh `docs/superpowers/research-runs/<RUN_ID>/` directory.
+- Every run writes a fresh `docs/superpowers/research-runs/<RUN_ID>/` directory (forensic re-pass on the pilot may add `forensic/` under the existing OUT_DIR).
 
 ## Run inputs (set before Task 5)
 
@@ -55,6 +58,9 @@
 | `watchtower-core/.../research/SampleCrashReplayHarness.java` | Parse → classify → narrate → JSON (test harness) |
 | `watchtower-core/.../research/SampleCrashReplayHarnessTest.java` | Enabled only when `-Dwt.sample.root` set |
 | `docs/superpowers/research-runs/<RUN_ID>/*` | Per-run artifacts (never commit secrets; samples may be large) |
+| `docs/superpowers/research-runs/<RUN_ID>/forensic/files/*.md` | Per-file AI deep-read notes (one note per non-duplicate scannable file) |
+| `docs/superpowers/research-runs/<RUN_ID>/forensic/manifest.json` | Proof every file was deep-read (`read_complete`) |
+| `docs/superpowers/research-runs/<RUN_ID>/forensic/cross-check.md` | AI ↔ census ↔ WatchTower triangulation |
 | Prior art to learn from (do not hard-code its paths): `tools/analyze-log-corpus.mjs` | Older fixtures/server-logs auditor — pattern ideas only |
 
 ```mermaid
@@ -64,14 +70,19 @@ flowchart TD
   cen[census.mjs]
   ing[ingestion-checklist.mjs]
   java[SampleCrashReplayHarness]
+  deep[AI deep-read every file]
+  xcheck[Cross-check AI vs scripts vs WT]
   human[Timeline + gap matrix + backlog]
   report[REPORT.md]
 
   inputs --> inv --> cen
   inv --> ing
   inv --> java
-  cen --> human
-  java --> human
+  inv --> deep
+  cen --> xcheck
+  deep --> xcheck
+  java --> xcheck
+  xcheck --> human
   ing --> report
   human --> report
 ```
@@ -573,22 +584,186 @@ If larger, keep locally and note paths in REPORT only (do not force-commit multi
 
 ---
 
+## Forensic deep-read + triangulation (Tasks F1–F6)
+
+**Required on every run** after inventory/census (and on the pilot sample before closing under the revised spec).  
+**Pilot defaults:** `SAMPLE_ROOT=samples/new samples 02.08.2026`, `OUT_DIR=docs/superpowers/research-runs/2026-08-02-new-samples`.
+
+### Task F1: Forensic manifest scaffold
+
+**Files:**
+- Create: `docs/superpowers/research-runs/<RUN_ID>/forensic/manifest.json`
+- Create: `docs/superpowers/research-runs/<RUN_ID>/forensic/files/` (directory)
+- Create: `tools/sample-gap-research/templates/forensic-file-note.md` (if missing)
+
+**Interfaces:**
+- Consumes: `inventory.json`
+- Produces: manifest with one entry per inventory file:
+
+```json
+{
+  "schema": "sample-gap-forensic-manifest-v1",
+  "sample_root": "...",
+  "files": [
+    {
+      "rel": "logs/2026-08-01-5.log.gz",
+      "kind": "rotate_gz",
+      "duplicate_of": null,
+      "read_complete": false,
+      "note_path": "forensic/files/logs__2026-08-01-5.log.gz.md",
+      "line_count": null
+    }
+  ]
+}
+```
+
+Skip deep-read for rows with `duplicate_of != null` (mark `read_complete: true`, `note_path: null`, note reason `deduped`).
+
+- [ ] **Step 1: Build manifest from inventory** (all files listed; scannable non-dupes `read_complete: false`)
+- [ ] **Step 2: Add forensic-file-note template** with sections: Time span, Session phases, Notable events, Player/ops impact, Noise vs hurt, Surprises / script-blind candidates, WT relevance
+- [ ] **Step 3: Commit** scaffold + template
+
+```bash
+git add tools/sample-gap-research/templates/forensic-file-note.md docs/superpowers/research-runs/<RUN_ID>/forensic/manifest.json
+git commit -m "docs(research): scaffold forensic deep-read manifest"
+```
+
+---
+
+### Task F2: AI deep-read every non-duplicate scannable file
+
+**Files:**
+- Create: one note under `forensic/files/` per non-duplicate scannable file
+- Modify: `forensic/manifest.json` (`read_complete`, `line_count`)
+
+**Interfaces:**
+- Consumes: SAMPLE_ROOT files + manifest
+- Produces: complete forensic notes; every non-dup scannable row `read_complete: true`
+
+**Rules (non-negotiable):**
+- Read each file **from the first line to the last line** (decompress `.gz` as needed).
+- Do not stop after sampling the head/tail; spam may be summarized only after full traversal with first/last occurrence + approximate volume.
+- Parallelize across files with subagents if needed; controller verifies 100% completion against inventory.
+- Crashes, latest, debug, every rotate, debug rotates, kubejs, Jade, and other text logs all require notes.
+
+- [ ] **Step 1: Assign file batches** from manifest (`read_complete: false`)
+- [ ] **Step 2: Deep-read each file and write its forensic note**
+- [ ] **Step 3: Mark `read_complete: true` and set `line_count` when known**
+- [ ] **Step 4: Controller audit** — zero remaining `read_complete: false` among non-dup scannable files
+- [ ] **Step 5: Commit** forensic notes + updated manifest
+
+```bash
+git add docs/superpowers/research-runs/<RUN_ID>/forensic/
+git commit -m "docs(research): forensic deep-read notes for full sample corpus"
+```
+
+---
+
+### Task F3: Three-way cross-check (AI ↔ census ↔ WatchTower)
+
+**Files:**
+- Create: `docs/superpowers/research-runs/<RUN_ID>/forensic/cross-check.md`
+
+**Interfaces:**
+- Consumes: forensic notes + manifest, `census.json`, `crash-replay.json`, `code-map.md`, `ingestion-checklist.md`
+- Produces: explicit disagreement table + new gap candidates
+
+Required sections:
+1. Coverage proof (manifest complete)
+2. AI-only finds (scripts missed)
+3. Census false positives / noise overcounts
+4. WatchTower misses vs AI ground truth (kind / primary / advice / blind / linkage / noise_drown)
+5. Cases where scripts and WT agree but AI disagrees (priority product gaps)
+6. Pattern-catalog extensions to consider (names only; no product code)
+
+- [ ] **Step 1: Write cross-check.md**
+- [ ] **Step 2: Commit**
+
+```bash
+git add docs/superpowers/research-runs/<RUN_ID>/forensic/cross-check.md
+git commit -m "docs(research): triangulate AI forensic notes vs census vs WatchTower"
+```
+
+---
+
+### Task F4: Refresh timeline from forensic notes
+
+**Files:**
+- Modify: `docs/superpowers/research-runs/<RUN_ID>/timeline.md`
+
+**Interfaces:**
+- Consumes: `forensic/files/*`, `forensic/cross-check.md`, census (supporting counts only)
+- Produces: timeline rewritten so day-by-day and crash vignettes cite forensic notes as primary evidence
+
+- [ ] **Step 1: Rewrite Summary / day-by-day / ranked hurts vs noise from deep-read**
+- [ ] **Step 2: Update crash vignettes with forensic-confirmed details**
+- [ ] **Step 3: Commit**
+
+```bash
+git add docs/superpowers/research-runs/<RUN_ID>/timeline.md
+git commit -m "docs(research): refresh timeline from forensic deep-read"
+```
+
+---
+
+### Task F5: Refresh gap matrix + fixture backlog from triangulation
+
+**Files:**
+- Modify: `docs/superpowers/research-runs/<RUN_ID>/gap-matrix.md`
+- Modify: `docs/superpowers/research-runs/<RUN_ID>/fixture-backlog.md`
+
+**Interfaces:**
+- Consumes: cross-check.md, refreshed timeline, crash-replay.json
+- Produces: gap rows for every triangulation miss; P0/P1 backlog entries updated/added with full required fields
+
+- [ ] **Step 1: Update gap-matrix** (include AI-only and script/WT disagreement rows)
+- [ ] **Step 2: Update fixture-backlog** (all new P0/P1; keep Jade/recipe P2 minimum)
+- [ ] **Step 3: Commit**
+
+```bash
+git add docs/superpowers/research-runs/<RUN_ID>/gap-matrix.md docs/superpowers/research-runs/<RUN_ID>/fixture-backlog.md
+git commit -m "docs(research): refresh gaps and backlog after forensic triangulation"
+```
+
+---
+
+### Task F6: Refresh REPORT + verification bar (forensic complete)
+
+**Files:**
+- Modify: `docs/superpowers/research-runs/<RUN_ID>/REPORT.md`
+- Modify: `tools/sample-gap-research/README.md` (verification bar must include forensic items)
+
+**Interfaces:**
+- Consumes: all prior artifacts including `forensic/`
+- Produces: REPORT stating forensic deep-read complete; verification bar fully ticked under revised spec
+
+- [ ] **Step 1: Update REPORT** — add forensic package + cross-check pointers; executive summary must mention deep-read + triangulation
+- [ ] **Step 2: Tick revised verification bar** (see Global / Spec — includes manifest + cross-check)
+- [ ] **Step 3: Commit**
+
+```bash
+git add docs/superpowers/research-runs/<RUN_ID>/REPORT.md tools/sample-gap-research/README.md
+git commit -m "docs(research): mark forensic deep-read pass complete"
+```
+
+---
+
 ### Task 6: Ground-truth timeline narrative
 
 **Files:**
 - Create: `docs/superpowers/research-runs/2026-08-02-new-samples/timeline.md`
 
 **Interfaces:**
-- Consumes: `census.json`, crash files, `crash-replay.json`
-- Produces: plain-English day-by-day narrative + ranked hurts vs noise
+- Consumes: `forensic/files/*` (primary), `forensic/cross-check.md`, `census.json` (supporting counts), crash files, `crash-replay.json`
+- Produces: plain-English day-by-day narrative + ranked hurts vs noise rooted in deep-read
 
 - [ ] **Step 1: Copy template and fill Summary**
 
-Start from `tools/sample-gap-research/templates/timeline.md`. Summary must answer: pack/MC/loader, host hints, what repeatedly killed the server vs what was noise.
+Start from `tools/sample-gap-research/templates/timeline.md`. Summary must answer: pack/MC/loader, host hints, what repeatedly killed the server vs what was noise — citing forensic notes, not census alone.
 
-- [ ] **Step 2: Write day-by-day from census**
+- [ ] **Step 2: Write day-by-day from forensic notes**
 
-For each calendar day present in census `time_start`/`filename` dates (Jul 29 → Aug 2 for first run): boots, stops, cant-keep-up totals, notable ERROR categories, crashes that day.
+For each calendar day: synthesize from the deep-read notes for that day’s files; use census only for volume. Include boots, stops, cant-keep-up, notable ERROR themes, crashes.
 
 - [ ] **Step 3: Write crash vignettes**
 
@@ -664,8 +839,8 @@ git commit -m "docs(research): WatchTower code map for sample gap run"
 - Create: `docs/superpowers/research-runs/2026-08-02-new-samples/gap-matrix.md`
 
 **Interfaces:**
-- Consumes: timeline.md, crash-replay.json, census.json, code-map.md, ingestion-checklist.md
-- Produces: one row per miss; tags from spec (`blind|wrong_kind|wrong_primary|no_surface|bad_advice|noise_drown|linkage`); severity P0–P3
+- Consumes: timeline.md, crash-replay.json, census.json, code-map.md, ingestion-checklist.md, `forensic/cross-check.md`, forensic notes
+- Produces: one row per miss; tags from spec (`blind|wrong_kind|wrong_primary|no_surface|bad_advice|noise_drown|linkage`); severity P0–P3; include triangulation disagreements as gap rows
 
 - [ ] **Step 1: Seed rows from suspected backlog (confirm or reject each)**
 
@@ -760,7 +935,7 @@ Sections (required):
 
 1. Run metadata (`SAMPLE_ROOT`, `RUN_ID`, date, agent/human)  
 2. Executive summary (5–10 lines plain English)  
-3. Pointers to timeline / gap-matrix / fixture-backlog / ingestion-checklist / crash-replay / census  
+3. Pointers to timeline / gap-matrix / fixture-backlog / ingestion-checklist / crash-replay / census / **forensic/manifest.json** / **forensic/cross-check.md**  
 4. Top P0/P1 recommendations (names only — details live in backlog)  
 5. Explicit “no product code changed” statement  
 6. Next step: open implementation writing-plans from backlog **or** wait for more samples  
@@ -772,6 +947,8 @@ All must be true:
 - [ ] Every file class on ingestion checklist  
 - [ ] Every crash has ground-truth + replay row  
 - [ ] Full-corpus census completed  
+- [ ] **Every non-duplicate scannable file has forensic `read_complete: true` + note**  
+- [ ] **`forensic/cross-check.md` documents AI ↔ census ↔ WT**  
 - [ ] Gap matrix covers confirmed miss types  
 - [ ] Every P0/P1 has fixture backlog entry with acceptance  
 - [ ] No product code changed  
@@ -805,20 +982,21 @@ Run the log sample gap research playbook on `SAMPLE_ROOT_HERE` with
 `docs/superpowers/specs/2026-08-02-log-sample-gap-research-design.md` and
 `docs/superpowers/plans/2026-08-02-log-sample-gap-research.md`.
 
-If `tools/sample-gap-research/` already exists and matches the plan, skip Tasks 1–4
-and execute Tasks 5–11 for the new run only. Write artifacts under
+If `tools/sample-gap-research/` already exists and matches the plan, skip Tasks 1–4.
+Execute Tasks 5–11 and **Tasks F1–F6** (AI forensic deep-read of every file
+start-to-end, every line; three-way cross-check AI vs census vs WatchTower;
+refresh timeline/gaps/backlog/REPORT). Write artifacts under
 `docs/superpowers/research-runs/<RUN_ID>/`. Do not change product classifiers.
+Do not treat census alone as ground truth.
 ```
 
-- [ ] **Step 2: Mark first-run complete in this plan header**
+- [ ] **Step 2: Update pilot status in this plan header**
 
-Add under Goal:
+When F1–F6 finish for the pilot, replace the census-only status line with:
 
 ```markdown
-**First run status:** Complete — see `docs/superpowers/research-runs/2026-08-02-new-samples/REPORT.md`
+**Pilot forensic status:** Complete — see `docs/superpowers/research-runs/2026-08-02-new-samples/forensic/` + `REPORT.md`
 ```
-
-(Only after Tasks 5–10 actually finished.)
 
 - [ ] **Step 3: Commit**
 
@@ -835,24 +1013,27 @@ git commit -m "docs: freeze reusable sample-gap research agent prompt"
 | ---- | ---------------- |
 | 1 | Drop dump at `samples/<label>/` |
 | 2 | Pick new `RUN_ID` |
-| 3 | Paste agent prompt from `tools/sample-gap-research/README.md` |
-| 4 | Review `research-runs/<RUN_ID>/REPORT.md` + `fixture-backlog.md` |
-| 5 | Optional: new implementation plan from P0/P1 backlog only |
+| 3 | Paste agent prompt from `tools/sample-gap-research/README.md` (includes F1–F6 deep-read) |
+| 4 | Confirm `forensic/manifest.json` is 100% `read_complete` for non-dup scannable files |
+| 5 | Review `REPORT.md`, `forensic/cross-check.md`, `fixture-backlog.md` |
+| 6 | Optional: new implementation plan from P0/P1 backlog only |
 
 ## Spec coverage self-check
 
 | Spec requirement | Task |
 | ---------------- | ---- |
 | Full corpus census | 3, 5 |
-| Timeline-first narrative | 6 |
+| **AI forensic deep-read every file every line** | **F1, F2** |
+| **Three-way cross-check AI ↔ scripts ↔ WT** | **F3** |
+| Timeline-first narrative (from deep-read) | 6, **F4** |
 | Code map | 7 |
 | Runtime crash/narrator replay | 4, 8 |
 | Ingestion checklist appendix | 4, 10 |
-| Gap matrix full operator path | 8 |
-| Fixture backlog with acceptance | 9 |
-| No product code in research pass | Global + 10 |
+| Gap matrix full operator path | 8, **F5** |
+| Fixture backlog with acceptance | 9, **F5** |
+| No product code in research pass | Global + 10 + F6 |
 | Reuse for future samples | 1, 11 + How to re-run |
 
 ## Plain English (end user)
 
-You get a repeatable lab procedure: drop a user’s logs in `samples/…`, run the playbook, and WatchTower research writes a folder explaining what broke, what WatchTower would have said, what it missed, and which golden fixtures to add next. The first dump (`new samples 02.08.2026`) is the pilot run; later dumps reuse the same tools and skip rebuilding them.
+You get a repeatable lab procedure: drop a user’s logs in `samples/…`, run the playbook, and the agent **reads every file start to finish**, compares that careful read to counting scripts and to what WatchTower would say, then writes a folder of gaps and golden-fixture ideas. The pilot census-only pass is not enough under the revised rules until Tasks F1–F6 finish on that dump.

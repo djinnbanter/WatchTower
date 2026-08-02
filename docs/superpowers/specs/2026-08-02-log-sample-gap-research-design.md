@@ -1,9 +1,10 @@
 # Log sample gap research (corpus → gap audit → fixture backlog)
 
-**Status:** Approved for planning (2026-08-02)  
-**Size:** Medium (research only; no product code in this pass)  
+**Status:** Approved for planning (2026-08-02); **revised 2026-08-02** — forensic deep-read mandatory  
+**Size:** Large (research only; no product code in this pass)  
 **Platforms:** NeoForge 1.21.x / Java 21 (sample pack is 1.21.1 / NeoForge 21.1.x)  
-**Sample root (first run):** `samples/new samples 02.08.2026/`
+**Sample root (pilot):** `samples/new samples 02.08.2026/`  
+**Pilot census-only run:** `docs/superpowers/research-runs/2026-08-02-new-samples/` (scripts + replay done; **forensic deep-read not yet done** — must re-run under this revised spec)
 
 ## Reuse (future sample dumps)
 
@@ -15,7 +16,7 @@ This is a **playbook**, not a one-shot. For any new user dump:
 4. Artifacts land in `docs/superpowers/research-runs/<RUN_ID>/` — do not overwrite prior runs.
 5. Product classifier/scanner code still stays out of scope unless a **separate** implementation plan is opened from that run’s fixture backlog.
 
-Locked decisions (full corpus, code map + runtime replay, full operator-path scoring, timeline-first + ingestion appendix) apply to every run unless this spec is explicitly revised.
+Locked decisions apply to every run unless this spec is explicitly revised: **full corpus**, **AI forensic deep-read of every file (every line, start→end)**, scripted census, code map + runtime replay, three-way cross-check (AI ↔ scripts ↔ WatchTower), full operator-path scoring, timeline-first + ingestion appendix.
 
 ## Problem
 
@@ -30,14 +31,17 @@ Without that research pass, classifier tweaks risk chasing one crash while missi
 
 ## Goal
 
-Produce a **gap audit + ranked fixture backlog** for WatchTower log/crash reading and operator advice against this corpus. No product behavior changes in this research pass. A separate implementation plan may follow from the backlog.
+Produce a **gap audit + ranked fixture backlog** for WatchTower log/crash reading and operator advice against this corpus. Ground truth comes from an **AI forensic deep-read of every corpus file (start to end, every line)**, then a **three-way cross-check** against (1) the scripted census toolkit and (2) what WatchTower would actually classify/surface/advise. No product behavior changes in this research pass. A separate implementation plan may follow from the backlog.
 
 ## Decisions (locked)
 
 | Decision | Choice |
 | -------- | ------ |
 | Primary deliverable | **B** — Gap audit + fixture backlog (not implement fixes yet) |
-| Corpus depth | **Full corpus** — all rotates, debug*, kubejs, Jade, mega.tar.gz |
+| Corpus depth | **Full corpus** — all rotates, debug*, kubejs, Jade, nested archives (dedupe members) |
+| AI forensic read | **Mandatory** — every non-duplicate scannable file is read by the agent **start→end, every line**; pattern scripts alone are not enough |
+| Scripted census | **Required companion** — inventory/census for counts and coverage; never a substitute for the AI deep-read |
+| Triangulation | **Required** — cross-check AI findings ↔ census scripts ↔ WatchTower replay/code map; record disagreements |
 | Verification | **Code map + runtime replay** — reading Java is not enough; capture real WT output |
 | Gap scoring | **Full operator path** — kind + surfacing + Fix/advice quality |
 | Research shape | **Timeline-first forensics** + **ingestion checklist appendix** |
@@ -66,18 +70,21 @@ Pack appears to be Create-heavy NeoForge **1.21.1** with Sable/Shtreimel, C2ME, 
 - `latest.log` — DISTXFORM client-on-server ERROR noise; GriefLogger MariaDB fail; loot-table parse errors for missing deps; chronic `Can't keep up` on Aug 1 rotates (100–200+ per file in samples checked)
 - `mega.tar.gz` — duplicate subset of Aug 1 rotates; must **dedupe** before counts
 
-These seeds inform the backlog but are **not** final until the full census + replay complete.
+These seeds inform the backlog but are **not** final until the **AI forensic deep-read**, full census, replay, and triangulation complete.
 
 ## Architecture (research flow)
 
 ```text
-samples/new samples 02.08.2026/
-  → Corpus inventory + mega.tar.gz dedupe
-  → Full-corpus signal census (scripted)
-  → Day-by-day operator timeline (ground truth)
+SAMPLE_ROOT/
+  → Corpus inventory + archive dedupe
+  → Full-corpus signal census (scripted)          [counts / coverage]
+  → AI forensic deep-read EVERY file, EVERY line  [ground truth understanding]
+  → Per-file forensic notes + forensic manifest
+  → Three-way cross-check: AI ↔ census ↔ WatchTower
+  → Day-by-day operator timeline (ground truth from deep-read)
   → Code map: signal → LogScanner / OpsLogTail / Crash* / Classifier / Narrator / Issues
   → Runtime replay against staged server root
-  → Gap matrix (ground truth × WT output × Fix quality)
+  → Gap matrix (AI ground truth × WT output × Fix quality × script disagreements)
   → Ranked fixture backlog + ingestion checklist appendix
 ```
 
@@ -85,7 +92,9 @@ samples/new samples 02.08.2026/
 flowchart TD
   corpus[Sample corpus]
   invent[Inventory + dedupe]
-  census[Full signal census]
+  census[Scripted signal census]
+  forensic[AI deep-read every file every line]
+  xcheck[Cross-check AI vs scripts vs WT]
   truth[Operator timeline]
   code[WT code map]
   replay[Runtime replay]
@@ -93,10 +102,14 @@ flowchart TD
   backlog[Fixture backlog]
   ingest[Ingestion checklist appendix]
 
-  corpus --> invent --> census --> truth
+  corpus --> invent --> census
+  invent --> forensic
+  census --> xcheck
+  forensic --> xcheck
   invent --> code
-  truth --> gaps
-  code --> replay --> gaps
+  code --> replay --> xcheck
+  xcheck --> truth --> gaps
+  xcheck --> gaps
   gaps --> backlog
   invent --> ingest
 ```
@@ -112,24 +125,48 @@ Catalog every file under the sample root:
 - `logs/*.log.gz`, `logs/debug-*.log.gz`
 - `logs/kubejs/*`
 - `logs/JadeErrorOutput.txt`
-- `logs/mega.tar.gz` (list + dedupe against already-present rotates)
+- nested archives such as `logs/mega.tar.gz` (list + dedupe against already-present rotates)
 
 Record size, date span, and whether WT has a reader for that path.
 
-### 2. Ground-truth pass (full corpus)
+### 2. Scripted census (companion, not ground truth)
 
-For each file, extract signal classes at least:
+Run inventory + census tools across every non-duplicate scannable file. Capture pattern counts (boot `Done (`, `Can't keep up`, ERROR/WARN floods, crash/watchdog, `NoSuchMethodError`, Spark profiler shutdown, Sable body-removed, Jade NPE, KubeJS/createfood recipe parse, DISTXFORM, loot-table missing deps, MariaDB addon fail, joins/leaves, `Stopping server`, and any other patterns in the toolkit catalog).
 
-Boot `Done (`, `Can't keep up`, ERROR/WARN floods, crash/watchdog, `NoSuchMethodError`, Spark profiler shutdown, Sable body-removed, Jade NPE, KubeJS/createfood recipe parse, DISTXFORM, loot-table missing deps, MariaDB addon fail, joins/leaves, `Stopping server`.
+Scripts exist to **quantify and prevent missed files**. They do **not** replace the AI deep-read.
 
-Build:
+### 3. AI forensic deep-read (mandatory ground truth)
 
-- Day-by-day timeline (Jul 29 → Aug 2)
-- Ranked “what actually hurt players/ops” vs “noise”
+The researching agent MUST read **every non-duplicate scannable file in the corpus from the first line to the last line**. That includes all crash reports, `latest.log`, `debug.log`, every rotate `.log.gz` / `debug-*.log.gz`, kubejs logs, Jade sidecars, and any other text logs listed in inventory after dedupe.
 
-Use scripted decompression + pattern counts; do not hand-read every line.
+Rules:
 
-### 3. Code map
+- Decompress gz/archives as needed; do not skip “quiet” days or large files.
+- For each file, write a **per-file forensic note** under `docs/superpowers/research-runs/<RUN_ID>/forensic/files/` covering: time span, session phases (boot / runtime / stop), notable events, player-facing impact, noise vs hurt, and anything surprising that scripts might miss (odd stack traces, rare mods, panel/host lines, auth storms, datapack quirks, WatchTower’s own lines, etc.).
+- Maintain `forensic/manifest.json`: one row per inventory file with `rel`, `kind`, `duplicate_of`, `read_complete` (must be `true` for every non-duplicate scannable file before the run can close), `note_path`, `line_count` if known.
+- Parallel subagents may split the file list, but the controller must ensure **100% of non-duplicate scannable files** reach `read_complete: true` with a note. No “spot-check only” shortcuts.
+- Repeating spam (e.g. thousands of identical recipe WARNs) may be summarized **after** the agent has confirmed the pattern by reading through the file; the agent still must traverse the whole file and record approximate volume / first-last occurrence — not sample the middle and stop.
+
+### 4. Three-way cross-check (AI ↔ scripts ↔ WatchTower)
+
+After deep-read + census + crash/narrator replay (+ code map):
+
+Write `forensic/cross-check.md` that explicitly compares:
+
+| Lens | Role |
+| ---- | ---- |
+| AI forensic notes | What a careful human would say happened |
+| Scripted census | What the pattern toolkit counted / missed |
+| WatchTower | What classifiers, scanners, Issues, and Fix advice would produce today |
+
+Call out:
+
+- Signals the AI found that census patterns missed (extend pattern catalog or note as gap)
+- Census hits that were noise / false positives on deep-read
+- WT wrong kind / wrong primary / bad advice / blind / no_surface / noise_drown / linkage misses
+- Cases where scripts and WT agree but both disagree with AI ground truth (highest-value product gaps)
+
+### 5. Code map
 
 Map each signal class to concrete WatchTower paths, including known limits:
 
@@ -142,7 +179,7 @@ Map each signal class to concrete WatchTower paths, including known limits:
 | Issues | `IssuesLiveEvaluators`, ops-cache peeks |
 | Known limits | Tail 4 MB/scan; crash enrich budget; same-line silent fails; YAML packs only override `unknown` unless configured; no Jade sidecar reader observed |
 
-### 4. Runtime replay
+### 6. Runtime replay
 
 Stage the sample tree as a fake server root. Drive existing collectors/classifiers (golden-test style harness or thin test/tools driver). Capture:
 
@@ -152,9 +189,11 @@ Stage the sample tree as a fake server root. Drive existing collectors/classifie
 
 Prefer real API output over invented expectations. If no “point at arbitrary server root” path exists, add a **test/tools-only** driver noted in the plan — still not a product change.
 
-### 5. Gap matrix + fixture backlog
+### 7. Timeline, gap matrix + fixture backlog
 
-Score each miss on the full operator path. Rank by severity × frequency × fixability. Propose fixtures matching existing golden styles (`crash-intelligence`, `ca-parity`, `issues-live`).
+Build the day-by-day timeline from **forensic notes first**, with census counts as supporting evidence.
+
+Score each miss on the full operator path, incorporating triangulation findings. Rank by severity × frequency × fixability. Propose fixtures matching existing golden styles (`crash-intelligence`, `ca-parity`, `issues-live`).
 
 ## Gap rubric
 
@@ -202,10 +241,13 @@ Score each miss on the full operator path. Rank by severity × frequency × fixa
 
 ## Deliverables
 
-1. **Incident narrative** — plain English across the full corpus  
-2. **Gap matrix** — ground truth → WT output → miss tags  
-3. **Ingestion checklist appendix** — every relevant file type vs WT reader coverage  
-4. **Ranked fixture backlog** — ready for a later implementation writing-plans pass  
+1. **Forensic package** — `forensic/manifest.json` + per-file notes proving every non-duplicate scannable file was deep-read  
+2. **Cross-check report** — `forensic/cross-check.md` (AI ↔ scripts ↔ WatchTower)  
+3. **Incident narrative** — plain English across the full corpus, rooted in deep-read  
+4. **Gap matrix** — ground truth → WT output → miss tags (plus script disagreements)  
+5. **Ingestion checklist appendix** — every relevant file type vs WT reader coverage  
+6. **Ranked fixture backlog** — ready for a later implementation writing-plans pass  
+7. **Scripted census** — inventory.json + census.json as quantitative companion  
 
 Optional working artifact if the matrix is large: `docs/superpowers/plans/2026-08-02-log-sample-gap-matrix.md`.
 
@@ -214,9 +256,12 @@ Optional working artifact if the matrix is large: `docs/superpowers/plans/2026-0
 | Artifact | Path |
 | -------- | ---- |
 | This spec | `docs/superpowers/specs/2026-08-02-log-sample-gap-research-design.md` |
-| Research plan (next) | `docs/superpowers/plans/2026-08-02-log-sample-gap-research.md` |
-| Optional matrix dump | `docs/superpowers/plans/2026-08-02-log-sample-gap-matrix.md` |
-| Source samples | `samples/new samples 02.08.2026/` (unchanged as source of truth) |
+| Research plan | `docs/superpowers/plans/2026-08-02-log-sample-gap-research.md` |
+| Per-run root | `docs/superpowers/research-runs/<RUN_ID>/` |
+| Forensic notes | `docs/superpowers/research-runs/<RUN_ID>/forensic/files/` |
+| Forensic manifest | `docs/superpowers/research-runs/<RUN_ID>/forensic/manifest.json` |
+| Cross-check | `docs/superpowers/research-runs/<RUN_ID>/forensic/cross-check.md` |
+| Source samples | `samples/...` (unchanged as source of truth) |
 | Future goldens | `samples/fixtures/...` only when a backlog item needs a durable fixture |
 
 ## Verification bar (“research done”)
@@ -224,18 +269,21 @@ Optional working artifact if the matrix is large: `docs/superpowers/plans/2026-0
 - Every file class in the corpus appears on the ingestion checklist (`seen` / `unread` / `partial`)
 - Every crash report has a ground-truth row and a WT replay row
 - Full-corpus pattern census completed (not crash-days only)
-- Gap matrix has ≥1 row per confirmed miss type found
+- **Every non-duplicate scannable inventory file has `read_complete: true` in `forensic/manifest.json` and a forensic note**
+- **`forensic/cross-check.md` exists and documents AI ↔ census ↔ WT disagreements**
+- Gap matrix has ≥1 row per confirmed miss type found (including triangulation finds)
 - Every P0/P1 item has a fixture backlog entry with acceptance criteria
 - No product code changed; any replay harness is test/tools-only and documented
 
 ## Risks & constraints
 
-- Large gz corpus → scripted counts only; avoid full manual reads
-- `mega.tar.gz` duplicates Aug 1 rotates → always dedupe before totals
+- Large gz corpus → deep-read is expensive; use parallel file-splitting subagents, but **never** skip files or replace deep-read with census alone
+- `mega.tar.gz` (and similar) duplicates peer rotates → always dedupe before totals and before deep-read (do not double-read identical members)
 - Runtime replay may need a thin test driver — preferred over inventing WT output
 - Sable / Jade / OPAC advice stays advisory, plain English; no download claims
 - WatchTower is installed on this pack — do not treat its own log lines as the incident unless they are
 - Status can fragment across Overview / Issues live / brief / crash review — note fragmentation when it appears in replay
+- The 2026-08-02 pilot census-only run is **insufficient** under this revised spec until the forensic deep-read + cross-check pass completes
 
 ## Out of scope
 
@@ -243,11 +291,12 @@ Optional working artifact if the matrix is large: `docs/superpowers/plans/2026-0
 - Modrinth lookups or jar installs
 - Auto-restart / world mutation
 - Treating this research plan as the implementation plan
+- Using pattern census or crash-replay alone as a substitute for reading every file
 
 ## Handoff
 
-After the research plan executes and the backlog is accepted, run a **separate** writing-plans pass to turn ranked P0/P1 fixtures into implementation tasks (TDD goldens → classifier/narrator/scanner).
+After the research plan executes (including forensic deep-read + triangulation) and the backlog is accepted, run a **separate** writing-plans pass to turn ranked P0/P1 fixtures into implementation tasks (TDD goldens → classifier/narrator/scanner).
 
 ## Plain English (end user)
 
-We take this user’s full log dump, figure out what actually broke their server day by day, then check what WatchTower would have said. We write down every miss — unread files, wrong labels, missing Issues, bad Fix text, spam drowning the real problem — and turn the worst misses into a fixture shopping list for later coding. This pass itself does not change the mod.
+We take the user’s full log dump and actually read every file, start to finish — not just run counters. Then we compare what a careful reader saw, what our counting scripts saw, and what WatchTower would have said. We write down every miss — unread files, wrong labels, missing Issues, bad Fix text, spam drowning the real problem, and things the scripts never looked for — and turn the worst misses into a fixture shopping list for later coding. This pass itself does not change the mod.
