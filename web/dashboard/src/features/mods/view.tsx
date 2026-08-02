@@ -4,7 +4,7 @@ import { api } from '@/api/client';
 import { navigate, type RouteState } from '@/app/router';
 import { asArray, asRecord, bool, get, num, str } from '@/lib/utils';
 import { FadeIn, HeroWatermark, PageEnter } from '@/ui/motion';
-import { ErrorState, HeroCard, HeroTabNav, MetricReadout, StatusPill } from '@/ui/patterns';
+import { ErrorState, HeroCard, HeroTabNav, StatusPill, VitalTile } from '@/ui/patterns';
 import { Boxes } from '@/ui/icons';
 import { buildBadgeMaps, enrichedFactsMods } from './catalog';
 import { ChangesTab } from './changes-tab';
@@ -33,28 +33,6 @@ const VALID = new Set(VIEWS.map((v) => v.id));
 
 type IconCmp = ComponentType<{ size?: number; className?: string }>;
 const BoxesIcon = Boxes as IconCmp;
-
-function VitalTile({
-  label,
-  value,
-  tone = 'default',
-}: {
-  label: string;
-  value: number;
-  tone?: 'default' | 'ok' | 'warn' | 'danger' | 'info';
-}) {
-  return (
-    <div className="md-vital">
-      <MetricReadout
-        label={label}
-        value={value}
-        format={(n) => String(Math.round(n))}
-        size="md"
-        tone={tone === 'info' ? 'default' : tone}
-      />
-    </div>
-  );
-}
 
 export function PageView({ route }: { route: RouteState }) {
   const rawView = (route.view as ModViewId) || 'overview';
@@ -256,18 +234,21 @@ export function PageView({ route }: { route: RouteState }) {
             </div>
 
             <div className="md-vitals" aria-label="Mod catalog vitals">
-              <VitalTile label="Loaded" value={modCount} tone="default" />
+              <VitalTile className="md-vital" label="Loaded" value={modCount} tone="default" />
               <VitalTile
+                className="md-vital"
                 label="Updates"
                 value={modrinthUpdates.length}
-                tone={modrinthUpdates.length ? 'info' : 'default'}
+                tone="default"
               />
               <VitalTile
+                className="md-vital"
                 label="Conflicts"
                 value={conflictCount}
                 tone={conflictCount ? 'warn' : 'default'}
               />
               <VitalTile
+                className="md-vital"
                 label="Log errors"
                 value={logErrorCount}
                 tone={logErrorCount ? 'warn' : 'default'}
