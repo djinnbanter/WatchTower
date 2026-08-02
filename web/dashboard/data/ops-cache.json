@@ -29,25 +29,10 @@
         "path": "dimdoors-1.21.jar.disabled"
       },
       {
-        "time": "2026-08-01T20:55:51.780Z",
-        "type": "mod_jar_updated",
-        "detail": "jei-1.21.1-neoforge-19.21.0.jar",
-        "source": "scan",
-        "path": "jei-1.21.1-neoforge-19.21.0.jar"
-      },
-      {
-        "time": "2026-08-01T20:50:51.780Z",
-        "type": "mod_jar_removed",
-        "detail": "old-debug-1.0.jar",
-        "source": "scan",
-        "path": "old-debug-1.0.jar"
-      },
-      {
-        "time": "2026-08-01T20:45:51.780Z",
-        "type": "mod_enabled",
-        "detail": "appleskin-neoforge-mc1.21-3.0.9.jar.disabled → appleskin-neoforge-mc1.21-3.0.9.jar",
-        "source": "dashboard",
-        "path": "appleskin-neoforge-mc1.21-3.0.9.jar"
+        "time": "2026-08-01T21:17:51.780Z",
+        "type": "restart_scheduled",
+        "detail": "Server will restart in 5 minutes",
+        "source": "scan"
       },
       {
         "time": "2026-08-01T21:15:51.780Z",
@@ -62,6 +47,12 @@
         "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
         "source": "scan",
         "ms_behind": 5200
+      },
+      {
+        "time": "2026-08-01T21:15:51.780Z",
+        "type": "backup_job",
+        "detail": "[Crafty] Starting backup for Example Server",
+        "source": "scan"
       },
       {
         "time": "2026-08-01T21:13:51.780Z",
@@ -90,16 +81,25 @@
         "player": "Steve"
       },
       {
-        "time": "2026-08-01T21:15:51.780Z",
-        "type": "backup_job",
-        "detail": "[Crafty] Starting backup for Example Server",
-        "source": "scan"
+        "time": "2026-08-01T20:55:51.780Z",
+        "type": "mod_jar_updated",
+        "detail": "jei-1.21.1-neoforge-19.21.0.jar",
+        "source": "scan",
+        "path": "jei-1.21.1-neoforge-19.21.0.jar"
       },
       {
-        "time": "2026-08-01T21:17:51.780Z",
-        "type": "restart_scheduled",
-        "detail": "Server will restart in 5 minutes",
-        "source": "scan"
+        "time": "2026-08-01T20:50:51.780Z",
+        "type": "mod_jar_removed",
+        "detail": "old-debug-1.0.jar",
+        "source": "scan",
+        "path": "old-debug-1.0.jar"
+      },
+      {
+        "time": "2026-08-01T20:45:51.780Z",
+        "type": "mod_enabled",
+        "detail": "appleskin-neoforge-mc1.21-3.0.9.jar.disabled → appleskin-neoforge-mc1.21-3.0.9.jar",
+        "source": "dashboard",
+        "path": "appleskin-neoforge-mc1.21-3.0.9.jar"
       },
       {
         "time": "2026-08-01T20:38:51.780Z",
