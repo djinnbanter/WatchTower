@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { navigate } from '@/app/router';
 import { FadeIn, HeroWatermark } from '@/ui/motion';
 import { Button, EmptyState, Section, StatusPill } from '@/ui/patterns';
-import { Activity, Copy, HardDrive, Settings2 } from '@/ui/icons';
+import { WtGauge } from '@/ui/charts/wt-gauges';
+import { Copy, HardDrive, Settings2 } from '@/ui/icons';
+import { SparkMark } from '@/ui/brand/spark-mark';
 import { asArray, asRecord, get, num, str } from '@/lib/utils';
 import { formatGb } from '@/domain/formats';
 import { PanelShell, coveragePct } from '../shared';
@@ -122,6 +124,56 @@ function flagsSourceLabel(source: string) {
   return source || 'Source unknown';
 }
 
+type MetricTone = 'ok' | 'warn' | 'danger' | 'info' | 'neutral';
+
+/** Peak / Xmx — high fill is tight; very low with over-provisioned is soft info. */
+function ramPeakTone(peakSharePct: number, verdict: string): MetricTone {
+  if (!Number.isFinite(peakSharePct)) return 'neutral';
+  if (peakSharePct >= 95) return 'danger';
+  if (verdict === 'under_provisioned' || peakSharePct >= 90) return 'warn';
+  if (peakSharePct <= 50 && verdict === 'over_provisioned') return 'info';
+  return 'ok';
+}
+
+/** Heap headroom left under -Xmx after peak. */
+function ramHeadroomTone(headroomGb: number, xmxGb: number, verdict: string): MetricTone {
+  if (!Number.isFinite(headroomGb) || !Number.isFinite(xmxGb) || xmxGb <= 0) return 'neutral';
+  const frac = headroomGb / xmxGb;
+  if (headroomGb < 0.5 || frac < 0.08) return 'danger';
+  if (verdict === 'under_provisioned' || headroomGb < 1.0 || frac < 0.12) return 'warn';
+  return 'ok';
+}
+
+/** -Xmx vs host/container envelope. */
+function ramAllocatedTone(hostSharePct: number, envelope: string, verdict: string): MetricTone {
+  if (envelope === 'critical') return 'danger';
+  if (envelope === 'low' || verdict === 'envelope_tight') return 'warn';
+  if (Number.isFinite(hostSharePct)) {
+    if (hostSharePct >= 85) return 'danger';
+    if (hostSharePct >= 70) return 'warn';
+    return 'ok';
+  }
+  if (verdict === 'over_provisioned') return 'info';
+  if (verdict === 'under_provisioned') return 'warn';
+  if (verdict === 'right_sized') return 'ok';
+  return 'neutral';
+}
+
+function ramOutsideTone(envelope: string): MetricTone {
+  if (envelope === 'critical') return 'danger';
+  if (envelope === 'low') return 'warn';
+  if (envelope === 'ok') return 'ok';
+  return 'neutral';
+}
+
+function ramPressureTone(pressurePct: number): MetricTone {
+  if (!Number.isFinite(pressurePct)) return 'neutral';
+  if (pressurePct >= 85) return 'danger';
+  if (pressurePct >= 70) return 'warn';
+  if (pressurePct <= 35) return 'ok';
+  return 'ok';
+}
+
 function copyText(text: string) {
   void navigator.clipboard?.writeText(text);
 }
@@ -135,7 +187,8 @@ function RamSizingCard({
 }) {
   if (!Object.keys(ram).length) return null;
   const envelope = str(ram.envelope);
-  const badge = ramSizingBadge(str(ram.verdict), envelope);
+  const verdict = str(ram.verdict);
+  const badge = ramSizingBadge(verdict, envelope);
   const blocked = !!ram.ram_upgrade_blocked;
   const peak = ram.heap_used_gb_peak;
   const xmx = ram.xmx_gb;
@@ -146,83 +199,180 @@ function RamSizingCard({
   const suggestLabel =
     suggestMin != null
       ? suggestMax != null && suggestMax !== suggestMin
-        ? `toward ${suggestMin}–${suggestMax}G`
-        : `toward ~${suggestMin}G`
+        ? `${suggestMin}–${suggestMax}G`
+        : `~${suggestMin}G`
       : null;
   const pasteNote =
     pasteXmxGb != null && xmx != null && Math.abs(pasteXmxGb - num(xmx)) >= 0.5
       ? `Full recommended flags below use -Xmx${Math.round(pasteXmxGb)}G to match this window’s sizing advice.`
       : null;
 
+  const pressure = ram.heap_pressure_pct_p95 != null ? num(ram.heap_pressure_pct_p95) : NaN;
+  const peakShare =
+    peak != null && xmx != null && num(xmx) > 0 ? (num(peak) / num(xmx)) * 100 : NaN;
+  const hostShare =
+    host != null && xmx != null && num(host) > 0 ? (num(xmx) / num(host)) * 100 : NaN;
+  const score = Number.isFinite(pressure)
+    ? pressure
+    : Number.isFinite(peakShare)
+      ? peakShare
+      : Number.isFinite(hostShare)
+        ? hostShare
+        : NaN;
+  const scoreLabel = Number.isFinite(pressure)
+    ? 'Pressure'
+    : Number.isFinite(peakShare)
+      ? 'Peak / Xmx'
+      : 'Xmx / host';
+  const scoreTone =
+    envelope === 'critical' || verdict === 'envelope_tight'
+      ? envelope === 'critical'
+        ? 'danger'
+        : 'warn'
+      : undefined;
+
+  const toneVar =
+    badge.tone === 'danger'
+      ? 'var(--wt-danger)'
+      : badge.tone === 'warn'
+        ? 'var(--wt-warn)'
+        : badge.tone === 'ok'
+          ? 'var(--wt-ok)'
+          : badge.tone === 'info'
+            ? 'var(--wt-accent)'
+            : 'var(--wt-text-low)';
+
+  type Metric = { key: string; label: string; value: string; tone: MetricTone };
+  const metrics: Metric[] = [];
+  if (host != null) {
+    metrics.push({
+      key: 'host',
+      label: `Host (${ramSourceLabel(str(ram.ram_source))})`,
+      value: formatGb(num(host)),
+      tone: 'neutral',
+    });
+    if (xmx != null) {
+      metrics.push({
+        key: 'xmx',
+        label: 'Heap (-Xmx)',
+        value: formatGb(num(xmx)),
+        tone: ramAllocatedTone(hostShare, envelope, verdict),
+      });
+    }
+    if (outside != null || envelope) {
+      metrics.push({
+        key: 'outside',
+        label: 'Outside heap',
+        value: outside != null ? `${envelope || '—'} · ${formatGb(num(outside))}` : envelope || '—',
+        tone: ramOutsideTone(envelope),
+      });
+    }
+  } else if (xmx != null) {
+    metrics.push({
+      key: 'xmx',
+      label: 'Allocated',
+      value: formatGb(num(xmx)),
+      tone: ramAllocatedTone(hostShare, envelope, verdict),
+    });
+  }
+  if (peak != null) {
+    metrics.push({
+      key: 'peak',
+      label: 'Peak',
+      value: formatGb(num(peak)),
+      tone: ramPeakTone(peakShare, verdict),
+    });
+  }
+  // Pressure is the dial — don't repeat it in the grid.
+  if (!Number.isFinite(pressure) && ram.heap_pressure_pct_p95 != null) {
+    metrics.push({
+      key: 'pressure',
+      label: 'Pressure p95',
+      value: `${num(ram.heap_pressure_pct_p95).toFixed(0)}%`,
+      tone: ramPressureTone(num(ram.heap_pressure_pct_p95)),
+    });
+  }
+  if (ram.headroom_gb != null) {
+    metrics.push({
+      key: 'headroom',
+      label: 'Heap headroom',
+      value: formatGb(num(ram.headroom_gb)),
+      tone: ramHeadroomTone(num(ram.headroom_gb), xmx != null ? num(xmx) : NaN, verdict),
+    });
+  }
+  if (suggestLabel) {
+    metrics.push({ key: 'suggest', label: 'Suggest', value: suggestLabel, tone: 'info' });
+  }
+
   return (
-    <div className="wt-hero-shell relative rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1/90 p-5">
+    <div
+      className="in-ram-card wt-hero-shell wt-plate relative"
+      style={{ ['--ram-tone' as string]: toneVar }}
+    >
       <HeroWatermark icon={HardDrive} tone="accent" size="card" />
-      <div className="relative z-[1] mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold">RAM sizing</h3>
+      <header className="in-ram-card__head">
+        <div className="in-ram-card__titles">
+          <p className="in-ram-card__eyebrow">Insights · Configs</p>
+          <h3 className="in-ram-card__title">RAM sizing</h3>
         </div>
         <StatusPill tone={badge.tone}>{badge.label}</StatusPill>
-      </div>
-      <p className="relative z-[1] text-sm text-wt-text-mid">{str(ram.advice, '—')}</p>
-      <p className="relative z-[1] mt-1 text-xs text-wt-text-low">
-        {host != null
-          ? 'Host/container memory vs heap, then Insights window heap history.'
-          : 'Metrics below are for this Insights window.'}
-      </p>
-      {host != null ? (
-        <div className="relative z-[1] mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-wt-text-low">
-          <span>
-            Host{' '}
-            <strong className="text-wt-text">{formatGb(num(host))}</strong> (
-            {ramSourceLabel(str(ram.ram_source))})
-          </span>
-          {xmx != null ? (
-            <span>
-              Heap (-Xmx) <strong className="text-wt-text">{formatGb(num(xmx))}</strong>
-            </span>
+      </header>
+
+      <div className="in-ram-card__body">
+        <div className="in-ram-card__main">
+          <div className="in-ram-card__copy">
+            <p className="in-ram-card__advice">{str(ram.advice, '—')}</p>
+            <p className="in-ram-card__hint">
+              {host != null
+                ? 'Host/container memory vs heap, then this window’s heap history.'
+                : 'Figures are for this Insights window.'}
+            </p>
+            {metrics.length ? (
+              <dl className="in-ram-card__metrics">
+                {metrics.map((m) => (
+                  <div
+                    key={m.key}
+                    className={`in-ram-card__metric${m.tone !== 'neutral' ? ` is-${m.tone}` : ''}`}
+                  >
+                    <dt>{m.label}</dt>
+                    <dd>{m.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+            {pasteNote ? <p className="in-ram-card__note">{pasteNote}</p> : null}
+            {blocked && str(ram.gc_verdict) === 'single_thread_bound' ? (
+              <div className="in-ram-card__actions">
+                <Button kind="default" onClick={() => navigate({ tab: 'live', view: null, panel: null })}>
+                  Open Live
+                </Button>
+              </div>
+            ) : null}
+          </div>
+
+          {Number.isFinite(score) ? (
+            <aside
+              className="in-ram-card__dial"
+              aria-label={`${scoreLabel} ${Math.round(score)} percent`}
+            >
+              <div className="in-ram-card__dial-well">
+                <WtGauge
+                  value={score}
+                  max={100}
+                  label={scoreLabel}
+                  suffix="%"
+                  centerValue={Math.round(score)}
+                  tone={scoreTone}
+                  size={120}
+                />
+              </div>
+              <p className="in-ram-card__dial-caption">
+                {Number.isFinite(pressure) ? 'Heap pressure p95' : scoreLabel}
+              </p>
+            </aside>
           ) : null}
-          <span>
-            Outside heap <strong className="text-wt-text">{envelope || '—'}</strong>
-            {outside != null ? ` (${formatGb(num(outside))})` : ''}
-          </span>
         </div>
-      ) : null}
-      <div className="relative z-[1] mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-wt-text-low">
-        {host == null && xmx != null ? (
-          <span>
-            Allocated <strong className="text-wt-text">{formatGb(num(xmx))}</strong>
-          </span>
-        ) : null}
-        {peak != null ? (
-          <span>
-            Peak <strong className="text-wt-text">{formatGb(num(peak))}</strong>
-          </span>
-        ) : null}
-        {ram.heap_pressure_pct_p95 != null ? (
-          <span>
-            Pressure p95{' '}
-            <strong className="text-wt-text">{num(ram.heap_pressure_pct_p95).toFixed(0)}%</strong>
-          </span>
-        ) : null}
-        {ram.headroom_gb != null ? (
-          <span>
-            Heap headroom <strong className="text-wt-text">{formatGb(num(ram.headroom_gb))}</strong>
-          </span>
-        ) : null}
-        {suggestLabel ? (
-          <span>
-            Suggest <strong className="text-wt-text">{suggestLabel}</strong>
-          </span>
-        ) : null}
       </div>
-      {pasteNote ? <p className="relative z-[1] mt-3 text-xs text-wt-text-mid">{pasteNote}</p> : null}
-      {blocked && str(ram.gc_verdict) === 'single_thread_bound' ? (
-        <div className="relative z-[1] mt-3">
-          <Button kind="default" onClick={() => navigate({ tab: 'live', view: null, panel: null })}>
-            Open Live
-          </Button>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -310,7 +460,7 @@ export function ConfigsPanel({
             </EmptyState>
           ) : (
             <div className="relative rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1/90 in-jvm-advisor">
-              <div className="relative z-10">
+              <div className="relative z-10 in-jvm-advisor__inner">
               <div className="in-jvm-advisor__top">
                 <div className="in-jvm-advisor__status">
                   <StatusPill
@@ -511,7 +661,30 @@ export function ConfigsPanel({
       </FadeIn>
 
       <FadeIn>
-        <RamSizingCard ram={ram} pasteXmxGb={pasteXmx} />
+        <div className="in-configs-duo">
+          <RamSizingCard ram={ram} pasteXmxGb={pasteXmx} />
+          <div className="in-spark-cta in-spark-cta--companion">
+            <header className="in-spark-cta__head">
+              <div>
+                <p className="in-spark-cta__eyebrow">Spark profile</p>
+                <h3 className="in-spark-cta__title">Sharper recommendations</h3>
+              </div>
+              <SparkMark size={28} className="in-spark-cta__mark" />
+            </header>
+            <div className="in-spark-cta__body">
+              <p className="in-spark-cta__text">
+                The properties audit below uses fixed bands. Profile during lag and WatchTower can suggest specific values from that capture’s CPU, heap, RAM, and tick load.
+              </p>
+              <Button
+                kind="primary"
+                className="in-spark-cta__action"
+                onClick={() => navigate({ tab: 'spark', view: 'technical', panel: null })}
+              >
+                Open Spark Technical
+              </Button>
+            </div>
+          </div>
+        </div>
       </FadeIn>
 
       <FadeIn>
@@ -564,27 +737,6 @@ export function ConfigsPanel({
           ) : (
             <EmptyState title="No audit rows" />
           )}
-          <div className="relative rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1/90 in-spark-cta mt-3">
-            <div className="in-spark-cta__body">
-              <div className="in-spark-cta__icon" aria-hidden="true">
-                <Activity size={18} />
-              </div>
-              <div className="in-spark-cta__copy">
-                <div className="in-spark-cta__eyebrow">Spark profile</div>
-                <div className="in-spark-cta__title">Want sharper recommendations?</div>
-                <p className="in-spark-cta__text">
-                  This audit uses fixed bands from on-disk server.properties. Profile during lag and Watchtower can suggest specific values from that capture’s CPU, heap, RAM, and tick load.
-                </p>
-              </div>
-              <Button
-                kind="primary"
-                className="in-spark-cta__action"
-                onClick={() => navigate({ tab: 'spark', view: 'technical', panel: null })}
-              >
-                Open Spark Technical
-              </Button>
-            </div>
-          </div>
         </Section>
       </FadeIn>
 

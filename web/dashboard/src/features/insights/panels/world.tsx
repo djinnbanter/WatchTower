@@ -1,6 +1,5 @@
 import type { ComponentType } from 'react';
-import BorderGlow from '@/components/border-glow/BorderGlow';
-import { Button, EmptyState, Section, StatusPill, useCappedList } from '@/ui/patterns';
+import { Button, EmptyState, HeroCard, Section, StatusPill, useCappedList } from '@/ui/patterns';
 import { PieChart } from '@/ui/charts';
 import { WtGauge } from '@/ui/charts/wt-gauges';
 import { Activity, AlertTriangle, ArrowUpRight, HardDrive, Map, Network, Package, Users, Zap } from '@/ui/icons';
@@ -305,9 +304,27 @@ function ChunkWriteEvidence({
   const growth = num(evidence.chunk_growth, NaN);
   const loaded = num(evidence.loaded_chunks, NaN);
   const players = num(evidence.players, NaN);
+  const growthHot = num(evidence.growth_hot_chunks, num(meters.growth_hot_chunks, 48));
+
+  const showLatency = kind === 'pregen_outrunning_disk' || kind === 'chunk_save_backlog';
+  const showGrowth = kind === 'heavy_chunk_generation';
+  const criticalMs = writeWarn > 0 ? writeWarn * 3 : 150;
+  const pressurePct = Number.isFinite(writeAwait) && criticalMs > 0
+    ? Math.min(100, (writeAwait / criticalMs) * 100)
+    : 0;
+  const pressureTone: Tone =
+    Number.isFinite(writeAwait) && writeAwait >= criticalMs
+      ? 'danger'
+      : Number.isFinite(writeAwait) && writeAwait >= writeWarn
+        ? 'warn'
+        : 'ok';
+  const ratio =
+    Number.isFinite(writeAwait) && writeWarn > 0 ? writeAwait / writeWarn : NaN;
+  const growthPct =
+    Number.isFinite(growth) && growthHot > 0 ? Math.min(100, (growth / (growthHot * 2)) * 100) : 0;
 
   const rows: { label: string; value: string }[] = [];
-  if (kind === 'pregen_outrunning_disk' || kind === 'chunk_save_backlog') {
+  if (showLatency) {
     rows.push({
       label: 'Write latency',
       value: Number.isFinite(writeAwait)
@@ -326,7 +343,7 @@ function ChunkWriteEvidence({
         : 'Idle',
     });
   }
-  if (kind === 'heavy_chunk_generation') {
+  if (showGrowth) {
     rows.push({
       label: 'Chunk growth',
       value: Number.isFinite(growth) ? `+${fmtInt(growth)} since last scan` : '—',
@@ -339,10 +356,52 @@ function ChunkWriteEvidence({
     }
   }
 
-  if (!rows.length) return null;
-
   return (
     <div className="in-world-compare">
+      {showLatency && Number.isFinite(writeAwait) ? (
+        <div className="in-world-pressure">
+          <div className="in-world-pressure__top">
+            <span className="in-world-pressure__label">Disk write pressure</span>
+            <code className={`in-world-pressure__ratio in-world-pressure__ratio--${pressureTone}`}>
+              {Number.isFinite(ratio) ? `${ratio.toFixed(1)}× warn` : '—'}
+            </code>
+          </div>
+          <div className="in-world-pressure__track" aria-hidden>
+            <span
+              className={`in-world-pressure__fill in-world-pressure__fill--${pressureTone}`}
+              style={{ width: `${Math.max(4, pressurePct)}%` }}
+            />
+            <span
+              className="in-world-pressure__mark"
+              style={{ left: `${Math.min(96, (writeWarn / criticalMs) * 100)}%` }}
+              title={`Warn ${Math.round(writeWarn)}ms`}
+            />
+          </div>
+          <p className="in-world-pressure__caption">
+            Latency vs warn (mark) and critical (~3× warn). WatchTower cannot read JVM save-queue depth — this is
+            the disk-pressure signal.
+          </p>
+        </div>
+      ) : null}
+      {showGrowth && Number.isFinite(growth) ? (
+        <div className="in-world-pressure">
+          <div className="in-world-pressure__top">
+            <span className="in-world-pressure__label">Chunk growth pressure</span>
+            <code>{`+${fmtInt(growth)} / hot ≥${fmtInt(growthHot)}`}</code>
+          </div>
+          <div className="in-world-pressure__track" aria-hidden>
+            <span
+              className={`in-world-pressure__fill in-world-pressure__fill--${growth >= growthHot ? 'warn' : 'ok'}`}
+              style={{ width: `${Math.max(4, growthPct)}%` }}
+            />
+            <span
+              className="in-world-pressure__mark"
+              style={{ left: `${Math.min(96, (growthHot / (growthHot * 2)) * 100)}%` }}
+              title={`Hot threshold +${fmtInt(growthHot)}`}
+            />
+          </div>
+        </div>
+      ) : null}
       {rows.map((row) => (
         <div key={row.label} className="in-world-compare__row">
           <div className="in-world-compare__meta">
@@ -392,7 +451,9 @@ function AlertCard({
           <div className="in-world-card__title">{str(c.headline)}</div>
           <p className="in-world-card__detail">{str(c.detail)}</p>
         </div>
-        <StatusPill tone={tone}>{sev}</StatusPill>
+        <StatusPill tone={tone} className="in-world-card__pill">
+          {sev}
+        </StatusPill>
       </div>
       {chunkWrite ? (
         <ChunkWriteEvidence kind={kind} evidence={evidence} meters={meters} />
@@ -572,9 +633,11 @@ export function WorldPanel({
 
   return (
     <PanelShell>
-      <BorderGlow
-        className="rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg2/40 p-5"
+      <HeroCard
+        tone={status.tone === 'neutral' ? 'info' : status.tone}
+        className={`in-world-glow in-world-glow--${status.tone} rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg2/40 p-5`}
         borderRadius={4}
+        glowIntensity={0.55}
       >
         <div className="in-world-hero">
           <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-wt-text-low">
@@ -655,7 +718,7 @@ export function WorldPanel({
             </div>
           ) : null}
         </div>
-      </BorderGlow>
+      </HeroCard>
 
       {classifiers.length ? (
         <Section title="Needs attention" hint={alertHint}>
