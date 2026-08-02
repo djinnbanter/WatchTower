@@ -266,7 +266,7 @@ export function IssuesQueue({
               </div>
               <button
                 type="button"
-                className="is-detail__close rounded-lg p-1 text-wt-text-low hover:bg-wt-bg3"
+                className="is-detail__close rounded-[var(--radius-wt)] p-1 text-wt-text-low hover:bg-wt-bg3"
                 aria-label="Close detail"
                 onClick={() => onSelect(null)}
               >
@@ -344,10 +344,14 @@ export function IssuesQueue({
                   {mode === 'active' && selected.issueId ? (
                     <Button
                       disabled={!canWrite}
-                      title={canWrite ? undefined : VIEW_ONLY_TITLE}
+                      title={
+                        canWrite
+                          ? 'Stops showing this issue type until you restore it from Tools'
+                          : VIEW_ONLY_TITLE
+                      }
                       onClick={() => onSuppress(selected)}
                     >
-                      Hide from Active
+                      Don&apos;t show again
                     </Button>
                   ) : null}
                 </div>

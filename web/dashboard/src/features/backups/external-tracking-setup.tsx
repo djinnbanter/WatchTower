@@ -140,7 +140,7 @@ export function ExternalTrackingSetup({
         <p className="mt-1 text-xs text-wt-text-low">
           For backups that never land on this disk — panel jobs, S3, or cloud sync.
         </p>
-        <p className="mt-2 rounded-lg border border-wt-warn/35 bg-wt-warn/10 px-3 py-2 text-xs text-wt-text-mid">
+        <p className="mt-2 rounded-[var(--radius-wt)] border border-wt-warn/35 bg-wt-warn/10 px-3 py-2 text-xs text-wt-text-mid">
           <strong className="font-semibold text-wt-warn">Alpha</strong> — panel / cloud backup
           tracking is experimental and may not work reliably on every host. Prefer a local backup
           folder when you can; treat webhook / marker setup as best-effort for now.
@@ -160,7 +160,7 @@ export function ExternalTrackingSetup({
                 setMode(opt.value);
                 setError('');
               }}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-[var(--radius-wt)] border px-3 py-1.5 text-sm font-medium transition ${
                 mode === opt.value
                   ? 'border-wt-accent bg-wt-accent text-white'
                   : 'border-wt-line bg-wt-bg2/50 text-wt-text-mid hover:border-wt-accent/40 hover:text-wt-text'
@@ -228,7 +228,7 @@ export function ExternalTrackingSetup({
               {WEBHOOK_EVENTS.map((t) => (
                 <li
                   key={t}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-wt-line bg-wt-bg1/60 px-2.5 py-2"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1/60 px-2.5 py-2"
                 >
                   <code className="font-mono text-xs text-wt-text">/api/backups/heartbeat/{t}</code>
                   <Button kind="ghost" onClick={() => copyWebhook(t)}>

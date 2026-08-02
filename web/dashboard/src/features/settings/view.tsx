@@ -249,7 +249,7 @@ function TimezonePreferenceField() {
         <span className="text-xs text-wt-text-low">IANA zone</span>
         <span className="relative mt-1.5 block">
           <select
-            className="w-full appearance-none rounded-lg border border-wt-line bg-wt-bg1 px-2.5 py-1.5 pr-9 text-sm text-wt-text outline-none focus-visible:border-wt-accent focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--wt-accent)_35%,transparent)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full appearance-none rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 px-2.5 py-1.5 pr-9 text-sm text-wt-text outline-none focus-visible:border-wt-accent focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--wt-accent)_35%,transparent)] disabled:cursor-not-allowed disabled:opacity-50"
             disabled={mode !== 'iana'}
             value={zoneValue}
             onChange={(e) => setIana(e.target.value)}
@@ -303,7 +303,7 @@ function NumberField({
           disabled={disabled}
           value={Number.isFinite(value) ? value : 0}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-28 rounded-lg border border-wt-line bg-wt-bg1 px-2.5 py-1.5 font-mono text-sm outline-none focus-visible:border-wt-accent focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--wt-accent)_35%,transparent)] disabled:cursor-not-allowed"
+          className="w-28 rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 px-2.5 py-1.5 font-mono text-sm outline-none focus-visible:border-wt-accent focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--wt-accent)_35%,transparent)] disabled:cursor-not-allowed"
         />
         {unit ? <span className="text-xs text-wt-text-low">{unit}</span> : null}
       </div>
@@ -335,7 +335,7 @@ function TextField({
         value={value}
         autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 w-full rounded-lg border border-wt-line bg-wt-bg1 px-2.5 py-1.5 text-sm outline-none focus-visible:border-wt-accent focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--wt-accent)_35%,transparent)]"
+        className="mt-1.5 w-full rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1 px-2.5 py-1.5 text-sm outline-none focus-visible:border-wt-accent focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--wt-accent)_35%,transparent)]"
       />
     </label>
   );
@@ -1050,7 +1050,7 @@ function SecurityPanel() {
           <div className="space-y-3">
             {qrSrc ? (
               <img
-                className="rounded-lg border border-wt-line"
+                className="rounded-[var(--radius-wt)] border border-wt-line"
                 src={qrSrc}
                 alt="TOTP QR code"
                 width={180}

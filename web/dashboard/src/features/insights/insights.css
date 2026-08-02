@@ -385,7 +385,7 @@
 .in-compare-legend__swatch {
   width: 0.7rem;
   height: 0.7rem;
-  border-radius: 0.2rem;
+  border-radius: var(--radius-wt-sm);
 }
 
 .in-compare-legend__swatch--prior {

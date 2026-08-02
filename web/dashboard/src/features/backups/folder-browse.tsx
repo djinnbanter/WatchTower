@@ -121,7 +121,7 @@ export function FolderBrowseModal({
           </div>
           <button
             type="button"
-            className="rounded-lg p-1.5 text-wt-text-low hover:bg-wt-bg2 hover:text-wt-text"
+            className="rounded-[var(--radius-wt)] p-1.5 text-wt-text-low hover:bg-wt-bg2 hover:text-wt-text"
             onClick={onClose}
             aria-label="Close"
           >

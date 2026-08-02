@@ -653,7 +653,7 @@ function DiscoveryStep({ onCompleteChange }: { onCompleteChange: (ok: boolean) =
             return (
               <li
                 key={stage.id}
-                className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs ${
+                className={`flex items-center gap-2 rounded-[var(--radius-wt)] px-2 py-1.5 text-xs ${
                   active ? 'bg-wt-accent-soft text-wt-text' : 'text-wt-text-low'
                 }`}
               >
@@ -965,7 +965,7 @@ function SecurityStep({ session }: { session: Record<string, unknown> | null }) 
           <p className="text-sm font-medium text-wt-text">Scan this QR code</p>
           {qrSrc ? (
             <img
-              className="rounded-lg border border-wt-line bg-white"
+              className="rounded-[var(--radius-wt)] border border-wt-line bg-white"
               src={qrSrc}
               alt="TOTP QR code"
               width={180}
