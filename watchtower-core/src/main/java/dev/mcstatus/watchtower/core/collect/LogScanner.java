@@ -2,10 +2,12 @@ package dev.mcstatus.watchtower.core.collect;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.analyze.JadeSidecarAnalyzer;
 import dev.mcstatus.watchtower.core.report.ReportConfig;
 import dev.mcstatus.watchtower.core.report.ReportProgress;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -58,6 +60,18 @@ public final class LogScanner {
             String rel = CollectSupport.relLogPath(serverDir, logPath);
             p.units(index, total);
             p.detail("Scanning log " + index + "/" + total + ": " + rel);
+            if (isJadeSidecar(logPath)) {
+                try {
+                    String jadeText = Files.readString(logPath, StandardCharsets.UTF_8);
+                    JsonObject jade = JadeSidecarAnalyzer.analyze(jadeText);
+                    if (jade != null) {
+                        staging.getAsJsonObject("optional").add("jade_sidecar", jade);
+                    }
+                } catch (IOException ignored) {
+                    // skip unreadable jade sidecar
+                }
+                continue;
+            }
             try {
                 GzipLineReader.forEachLine(logPath, (lineNo, line) ->
                         processLine(staging, mc, cutoff, rel, lineNo, line, state));
@@ -617,6 +631,14 @@ public final class LogScanner {
             this.fmlAccumulating = false;
             this.disconnectStormEmitted = false;
         }
+    }
+
+    private static boolean isJadeSidecar(Path logPath) {
+        if (logPath == null) {
+            return false;
+        }
+        String name = logPath.getFileName() != null ? logPath.getFileName().toString() : "";
+        return "JadeErrorOutput.txt".equalsIgnoreCase(name);
     }
 
     private static Set<String> knownModIdsFromJars(String serverDir) {
