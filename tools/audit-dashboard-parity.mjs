@@ -1,121 +1,360 @@
 #!/usr/bin/env node
 /**
- * Guardrails for Lantern dashboard preview/JAR parity.
+ * Dashboard parity guards for the production React UI (web/dashboard)
+ * vs the archived Preact tree (web/dashboard-archive).
  * Run from repo root: node tools/audit-dashboard-parity.mjs
  */
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = join(fileURLToPath(import.meta.url), '..', '..');
-const dashboard = join(ROOT, 'web', 'dashboard');
-const stylesCss = join(dashboard, 'styles.css');
-const indexHtml = join(dashboard, 'index.html');
-const buildScript = join(dashboard, 'scripts', 'build.mjs');
-const srcStyles = join(dashboard, 'src', 'styles');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const ARCHIVE = join(ROOT, 'web', 'dashboard-archive');
+const DASH = join(ROOT, 'web', 'dashboard');
+const GRADLE = join(ROOT, 'mods', 'neoforge-1.21', 'build.gradle');
+const ROUTE_CATALOG = join(DASH, 'scripts', 'data', 'route-catalog.json');
 
-let failed = false;
+const fails = [];
+const notes = [];
 
-function fail(msg) {
-  console.error(`FAIL: ${msg}`);
-  failed = true;
+function read(path) {
+  return readFileSync(path, 'utf8');
 }
 
-function walkCss(dir, out = []) {
-  if (!existsSync(dir)) return out;
-  for (const name of readdirSync(dir)) {
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) walkCss(full, out);
-    else if (name.endsWith('.css') && !name.startsWith('_')) {
-      out.push(relative(dashboard, full).replace(/\\/g, '/'));
+function check(condition, message) {
+  if (!condition) fails.push(message);
+}
+
+function rel(path) {
+  return relative(ROOT, path).replace(/\\/g, '/');
+}
+
+function featureDirs(base) {
+  const dir = join(base, 'src', 'features');
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)
+    .sort();
+}
+
+function pageImports(pagesPath) {
+  if (!existsSync(pagesPath)) return [];
+  const text = read(pagesPath);
+  const imports = [];
+  for (const m of text.matchAll(/import\s+['"]([^'"]+)['"]/g)) {
+    const spec = m[1];
+    let folder = null;
+    if (spec.includes('/features/')) {
+      folder = spec.split('/features/').pop();
+    } else if (spec.startsWith('./') && !spec.includes('/')) {
+      folder = spec.slice(2);
+    } else if (spec.startsWith('@/features/')) {
+      folder = spec.replace('@/features/', '');
     }
+    if (!folder) continue;
+    folder = folder.replace(/\/index\.(js|ts|tsx)$/, '').replace(/\/$/, '');
+    if (folder && folder !== 'register') imports.push(folder);
   }
-  return out;
+  return [...new Set(imports)].sort();
 }
 
-// Required shipped assets
-const required = [
-  'index.html',
-  'styles.css',
-  'src/main.js',
-  'src/wiki/content.js',
-  'vendor/preact.module.js',
-  'vendor/uplot.esm.js',
-  'assets/fonts/IBMPlexSans-Regular.woff2',
+function resolveFeatureIndex(base, folder) {
+  for (const name of ['index.ts', 'index.tsx', 'index.js']) {
+    const full = join(base, 'src', 'features', folder, name);
+    if (existsSync(full)) return full;
+  }
+  return null;
+}
+
+function resolveView(base, folder) {
+  for (const name of ['view.tsx', 'view.ts', 'view.js']) {
+    const full = join(base, 'src', 'features', folder, name);
+    if (existsSync(full)) return full;
+  }
+  return null;
+}
+
+function registeredPages(base, { react = false } = {}) {
+  const entry = react
+    ? join(base, 'src', 'features', 'register.ts')
+    : join(base, 'src', 'app', 'pages.js');
+  const folders = pageImports(entry);
+  const registrations = new Map();
+  for (const folder of folders) {
+    const indexPath = resolveFeatureIndex(base, folder);
+    if (!indexPath) {
+      fails.push(`${rel(join(base, 'src', 'features', folder, 'index.*'))} missing for registration entry`);
+      continue;
+    }
+    const match = read(indexPath).match(/registerPage\s*\(\s*\{[\s\S]*?\bid\s*:\s*['"]([^'"]+)['"]/);
+    if (!match) {
+      fails.push(`${rel(indexPath)} does not register a page id`);
+      continue;
+    }
+    if (registrations.has(match[1])) {
+      fails.push(`duplicate page id "${match[1]}" in ${rel(indexPath)}`);
+    }
+    registrations.set(match[1], folder);
+  }
+  return registrations;
+}
+
+const isReactDash = existsSync(join(DASH, 'vite.config.ts')) && existsSync(join(DASH, 'src', 'main.tsx'));
+
+// ── Page registrations (archive Preact vs production React) ──────────────────
+const archiveRegistrations = registeredPages(ARCHIVE, { react: false });
+const dashRegistrations = registeredPages(DASH, { react: isReactDash });
+const archivePages = [...archiveRegistrations.keys()].sort();
+const dashPages = [...dashRegistrations.keys()].sort();
+
+const missingInDash = archivePages.filter((p) => !dashPages.includes(p));
+if (missingInDash.length) {
+  fails.push(`dashboard missing archive registrations: ${missingInDash.join(', ')}`);
+}
+
+const dashOnly = dashPages.filter((p) => !archivePages.includes(p));
+check(dashOnly.length === 0,
+  `unexpected dashboard-only page registrations: ${dashOnly.join(', ')}`);
+for (const page of archivePages) {
+  check(dashRegistrations.get(page) === archiveRegistrations.get(page),
+    `dashboard page "${page}" must be registered from features/${archiveRegistrations.get(page)}`);
+}
+
+// ── Feature folders ──────────────────────────────────────────────────────────
+const archiveFeatures = featureDirs(ARCHIVE);
+const dashFeatures = featureDirs(DASH).filter((f) => f !== 'register');
+const missingFolders = archiveFeatures.filter((f) => !dashFeatures.includes(f));
+if (missingFolders.length) {
+  fails.push(`dashboard missing archive feature folders: ${missingFolders.join(', ')}`);
+}
+const extraFolders = dashFeatures.filter((f) => !archiveFeatures.includes(f));
+if (extraFolders.length) {
+  notes.push(`dashboard extra feature folders (OK): ${extraFolders.join(', ')}`);
+}
+
+// ── Required query surfaces (string presence in React views) ─────────────────
+const requiredRoutes = {
+  insights: {
+    folder: 'insights',
+    tokens: ['patterns', 'configs', 'mod-changes', 'storage', 'schedule', 'load', 'incidents'],
+  },
+  issues: {
+    folder: 'issues',
+    tokens: ['active', 'reviewed', 'tools'],
+  },
+  crashes: {
+    folder: 'crashes',
+    tokens: ['review', 'reviewed', 'tools'],
+  },
+  mods: {
+    folder: 'mods',
+    tokens: ['overview', 'updates', 'conflicts', 'log-errors', 'changes', 'modrinth', 'forensics'],
+  },
+  settings: {
+    folder: 'settings',
+    tokens: ['general', 'monitoring', 'backups', 'rules', 'security', 'advanced', 'about'],
+  },
+};
+
+for (const [page, def] of Object.entries(requiredRoutes)) {
+  const viewPath = resolveView(DASH, def.folder);
+  check(!!viewPath, `${page} view missing`);
+  if (!viewPath) continue;
+  const source = read(viewPath);
+  const missing = def.tokens.filter((token) => !source.includes(`'${token}'`) && !source.includes(`"${token}"`));
+  check(missing.length === 0, `${page} view missing route tokens: ${missing.join(', ')}`);
+}
+
+// ── Fixture contract ─────────────────────────────────────────────────────────
+const requiredFixtures = [
+  'data/reports-index.json',
+  'data/facts.json',
+  'data/facts-prev.json',
+  'data/brief.txt',
+  'data/live-samples.json',
+  'data/live-envelope.json',
+  'data/snapshot.json',
+  'data/ops-cache.json',
+  'data/overview-meta.json',
+  'data/issues-peek.json',
+  'data/performance-rollups.json',
+  'data/performance-rollups-7d.json',
+  'data/performance-rollups-30d.json',
+  'data/performance-insights.json',
+  'data/performance-insights-30d.json',
+  'data/performance-dashboard.json',
+  'data/performance-dashboard-30d.json',
+  'data/spark-profiles.json',
+  'data/spark-profile-mocks.json',
+  'data/crash-contexts.json',
+  'data/logs-index.json',
+  'data/preview-settings.json',
+  'data/update-check.json',
+  'data/forensics-status.json',
+  'data/forensics-find-class.json',
+  'data/forensics-config-health.json',
+  'data/preview-profiles.json',
+  'data/active-profile.json',
+  'data/modrinth-status.json',
+  'data/incidents-index.json',
 ];
-for (const rel of required) {
-  if (!existsSync(join(dashboard, rel))) fail(`missing required asset: ${rel}`);
+for (const fixture of requiredFixtures) {
+  check(existsSync(join(DASH, fixture)), `missing required dashboard fixture: ${fixture}`);
+}
+for (const fixtureDir of ['data/logs', 'data/crash-reports', 'data/incidents']) {
+  const full = join(DASH, fixtureDir);
+  check(existsSync(full) && statSync(full).isDirectory() && readdirSync(full).length > 0,
+    `required dashboard fixture directory is missing or empty: ${fixtureDir}`);
 }
 
-// index.html must boot the Lantern app, not legacy scripts
-const html = readFileSync(indexHtml, 'utf8');
-if (!html.includes('src/main.js')) fail('index.html must load src/main.js');
-if (html.includes('app.js') || html.includes('tower/')) {
-  fail('index.html still references legacy app.js or tower/');
-}
-if (html.includes('fonts.googleapis.com')) {
-  fail('index.html must not load Google Fonts CDN (self-hosted IBM Plex)');
-}
-if (!html.includes('modulepreload:start') || !html.includes('modulepreload:end')) {
-  fail('index.html missing modulepreload markers');
-}
+const fixtureApi = join(DASH, 'scripts', 'vite-fixture-api.ts');
+const apiClient = join(DASH, 'src', 'api', 'client.ts');
+check(existsSync(fixtureApi), 'missing scripts/vite-fixture-api.ts');
+check(existsSync(apiClient), 'missing src/api/client.ts');
 
-// styles.css must be Lantern tokens, not wt- legacy
-const stylesText = readFileSync(stylesCss, 'utf8');
-if (!stylesText.includes('--ui-bg0') && !stylesText.includes('--ui-accent')) {
-  fail('styles.css missing Lantern --ui-* tokens');
-}
-if (stylesText.includes('.wt-setup-wizard') || stylesText.includes('--wt-surface-0')) {
-  fail('styles.css still contains legacy wt- rules');
-}
-
-// build.mjs must exist and reference src/styles
-if (!existsSync(buildScript)) fail('scripts/build.mjs missing');
-const buildSrc = readFileSync(buildScript, 'utf8');
-if (!buildSrc.includes('src/styles/00-tokens.css')) {
-  fail('build.mjs STYLE_ORDER missing src/styles/00-tokens.css');
-}
-
-// CSS modules on disk should appear in STYLE_ORDER (best-effort)
-const order = [...buildSrc.matchAll(/['"](src\/styles\/[^'"]+\.css)['"]/g)].map((m) => m[1]);
-const onDisk = walkCss(srcStyles).filter((p) => !p.includes('/_'));
-const missing = onDisk.filter((rel) => !order.includes(rel) && !rel.endsWith('/_index.css'));
-if (missing.length) {
-  console.warn(`WARN: CSS files not in STYLE_ORDER (may be intentional placeholders): ${missing.join(', ')}`);
-}
-
-// No legacy UI in shipped path
-const legacyPaths = [
-  'tower',
-  'css/v3',
-  'app.js',
-  'vendor/chart.umd.min.js',
-  'vendor/lucide.min.js',
-];
-for (const rel of legacyPaths) {
-  if (existsSync(join(dashboard, rel))) {
-    fail(`legacy path still present (must delete before release): ${rel}`);
+// ── Route catalog ────────────────────────────────────────────────────────────
+check(existsSync(ROUTE_CATALOG), 'missing scripts/data/route-catalog.json');
+if (existsSync(ROUTE_CATALOG)) {
+  try {
+    const catalog = JSON.parse(read(ROUTE_CATALOG));
+    check(catalog.baseUrl === 'http://127.0.0.1:8081/',
+      `route catalog baseUrl must be http://127.0.0.1:8081/ (got ${catalog.baseUrl})`);
+    const catalogPages = Array.isArray(catalog.pages) ? catalog.pages : [];
+    const catalogIds = catalogPages.map((page) => page.id);
+    for (const page of dashPages) {
+      check(catalogIds.includes(page), `route catalog missing page: ${page}`);
+    }
+    check(new Set(catalogIds).size === catalogIds.length, 'route catalog contains duplicate page ids');
+    check(Array.isArray(catalog.deepLinks) && catalog.deepLinks.length >= 5,
+      'route catalog must list deep links');
+  } catch (error) {
+    fails.push(`invalid route catalog JSON: ${error.message}`);
   }
 }
 
-// Grep-ish: no wt- class prefixes in src/
-function walkJs(dir, out = []) {
-  if (!existsSync(dir)) return out;
+// ── React stack / no skins ───────────────────────────────────────────────────
+if (isReactDash) {
+  check(existsSync(join(DASH, 'vite.config.ts')), 'missing vite.config.ts');
+  check(existsSync(join(DASH, 'src', 'main.tsx')), 'missing src/main.tsx');
+  check(existsSync(join(DASH, 'src', 'ui', 'charts', 'index.tsx')), 'missing Watchtower chart kit');
+  check(existsSync(join(DASH, 'src', 'ui', 'motion', 'index.tsx')), 'missing motion kit');
+  check(existsSync(join(DASH, 'src', 'components', 'charts', 'line-chart.tsx')), 'missing installed Bklit line-chart');
+  const html = read(join(DASH, 'index.html'));
+  check(!/data-alpha=["']true["']/.test(html), 'index.html must not declare data-alpha (shipped UI)');
+  check(!/data-skin/.test(html), 'index.html must not use data-skin');
+  const pkg = JSON.parse(read(join(DASH, 'package.json')));
+  check(pkg.name === 'watchtower-dashboard', 'package name');
+  check(/vite/.test(pkg.scripts?.dev || ''), 'dev script must use vite');
+  check(Boolean(pkg.scripts?.['preview:live']), 'preview:live soak script required');
+  check(/8081/.test(read(join(DASH, 'vite.config.ts'))), 'vite must default to 8081');
+  check(/WATCHTOWER_ORIGIN/.test(read(join(DASH, 'vite.config.ts'))), 'vite must support WATCHTOWER_ORIGIN live proxy');
+  notes.push('React + Vite + Bklit dashboard detected');
+} else {
+  fails.push('web/dashboard is not a React+Vite remake (missing vite.config.ts / src/main.tsx)');
+}
+
+// ── Prod-readiness gates ─────────────────────────────────────────────────────
+const apiClientSrc = read(join(DASH, 'src', 'api', 'client.ts'));
+for (const method of [
+  'login:',
+  'totp:',
+  'changePassword:',
+  'totpSetup:',
+  'totpConfirm:',
+  'supportCatalog:',
+  'supportBundleDownload:',
+  'discoveryStart:',
+  'discoveryStatus:',
+]) {
+  check(apiClientSrc.includes(method), `api client missing ${method}`);
+}
+check(existsSync(join(DASH, 'src', 'app', 'auth-gate.tsx')), 'missing auth-gate');
+check(existsSync(join(DASH, 'src', 'app', 'session-store.ts')), 'missing session-store');
+check(existsSync(join(DASH, 'src', 'app', 'runtime.ts')), 'missing runtime helpers');
+
+const wizard = read(join(DASH, 'src', 'features', 'wizard', 'view.tsx'));
+for (const step of ['welcome', 'options', 'audit', 'backups', 'security']) {
+  check(wizard.includes(`'${step}'`) || wizard.includes(`"${step}"`), `wizard missing step ${step}`);
+}
+
+const support = read(join(DASH, 'src', 'features', 'support', 'bundle-builder-modal.tsx'));
+for (const preset of ['QUICK', 'SERVER_TRIAGE', 'WATCHTOWER_BUG', 'FULL_EVIDENCE', 'CUSTOM']) {
+  check(support.includes(preset), `support builder missing preset ${preset}`);
+}
+
+// Commons Clause / React Bits vendor strings must not remain in component sources
+const vendorRoots = [
+  join(DASH, 'src', 'components', 'border-glow'),
+  join(DASH, 'src', 'components', 'specular-button'),
+  join(DASH, 'src', 'components', 'pill-nav'),
+  join(DASH, 'src', 'components', 'animated-list'),
+];
+for (const dir of vendorRoots) {
+  if (!existsSync(dir)) continue;
   for (const name of readdirSync(dir)) {
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) walkJs(full, out);
-    else if (name.endsWith('.js') || name.endsWith('.css')) out.push(full);
-  }
-  return out;
-}
-
-const srcFiles = walkJs(join(dashboard, 'src')).filter((f) => !f.replace(/\\/g, '/').includes('/wiki/content.js'));
-for (const file of srcFiles) {
-  const text = readFileSync(file, 'utf8');
-  if (/\bclassList\.[^(]*\(['"]wt-|class="[^"]*\bwt-[a-z]|TowerRender|WatchtowerToast/.test(text)) {
-    fail(`legacy reference in ${relative(dashboard, file)}`);
+    if (!/\.(tsx?|css)$/.test(name)) continue;
+    const body = read(join(dir, name));
+    check(
+      !/Commons Clause/i.test(body),
+      `${rel(join(dir, name))} still mentions Commons Clause`,
+    );
+    check(
+      !/Vendored from React Bits/i.test(body),
+      `${rel(join(dir, name))} still claims React Bits vendor copy`,
+    );
   }
 }
+check(
+  !/["']gsap["']/.test(read(join(DASH, 'package.json'))),
+  'package.json must not depend on gsap',
+);
+// ogl (MIT) is allowed — SpecularButton WebGL rim depends on it.
+check(
+  /["']ogl["']/.test(read(join(DASH, 'package.json'))),
+  'package.json should keep ogl for SpecularButton WebGL',
+);
+check(
+  existsSync(join(DASH, 'src', 'components', 'specular-button', 'SpecularButton.tsx')),
+  'SpecularButton component present',
+);
+check(
+  /from ['"]ogl['"]/.test(read(join(DASH, 'src', 'components', 'specular-button', 'SpecularButton.tsx'))),
+  'SpecularButton imports ogl',
+);
 
-if (failed) process.exit(1);
-console.log('audit-dashboard-parity OK (Lantern)');
+// ── Gradle sync: React web/dashboard is the ship path ────────────────────────
+if (!existsSync(GRADLE)) {
+  fails.push('mods/neoforge-1.21/build.gradle not found');
+} else {
+  const gradle = read(GRADLE);
+  if (!/web\/dashboard/.test(gradle) && !/dashboardDir/.test(gradle)) {
+    fails.push('build.gradle must sync from web/dashboard');
+  }
+  if (/dashboard-alpha|dashboardAlphaDir/.test(gradle)) {
+    fails.push('build.gradle still references dashboard-alpha');
+  }
+  if (!/syncDashboard/.test(gradle)) {
+    fails.push('build.gradle missing syncDashboard task');
+  }
+  if (!/dashboardDist|web\/dashboard.*dist|npm.*run.*build/.test(gradle)) {
+    fails.push('build.gradle must build Vite dist from web/dashboard');
+  }
+}
+
+if (fails.length) {
+  console.error('audit-dashboard-parity FAILED:');
+  for (const f of fails) console.error('  -', f);
+  process.exit(1);
+}
+
+console.log('audit-dashboard-parity OK');
+console.log(`  stack: React + Vite (production path web/dashboard)`);
+console.log(`  page registrations: ${archivePages.length} archive parity`);
+console.log(`  archive feature folders in dashboard: ${archiveFeatures.length}/${archiveFeatures.length}`);
+if (extraFolders.length) console.log(`  dashboard-only feature folders: ${extraFolders.join(', ')}`);
+console.log('  query routes: Insights, Issues, Crashes, Mods, Settings');
+console.log('  prod gates: auth, wizard, support presets, license cleanup');
+console.log(`  fixture paths: ${requiredFixtures.length} files + logs/crashes/incidents`);
+console.log(`  route catalog: ${rel(ROUTE_CATALOG)}`);
+for (const n of notes) console.log(`  note: ${n}`);

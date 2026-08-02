@@ -376,7 +376,10 @@ export function PageView({ route }: { route: RouteState }) {
           >
             <SettingsStack>
               <div className="st-row">
-                <AppearanceControls idPrefix="settings-appearance" embedded />
+                <AppearanceControls
+                  idPrefix="settings-appearance"
+                  embedded
+                />
               </div>
             </SettingsStack>
           </Section>

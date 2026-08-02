@@ -17,7 +17,7 @@ Spark records **what is using server time** when lag happens. Watchtower reads S
 1. **Capture while lagging:** `/spark profiler start` → wait **30–60 seconds** → `/spark profiler stop --save-to-file`
 2. **Open the Spark tab** and click **Refresh** if you just saved a new profile, then use the **profile dropdown** to pick the file
 3. **Or** click **Import from URL** and paste a `https://spark.lucko.me/…` link (downloads once into `watchtower/spark-upload/`)
-4. **Read the evidence** — Overview, Findings, World, **Sources** (profile share), Timeline, Call paths, Technical, Compare
+4. **Read the evidence** — Overview, Findings, World, **Map** (chunk heat from this capture), Sources, Timeline, Call paths, Technical, Compare
 
 Day-to-day lag triage starts on [[Live-Charts]] and [[Issues]]. Spark is for proof when you need it — not a required daily “run report” step.
 
@@ -56,6 +56,7 @@ Watchtower lists up to **25** profiles. To turn Spark ingest off, set `SPARK_ENA
 | **Overview** | Capture health, findings, next actions, quality limits |
 | **Findings** | Ranked evidence |
 | **World** | Entity/chunk context when present |
+| **Map** | Pan/zoom chunk heat from this capture’s busy chunks |
 | **Sources** | **Profile** source/mod attribution (own-time vs stack involvement) |
 | **Timeline** | One-minute windows for TPS, MSPT, CPU, players, entities, chunks |
 | **Call paths** | Searchable thread trees |
@@ -63,6 +64,10 @@ Watchtower lists up to **25** profiles. To turn Spark ingest off, set `SPARK_ENA
 | **Compare** | Baseline vs target deltas |
 
 > **Name clash:** Spark → **Sources** explains which mod owns time in a **profile**. Ops → [[Sources]] explains Watchtower **pollers**. They are different tabs.
+
+## Map
+
+**Map** shows busy chunks from the **selected Spark profile** on a pan/zoom grid (not a live world map, not terrain). Click a square for the same chunk details as World cards. Switch dimension when the capture includes more than one.
 
 ### When Spark helps / when it doesn’t
 

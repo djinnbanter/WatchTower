@@ -93,6 +93,6 @@ Generated from parser output of real CPU profiles under `samples/fixtures/spark/
 
 ```bash
 ./gradlew :watchtower-core:sparkAuditFixtures
-node web/dashboard-alpha/scripts/generate-spark-mocks.mjs
+node web/dashboard/scripts/generate-spark-mocks.mjs
 node web/dashboard/scripts/generate-spark-mocks.mjs
 ```

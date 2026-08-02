@@ -1,0 +1,1 @@
+{"file":"crash-2026-07-05_14-01-55-server.txt","content":"---- Minecraft Crash Report ----\nTime: 2026-07-05 14:01:55\nDescription: Mod loading has failed\n\nnet.neoforged.fml.ModLoadingException: Duplicate mods found: create\n\tFound jars: create-6.0.0.jar, create-6.0.0-copy.jar\n","truncated":false}

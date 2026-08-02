@@ -142,7 +142,7 @@ public final class ModConfigService {
     }
 
     /**
-     * Serialize form fields to TOML, then delegate to {@link #save}.
+     * Patch form field values into the existing TOML (layout/comments preserved), then {@link #save}.
      *
      * @throws IllegalArgumentException if the field tree is invalid
      */
@@ -153,7 +153,12 @@ public final class ModConfigService {
             JsonArray fields,
             long expectedMtimeEpochSec
     ) throws IOException {
-        String content = TomlFormModel.serialize(fields);
+        Path file = resolveConfigFile(serverDir, relativePath);
+        String original = "";
+        if (Files.isRegularFile(file)) {
+            original = Files.readString(file, StandardCharsets.UTF_8);
+        }
+        String content = TomlFormModel.applyValues(original, fields);
         return save(serverDir, watchtowerDir, relativePath, content, expectedMtimeEpochSec);
     }
 

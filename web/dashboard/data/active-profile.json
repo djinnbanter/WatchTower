@@ -1,0 +1,8 @@
+{
+  "name": "normal",
+  "canonical_name": "normal",
+  "applied_at": "2026-08-01T21:23:52.580Z",
+  "behavior": {
+    "simulator": true
+  }
+}

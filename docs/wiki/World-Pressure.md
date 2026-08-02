@@ -75,11 +75,20 @@ Hero **Force-kept** = sum of vanilla `/forceload` + mod force-loads across dimen
 |------|---------------|-----------|
 | **item_storm** | ≥1200 items **and** (items ≥40% of entities **or** entities ≥2× quiet-hours p95) | ≥3 scans |
 | **mob_spike** | ≥900 living **and** entities ≥2× quiet-hours p95 | ≥3 scans |
-| **pregen_outrunning_disk** | Pregen (Chunky/DH) active **and** disk write latency ≥ `DISK_IO_LATENCY_WARN_MS` | ≥3 scans |
-| **chunk_save_backlog** | Disk write latency sustained high **without** active pregen | ≥3 scans |
-| **heavy_chunk_generation** | Players online **and** loaded chunks grew by ≥48 vs last scan | ≥3 scans |
+| **pregen_outrunning_disk** | Pregen (Chunky/DH) active **and** disk write latency ≥ `DISK_IO_LATENCY_WARN_MS` | ≥ `CHUNK_WRITE_SUSTAINED_SCANS` (default 3) |
+| **chunk_save_backlog** | Disk write latency sustained high **without** active pregen | ≥ `CHUNK_WRITE_SUSTAINED_SCANS` (default 3) |
+| **heavy_chunk_generation** | Players online **and** loaded chunks grew by ≥ `CHUNK_WRITE_GROWTH_CHUNKS` (default 48) vs last scan | ≥ `CHUNK_WRITE_SUSTAINED_SCANS` (default 3) |
 
-**Chunk write / pregen (1.1.23):** WatchTower also watches disk write latency and Chunky/DH pregen. Sustained save backlog, pregen outrunning disk, or heavy chunk growth while players are online raise Issues with advice to pause pregen and wait for saves — WatchTower will not pause pregen for you. Insights → World shows write latency, pregen, and chunk-growth meters when `CHUNK_WRITE_PRESSURE_ENABLED` is on (default).
+**Chunk write / pregen (1.1.23):** WatchTower also watches disk write latency and Chunky/DH pregen. Sustained save backlog, pregen outrunning disk, or heavy chunk growth while players are online raise Issues with advice to pause pregen and wait for saves — WatchTower will not pause pregen for you. Insights → World shows a **disk write pressure** bar (latency vs warn / ~3× critical) plus write/pregen evidence when `CHUNK_WRITE_PRESSURE_ENABLED` is on (default). WatchTower cannot read JVM save-queue depth — latency is the signal.
+
+Tune thresholds in **Settings → Alerts → Chunk write / pregen** (or conf):
+
+| Setting | Conf key | Default |
+|---------|----------|---------|
+| Enable classifiers | `CHUNK_WRITE_PRESSURE_ENABLED` | `true` |
+| Disk write latency warn | `DISK_IO_LATENCY_WARN_MS` | `50` |
+| Heavy growth (chunks / scan) | `CHUNK_WRITE_GROWTH_CHUNKS` | `48` |
+| Sustained scans before Issue | `CHUNK_WRITE_SUSTAINED_SCANS` | `3` |
 
 `item_storm` becomes **critical** when items ≥3000 **or** entity load correlates with MSPT (top vs bottom entity quartile over ~24h of rollups).
 

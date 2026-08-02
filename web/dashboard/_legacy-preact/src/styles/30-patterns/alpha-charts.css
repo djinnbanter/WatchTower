@@ -1,0 +1,264 @@
+/* Alpha chart patterns — ring, sunburst, compare, radar, scatter */
+
+:root {
+  --ui-ch-tooltip-bg: color-mix(in srgb, var(--ui-bg1) 92%, transparent);
+  --ui-ch-tooltip-border: color-mix(in srgb, var(--ui-line-strong) 80%, transparent);
+}
+
+/* ── Ring ─────────────────────────────────────────────────────────────────── */
+
+.ui-ring {
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.ui-ring__svg {
+  transform: rotate(-90deg);
+}
+
+.ui-ring__track {
+  fill: none;
+  stroke: var(--ui-bg3);
+  stroke-width: 8;
+}
+
+.ui-ring__value {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--ui-dur-4) var(--ui-ease-out);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, currentColor 35%, transparent));
+}
+
+.ui-ring__label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ui-ring__num {
+  font-family: var(--ui-font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ui-text-hi);
+}
+
+.ui-ring__sub {
+  margin-top: 4px;
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+}
+
+/* ── Sunburst ─────────────────────────────────────────────────────────────── */
+
+.ui-sunburst {
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.ui-sunburst__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ui-sunburst__num {
+  font-family: var(--ui-font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ui-text-hi);
+}
+
+.ui-sunburst__sub {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+}
+
+.ui-sunburst path {
+  stroke: var(--ui-bg0);
+  stroke-width: 2;
+  transition: opacity var(--ui-dur-2) var(--ui-ease-out);
+  cursor: pointer;
+}
+
+.ui-sunburst path:hover {
+  opacity: 0.85;
+}
+
+/* ── Compare bars ───────────────────────────────────────────────────────── */
+
+.ui-compare {
+  display: grid;
+  gap: var(--ui-sp-10);
+}
+
+.ui-compare__legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ui-sp-12);
+  margin-bottom: var(--ui-sp-6);
+}
+
+.ui-compare__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+}
+
+.ui-compare__swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.ui-compare__swatch--current {
+  background: color-mix(in srgb, var(--ui-accent) 55%, transparent);
+}
+
+.ui-compare__swatch--previous {
+  background: color-mix(in srgb, var(--ui-info) 55%, transparent);
+}
+
+.ui-compare__row {
+  display: grid;
+  grid-template-columns: 90px 1fr 64px;
+  gap: var(--ui-sp-10);
+  align-items: center;
+}
+
+.ui-compare__label {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-mid);
+}
+
+.ui-compare__track {
+  height: 10px;
+  border-radius: var(--ui-rad-full);
+  background: var(--ui-bg3);
+  overflow: hidden;
+  display: flex;
+}
+
+.ui-compare__a {
+  height: 100%;
+  background: color-mix(in srgb, var(--ui-accent) 55%, transparent);
+}
+
+.ui-compare__b {
+  height: 100%;
+  background: color-mix(in srgb, var(--ui-info) 55%, transparent);
+}
+
+.ui-compare__delta {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-text-xs);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Radar (multi-axis spider) ────────────────────────────────────────────── */
+
+.ui-radar-chart {
+  display: grid;
+  place-items: center;
+}
+
+.ui-radar-chart svg {
+  overflow: visible;
+}
+
+.ui-radar-chart__grid {
+  fill: none;
+  stroke: var(--ui-ch-grid);
+  stroke-width: 1;
+}
+
+.ui-radar-chart__area {
+  fill: color-mix(in srgb, var(--ui-accent) 22%, transparent);
+  stroke: var(--ui-accent);
+  stroke-width: 2;
+}
+
+.ui-radar-chart__label {
+  fill: var(--ui-text-low);
+  font-size: 10px;
+  text-anchor: middle;
+  font-family: var(--ui-font-sans);
+}
+
+/* ── Scatter placeholder ──────────────────────────────────────────────────── */
+
+.ui-scatter {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-rad-m);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ui-bg2) 70%, transparent), transparent 40%),
+    var(--ui-bg0);
+}
+
+/* ── Chart tooltip chrome (uPlot / float tips) ─────────────────────────────── */
+
+.ui-chart-tooltip {
+  position: absolute;
+  z-index: 20;
+  min-width: 148px;
+  padding: 10px 12px;
+  border-radius: var(--ui-rad-m);
+  background: var(--ui-ch-tooltip-bg);
+  border: 1px solid var(--ui-ch-tooltip-border);
+  box-shadow: var(--ui-shadow-lift);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  font-size: var(--ui-text-xs);
+}
+
+.ui-chart-tooltip__time {
+  color: var(--ui-text-low);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.ui-chart-tooltip__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.ui-chart-tooltip__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ui-text-mid);
+}
+
+.ui-chart-tooltip__value {
+  font-family: var(--ui-font-mono);
+  font-weight: 650;
+  color: var(--ui-text-hi);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-chart-tooltip__swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}

@@ -42,6 +42,8 @@ public final class CrashClassifier {
     public static final String FK_WATCHDOG_FOLLOWUP = "watchdog_followup";
     public static final String FK_WATCHDOG_PREGEN = "watchdog_pregen";
     public static final String FK_HOST_RESOURCE = "host_resource";
+    /** External force-kill (OS OOM-killer or panel watchdog) — no Minecraft crash report. */
+    public static final String FK_EXTERNAL_KILL = "external_kill";
     public static final String FK_LOADER = "loader";
     public static final String FK_UNKNOWN = "unknown";
 
@@ -1179,6 +1181,34 @@ public final class CrashClassifier {
                 "Confirm the pack needs more heap before raising RAM — oversized packs and leaks look the same.",
                 "Increase Java heap (-Xmx) only if the host still has free RAM; otherwise find leaks or shrink the pack.",
                 "Check duplicate mods, oversized chunk loaders, or run Spark heap analysis."));
+    }
+
+    /**
+     * Fix hints when the OS / container OOM-killer terminated the JVM (no Minecraft crash report).
+     */
+    public static JsonArray hintsExternalKillOom() {
+        return toArray(List.of(
+                "The server process was killed by the OS or container out-of-memory killer — nothing in Minecraft crashed.",
+                "Raise the container / host memory limit, or lower -Xmx so the JVM fits under the limit.",
+                "Open Insights → Configs for the RAM sizing advisor before changing flags.",
+                "Leave 1–2 GB above -Xmx for JVM overhead and the OS."));
+    }
+
+    /**
+     * Fix hints when the process was force-killed from outside (panel watchdog / SIGKILL) with no crash report.
+     *
+     * @param kernelLogReadable when false, also warn that an OOM kill cannot be ruled out
+     */
+    public static JsonArray hintsExternalKillPanel(boolean kernelLogReadable) {
+        List<String> hints = new ArrayList<>();
+        hints.add("The server was terminated from outside the JVM with no clean shutdown and no crash report.");
+        hints.add("Raise the panel stop / watchdog timeout so a slow world save is not force-killed.");
+        hints.add("Check panel logs around the kill time for stop / kill / restart commands.");
+        if (!kernelLogReadable) {
+            hints.add("Kernel logs are unreadable here, so an OS out-of-memory kill cannot be ruled out — "
+                    + "also check your memory limit in Insights → Configs.");
+        }
+        return toArray(hints);
     }
 
     private static String stripTrailingPunct(String s) {

@@ -112,6 +112,18 @@ public final class WatchtowerSetup {
                 STARTUP_PROFILE_ON_BOOT=true
                 CRASH_ENRICH_ON_MTIME=true
                 MODS_LIGHT_ON_JAR_CHANGE=true
+                MOD_JAR_DRIFT_ENABLED=true
+                CLIENT_ON_SERVER_ISSUES_ENABLED=true
+                EXTERNAL_KILL_DETECT_ENABLED=true
+                RESTART_HYGIENE_ENABLED=true
+                SILENT_FAIL_DETECT_ENABLED=true
+                WORLD_PRESSURE_ENABLED=true
+                MOD_DISABLE_ENABLED=true
+                WORLD_RISK_ENABLED=true
+                BACKUP_VERIFY_AUTO=true
+                BACKUP_VERIFY_DEFER_WHEN_PLAYERS=true
+                BACKUP_VERIFY_MAX_MSPT=40
+                BACKUP_TEST_RESTORE_ENABLED=true
                 MODS_DEEP_ON_JAR_CHANGE=true
                 MODS_DEEP_SEED_ON_BOOT=true
                 MODS_DEEP_MAX_JARS_PER_WAKE=32
@@ -147,6 +159,7 @@ public final class WatchtowerSetup {
                 LOG_TAIL_LINES=80
                 LOG_GZIP_COUNT=12
                 BACKUP_WARN_DAYS=7
+                BACKUP_STALE_HOURS=24
                 BACKUP_POLL_MIN=0
                 # Opt-in Modrinth side lookup (SHA-512 hashes only; off by default)
                 # MODRINTH_LOOKUP=false

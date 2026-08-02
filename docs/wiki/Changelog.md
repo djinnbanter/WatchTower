@@ -8,10 +8,21 @@ Full downloads: [GitHub Releases](https://github.com/djinnbanter/WatchTower/rele
 
 ## Unreleased
 
-Operator-facing notes for work after **1.1.9** and the Jul 28–30 polish that sat beside the 1.1.3–1.1.9 feature line. Full maintainer detail: root [CHANGELOG.md](https://github.com/djinnbanter/WatchTower/blob/main/CHANGELOG.md) Unreleased.
+_(empty)_
+
+## [1.2.0-beta.1] — 2026-08-02
+
+**Artifacts:** `watchtower-neoforge-1.2.0-beta.1+mc1.21.jar` · `watchtower-cli-1.2.0-beta.1.jar`
+
+Release: [v1.2.0-beta.1](https://github.com/djinnbanter/WatchTower/releases/tag/v1.2.0-beta.1) (**pre-release / beta**)
+
+> **Beta:** expect rough edges. Try on a test pack first.
 
 > **Updating from 1.1.x:** your existing dashboard login keeps working and becomes the **owner** — no reset. Everyone signs in again after the restart. Pre-upgrade file kept as `watchtower/dashboard-auth.json.pre-1.1.18.bak`.
 
+- **Backup integrity verify** — Backups list shows Verified / Suspicious / Broken; Verify now; optional test restore into `watchtower/restore-verify/` only (never the live world)
+- **Soft jar Disable / Enable** — Mods can rename a jar to `*.jar.disabled` (and back). Disabled jars stay in the list; filters All / Enabled / Disabled. Restart chip on Overview until you reboot. Admin/owner only — no Delete
+- **World risk** — Badge when the save may depend on a mod (dimension folders / jar data). Extra confirm before disable. Issue if a disabled mod still has world dimension folders left behind
 - **Named admin accounts** — owner / admin / viewer; Settings → Accounts (owner adds people and hands over a one-time temp password)
 - **Audit log** — Settings → Audit log records settings, acks, suppressions, accounts, and sign-ins (`watchtower/audit-log.jsonl`, newest 2000 / 90 days)
 - **Join & pack sync clinic** — rejects for mismatched channels / missing / wrong-version mods from `latest.log`; Issues `JOIN_SYNC` + Session → **Session activity** (joins / leaves / failed joins with **Copy fix**)
@@ -19,12 +30,14 @@ Operator-facing notes for work after **1.1.9** and the Jul 28–30 polish that s
 - **Dashboard look** — bold blue accent, tighter corners, clearer gauge colours (metric vs healthy/warn), shared hero plates; less generic dark-SaaS chrome
 - **React dashboard is the real app** — old Preact/alpha UI archived; packaging and docs follow `web/dashboard`
 - **Insights → Storage Space map** — treemap of where disk goes (world / mods / logs / backups drill-in); meters and tables stay
+- **Spark → Map** — pan/zoom chunk heat from the selected profile’s entity hotspots; click a square for chunk details
 - **Insights → World** depth — dimension cards, compare bars, forceload + players (ties to 1.1.9 world pressure)
 - **Live charts** — less jump/flash; calmer hover; better downsample
 - **Snappier shell** — lazy routes, less query thrash, tabs scroll to top on change
 - **Issues inbox** — severity groups only (Critical / Warning / Info); drift / silent-fail / world-pressure still show as Issues with the right Fix actions
 - **Mods → Log errors** — Active / Reviewed + Mark reviewed
-- **Support packs** — tighter redaction and size accounting; clearer why a grade is Degraded
+- **Support packs** — chooser is pack type + optional note + size; Customize files stays optional; tighter redaction and size accounting
+- **Settings Appearance** — theme and accent on one row
 - **Screenshots** — docs assets recaptured for Overview, Live, Insights, Mods, Issues, Crashes, Spark, Backups
 
 ## [1.1.9] — 2026-07-29

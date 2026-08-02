@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { CheckCircle2, ChevronRight, Copy, Layers, X } from '@/ui/icons';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { navigate } from '@/app/router';
 import { Sparkline } from '@/ui/charts';
 import { Stagger } from '@/ui/motion';
@@ -28,8 +28,6 @@ import {
 } from './helpers';
 import { bareFile } from './groups';
 import { buildFixPlan, formatConfidenceLabel } from './fix-plan';
-
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 
 const VIRTUALIZE_THRESHOLD = 50;
 const CRASH_ROW_ESTIMATE = 78;

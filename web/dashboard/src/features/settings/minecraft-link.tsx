@@ -26,28 +26,39 @@ export function parsePlayerDirectory(payload: Record<string, unknown>): Minecraf
     .sort((a, b) => Number(b.online) - Number(a.online) || a.name.localeCompare(b.name));
 }
 
+function usePlayerOptions(prefetched?: MinecraftPlayerOption[]) {
+  const playersQ = useQuery({
+    queryKey: ['players'],
+    queryFn: api.players,
+    staleTime: 30_000,
+    enabled: prefetched == null,
+  });
+  return useMemo(() => {
+    if (prefetched) return prefetched;
+    return playersQ.data ? parsePlayerDirectory(asRecord(playersQ.data)) : [];
+  }, [prefetched, playersQ.data]);
+}
+
 /** Owner linking someone else's account via /api/accounts/update */
 export function AccountMinecraftLink({
   accountId,
   uuid,
   name,
   disabled,
+  options: prefetchedOptions,
+  compact,
 }: {
   accountId: string;
   uuid: string | null;
   name: string | null;
   disabled?: boolean;
+  /** Shared directory from Accounts table (avoids N× fetch). */
+  options?: MinecraftPlayerOption[];
+  /** Single-line table cell; avatar lives in the Person column. */
+  compact?: boolean;
 }) {
   const qc = useQueryClient();
-  const playersQ = useQuery({
-    queryKey: ['players'],
-    queryFn: api.players,
-    staleTime: 30_000,
-  });
-  const options = useMemo(
-    () => (playersQ.data ? parsePlayerDirectory(asRecord(playersQ.data)) : []),
-    [playersQ.data],
-  );
+  const options = usePlayerOptions(prefetchedOptions);
   const [pick, setPick] = useState('');
   const [error, setError] = useState('');
 
@@ -76,6 +87,7 @@ export function AccountMinecraftLink({
       onPick={setPick}
       error={error}
       busy={mut.isPending || Boolean(disabled)}
+      compact={compact}
       onLink={() => {
         const hit = options.find((o) => o.uuid === pick);
         if (!hit) return;
@@ -94,15 +106,7 @@ export function SelfMinecraftLink() {
   const uuid = typeof session?.minecraft_uuid === 'string' ? session.minecraft_uuid : null;
   const name = typeof session?.minecraft_name === 'string' ? session.minecraft_name : null;
 
-  const playersQ = useQuery({
-    queryKey: ['players'],
-    queryFn: api.players,
-    staleTime: 30_000,
-  });
-  const options = useMemo(
-    () => (playersQ.data ? parsePlayerDirectory(asRecord(playersQ.data)) : []),
-    [playersQ.data],
-  );
+  const options = usePlayerOptions();
   const [pick, setPick] = useState('');
   const [error, setError] = useState('');
 
@@ -164,6 +168,7 @@ function MinecraftLinkBody({
   onPick,
   error,
   busy,
+  compact,
   onLink,
   onClear,
 }: {
@@ -174,18 +179,59 @@ function MinecraftLinkBody({
   onPick: (v: string) => void;
   error: string;
   busy: boolean;
+  compact?: boolean;
   onLink: () => void;
   onClear: () => void;
 }) {
   const linked = Boolean(uuid);
+  const label = linked ? name || uuid || 'Linked' : 'Not linked';
+
+  if (compact) {
+    return (
+      <div className="st-accounts__mc">
+        {linked ? (
+          <div className="st-accounts__mc-row">
+            <span className="st-accounts__mc-name" title={label}>
+              {label}
+            </span>
+            <Button kind="ghost" size="xs" disabled={busy} onClick={onClear}>
+              Clear
+            </Button>
+          </div>
+        ) : (
+          <div className="st-accounts__mc-row">
+            <select
+              className="st-accounts__select st-accounts__select--dense"
+              value={pick}
+              disabled={busy || options.length === 0}
+              aria-label="Minecraft player"
+              onChange={(e) => onPick(e.target.value)}
+            >
+              <option value="">
+                {options.length ? 'Pick a player…' : 'No players yet'}
+              </option>
+              {options.map((o) => (
+                <option key={o.uuid} value={o.uuid}>
+                  {o.name}
+                  {o.online ? ' (online)' : ''}
+                </option>
+              ))}
+            </select>
+            <Button kind="ghost" size="xs" disabled={busy || !pick} onClick={onLink}>
+              Link
+            </Button>
+          </div>
+        )}
+        {error ? <p className="st-accounts__row-error">{error}</p> : null}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2 min-w-0">
-        <PlayerAvatar uuid={uuid} name={name || 'Player'} size={32} />
-        <span className="truncate text-sm text-wt-text-mid">
-          {linked ? (name || uuid) : 'Not linked'}
-        </span>
+        <PlayerAvatar uuid={uuid} name={name || 'Player'} size={32} className="st-mc-avatar" />
+        <span className="truncate text-sm text-wt-text-mid">{label}</span>
         {linked ? (
           <Button kind="ghost" size="xs" disabled={busy} onClick={onClear}>
             Clear

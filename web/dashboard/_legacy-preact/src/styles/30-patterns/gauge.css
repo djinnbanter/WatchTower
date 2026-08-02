@@ -1,0 +1,269 @@
+/* Gauge + radar dials */
+
+.ui-gauge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ui-gauge--label-above {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ui-sp-6);
+}
+
+.ui-gauge__title {
+  font-size: var(--ui-text-xs);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-text-low);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.ui-gauge__face {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ui-gauge svg {
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.ui-gauge__halo {
+  display: none;
+}
+
+.ui-gauge--hero .ui-gauge__halo {
+  display: block;
+  position: absolute;
+  inset: 12% 14% 18%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 42%,
+      color-mix(in srgb, var(--ui-ok) 22%, transparent) 0%,
+      color-mix(in srgb, var(--ui-ch-cpu) 10%, transparent) 42%,
+      transparent 72%);
+  filter: blur(6px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ui-gauge--hero.ui-gauge--warn .ui-gauge__halo {
+  background:
+    radial-gradient(circle at 50% 42%,
+      color-mix(in srgb, var(--ui-warn) 28%, transparent) 0%,
+      color-mix(in srgb, var(--ui-warn) 8%, transparent) 48%,
+      transparent 72%);
+}
+
+.ui-gauge--hero.ui-gauge--danger .ui-gauge__halo {
+  background:
+    radial-gradient(circle at 50% 42%,
+      color-mix(in srgb, var(--ui-danger) 30%, transparent) 0%,
+      color-mix(in srgb, var(--ui-danger) 10%, transparent) 48%,
+      transparent 72%);
+}
+
+.ui-gauge__track {
+  stroke: var(--ui-line);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.ui-gauge--hero .ui-gauge__track {
+  stroke: color-mix(in srgb, var(--ui-line) 70%, var(--ui-bg2));
+  stroke-width: 11;
+}
+
+.ui-gauge__glow-track {
+  stroke: color-mix(in srgb, var(--ui-ch-cpu) 18%, transparent);
+  stroke-width: 16;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.ui-gauge__value {
+  stroke: var(--ui-ok);
+  stroke-width: 8;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ui-ok) 45%, transparent));
+}
+
+.ui-gauge--hero .ui-gauge__value {
+  stroke-width: 11;
+}
+
+.ui-gauge--warn .ui-gauge__value {
+  stroke: var(--ui-warn);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ui-warn) 45%, transparent));
+}
+
+.ui-gauge--danger .ui-gauge__value {
+  stroke: var(--ui-danger);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ui-danger) 45%, transparent));
+}
+
+.ui-gauge__tick {
+  stroke: var(--ui-line);
+  stroke-width: 1.5;
+  opacity: 0.7;
+}
+
+.ui-gauge__tick--major {
+  stroke: color-mix(in srgb, var(--ui-text-low) 55%, var(--ui-line));
+  stroke-width: 2;
+  opacity: 1;
+}
+
+.ui-gauge__hub-ring {
+  stroke: color-mix(in srgb, var(--ui-line) 80%, transparent);
+  stroke-width: 1.5;
+  opacity: 0.55;
+}
+
+.ui-gauge__needle-glow {
+  fill: color-mix(in srgb, var(--ui-ok) 35%, transparent);
+}
+
+.ui-gauge--warn .ui-gauge__needle-glow { fill: color-mix(in srgb, var(--ui-warn) 40%, transparent); }
+.ui-gauge--danger .ui-gauge__needle-glow { fill: color-mix(in srgb, var(--ui-danger) 42%, transparent); }
+
+.ui-gauge__needle {
+  fill: var(--ui-ok);
+}
+
+.ui-gauge--warn .ui-gauge__needle { fill: var(--ui-warn); }
+.ui-gauge--danger .ui-gauge__needle { fill: var(--ui-danger); }
+
+.ui-gauge__needle-core {
+  fill: var(--ui-bg1);
+}
+
+.ui-gauge__readout {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding-top: 8%;
+  z-index: 2;
+}
+
+.ui-gauge--label-above .ui-gauge__readout {
+  padding-top: 4%;
+}
+
+.ui-gauge__value-text {
+  font-family: var(--ui-font-mono);
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+  color: var(--ui-text-hi);
+  line-height: 1;
+}
+
+.ui-gauge--hero .ui-gauge__value-text {
+  font-size: 1.85rem;
+  letter-spacing: -0.05em;
+  text-shadow: 0 0 18px color-mix(in srgb, var(--ui-text-hi) 18%, transparent);
+}
+
+.ui-gauge--label-above.ui-gauge--hero .ui-gauge__value-text {
+  font-size: 2rem;
+}
+
+.ui-gauge__label {
+  margin-top: 4px;
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  color: var(--ui-text-low);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ui-gauge--hero .ui-gauge__label {
+  margin-top: 6px;
+  letter-spacing: 0.1em;
+}
+
+.ui-gauge__band {
+  margin-top: 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ui-ok);
+}
+
+.ui-gauge--hero .ui-gauge__band {
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ui-ok) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ui-ok) 28%, transparent);
+}
+
+.ui-gauge--warn .ui-gauge__band { color: var(--ui-warn); }
+.ui-gauge--danger .ui-gauge__band { color: var(--ui-danger); }
+
+.ui-gauge--hero.ui-gauge--warn .ui-gauge__band {
+  background: color-mix(in srgb, var(--ui-warn) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ui-warn) 28%, transparent);
+}
+
+.ui-gauge--hero.ui-gauge--danger .ui-gauge__band {
+  background: color-mix(in srgb, var(--ui-danger) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ui-danger) 28%, transparent);
+}
+
+/* Radar */
+
+.ui-radar {
+  display: inline-flex;
+  border-radius: var(--ui-rad-m);
+  background: var(--ui-bg0);
+  box-shadow: var(--ui-shadow-inset);
+  overflow: hidden;
+}
+
+.ui-radar svg { display: block; }
+
+.ui-radar__grid {
+  stroke: var(--ui-line);
+  stroke-width: 1;
+}
+
+.ui-radar__ring {
+  stroke: color-mix(in srgb, var(--ui-text-low) 50%, var(--ui-line));
+  stroke-width: 1.5;
+}
+
+.ui-radar--square .ui-radar__fill {
+  fill: color-mix(in srgb, var(--ui-accent) 18%, transparent);
+  stroke: var(--ui-accent);
+  stroke-width: 2;
+}
+
+.ui-radar--circle .ui-radar__fill {
+  fill: color-mix(in srgb, var(--ui-warn) 18%, transparent);
+  stroke: var(--ui-warn);
+  stroke-width: 2;
+}
+
+.ui-radar__dot {
+  fill: var(--ui-accent);
+}
+
+.ui-radar--circle .ui-radar__dot {
+  fill: var(--ui-warn);
+}

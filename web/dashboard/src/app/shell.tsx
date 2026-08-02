@@ -272,7 +272,7 @@ export function AppShell({ route, page, children }: Props) {
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden text-wt-text">
-      <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-wt-bg1 focus:px-3 focus:py-2">
+      <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-[var(--radius-wt)] focus:bg-wt-bg1 focus:px-3 focus:py-2">
         Skip to content
       </a>
       <DemoBanner />

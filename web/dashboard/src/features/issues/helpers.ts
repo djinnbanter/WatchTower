@@ -220,7 +220,7 @@ export function fromLedgerRow(
   const source = str(row.source, 'ops');
   let primaryAction: PrimaryAction | null = null;
   if (id === 'SOFT_HANG' || id.includes('SOFT_HANG')) {
-    primaryAction = { label: 'Build support pack', tab: 'support' };
+    primaryAction = null;
   } else if (id.includes('DISK') || id.includes('BACKUP')) {
     primaryAction = { label: 'Open Backups', tab: 'backups' };
   } else if (id.startsWith('MOD_JAR_DRIFT') || id.includes('MOD_JAR_DRIFT')) {

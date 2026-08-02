@@ -1,7 +1,7 @@
 /**
  * Client-side TOML form helpers for Mods → Configs.
  * Server (TomlFormModel) is source of truth for written bytes; this mirrors
- * serialize for Form→Raw / diff preview, and a simple parse for fixture GET.
+ * applyValues for Form→Raw / diff preview, and a simple parse for fixture GET.
  */
 
 export type TomlFormField = {
@@ -20,12 +20,110 @@ export type TomlFormParseResult = {
   warnings: string[];
 };
 
+
+/**
+ * Patch leaf values into existing TOML text (preserve comments/layout).
+ * Mirrors watchtower-core TomlFormModel.applyValues.
+ */
+export function applyTomlValues(originalToml: string, fields: TomlFormField[]): string {
+  if (!Array.isArray(fields)) throw new Error('fields required');
+  const values = new Map<string, unknown>();
+  collectLeafValues(fields, values);
+  if (!originalToml) return serializeTomlFields(fields);
+
+  const originals = new Map<string, unknown>();
+  const parsed = parseTomlForm(originalToml);
+  if (parsed.formOk) collectLeafValues(parsed.fields, originals);
+
+  const nl = originalToml.includes('\r\n') ? '\r\n' : '\n';
+  const lines = originalToml.split(/\r?\n/);
+  let currentTable = '';
+  const out: string[] = [];
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[[')) {
+      out.push(raw);
+      continue;
+    }
+    const tableMatch = raw.match(/^\s*\[([^\]]+)\]\s*(?:#.*)?$/);
+    if (tableMatch && !trimmed.startsWith('[[')) {
+      currentTable = tableMatch[1]!.trim();
+      out.push(raw);
+      continue;
+    }
+    if (!trimmed || trimmed.startsWith('#')) {
+      out.push(raw);
+      continue;
+    }
+    const assign = raw.match(/^(\s*)([A-Za-z0-9_.-]+)(\s*=\s*)(.*)$/);
+    if (!assign) {
+      out.push(raw);
+      continue;
+    }
+    const key = assign[2]!;
+    const path = currentTable ? `${currentTable}.${key}` : key;
+    if (!values.has(path)) {
+      out.push(raw);
+      continue;
+    }
+    const next = values.get(path);
+    if (originals.has(path) && jsonValuesEqual(originals.get(path), next)) {
+      out.push(raw);
+      continue;
+    }
+    const rhs = assign[4]!;
+    const hash = indexOfUnquotedHash(rhs);
+    const comment = hash >= 0 ? rhs.slice(hash) : '';
+    let line = `${assign[1]}${key}${assign[3]}${formatValue(next)}`;
+    if (comment) {
+      line += comment.startsWith(' ') || comment.startsWith('\t') ? comment : ` ${comment}`;
+    }
+    out.push(line);
+  }
+  return out.join(nl);
+}
+
+function collectLeafValues(fields: TomlFormField[], out: Map<string, unknown>) {
+  for (const o of fields) {
+    if (!o || typeof o !== 'object') throw new Error('invalid field');
+    if (o.kind === 'table') {
+      collectLeafValues(o.children ?? [], out);
+      continue;
+    }
+    if (!['bool', 'integer', 'number', 'string', 'array'].includes(o.kind)) {
+      throw new Error(`invalid field kind: ${o.kind}`);
+    }
+    out.set(o.path, o.value);
+  }
+}
+
+function indexOfUnquotedHash(rhs: string): number {
+  let inStr = false;
+  for (let i = 0; i < rhs.length; i++) {
+    const c = rhs[i]!;
+    if (c === '"' && (i === 0 || rhs[i - 1] !== '\\')) inStr = !inStr;
+    else if (c === '#' && !inStr) return i;
+  }
+  return -1;
+}
+
+function jsonValuesEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a === 'number' && typeof b === 'number') return a === b;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    return a.every((v, i) => jsonValuesEqual(v, b[i]));
+  }
+  return false;
+}
+
 /** Clean rewrite matching watchtower-core TomlFormModel.serialize rules. */
 export function serializeTomlFields(fields: TomlFormField[]): string {
   if (!Array.isArray(fields)) {
     throw new Error('fields required');
   }
-  const lines: string[] = ['# WatchTower form rewrite'];
+  const lines: string[] = [];
   const rootScalars: TomlFormField[] = [];
   const tables: TomlFormField[] = [];
   for (const o of fields) {
@@ -43,7 +141,8 @@ export function serializeTomlFields(fields: TomlFormField[]): string {
     if (i > 0) lines.push('');
     writeTableLines(lines, t, t.path);
   });
-  return lines.join('\n') + (lines.length ? '\n' : '');
+  if (!lines.length) return '';
+  return lines.join('\n') + '\n';
 }
 
 /**
@@ -291,7 +390,7 @@ function formatValue(value: unknown): string {
     return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
   }
   if (Array.isArray(value)) {
-    return `[ ${value.map((v) => formatValue(v)).join(', ')} ]`;
+    return `[${value.map((v) => formatValue(v)).join(', ')}]`;
   }
   throw new Error('cannot serialize value');
 }

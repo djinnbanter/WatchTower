@@ -283,7 +283,53 @@ export function generateCorrelatedLiveSamples(nowMs, {
   stepMs = 30_000,
 } = {}) {
   const state = createSimState(null, nowMs - (count - 1) * stepMs);
-  const series = {
+  const series = emptyLiveSeries();
+  const bandwidth = [];
+  const diskIo = [];
+  const stepSec = stepMs / 1000;
+
+  for (let i = count - 1; i >= 0; i -= 1) {
+    const t = nowMs - i * stepMs;
+    const m = stepSim(state, t, stepSec);
+    pushLiveSample(series, bandwidth, diskIo, t, m);
+  }
+
+  return { series, bandwidth, diskIo, state };
+}
+
+/**
+ * 30d-style history: coarse samples for older days, dense samples for the
+ * recent window so short brush windows (1m–1h) still have usable points.
+ */
+export function generateCorrelatedLiveSamplesSpan(nowMs, {
+  spanMs = 30 * 86_400_000,
+  recentMs = 86_400_000,
+  denseStepMs = 30_000,
+  sparseStepMs = 10 * 60_000,
+} = {}) {
+  const startMs = nowMs - spanMs;
+  const denseStartMs = Math.max(startMs, nowMs - recentMs);
+  const state = createSimState(null, startMs);
+  const series = emptyLiveSeries();
+  const bandwidth = [];
+  const diskIo = [];
+  const stepSec = denseStepMs / 1000;
+
+  let nextRecordAt = startMs;
+  for (let t = startMs; t <= nowMs; t += denseStepMs) {
+    const m = stepSim(state, t, stepSec);
+    const recordStep = t >= denseStartMs ? denseStepMs : sparseStepMs;
+    if (t >= nextRecordAt || t + denseStepMs > nowMs) {
+      pushLiveSample(series, bandwidth, diskIo, t, m);
+      nextRecordAt = t + recordStep;
+    }
+  }
+
+  return { series, bandwidth, diskIo, state };
+}
+
+function emptyLiveSeries() {
+  return {
     tps: [],
     mspt: [],
     host_cpu: [],
@@ -300,32 +346,25 @@ export function generateCorrelatedLiveSamples(nowMs, {
     disk_read_mb_s: [],
     disk_write_mb_s: [],
   };
-  const bandwidth = [];
-  const diskIo = [];
-  const stepSec = stepMs / 1000;
+}
 
-  for (let i = count - 1; i >= 0; i -= 1) {
-    const t = nowMs - i * stepMs;
-    const m = stepSim(state, t, stepSec);
-    const iso = new Date(t).toISOString();
-    series.tps.push({ t: iso, v: m.tps });
-    series.mspt.push({ t: iso, v: m.mspt });
-    series.host_cpu.push({ t: iso, v: m.host_cpu });
-    series.heap_mb.push({ t: iso, v: m.heap_mb });
-    series.mem_available_gb.push({ t: iso, v: m.mem_available_gb });
-    series.mem_used_gb.push({ t: iso, v: m.mem_used_gb });
-    series.mem_total_gb.push({ t: iso, v: m.mem_total_gb });
-    series.disk_use_pct.push({ t: iso, v: m.disk_use_pct });
-    series.players.push({ t: iso, v: m.players });
-    series.thermal_package.push({ t: iso, v: m.thermal_c });
-    series.thermal_ambient.push({ t: iso, v: m.ambient_c });
-    series.net_rx_mbps.push({ t: iso, v: m.rx });
-    series.net_tx_mbps.push({ t: iso, v: m.tx });
-    series.disk_read_mb_s.push({ t: iso, v: m.read });
-    series.disk_write_mb_s.push({ t: iso, v: m.write });
-    bandwidth.push({ t: iso, rx: m.rx, tx: m.tx });
-    diskIo.push({ t: iso, read: m.read, write: m.write });
-  }
-
-  return { series, bandwidth, diskIo, state };
+function pushLiveSample(series, bandwidth, diskIo, t, m) {
+  const iso = new Date(t).toISOString();
+  series.tps.push({ t: iso, v: m.tps });
+  series.mspt.push({ t: iso, v: m.mspt });
+  series.host_cpu.push({ t: iso, v: m.host_cpu });
+  series.heap_mb.push({ t: iso, v: m.heap_mb });
+  series.mem_available_gb.push({ t: iso, v: m.mem_available_gb });
+  series.mem_used_gb.push({ t: iso, v: m.mem_used_gb });
+  series.mem_total_gb.push({ t: iso, v: m.mem_total_gb });
+  series.disk_use_pct.push({ t: iso, v: m.disk_use_pct });
+  series.players.push({ t: iso, v: m.players });
+  series.thermal_package.push({ t: iso, v: m.thermal_c });
+  series.thermal_ambient.push({ t: iso, v: m.ambient_c });
+  series.net_rx_mbps.push({ t: iso, v: m.rx });
+  series.net_tx_mbps.push({ t: iso, v: m.tx });
+  series.disk_read_mb_s.push({ t: iso, v: m.read });
+  series.disk_write_mb_s.push({ t: iso, v: m.write });
+  bandwidth.push({ t: iso, rx: m.rx, tx: m.tx });
+  diskIo.push({ t: iso, read: m.read, write: m.write });
 }

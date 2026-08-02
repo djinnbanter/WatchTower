@@ -1,0 +1,191 @@
+/* Shared instrument plate — glass + tone wash + top gradient hairline
+   Canonical surface for .ui-instrument, .ui-card, .feat-card, .ov-instrument */
+
+.ui-instrument,
+.ui-instrument-surface,
+.ui-card,
+.feat-card,
+.ov-instrument {
+  --ui-instrument-tone: var(--ui-sky);
+  --ui-instrument-wash: 12%;
+  --ui-instrument-border-mix: 26%;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ui-instrument-tone) var(--ui-instrument-border-mix), var(--ui-glass-border, var(--ui-line)));
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-instrument-tone) var(--ui-instrument-wash), transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-glass, var(--ui-bg1)) 72%, transparent);
+  box-shadow: var(--ui-shadow-rest);
+  backdrop-filter: blur(var(--ui-blur, 12px));
+  -webkit-backdrop-filter: blur(var(--ui-blur, 12px));
+}
+
+.ui-instrument::before,
+.ui-instrument-surface::before,
+.ui-card::before,
+.feat-card::before,
+.ov-instrument::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--ui-instrument-tone) 65%, transparent),
+    transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ui-instrument > *,
+.ui-instrument-surface > *,
+.ui-card > *,
+.feat-card > *,
+.ov-instrument > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Layout variants */
+.ui-instrument,
+.ov-instrument {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-12);
+  padding: var(--ui-sp-14) var(--ui-sp-14) var(--ui-sp-12);
+  border-radius: var(--ui-rad-xl);
+}
+
+.ui-card {
+  border-radius: var(--ui-rad-xl);
+}
+
+.feat-card {
+  border-radius: var(--ui-rad-xl);
+  padding: var(--ui-sp-16) var(--ui-sp-20);
+  margin-bottom: 0;
+  transition: border-color var(--ui-dur-2) var(--ui-ease-out),
+              box-shadow var(--ui-dur-2) var(--ui-ease-out),
+              transform var(--ui-dur-2) var(--ui-ease-out);
+}
+
+.feat-card:hover {
+  border-color: color-mix(in srgb, var(--ui-sky) 30%, var(--ui-line-strong));
+  box-shadow: var(--ui-shadow-lift);
+}
+
+.ui-instrument--sky {
+  --ui-instrument-tone: var(--ui-sky);
+}
+
+.ui-instrument--disk,
+.ui-instrument--warn {
+  --ui-instrument-tone: var(--ui-ch-disk, var(--ui-warn));
+}
+
+.ui-instrument--accent {
+  --ui-instrument-tone: var(--ui-accent);
+}
+
+.ui-instrument--ok {
+  --ui-instrument-tone: var(--ui-ok);
+}
+
+.ui-instrument--danger {
+  --ui-instrument-tone: var(--ui-danger);
+}
+
+.ui-instrument--info {
+  --ui-instrument-tone: var(--ui-info, var(--ui-sky));
+}
+
+.ui-instrument--purple,
+.ui-instrument--insight {
+  --ui-instrument-tone: var(--ui-ch-insight, var(--ui-sky));
+}
+
+.ui-instrument--net {
+  --ui-instrument-tone: var(--ui-ch-net, var(--ui-ch-players));
+}
+
+.ui-instrument--cpu {
+  --ui-instrument-tone: var(--ui-ch-cpu, var(--ui-warn));
+}
+
+.ui-instrument--compact {
+  gap: var(--ui-sp-6);
+  padding: var(--ui-sp-12) var(--ui-sp-14);
+}
+
+/* Card interactive / tone modifiers */
+.ui-card--interactive {
+  transition: transform var(--ui-dur-2) var(--ui-ease-out),
+              box-shadow var(--ui-dur-2) var(--ui-ease-out),
+              border-color var(--ui-dur-2) var(--ui-ease-out);
+}
+
+.ui-card--interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ui-shadow-lift);
+  border-color: color-mix(in srgb, var(--ui-sky) 35%, var(--ui-line-strong));
+}
+
+.ui-card--ok,
+.feat-card--success {
+  --ui-instrument-tone: var(--ui-ok);
+  --ui-instrument-wash: 14%;
+  --ui-instrument-border-mix: 32%;
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-ok) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-ok) 8%, var(--ui-glass, var(--ui-bg1)));
+}
+
+.ui-card--warn,
+.feat-card--warn {
+  --ui-instrument-tone: var(--ui-warn);
+  --ui-instrument-wash: 14%;
+  --ui-instrument-border-mix: 32%;
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-warn) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-warn) 8%, var(--ui-glass, var(--ui-bg1)));
+}
+
+.ui-card--danger,
+.feat-card--danger {
+  --ui-instrument-tone: var(--ui-danger);
+  --ui-instrument-wash: 14%;
+  --ui-instrument-border-mix: 32%;
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-danger) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-danger) 8%, var(--ui-glass, var(--ui-bg1)));
+}
+
+.ui-card--info {
+  --ui-instrument-tone: var(--ui-info);
+  --ui-instrument-wash: 14%;
+  --ui-instrument-border-mix: 32%;
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-info) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-info) 8%, var(--ui-glass, var(--ui-bg1)));
+}
+
+.ui-card--accent {
+  --ui-instrument-tone: var(--ui-accent);
+  --ui-instrument-wash: 14%;
+  --ui-instrument-border-mix: 34%;
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--ui-accent) 14%, transparent) 0%,
+      transparent 46%),
+    color-mix(in srgb, var(--ui-accent) 8%, var(--ui-glass, var(--ui-bg1)));
+}

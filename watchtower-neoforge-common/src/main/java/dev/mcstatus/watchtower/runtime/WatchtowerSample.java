@@ -13,6 +13,28 @@ public final class WatchtowerSample {
     public record DimensionSample(String id, double tps, double mspt, long entities, long chunks) {
     }
 
+    public record TypeCount(String type, long count) {
+    }
+
+    public record DimensionCensus(
+            String id,
+            long entities,
+            long items,
+            long living,
+            long loadedChunks,
+            long forcedChunks,
+            long spawnChunks,
+            long modForcedChunks,
+            int players,
+            List<TypeCount> topTypes) {
+    }
+
+    public record WorldCensus(Instant takenAt, List<DimensionCensus> dimensions) {
+        public static WorldCensus empty() {
+            return new WorldCensus(null, List.of());
+        }
+    }
+
     public record PlayerSample(String name, String uuid, int ping, String dimension) {
     }
 

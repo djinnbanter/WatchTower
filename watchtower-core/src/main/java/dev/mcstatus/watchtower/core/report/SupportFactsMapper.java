@@ -9,7 +9,9 @@ import dev.mcstatus.watchtower.core.ops.OpsCacheSchema;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Maps continuous ops-cache blocks into a facts-shaped JSON for support compose only.
@@ -28,7 +30,8 @@ public final class SupportFactsMapper {
             boolean javaRunning,
             int logStaleMinutes,
             String modVersion,
-            String minecraftVersion
+            String minecraftVersion,
+            Boolean panelRunning
     ) {
         public Context(
                 String serverDir,
@@ -38,18 +41,38 @@ public final class SupportFactsMapper {
                 boolean javaRunning,
                 int logStaleMinutes
         ) {
-            this(serverDir, hostname, loader, panel, javaRunning, logStaleMinutes, null, null);
+            this(serverDir, hostname, loader, panel, javaRunning, logStaleMinutes, null, null, null);
+        }
+
+        public Context(
+                String serverDir,
+                String hostname,
+                String loader,
+                String panel,
+                boolean javaRunning,
+                int logStaleMinutes,
+                String modVersion,
+                String minecraftVersion
+        ) {
+            this(serverDir, hostname, loader, panel, javaRunning, logStaleMinutes,
+                    modVersion, minecraftVersion, null);
         }
     }
 
     public static JsonObject fromOpsCache(JsonObject ops, Context ctx) {
+        return fromOpsCache(ops, ctx, null);
+    }
+
+    public static JsonObject fromOpsCache(JsonObject ops, Context ctx, JsonObject hostSystem) {
         JsonObject facts = new JsonObject();
         facts.add("meta", buildMeta(ctx));
         facts.add("health", buildHealth(ops, ctx));
         facts.add("minecraft", buildMinecraft(ops));
         facts.add("issues", buildIssues(ops));
+        facts.add("issue_counts", buildIssueCounts(ops));
         facts.add("events", buildEvents(ops));
         facts.add("optional", buildOptional(ops));
+        facts.add("system", buildSystem(ops, hostSystem));
         JsonObject thresholds = new JsonObject();
         thresholds.addProperty("log_stale_minutes", ctx.logStaleMinutes());
         facts.add("thresholds", thresholds);
@@ -77,6 +100,9 @@ public final class SupportFactsMapper {
     private static JsonObject buildHealth(JsonObject ops, Context ctx) {
         JsonObject health = new JsonObject();
         health.addProperty("java_running", ctx.javaRunning());
+        if (ctx.panelRunning() != null) {
+            health.addProperty("panel_running", ctx.panelRunning());
+        }
         String status = deriveStatus(ops);
         health.addProperty("status", status);
         health.addProperty("current_status", status);
@@ -103,6 +129,34 @@ public final class SupportFactsMapper {
             health.add("backups", ops.get("backups").deepCopy());
         }
         return health;
+    }
+
+    /**
+     * BriefWriter reads system.disk_use_pct / mem_available_gb / uptime_seconds. Support facts
+     * previously omitted the whole block, so the brief printed "?" and "0.0 hours" while
+     * ops-cache already held real disk numbers.
+     */
+    private static JsonObject buildSystem(JsonObject ops, JsonObject hostSystem) {
+        JsonObject system = hostSystem != null ? hostSystem.deepCopy() : new JsonObject();
+        JsonObject diskFallback = null;
+        if (ops.has("disk_jump") && ops.get("disk_jump").isJsonObject()) {
+            diskFallback = ops.getAsJsonObject("disk_jump");
+        } else if (ops.has("disk_projection") && ops.get("disk_projection").isJsonObject()) {
+            diskFallback = ops.getAsJsonObject("disk_projection");
+        }
+        if (diskFallback != null) {
+            copyIfMissing(system, diskFallback, "disk_use_pct");
+            copyIfMissing(system, diskFallback, "disk_free_gb");
+        }
+        system.addProperty("source", hostSystem != null ? "host_metrics" : "ops_cache");
+        return system;
+    }
+
+    private static void copyIfMissing(JsonObject target, JsonObject source, String key) {
+        boolean alreadySet = target.has(key) && !target.get(key).isJsonNull();
+        if (!alreadySet && source.has(key) && !source.get(key).isJsonNull()) {
+            target.add(key, source.get(key).deepCopy());
+        }
     }
 
     private static String deriveStatus(JsonObject ops) {
@@ -161,6 +215,30 @@ public final class SupportFactsMapper {
         return out;
     }
 
+    /** Open vs reviewed severity tallies for brief AT A GLANCE. Overall still uses open-only. */
+    private static JsonObject buildIssueCounts(JsonObject ops) {
+        JsonObject counts = new JsonObject();
+        int openCrit = 0, openWarn = 0, revCrit = 0, revWarn = 0;
+        for (IssuesLiveRecord r : IssuesLiveStore.readAll(ops)) {
+            String status = r.status() == null ? "" : r.status().toLowerCase(Locale.ROOT);
+            String sev = r.severity() == null ? "" : r.severity().toLowerCase(Locale.ROOT);
+            boolean crit = "critical".equals(sev);
+            boolean warn = "warning".equals(sev);
+            if ("open".equals(status)) {
+                if (crit) openCrit++;
+                if (warn) openWarn++;
+            } else if ("reviewed".equals(status)) {
+                if (crit) revCrit++;
+                if (warn) revWarn++;
+            }
+        }
+        counts.addProperty("open_critical", openCrit);
+        counts.addProperty("open_warning", openWarn);
+        counts.addProperty("reviewed_critical", revCrit);
+        counts.addProperty("reviewed_warning", revWarn);
+        return counts;
+    }
+
     private static JsonArray buildEvents(JsonObject ops) {
         JsonArray out = new JsonArray();
         if (!ops.has(OpsCacheSchema.ACTIVITY) || !ops.get(OpsCacheSchema.ACTIVITY).isJsonObject()) {
@@ -172,13 +250,54 @@ public final class SupportFactsMapper {
         }
         int limit = 120;
         JsonArray events = activity.getAsJsonArray(OpsCacheSchema.ACTIVITY_EVENTS);
-        for (int i = 0; i < events.size() && i < limit; i++) {
+        List<JsonObject> kept = new ArrayList<>();
+        for (int i = 0; i < events.size() && kept.size() < limit; i++) {
             JsonElement el = events.get(i);
-            if (el.isJsonObject()) {
-                out.add(el.getAsJsonObject().deepCopy());
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject().deepCopy();
+            if (!absorbDuplicate(kept, row)) {
+                kept.add(row);
             }
         }
+        kept.forEach(out::add);
         return out;
+    }
+
+    /**
+     * Scanners emit the same join twice: once bare, once with the connection detail. Same time and
+     * type where one detail is a prefix of the other keeps only the longer, more specific row.
+     */
+    private static boolean absorbDuplicate(List<JsonObject> kept, JsonObject row) {
+        String time = optString(row, "time");
+        String type = optString(row, "type");
+        String detail = optString(row, "detail");
+        if (time.isEmpty() || type.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < kept.size(); i++) {
+            JsonObject prev = kept.get(i);
+            if (!time.equals(optString(prev, "time")) || !type.equals(optString(prev, "type"))) {
+                continue;
+            }
+            String prevDetail = optString(prev, "detail");
+            if (prevDetail.equals(detail)) {
+                return true;
+            }
+            if (!prevDetail.isEmpty() && detail.startsWith(prevDetail)) {
+                kept.set(i, row);
+                return true;
+            }
+            if (!detail.isEmpty() && prevDetail.startsWith(detail)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String optString(JsonObject o, String key) {
+        return o.has(key) && o.get(key).isJsonPrimitive() ? o.get(key).getAsString() : "";
     }
 
     private static JsonObject buildOptional(JsonObject ops) {
@@ -232,10 +351,28 @@ public final class SupportFactsMapper {
                     if (row.has("last_ip")) {
                         row.addProperty("last_ip", "[IP_REDACTED]");
                     }
+                    truncateUuidField(row, "uuid");
+                    truncateUuidField(row, "last_uuid");
                 }
             }
         }
         return dir;
+    }
+
+    private static void truncateUuidField(JsonObject row, String key) {
+        if (!row.has(key) || row.get(key).isJsonNull() || !row.get(key).isJsonPrimitive()) {
+            return;
+        }
+        row.addProperty(key, shortUuid(row.get(key).getAsString()));
+    }
+
+    /** Keep enough prefix to correlate rows across the bundle without shipping a full account id. */
+    private static String shortUuid(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+        String hex = raw.replace("-", "");
+        return hex.length() <= 8 ? hex : hex.substring(0, 8) + "...";
     }
 
     private static JsonArray crashSummaries(JsonObject ops) {

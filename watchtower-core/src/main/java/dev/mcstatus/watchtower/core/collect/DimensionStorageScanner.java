@@ -24,6 +24,8 @@ public final class DimensionStorageScanner {
 
     private static final int MAX_DU_CALLS = 24;
     private static final int MAX_OTHER_ENTRIES = 12;
+    /** Top jars shown in storage treemap / share tables before an "Other jars" bucket. */
+    private static final int MAX_MOD_ENTRIES = 40;
     private static final int DU_TIMEOUT_SEC = 15;
     /** Top-level names already covered by world / mods / logs (or backup) cards. */
     private static final Set<String> OTHER_SKIP = Set.of(
@@ -200,12 +202,63 @@ public final class DimensionStorageScanner {
         if (!Files.isDirectory(modsDir)) {
             return;
         }
-        Long bytes = duBytes(modsDir.toString());
-        if (bytes == null) {
+
+        List<ShareRow> jars = new ArrayList<>();
+        long jarTotal = 0;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
+            for (Path p : stream) {
+                if (!Files.isRegularFile(p)) {
+                    continue;
+                }
+                long sz;
+                try {
+                    sz = Files.size(p);
+                } catch (IOException e) {
+                    continue;
+                }
+                if (sz <= 0) {
+                    continue;
+                }
+                String name = p.getFileName().toString();
+                jars.add(new ShareRow("mod:" + name.toLowerCase(Locale.ROOT), "mods/" + name, name, sz));
+                jarTotal += sz;
+            }
+        } catch (IOException ignored) {
+            // still try du below
+        }
+
+        Long duBytesVal = duBytes(modsDir.toString());
+        long modsBytes = duBytesVal != null ? duBytesVal : jarTotal;
+        if (modsBytes <= 0) {
             return;
         }
-        result.addProperty("mods_bytes", bytes);
-        result.addProperty("mods_gb", round2(bytes / (1024.0 * 1024.0 * 1024.0)));
+        result.addProperty("mods_bytes", modsBytes);
+        result.addProperty("mods_gb", round2(modsBytes / (1024.0 * 1024.0 * 1024.0)));
+
+        if (jars.isEmpty()) {
+            return;
+        }
+        jars.sort(Comparator.comparingLong((ShareRow r) -> r.bytes).reversed());
+        JsonArray byMods = new JsonArray();
+        long shown = 0;
+        int limit = Math.min(MAX_MOD_ENTRIES, jars.size());
+        for (int i = 0; i < limit; i++) {
+            ShareRow r = jars.get(i);
+            addShareRow(byMods, r.id, r.path, r.label, r.bytes);
+            shown += r.bytes;
+        }
+        long rest = 0;
+        for (int i = limit; i < jars.size(); i++) {
+            rest += jars.get(i).bytes;
+        }
+        if (rest > 0) {
+            addShareRow(byMods, "mod:rest", "mods", "Other jars", rest);
+            shown += rest;
+        }
+        result.add("by_mods", byMods);
+        if (shown > 0) {
+            result.addProperty("mods_jars_gb", round2(shown / (1024.0 * 1024.0 * 1024.0)));
+        }
     }
 
     private static void attachOtherBreakdown(Path root, JsonObject result) {

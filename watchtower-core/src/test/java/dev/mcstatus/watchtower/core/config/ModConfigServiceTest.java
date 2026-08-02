@@ -128,7 +128,7 @@ class ModConfigServiceTest {
 
     @Test
     void saveFieldsWritesAndBacksUp() throws Exception {
-        Path server = serverWithConfig("config/a.toml", "x = 1\n");
+        Path server = serverWithConfig("config/a.toml", "# keep\nx = 1\n");
         Path wt = temp.resolve("watchtower");
         Files.createDirectories(wt);
         JsonObject before = ModConfigService.read(server, "config/a.toml");
@@ -146,7 +146,9 @@ class ModConfigServiceTest {
         JsonObject saved = ModConfigService.saveFields(server, wt, "config/a.toml", fields, mtime);
         assertTrue(saved.has("backup_path"));
         String written = Files.readString(server.resolve("config/a.toml"));
-        assertTrue(written.contains("x = 99") || written.contains("x=99"));
+        assertTrue(written.startsWith("# keep"));
+        assertTrue(written.contains("x = 99"));
+        assertFalse(written.contains("WatchTower form rewrite"));
         assertTrue(TomlFormModel.parse(written).formOk());
     }
 

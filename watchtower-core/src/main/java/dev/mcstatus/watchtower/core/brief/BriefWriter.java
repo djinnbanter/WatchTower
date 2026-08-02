@@ -98,22 +98,39 @@ public final class BriefWriter {
         } else {
             logS = "unknown";
         }
-        int ac = 0;
-        int aw = 0;
-        for (JsonObject i : activeIssues) {
-            if ("critical".equals(str(i, "severity"))) {
-                ac++;
-            }
-            if ("warning".equals(str(i, "severity"))) {
-                aw++;
+        JsonObject issueCounts = facts.has("issue_counts") && facts.get("issue_counts").isJsonObject()
+                ? facts.getAsJsonObject("issue_counts") : null;
+        int ac = issueCounts != null && issueCounts.has("open_critical")
+                ? issueCounts.get("open_critical").getAsInt() : 0;
+        int aw = issueCounts != null && issueCounts.has("open_warning")
+                ? issueCounts.get("open_warning").getAsInt() : 0;
+        int rc = issueCounts != null && issueCounts.has("reviewed_critical")
+                ? issueCounts.get("reviewed_critical").getAsInt() : 0;
+        int rw = issueCounts != null && issueCounts.has("reviewed_warning")
+                ? issueCounts.get("reviewed_warning").getAsInt() : 0;
+        if (issueCounts == null) {
+            // Fallback: open-only from activeIssues (pre-issue_counts facts)
+            for (JsonObject i : activeIssues) {
+                if ("critical".equals(str(i, "severity"))) ac++;
+                if ("warning".equals(str(i, "severity"))) aw++;
             }
         }
         int hc = histIssues.size();
-        String issueS = ac + " critical, " + aw + " warning" + (hc > 0 ? ", " + hc + " historical" : "");
-        String panelStatus = PanelLabels.glanceStatus(panel, bool(health, "panel_running", false));
+        String issueS = String.format(Locale.ROOT,
+                "open %d critical / %d warning · reviewed %d critical / %d warning",
+                ac, aw, rc, rw);
+        if (hc > 0) {
+            issueS = issueS + ", " + hc + " historical";
+        }
+        Boolean panelRunningFlag = health != null && health.has("panel_running")
+                && !health.get("panel_running").isJsonNull()
+                ? health.get("panel_running").getAsBoolean()
+                : null;
+        String panelStatus = PanelLabels.glanceStatusUnknownAware(panel, panelRunningFlag);
         lines.add(String.format("  Java: %s%s   Panel: %s   Logs: %s",
                 javaUp ? "RUNNING" : "DOWN", javaU, panelStatus, logS));
         lines.add("  Issues: " + issueS);
+        lines.add("  Note: Overall/Issues open counts are continuous open issues only — not Overview scorecard grade.");
         lines.add("  " + BriefFormatters.fmtPlayersLine(mc != null ? mc : new JsonObject()));
 
         JsonObject dh = optional != null ? obj(optional, "dh_pregen") : null;
@@ -158,8 +175,10 @@ public final class BriefWriter {
             lines.add("Last log activity: " + TimeParse.fmtTime(str(health, "last_log_time"))
                     + TimeParse.fmtGap(gap));
         }
-        double uptimeSec = dbl(system, "uptime_seconds") != null ? dbl(system, "uptime_seconds") : 0.0;
-        lines.add(String.format(Locale.US, "Machine uptime: %.1f hours", uptimeSec / 3600.0));
+        Double uptimeSec = dbl(system, "uptime_seconds");
+        lines.add(uptimeSec != null && uptimeSec > 0
+                ? String.format(Locale.US, "Machine uptime: %.1f hours", uptimeSec / 3600.0)
+                : "Machine uptime: ?");
         lines.add("RAM available: " + strOr(system, "mem_available_gb", "?")
                 + " GB  |  Disk used: " + strOr(system, "disk_use_pct", "?") + "%");
         lines.add(BriefFormatters.fmtPlayersLine(mc != null ? mc : new JsonObject()));

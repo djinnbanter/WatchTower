@@ -10,8 +10,8 @@
  * Display spelling: WatchTower (DESIGN.md / PRODUCT.md)
  */
 
-/** Single hero line. Product: local ops desk for dedicated MC servers (PRODUCT.md). */
-export const TAGLINE = 'The ops desk for your Minecraft server.';
+/** Single hero line. Product: local ops dashboard for dedicated MC servers (PRODUCT.md). */
+export const TAGLINE = 'The ops dashboard for your Minecraft server.';
 
 /** Source: PRODUCT.md Product Purpose, README.md. */
 export const SUPPORT_LINE =
@@ -25,8 +25,8 @@ export const HERO_OVERVIEW =
 export const HERO_CONTEXT =
   'Local-first · dedicated host · no cloud required';
 
-/** Scroll cue into the Live desk beat. */
-export const SCROLL_CUE = 'Scroll the desk';
+/** Scroll cue into the Live dashboard beat. */
+export const SCROLL_CUE = 'Scroll the dashboard';
 
 /** Close CTA headline. */
 export const CLOSE_HEADLINE = 'Try the demo, then get it on Modrinth.';
@@ -37,17 +37,17 @@ export const CLOSE_BODY =
 
 /** Footer product blurb. */
 export const FOOTER_BLURB =
-  'A local ops desk for Minecraft dedicated servers. It runs on the machine your server already runs on.';
+  'A local ops dashboard for Minecraft dedicated servers. It runs on the machine your server already runs on.';
 
 /**
  * Feature-tour capability + brings for Shift Log product beats.
- * Left columns name what the surface shows; desk mocks hold fixtures (no proof field).
+ * Left columns name what the surface shows; dashboard mocks hold fixtures (no proof field).
  */
 export const TOUR = {
   live: {
     capability:
       'Live charts for ticks, lag, memory, players, and host load - no need to open latest.log.',
-    note: 'desk · Live',
+    note: 'dashboard · Live',
     /** Source: docs/wiki/Live-Charts.md */
     brings: [
       {
@@ -71,7 +71,7 @@ export const TOUR = {
   issues: {
     capability:
       'A ranked fix inbox for live finds, scan results, boot problems, and crash pointers.',
-    note: 'desk · Issues',
+    note: 'dashboard · Issues',
     /** Source: docs/wiki/Issues.md */
     brings: [
       {
@@ -97,7 +97,7 @@ export const TOUR = {
   },
   crashes: {
     capability: 'Fingerprint-grouped crashes with Fix, Evidence, and Details tabs.',
-    note: 'desk · Crashes',
+    note: 'dashboard · Crashes',
     /** Source: docs/wiki/Crashes.md + PRODUCT.md advisory */
     brings: [
       {
@@ -120,8 +120,8 @@ export const TOUR = {
   },
   overview: {
     capability:
-      'Home screen after login: health grade, needs-attention list, and jump links into the desk.',
-    note: 'desk · Overview',
+      'Home screen after login: health grade, needs-attention list, and jump links into the dashboard.',
+    note: 'dashboard · Overview',
     /** Source: docs/wiki/Dashboard-Overview.md */
     brings: [
       {
@@ -146,7 +146,7 @@ export const TOUR = {
   insights: {
     capability:
       'Day-and-week views: busy hours, world pressure, storage trends, and a weekly digest.',
-    note: 'desk · Insights',
+    note: 'dashboard · Insights',
     /** Source: docs/wiki/Insights.md */
     brings: [
       {

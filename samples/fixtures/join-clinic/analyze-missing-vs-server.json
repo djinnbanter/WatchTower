@@ -1,0 +1,20 @@
+{
+  "raw": {
+    "kind": "mismatched_channel",
+    "platform": "neoforge",
+    "player": "FriendName",
+    "mod_ids": ["create", "flywheel"],
+    "reason": "mismatched channels",
+    "confidence": "high",
+    "time": "2026-07-29T20:15:01Z",
+    "sample_line": "FriendName lost connection: mismatched channels: [create:main]"
+  },
+  "cache": {
+    "running_mods": {
+      "mods": [
+        {"id": "create", "version": "6.0.0", "display_name": "Create"},
+        {"id": "flywheel", "version": "1.0.0", "display_name": "Flywheel"}
+      ]
+    }
+  }
+}

@@ -33,6 +33,17 @@ public final class ChunkWritePressureAnalyzer {
      * @param signals {@code dh_pregen}, {@code chunky_pregen}, {@code write_await_ms}, {@code write_mb_s}, {@code census}
      */
     public static void enrich(JsonObject block, JsonObject signals, JsonObject prevOpsRoot, double diskWarnMs) {
+        enrich(block, signals, prevOpsRoot, diskWarnMs, GROWTH_HOT_CHUNKS, SUSTAINED);
+    }
+
+    public static void enrich(
+            JsonObject block,
+            JsonObject signals,
+            JsonObject prevOpsRoot,
+            double diskWarnMs,
+            long growthHotChunks,
+            int sustainedScans
+    ) {
         if (block == null) {
             return;
         }
@@ -40,6 +51,8 @@ public final class ChunkWritePressureAnalyzer {
             signals = new JsonObject();
         }
         double warn = diskWarnMs > 0 ? diskWarnMs : 50.0;
+        long growthHot = Math.max(1, growthHotChunks);
+        int sustainedNeed = Math.max(1, sustainedScans);
 
         JsonObject prevWp = prevOpsRoot != null
                 && prevOpsRoot.has("world_pressure")
@@ -67,8 +80,9 @@ public final class ChunkWritePressureAnalyzer {
         DimStats dim = pickDim(census);
         long totalLoaded = totalLoadedChunks(census);
         long totalPlayers = totalPlayers(census);
+        long growthHotChunksThreshold = growthHot;
         long growth = prevLoaded > 0 ? totalLoaded - prevLoaded : 0;
-        boolean growthHot = growth >= GROWTH_HOT_CHUNKS;
+        boolean growthIsHot = growth >= growthHotChunksThreshold;
 
         Double writeAwait = dbl(signals, "write_await_ms");
         Double writeMbS = dbl(signals, "write_mb_s");
@@ -104,7 +118,7 @@ public final class ChunkWritePressureAnalyzer {
         if (writeMbS != null) {
             pregenEvidence.addProperty("write_mb_s", round1(writeMbS));
         }
-        maybeEmit(classifiers, streaks, active, KIND_PREGEN_DISK, dimId, pregenHit,
+        maybeEmit(classifiers, streaks, active, KIND_PREGEN_DISK, dimId, pregenHit, sustainedNeed,
                 latencyCritical ? "critical" : "warning",
                 "Pregen is outrunning the disk",
                 String.format(Locale.US,
@@ -126,7 +140,7 @@ public final class ChunkWritePressureAnalyzer {
         if (writeMbS != null) {
             saveEvidence.addProperty("write_mb_s", round1(writeMbS));
         }
-        maybeEmit(classifiers, streaks, active, KIND_SAVE_BACKLOG, dimId, saveHit,
+        maybeEmit(classifiers, streaks, active, KIND_SAVE_BACKLOG, dimId, saveHit, sustainedNeed,
                 latencyCritical ? "critical" : "warning",
                 "Chunk save backlog",
                 String.format(Locale.US,
@@ -142,12 +156,13 @@ public final class ChunkWritePressureAnalyzer {
                 saveEvidence);
 
         // heavy_chunk_generation
-        boolean heavyHit = totalPlayers > 0 && growthHot;
+        boolean heavyHit = totalPlayers > 0 && growthIsHot;
         JsonObject heavyEvidence = new JsonObject();
         heavyEvidence.addProperty("loaded_chunks", totalLoaded);
         heavyEvidence.addProperty("chunk_growth", Math.max(0, growth));
+        heavyEvidence.addProperty("growth_hot_chunks", growthHotChunksThreshold);
         heavyEvidence.addProperty("players", totalPlayers);
-        maybeEmit(classifiers, streaks, active, KIND_HEAVY_GEN, dimId, heavyHit,
+        maybeEmit(classifiers, streaks, active, KIND_HEAVY_GEN, dimId, heavyHit, sustainedNeed,
                 "warning",
                 "Heavy chunk generation while players are online",
                 String.format(Locale.US,
@@ -190,7 +205,7 @@ public final class ChunkWritePressureAnalyzer {
             meters.addProperty("pregen_label", "Pregen");
             meters.add("pregen_rate", JsonNull.INSTANCE);
         }
-        if (growthHot) {
+        if (growthIsHot) {
             meters.addProperty("chunk_growth_label",
                     String.format(Locale.US, "+%d", Math.max(0, growth)));
         } else if (growth > 0) {
@@ -200,6 +215,7 @@ public final class ChunkWritePressureAnalyzer {
         } else {
             meters.addProperty("chunk_growth_label", "Steady");
         }
+        meters.addProperty("growth_hot_chunks", growthHotChunksThreshold);
         meters.addProperty("prev_loaded_chunks", totalLoaded);
         block.add("meters", meters);
     }
@@ -233,6 +249,7 @@ public final class ChunkWritePressureAnalyzer {
             String kind,
             String dimId,
             boolean hit,
+            int sustainedNeed,
             String severity,
             String headline,
             String detail,
@@ -247,7 +264,7 @@ public final class ChunkWritePressureAnalyzer {
         streak++;
         streaks.addProperty(key, streak);
         active.add(key);
-        if (streak < SUSTAINED) {
+        if (streak < sustainedNeed) {
             return;
         }
         JsonObject c = new JsonObject();

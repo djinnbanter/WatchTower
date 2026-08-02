@@ -1,0 +1,65 @@
+/* Heatmap */
+
+.ui-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-4);
+  overflow: auto;
+}
+
+.ui-heatmap__grid {
+  display: grid;
+  gap: var(--ui-sp-2);
+}
+
+.ui-heatmap__cell {
+  border-radius: var(--ui-rad-s);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--ui-text-xs);
+  font-family: var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+  transition: outline-color var(--ui-dur-1) var(--ui-ease-out);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.ui-heatmap__cell:focus {
+  outline-color: var(--ui-accent);
+}
+
+.ui-heatmap__cell:focus-visible {
+  outline-color: var(--ui-accent);
+}
+
+.ui-heatmap__row-label,
+.ui-heatmap__col-label {
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: var(--ui-sp-6);
+  white-space: nowrap;
+}
+
+.ui-heatmap__col-label {
+  justify-content: center;
+  padding-right: 0;
+  padding-bottom: var(--ui-sp-4);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ui-heatmap--entering .ui-heatmap__cell {
+    animation: ui-enter-fade var(--ui-dur-3) var(--ui-ease-out) both;
+    animation-delay: calc(var(--ui-stagger-index, 0) * 18ms);
+  }
+
+  .ui-heatmap--settled .ui-heatmap__cell {
+    animation: none;
+  }
+}

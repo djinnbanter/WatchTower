@@ -37,6 +37,10 @@ class ScorecardBuilderTest {
 
         JsonObject scorecard = ScorecardBuilder.build(facts, opsCache, rollups, 19.5, 50.0, 1);
         assertEquals("degraded", scorecard.get("grade").getAsString());
+        assertTrue(scorecard.has("grade_reasons"));
+        assertTrue(scorecard.getAsJsonArray("grade_reasons").size() >= 1);
+        assertEquals("low_tps_24h",
+                scorecard.getAsJsonArray("grade_reasons").get(0).getAsJsonObject().get("code").getAsString());
         assertTrue(scorecard.getAsJsonObject("performance").get("low_tps_minutes_24h").getAsInt() >= 2);
         Files.deleteIfExists(rollups);
     }
@@ -55,5 +59,25 @@ class ScorecardBuilderTest {
         JsonObject scorecard = ScorecardBuilder.build(facts, opsCache, Path.of("nonexistent.json"), 19.5, 50.0, 5);
         assertEquals("critical", scorecard.get("grade").getAsString());
         assertEquals(2, scorecard.getAsJsonObject("crashes").get("unreviewed").getAsInt());
+        assertEquals("unreviewed_crashes",
+                scorecard.getAsJsonArray("grade_reasons").get(0).getAsJsonObject().get("code").getAsString());
+    }
+
+    @Test
+    void build_degradedWhenFactsHealthWarning() {
+        JsonObject facts = new JsonObject();
+        JsonObject health = new JsonObject();
+        health.addProperty("status", "warning");
+        facts.add("health", health);
+
+        JsonObject opsCache = JsonParser.parseString(
+                "{\"crashes\":{\"unreviewed\":0}}").getAsJsonObject();
+
+        JsonObject scorecard = ScorecardBuilder.build(
+                facts, opsCache, Path.of("nonexistent.json"), 19.5, 50.0, 5);
+        assertEquals("degraded", scorecard.get("grade").getAsString());
+        assertEquals("facts_health_warning",
+                scorecard.getAsJsonArray("grade_reasons").get(0).getAsJsonObject()
+                        .get("code").getAsString());
     }
 }

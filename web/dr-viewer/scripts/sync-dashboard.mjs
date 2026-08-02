@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-/** Copy shared dashboard v3 assets from web/dashboard into web/dr-viewer. */
+/** Copy shared dashboard v3 assets from web/dashboard-archive into web/dr-viewer. */
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const dash = join(root, '..', 'dashboard');
+const dash = join(root, '..', 'dashboard-archive');
 
 const copies = [
   [join(dash, 'styles.css'), join(root, 'styles.css')],

@@ -1,8 +1,6 @@
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { Button, EmptyState, StatusPill } from '@/ui/patterns';
 import { severityTone, type IssueItem } from './helpers';
-
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 
 export type SuppressionRow = {
   id: string;
@@ -71,8 +69,8 @@ export function IssuesTools({
       <div className="is-card">
         <h3 className="is-card__title">Hidden (suppressed)</h3>
         <p className="is-card__hint">
-          Issues silenced with Hide from Active. Restore brings them back into the Active queue when evidence is still
-          present.
+          Issues silenced with Don&apos;t show again. Restore brings them back into the Active queue when evidence is
+          still present.
         </p>
         {suppressions.length ? (
           <div className="is-hidden-list">
@@ -107,7 +105,8 @@ export function IssuesTools({
             <strong>Review</strong> when you fixed it or accepted the risk — it moves to Reviewed and can be undone.
           </li>
           <li>
-            <strong>Hide from Active</strong> when the finding is noisy/expected — restore anytime from Tools.
+            <strong>Don&apos;t show again</strong> when the finding is noisy/expected — it stays hidden until you
+            restore it from Tools.
           </li>
           <li>Active is grouped by severity (Critical / Warning / Info), not by scan source.</li>
           <li>Crash rows are pointers only — open Crashes for the real fix plan.</li>

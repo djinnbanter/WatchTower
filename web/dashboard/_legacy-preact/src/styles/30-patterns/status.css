@@ -1,0 +1,249 @@
+/* Status pills, beacons, uptime clock, dual metrics */
+
+.ui-status-pill-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--ui-sp-10);
+}
+
+.ui-status-pill {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-4);
+  padding: var(--ui-sp-12) var(--ui-sp-16);
+  border-radius: var(--ui-rad-l);
+  border: 1px solid var(--ui-line);
+  background: var(--ui-bg1);
+  box-shadow: var(--ui-shadow-rest);
+  text-align: left;
+  min-width: 0;
+}
+
+.ui-status-pill--interactive {
+  cursor: pointer;
+  transition: transform var(--ui-dur-2) var(--ui-ease-out), border-color var(--ui-dur-2) var(--ui-ease-out);
+}
+
+.ui-status-pill--interactive:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ui-accent) 35%, var(--ui-line));
+}
+
+.ui-status-pill--ok {
+  border-color: color-mix(in srgb, var(--ui-ok) 30%, var(--ui-line));
+  background: color-mix(in srgb, var(--ui-ok) 8%, var(--ui-bg1));
+}
+
+.ui-status-pill--warn {
+  border-color: color-mix(in srgb, var(--ui-warn) 30%, var(--ui-line));
+  background: color-mix(in srgb, var(--ui-warn) 8%, var(--ui-bg1));
+}
+
+.ui-status-pill--danger {
+  border-color: color-mix(in srgb, var(--ui-danger) 30%, var(--ui-line));
+  background: color-mix(in srgb, var(--ui-danger) 8%, var(--ui-bg1));
+}
+
+.ui-status-pill--info {
+  border-color: color-mix(in srgb, var(--ui-info, #4c9eea) 30%, var(--ui-line));
+  background: color-mix(in srgb, var(--ui-info, #4c9eea) 8%, var(--ui-bg1));
+}
+
+.ui-status-pill__lead {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-sp-6);
+  color: var(--ui-text-low);
+}
+
+.ui-status-pill__icon {
+  display: inline-flex;
+  color: var(--ui-text-mid);
+}
+
+.ui-status-pill__label {
+  font-size: var(--ui-text-xs);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ui-status-pill__value {
+  font-size: var(--ui-text-sm);
+  font-weight: 600;
+  color: var(--ui-text-hi);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Beacon */
+
+.ui-beacon-card__label {
+  font-size: var(--ui-text-xs);
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ui-text-low);
+}
+
+.ui-beacon-card__hint {
+  margin-top: var(--ui-sp-2);
+  font-size: var(--ui-text-xs);
+  color: var(--ui-text-low);
+}
+
+.ui-beacon-card__value {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-12);
+  margin-top: var(--ui-sp-10);
+  min-height: 2rem;
+}
+
+.ui-beacon-card__word {
+  font-size: var(--ui-text-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ui-text-hi);
+}
+
+.ui-beacon-card--ok .ui-beacon-card__word { color: var(--ui-ok); }
+.ui-beacon-card--warn .ui-beacon-card__word { color: var(--ui-warn); }
+.ui-beacon-card--danger .ui-beacon-card__word { color: var(--ui-danger); }
+
+.ui-beacon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ui-text-low);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ui-text-low) 18%, transparent);
+  flex-shrink: 0;
+}
+
+.ui-beacon--ok {
+  background: var(--ui-ok);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ui-ok) 22%, transparent);
+  animation: ui-beacon-pulse 2.2s var(--ui-ease-inout) infinite;
+}
+
+.ui-beacon--warn {
+  background: var(--ui-warn);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ui-warn) 22%, transparent);
+  animation: ui-beacon-pulse 1.8s var(--ui-ease-inout) infinite;
+}
+
+.ui-beacon--danger {
+  background: var(--ui-danger);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ui-danger) 25%, transparent);
+  animation: ui-beacon-pulse 1.2s var(--ui-ease-inout) infinite;
+}
+
+.ui-beacon--info {
+  background: var(--ui-info, #4c9eea);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ui-info, #4c9eea) 22%, transparent);
+}
+
+@keyframes ui-beacon-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-beacon--ok,
+  .ui-beacon--warn,
+  .ui-beacon--danger {
+    animation: none;
+  }
+}
+
+/* Uptime clock */
+
+.ui-uptime {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--ui-sp-6);
+  font-family: var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-uptime--empty {
+  color: var(--ui-text-low);
+  font-size: var(--ui-text-xl);
+}
+
+.ui-uptime__block {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+}
+
+.ui-uptime__num {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--ui-text-hi);
+  line-height: 1;
+}
+
+.ui-uptime__unit {
+  font-size: var(--ui-text-xs);
+  font-weight: 600;
+  color: var(--ui-text-low);
+  text-transform: lowercase;
+}
+
+.ui-uptime__block--sec .ui-uptime__num {
+  color: var(--ui-accent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ui-uptime__block--sec.is-tick .ui-uptime__num {
+    animation: ui-uptime-tick var(--ui-dur-2) var(--ui-ease-out);
+  }
+
+  @keyframes ui-uptime-tick {
+    from { opacity: 0.45; }
+    to { opacity: 1; }
+  }
+}
+
+/* Dual metric */
+
+.ui-dual-metric__row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: var(--ui-sp-10);
+  margin-top: var(--ui-sp-4);
+}
+
+.ui-dual-metric__side-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ui-text-low);
+  margin-bottom: 2px;
+}
+
+.ui-dual-metric__side-value {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-text-xl);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ui-text-hi);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.ui-dual-metric--ok .ui-dual-metric__side-value { color: var(--ui-ok); }
+.ui-dual-metric--warn .ui-dual-metric__side-value { color: var(--ui-warn); }
+.ui-dual-metric--danger .ui-dual-metric__side-value { color: var(--ui-danger); }
+
+.ui-dual-metric__divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--ui-line);
+  opacity: 0.8;
+}

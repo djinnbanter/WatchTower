@@ -29,7 +29,7 @@ export function Close() {
                     {CLOSE_BODY}
                   </p>
                   <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                    <Cta href={DEMO_URL} withArrow>
+                    <Cta href={DEMO_URL} withArrow newTab>
                       Open the demo
                     </Cta>
                     <Cta

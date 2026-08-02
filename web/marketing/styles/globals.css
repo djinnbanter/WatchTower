@@ -1,0 +1,302 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/jetbrains-mono";
+
+/*
+  Night Watch Desk tokens.
+  Dark = default ops desk. Light = paper daylight desk (Shift Log).
+  Do not invent new brand hues. No decorative glow orbs.
+*/
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --wt-bg0: #14171e;
+  --wt-bg1: #222833;
+  --wt-bg2: #2e3543;
+  --wt-bg3: #3b4354;
+  --wt-bg-hot: #171519;
+  --wt-line: rgba(232, 237, 246, 0.14);
+  --wt-line-strong: rgba(232, 237, 246, 0.22);
+  --wt-text: #f3f5f8;
+  --wt-text-mid: #b8bfcc;
+  --wt-text-low: #8a92a1;
+  --wt-accent: #4c8dff;
+  --wt-accent-soft: rgba(76, 141, 255, 0.16);
+  --wt-accent-ink: #ffffff;
+  --wt-lantern: #f5a524;
+  --wt-ok: #34d399;
+  --wt-warn: #f5a524;
+  --wt-danger: #f87171;
+  --wt-info: #9db2ce;
+  --wt-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 18px 48px rgba(0, 0, 0, 0.45);
+  --wt-plate-outer: rgba(255, 255, 255, 0.04);
+  --wt-grat: rgba(232, 237, 246, 0.035);
+  --wt-nav-bg: rgba(20, 23, 30, 0.72);
+  --wt-ch-tps: #4fb286;
+  --wt-ch-mspt: #e0a458;
+  --wt-ch-players: #7fa9d6;
+  --wt-ch-heap: #9b8bd9;
+  --wt-ch-cpu: #c77fa6;
+  --wt-ch-disk: #5fb3c4;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --wt-bg0: #f4f2ee;
+  --wt-bg1: #fbfaf8;
+  --wt-bg2: #eae7e1;
+  --wt-bg3: #ddd9d1;
+  --wt-bg-hot: #f1ece5;
+  --wt-line: rgba(22, 24, 29, 0.14);
+  --wt-line-strong: rgba(22, 24, 29, 0.2);
+  --wt-text: #16181d;
+  --wt-text-mid: #4a5058;
+  --wt-text-low: #696e76;
+  --wt-accent: #1b4fe0;
+  --wt-accent-soft: rgba(27, 79, 224, 0.12);
+  --wt-accent-ink: #ffffff;
+  --wt-lantern: #b4690e;
+  --wt-ok: #1f9d63;
+  --wt-warn: #b4690e;
+  --wt-danger: #d14343;
+  --wt-info: #48607f;
+  --wt-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 18px 44px rgba(23, 26, 32, 0.1);
+  --wt-plate-outer: rgba(22, 24, 29, 0.04);
+  --wt-grat: rgba(22, 24, 29, 0.05);
+  --wt-nav-bg: rgba(251, 250, 248, 0.86);
+  --wt-ch-tps: #2f8f66;
+  --wt-ch-mspt: #b4690e;
+  --wt-ch-players: #48607f;
+  --wt-ch-heap: #6b5f9a;
+  --wt-ch-cpu: #a05f86;
+  --wt-ch-disk: #3d8a98;
+}
+
+:root {
+  --wt-radius-sm: 2px;
+  --wt-radius-md: 4px;
+  --wt-radius-lg: 6px;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --wt-fs-display: clamp(2.75rem, 7vw, 5rem);
+  --wt-fs-display-sm: clamp(1.85rem, 3.8vw, 2.75rem);
+  --wt-fs-hero: clamp(2.75rem, 7.5vw, 6rem);
+  --wt-fs-entry: clamp(1.75rem, 3.6vw, 2.75rem);
+  --wt-fs-numeral: clamp(4rem, 16vw, 13rem);
+  --wt-fs-numeral-sm: clamp(2.25rem, 7vw, 4.5rem);
+  --wt-fs-lead: clamp(1.05rem, 1.35vw, 1.25rem);
+  --wt-track-display: -0.035em;
+  --wt-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --color-wt-bg0: var(--wt-bg0);
+  --color-wt-bg1: var(--wt-bg1);
+  --color-wt-bg2: var(--wt-bg2);
+  --color-wt-bg3: var(--wt-bg3);
+  --color-wt-line: var(--wt-line);
+  --color-wt-text: var(--wt-text);
+  --color-wt-text-mid: var(--wt-text-mid);
+  --color-wt-text-low: var(--wt-text-low);
+  --color-wt-accent: var(--wt-accent);
+  --color-wt-lantern: var(--wt-lantern);
+  --color-wt-ok: var(--wt-ok);
+  --color-wt-warn: var(--wt-warn);
+  --color-wt-danger: var(--wt-danger);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+html,
+body {
+  background: var(--wt-bg0);
+  color: var(--wt-text);
+  font-family: var(--font-sans);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.35s var(--wt-ease), color 0.35s var(--wt-ease);
+}
+
+:focus-visible {
+  outline: 2px solid var(--wt-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--wt-accent-soft);
+}
+
+/* Desk tour rooms: each entry is a full-bleed tonal band. */
+.wt-tour-band {
+  transition: background-color 600ms var(--wt-ease);
+}
+
+.wt-tour-band[data-band='ink'] {
+  background-color: var(--wt-bg0);
+}
+
+.wt-tour-band[data-band='plate'] {
+  background-color: color-mix(in srgb, var(--wt-bg1) 72%, var(--wt-bg0));
+}
+
+.wt-tour-band[data-band='ember'] {
+  background-color: var(--wt-bg-hot);
+}
+
+.wt-tour-band__rule {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--wt-line);
+}
+
+.wt-tour-band__lantern {
+  display: block;
+  width: 3rem;
+  height: 1px;
+  background: var(--wt-lantern);
+}
+
+.wt-tour-band:first-child .wt-tour-band__rule {
+  display: none;
+}
+
+.wt-graticule {
+  background-image:
+    repeating-linear-gradient(to right, var(--wt-grat) 0 1px, transparent 1px 88px),
+    repeating-linear-gradient(to bottom, var(--wt-grat) 0 1px, transparent 1px 88px);
+}
+
+.wt-display {
+  font-size: var(--wt-fs-display);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: var(--wt-track-display);
+  text-wrap: balance;
+}
+
+.wt-display-sm {
+  font-size: var(--wt-fs-display-sm);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.wt-hero {
+  font-size: var(--wt-fs-hero);
+  font-weight: 600;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.wt-entry {
+  font-size: var(--wt-fs-entry);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.wt-numeral {
+  font-family: var(--font-mono);
+  font-size: var(--wt-fs-numeral);
+  font-weight: 600;
+  line-height: 0.82;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.wt-numeral--sm {
+  font-size: var(--wt-fs-numeral-sm);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+.wt-lead {
+  font-size: var(--wt-fs-lead);
+  line-height: 1.55;
+  color: var(--wt-text-mid);
+  max-width: 44ch;
+}
+
+.wt-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wt-text-low);
+}
+
+@layer base {
+  a {
+    color: inherit;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only:focus,
+.sr-only:focus-visible {
+  position: absolute;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .motion-safe-only {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-reduce-only {
+    display: none !important;
+  }
+
+  @keyframes wt-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(1.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .wt-menu-in {
+    animation: wt-menu-in 0.55s var(--wt-ease) both;
+  }
+}

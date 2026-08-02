@@ -1,0 +1,29 @@
+{
+  "prev_session": {
+    "boot_at": "2026-07-28T18:00:00Z",
+    "last_alive_at": "2026-07-28T21:14:00Z",
+    "clean_stop_at": null,
+    "cgroup_oom_kill": 0,
+    "postmortem_for": null
+  },
+  "kernel": {
+    "readable": true,
+    "evidence": [
+      {
+        "file": "journalctl-k",
+        "line": null,
+        "quote": "Out of memory: Killed process 1234 (java) total-vm:8192000kB",
+        "time": "2026-07-28T21:14:02"
+      }
+    ]
+  },
+  "cgroup_oom_kill": 0,
+  "panel_kill_events": [],
+  "now": "2026-07-28T21:20:11Z",
+  "expected": {
+    "failure_kind": "external_kill",
+    "subtype": "oom",
+    "confidence": "high",
+    "kernel_log_readable": true
+  }
+}

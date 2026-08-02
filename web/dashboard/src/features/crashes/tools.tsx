@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { api } from '@/api/client';
-import { useCanWrite } from '@/app/permissions';
+import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { navigate } from '@/app/router';
 import { Button, EmptyState } from '@/ui/patterns';
 import { asArray, asRecord, str } from '@/lib/utils';
 import { formatAge } from './helpers';
-
-const VIEW_ONLY_TITLE = 'Your account can view Watchtower but not change it';
 
 export function CrashTools({
   needsReview,

@@ -1,0 +1,1 @@
+import{aV as n}from"./index-BiyVJNot.js";const t=1100,o={type:"spring",stiffness:280,damping:22},r={type:"tween",duration:t/1e3,ease:[.85,0,.15,1]};function s(){const e=n();return{reduced:e,animationDuration:e?0:t,enterTransition:e?{type:"tween",duration:0}:r,gaugeEnter:e?{type:"tween",duration:0}:o}}export{s as u};

@@ -82,6 +82,17 @@ public final class PanelLabels {
         return panelRunning ? "RUNNING" : "DOWN";
     }
 
+    /**
+     * Null means panel liveness was never probed (support compose, or a container that cannot see
+     * the host daemon). Reporting DOWN in that case is a false outage.
+     */
+    public static String glanceStatusUnknownAware(String panelId, Boolean panelRunning) {
+        if (panelRunning == null && hasDaemon(panelId)) {
+            return "unknown";
+        }
+        return glanceStatus(panelId, Boolean.TRUE.equals(panelRunning));
+    }
+
     public static boolean isKnownPanelId(String id) {
         if (id == null || id.isBlank()) {
             return false;

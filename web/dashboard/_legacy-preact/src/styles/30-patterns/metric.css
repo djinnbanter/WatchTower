@@ -1,0 +1,185 @@
+/* Metric readout + tile */
+
+.ui-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-4);
+  min-height: 0;
+}
+
+.ui-metric--sm {
+  gap: var(--ui-sp-2);
+}
+
+.ui-metric__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-sp-8);
+}
+
+.ui-metric__label {
+  font-size: var(--ui-text-sm);
+  line-height: var(--ui-lh-sm);
+  font-weight: 600;
+  color: var(--ui-text-low);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ui-metric__hint {
+  flex-shrink: 0;
+}
+
+.ui-metric__hint-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ui-text-low);
+  cursor: help;
+  border-radius: var(--ui-rad-s);
+}
+
+.ui-metric__hint-btn:hover,
+.ui-metric__hint-btn:focus-visible {
+  color: var(--ui-text-mid);
+}
+
+.ui-metric__caption {
+  font-size: var(--ui-text-xs);
+  line-height: var(--ui-lh-xs);
+  color: var(--ui-text-low);
+}
+
+.ui-metric__value-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ui-sp-6);
+  flex-wrap: wrap;
+}
+
+.ui-metric__value {
+  font-size: var(--ui-text-metric);
+  line-height: var(--ui-lh-metric);
+  font-weight: 700;
+  font-family: var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  color: var(--ui-text-hi);
+  transition: color var(--ui-dur-2) var(--ui-ease-out);
+}
+
+.ui-metric--sm .ui-metric__value {
+  font-size: var(--ui-text-xl);
+  line-height: var(--ui-lh-xl);
+}
+
+.ui-metric--ok .ui-metric__value { color: var(--ui-ok); }
+.ui-metric--warn .ui-metric__value { color: var(--ui-warn); }
+.ui-metric--danger .ui-metric__value { color: var(--ui-danger); }
+.ui-metric--accent .ui-metric__value { color: var(--ui-accent); }
+
+.ui-metric__unit {
+  font-size: var(--ui-text-sm);
+  line-height: var(--ui-lh-sm);
+  font-weight: 500;
+  color: var(--ui-text-mid);
+  font-family: var(--ui-font-mono);
+}
+
+.ui-metric__delta {
+  font-size: var(--ui-text-sm);
+  line-height: var(--ui-lh-sm);
+  font-weight: 500;
+  font-family: var(--ui-font-mono);
+  color: var(--ui-text-mid);
+}
+
+.ui-metric__delta--up { color: var(--ui-ok); }
+.ui-metric__delta--down { color: var(--ui-danger); }
+
+.ui-metric__spark {
+  margin-top: var(--ui-sp-8);
+  padding-top: 0;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  border: 0;
+}
+
+.ui-metric__spark .ui-sparkline {
+  display: block;
+  width: 100%;
+}
+
+.ui-metric__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-sp-8);
+  margin-top: var(--ui-sp-4);
+}
+
+/* Flash animation on threshold cross */
+@keyframes ui-metric-flash {
+  0%, 100% { background-color: transparent; }
+  30% { background-color: var(--ui-warn-soft); }
+}
+
+.ui-metric--flash {
+  animation: ui-metric-flash 600ms var(--ui-ease-out);
+  border-radius: var(--ui-rad-m);
+}
+
+/* Tile wraps readout in a Card — padding comes from Card; don't double it */
+.ui-metric-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-8);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--ui-glass, var(--ui-bg1));
+  border: 1px solid var(--ui-glass-border, var(--ui-line));
+  border-radius: var(--ui-rad-xl);
+  box-shadow: var(--ui-shadow-rest);
+  min-height: 0;
+  height: auto;
+  align-self: start;
+  backdrop-filter: blur(var(--ui-blur, 12px));
+  transition: border-color var(--ui-dur-2) var(--ui-ease-out),
+              box-shadow var(--ui-dur-2) var(--ui-ease-out),
+              transform var(--ui-dur-2) var(--ui-ease-out);
+}
+
+.ui-metric-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 45%;
+  pointer-events: none;
+  background: var(--ui-sheen);
+}
+
+.ui-metric-tile:hover {
+  border-color: color-mix(in srgb, var(--ui-sky) 35%, var(--ui-line-strong));
+  box-shadow: var(--ui-shadow-lift);
+  transform: translateY(-2px);
+}
+
+.ui-metric-tile .ui-metric__spark,
+.ui-dual-metric .ui-metric__spark {
+  margin-top: var(--ui-sp-8);
+}
+
+.ui-dual-metric__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-sp-6);
+  min-width: 0;
+}

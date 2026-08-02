@@ -1,0 +1,1 @@
+{"file":"crash-2026-06-18_08-13-50-server.txt","content":"---- Minecraft Crash Report ----\nTime: 2026-06-18 08:13:50\nDescription: Watching Server\n\njava.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds (should be max 0.05)\n","truncated":false}

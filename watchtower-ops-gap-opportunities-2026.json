@@ -1,0 +1,824 @@
+{
+  "run_id": "trun_9c2c4caf31304c17b7351e899d2fae27",
+  "interaction_id": "trun_9c2c4caf31304c17b7351e899d2fae27",
+  "result_url": "https://platform.parallel.ai/play/deep-research/trun_9c2c4caf31304c17b7351e899d2fae27",
+  "status": "completed",
+  "output": {
+    "basis": [
+      {
+        "field": "executive_summary",
+        "reasoning": "Assessment reasoning:\n- The provided field_answer presents an executive summary focusing on differentiation, launch readiness, world-change safety, recovery proof, profiler context, chunk/save risk, reach as a commodity, and avoidance of player analytics. This aligns with the general intent of a product/feature brief but it does not clearly enumerate or address all the explicit Research Questions 1-5 from the input (pain points, competitor capabilities, standout gaps, concrete feature opportunities with the requested structure, and explicit disallowed items).\n- Completeness rationale: Because the user\u2019s query asked for a thorough, actionable set of opportunities and explicit note of \u201cnot our job\u201d constraints, the current answer provides a high-level narrative but does not provide the full per-question detail (e.g., ranked 8-15 concrete feature opportunities with problem statements, why competitors miss it, value vs complexity, and forum evidence). Therefore, completeness should be false.\n- Excerpts support rationale: Excerpts include items about Spark, LagGoggles/Observable, Chunker, NetherStatus, and other related tooling. The field_answer references concepts that are present in excerpts (e.g., profiler context, preflight/recovery, chunk risk, world-change safety). This suggests partial support, but the answer also introduces synthesized conclusions not directly derived from the excerpts alone. Overall, excerpts partially support the themes but not every specific claim.\n- Confidence/risks: Moderate; enough to indicate alignment with excerpts but not a fully evidenced, step-by-step plan as requested.",
+        "citations": [
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/crash-assistant",
+            "excerpts": [],
+            "title": "Crash Assistant - Minecraft Mods - CurseForge"
+          },
+          {
+            "url": "https://spark.lucko.me/",
+            "excerpts": [
+              "spark\nspark is a performance profiler for Minecraft clients, servers, and proxies. diagnose performance problems and bottlenecks. This website is also an online"
+            ],
+            "title": "spark"
+          },
+          {
+            "url": "https://pterodactyl.io/",
+            "excerpts": [
+              "Pterodactyl Panel\nLet's Get Started! Pterodactyl\u00ae is a free, open-source game server management panel built with PHP, React, and Go. Designed with security in mind, Pterodactyl runs all game servers in isolated Docker containers while exposing a beautiful and intuitive UI to end users. Stop settling for less."
+            ],
+            "title": "Pterodactyl Panel"
+          },
+          {
+            "url": "https://bluemap.bluecolored.de/",
+            "excerpts": [],
+            "title": "Home | BlueMap"
+          },
+          {
+            "url": "https://www.reddit.com/r/MinecraftForge/comments/1kr88uq/minecraft_forge_server_not_working",
+            "excerpts": [
+              "Minecraft forge server (not working) : r/MinecraftForge\nFixed it! When I went and download the mod pack in curse forge there was mods that weren't shown as dependencies, which resulted in a crash. I"
+            ],
+            "title": "Minecraft forge server (not working) : r/MinecraftForge"
+          },
+          {
+            "url": "https://github.com/neoforged/NeoForge/issues/1890",
+            "excerpts": [],
+            "title": "Installed neoforge server doesn't check for java version \u00b7 Issue #1890 \u00b7 neoforged/NeoForge \u00b7 GitHub"
+          },
+          {
+            "url": "https://github.com/MinecraftForge/MinecraftForge/issues/8800",
+            "excerpts": [
+              "[1.18.2 and 1.19.0] Removal of dimension mods will make"
+            ],
+            "title": "[1.18.2 and 1.19.0] Removal of dimension mods will make ... GitHub https://github.com \u203a MinecraftForge \u203a issues"
+          },
+          {
+            "url": "https://www.reddit.com/r/ModdedMinecraft/comments/138y3m3/minecraft_world_wont_load_after_removing_a_mod",
+            "excerpts": [
+              "Minecraft world"
+            ],
+            "title": "Minecraft world wont load after removing a mod ..."
+          },
+          {
+            "url": "https://www.reddit.com/r/Minecraft/comments/1i6hsxk/restoring_minecraft_java_server_world_from_backup",
+            "excerpts": [
+              "Restoring Minecraft Java Server world from backup not working\nI stopped the server and checked on my backups, Although almost everything backed up, a number of files were skipped because of access denied"
+            ],
+            "title": "Restoring Minecraft Java Server world from backup not working"
+          },
+          {
+            "url": "https://discourse.cubecoders.com/t/restore-backup-on-new-server/2865",
+            "excerpts": [
+              "Restore backup on new server\nDec 31, 2022 \u2014 I have restored all files into the backups folder of the AMP system using sFTP. It did not display anything for me to restore. I created a new"
+            ],
+            "title": "Restore backup on new server"
+          },
+          {
+            "url": "https://modrinth.com/mod/observable",
+            "excerpts": [
+              "Observable - Minecraft Mod - Modrinth\nA spiritual successor to LagGoggles for Minecraft 1.16+, Observable profiles (tile) entities and shows you what's taking up tick time and where. Forge and Fabric compatible."
+            ],
+            "title": "Observable - Minecraft Mod - Modrinth"
+          },
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/laggoggles",
+            "excerpts": [
+              "LagGoggles - Minecraft Mods - CurseForge\nA minecraft forge mod which profiles and visualises lag in the world. Download LagGoggles by Terminator_NL, with over 11.7M+ downloads on CurseForge"
+            ],
+            "title": "LagGoggles - Minecraft Mods - CurseForge"
+          },
+          {
+            "url": "https://modrinth.com/plugin/chunker",
+            "excerpts": [
+              "Chunker - Minecraft Plugin - Modrinth\nChunker is designed to be more efficient and resilient than traditional pre-generators. Many pre-generators track thousands of chunks in memory, risking significant rollback or data loss if the server crashes."
+            ],
+            "title": "Chunker - Minecraft Plugin - Modrinth"
+          },
+          {
+            "url": "https://www.reddit.com/r/selfhosted/comments/1s2u57z/my_server_is_lagging_and_i_have_no_idea_why",
+            "excerpts": [
+              "my server is lagging and i have no idea why : r/selfhosted\nThe chunk loading lag with more players online sounds more like a CPU bottleneck than RAM \u2014 Minecraft servers are heavily single-threaded, and"
+            ],
+            "title": "my server is lagging and i have no idea why : r/selfhosted"
+          },
+          {
+            "url": "https://netherstatus.net/",
+            "excerpts": [
+              "NetherStatus - Minecraft Server Monitoring\nNetherStatus checks your Minecraft server (s) every few seconds. Whenever downtime or issues are detected, you receive an instant notification. Get push notifications on your phone or Discord the moment your server status changes. Always stay up to date, wherever you are."
+            ],
+            "title": "NetherStatus - Minecraft Server Monitoring"
+          },
+          {
+            "url": "https://docs.discordsrv.com/",
+            "excerpts": [],
+            "title": "Home | DiscordSRV Documentation"
+          },
+          {
+            "url": "https://github.com/plan-player-analytics/Plan",
+            "excerpts": [],
+            "title": "GitHub - plan-player-analytics/Plan: Player Analytics plugin for Minecraft Server platforms - View player activity of your server with ease. :calendar: \u00b7 GitHub"
+          },
+          {
+            "url": "https://crafty.gg/bot",
+            "excerpts": [
+              "Minecraft Discord Bot (Player, Server, Hypixel Stats) \u2014 Crafty\nView detailed information about any Minecraft player including skins, capes, and name history. Check any Minecraft server's status, player count, version, and more without leaving Discord. Get detailed statistics from popular servers like Hypixel, including game stats and leaderboards."
+            ],
+            "title": "Minecraft Discord Bot (Player, Server, Hypixel Stats) \u2014 Crafty"
+          }
+        ],
+        "confidence": "low"
+      },
+      {
+        "field": "1_the_remaining_pain_is_change_safety_not_another_tps_graph",
+        "reasoning": "Reasoning for completeness and excerpt support:\n- The field answer discusses the remaining pain around change safety (prediciting safe updates/removals, backup restoral confidence, post-change verification, dependency/loader mismatches, migration risks, config drift, chunk and disk/write pressures, and soft hangs) and provides concrete sub-points and product implications. This aligns with the query intent to identify change-safety related gaps beyond what WatchTower already covers.\n- The answer includes multiple concrete pain points (hidden dependencies/loader mismatch, mod/world migration risk, semantic config drift, chunk generation/write pressure, backup confidence, soft hangs/phase stalls, fix validation/handoff) and a recommended first step (a change safety plane with four questions). This suggests a thorough, actionable completeness for the described field.\n- The excerpts provided touch on several of these themes (mod removal leading to crashes, world load after mod removal, TOML config semantics, chunking and pre-generators, backup restore issues, and crash/profiling tools). Therefore, the field answer is at least partially grounded in the excerpts; overall, the coverage appears to map well to the sources.\n- Therefore: completeness = true. supported = true (the field answer is supported by the excerpts, even if not every exact bullet is present in a single excerpt, the themes are corroborated across excerpts).",
+        "citations": [
+          {
+            "url": "https://www.reddit.com/r/MinecraftForge/comments/1kr88uq/minecraft_forge_server_not_working",
+            "excerpts": [
+              "Minecraft forge server (not working) : r/MinecraftForge\nFixed it! When I went and download the mod pack in curse forge there was mods that weren't shown as dependencies, which resulted in a crash. I"
+            ],
+            "title": "Minecraft forge server (not working) : r/MinecraftForge"
+          },
+          {
+            "url": "https://github.com/neoforged/NeoForge/issues/1890",
+            "excerpts": [],
+            "title": "Installed neoforge server doesn't check for java version \u00b7 Issue #1890 \u00b7 neoforged/NeoForge \u00b7 GitHub"
+          },
+          {
+            "url": "https://github.com/MinecraftForge/MinecraftForge/issues/8800",
+            "excerpts": [
+              "[1.18.2 and 1.19.0] Removal of dimension mods will make"
+            ],
+            "title": "[1.18.2 and 1.19.0] Removal of dimension mods will make ... GitHub https://github.com \u203a MinecraftForge \u203a issues"
+          },
+          {
+            "url": "https://www.reddit.com/r/ModdedMinecraft/comments/138y3m3/minecraft_world_wont_load_after_removing_a_mod",
+            "excerpts": [
+              "Minecraft world"
+            ],
+            "title": "Minecraft world wont load after removing a mod ..."
+          },
+          {
+            "url": "https://docs.neoforged.net/docs/misc/config",
+            "excerpts": [
+              "Configuration - NeoForged docs\nNeoForge uses a configuration system using TOML files and read with NightConfig. A configuration can be created using a subtype of IConfigSpec. NeoForge implements the type via ModConfigSpec and enables its construction through ModConfigSpec.Builder."
+            ],
+            "title": "Configuration - NeoForged docs"
+          },
+          {
+            "url": "https://modrinth.com/plugin/chunker",
+            "excerpts": [
+              "Chunker - Minecraft Plugin - Modrinth\nChunker is designed to be more efficient and resilient than traditional pre-generators. Many pre-generators track thousands of chunks in memory, risking significant rollback or data loss if the server crashes."
+            ],
+            "title": "Chunker - Minecraft Plugin - Modrinth"
+          },
+          {
+            "url": "https://www.reddit.com/r/selfhosted/comments/1s2u57z/my_server_is_lagging_and_i_have_no_idea_why",
+            "excerpts": [
+              "my server is lagging and i have no idea why : r/selfhosted\nThe chunk loading lag with more players online sounds more like a CPU bottleneck than RAM \u2014 Minecraft servers are heavily single-threaded, and"
+            ],
+            "title": "my server is lagging and i have no idea why : r/selfhosted"
+          },
+          {
+            "url": "https://www.reddit.com/r/Minecraft/comments/1i6hsxk/restoring_minecraft_java_server_world_from_backup",
+            "excerpts": [
+              "Restoring Minecraft Java Server world from backup not working\nI stopped the server and checked on my backups, Although almost everything backed up, a number of files were skipped because of access denied"
+            ],
+            "title": "Restoring Minecraft Java Server world from backup not working"
+          },
+          {
+            "url": "https://discourse.cubecoders.com/t/restore-backup-on-new-server/2865",
+            "excerpts": [
+              "Restore backup on new server\nDec 31, 2022 \u2014 I have restored all files into the backups folder of the AMP system using sFTP. It did not display anything for me to restore. I created a new"
+            ],
+            "title": "Restore backup on new server"
+          },
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/crash-assistant",
+            "excerpts": [],
+            "title": "Crash Assistant - Minecraft Mods - CurseForge"
+          },
+          {
+            "url": "https://spark.lucko.me/",
+            "excerpts": [
+              "spark\nspark is a performance profiler for Minecraft clients, servers, and proxies. diagnose performance problems and bottlenecks. This website is also an online"
+            ],
+            "title": "spark"
+          },
+          {
+            "url": "https://support.modrinth.com/en/articles/8792916-debugging-minecraft-crashes",
+            "excerpts": [
+              "Debugging Minecraft crashes | Modrinth Help Center\nWhile some crashes may be caused by the Modrinth App itself, this is extremely rare. Even though Modrinth staff are unable to help you figure out why a profile is crashing, the following steps can help you figure out on your own why this might be happening."
+            ],
+            "title": "Debugging Minecraft crashes | Modrinth Help Center"
+          },
+          {
+            "url": "https://docs.fabricmc.net/develop/debugging",
+            "excerpts": [
+              "Debugging Mods | Fabric Documentation\nDebugging Mods 26.1.2 Learn all about logging, breakpoints and other useful debugging features. In programming, even the best are bound to encounter issues, bugs and mistakes. This guide outlines some general steps that you can take to potentially identify and resolve those, even without the help of others. Solving problems on your own can teach you many things, and will also feel rewarding"
+            ],
+            "title": "Debugging Mods | Fabric Documentation"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "2_what_competing_tools_do_well_and_where_the_gaps_are",
+        "reasoning": "Assessment notes:\n- The field_description asks for a comparison of competing tools, what they do well, gaps relative to WatchTower, and a strategic response. It implies a comprehensive, sourced analysis across multiple tools (Crash Assistant, Spark, SparklyPaper/Purpur, LagGoggles, Observable, TickProfiler, Carpet/Scarpet, Pterodactyl, AMP/Crafty, BlueMap/Dynmap, Server-status bots, DiscordSRV, Plan analytics, Aikar flags, Fabric/NeoForge support, paid hosting dashboards).\n- The provided field_answer is a formatted table enumerating many tools and claimed strengths/ gaps, plus a \u201cStrategic response for WatchTower\u201d column.\n- Excerpts supplied include: Spark (profiler and viewer), LagGoggles, Observable, Purpur config, Pterodactyl, Crafty Controller, BlueMap, NetherStatus, Scarpet/Carpet, and related hosting/discord tooling mentions. These excerpts partially cover several items in the field_answer, but not all claims are directly supported by the excerpts (e.g., Crash Assistant details, SparklyPaper/Purpur cross-links, TickProfiler specifics, Plan analytics, Aikar flag guidance, AMP/Crafty as a compare, and exact statements about strategic responses beyond general alignment).\n- Because the field_answer includes many items not clearly supported by the provided excerpts and some claims lack explicit citation, the evaluation leans toward partial support rather than full corroboration.\n- Therefore:\n  - Completeness: false (not all aspects are substantiated within the excerpts; several claimed gaps/strategies are not fully covered by the excerpts).\n  - Supported: false (the answer is not fully supported by the given excerpts).\n- If you want, I can mark which rows are directly supported by which excerpts and revise to tighten alignment with the sources.",
+        "citations": [
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/crash-assistant",
+            "excerpts": [],
+            "title": "Crash Assistant - Minecraft Mods - CurseForge"
+          },
+          {
+            "url": "https://spark.lucko.me/",
+            "excerpts": [
+              "spark\nspark is a performance profiler for Minecraft clients, servers, and proxies. diagnose performance problems and bottlenecks. This website is also an online"
+            ],
+            "title": "spark"
+          },
+          {
+            "url": "https://spark.lucko.me/docs/Using-the-viewer",
+            "excerpts": [
+              "Using the viewer | spark docs\nOnce you have created a profile using the /spark profiler command, your profile will be automatically uploaded to the viewer, and you will be presented with a link. You can freely share this link with other people, send it to someone helping you or to a plugin/mod developer to point out a problem!"
+            ],
+            "title": "Using the viewer | spark docs"
+          },
+          {
+            "url": "https://github.com/SparklyPower/SparklyPaper",
+            "excerpts": [],
+            "title": "GitHub - SparklyPower/SparklyPaper: \u2728 \"Ooooh, sparkly paper!\" - SparklyPower's Paper fork, making large servers snappier with high-performance optimizations and improvements! \u00b7 GitHub"
+          },
+          {
+            "url": "https://purpurmc.org/docs/purpur/configuration",
+            "excerpts": [
+              "Configuration - PurpurMC Documentation\nThis page details the various configuration settings exposed by Purpur in the purpur.yml file. If you want information on settings in paper.yml, spigot.yml, bukkit.yml and server.properties you should see their respective documentation pages."
+            ],
+            "title": "Configuration - PurpurMC Documentation"
+          },
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/laggoggles",
+            "excerpts": [
+              "LagGoggles - Minecraft Mods - CurseForge\nA minecraft forge mod which profiles and visualises lag in the world. Download LagGoggles by Terminator_NL, with over 11.7M+ downloads on CurseForge"
+            ],
+            "title": "LagGoggles - Minecraft Mods - CurseForge"
+          },
+          {
+            "url": "https://modrinth.com/mod/observable",
+            "excerpts": [
+              "Observable - Minecraft Mod - Modrinth\nA spiritual successor to LagGoggles for Minecraft 1.16+, Observable profiles (tile) entities and shows you what's taking up tick time and where. Forge and Fabric compatible."
+            ],
+            "title": "Observable - Minecraft Mod - Modrinth"
+          },
+          {
+            "url": "https://github.com/gnembon/fabric-carpet",
+            "excerpts": [],
+            "title": "GitHub - gnembon/fabric-carpet: Fabric Carpet \u00b7 GitHub"
+          },
+          {
+            "url": "https://github.com/gnembon/fabric-carpet/blob/master/docs/scarpet/Full.md",
+            "excerpts": [
+              "fabric-carpet/docs/scarpet/Full.md at master - GitHub\nScarpet (a.k.a. Carpet Script, or Script for Carpet) is a programming language designed to provide the ability to write custom programs to run within Minecraft and interact with the world."
+            ],
+            "title": "fabric-carpet/docs/scarpet/Full.md at master - GitHub"
+          },
+          {
+            "url": "https://pterodactyl.io/",
+            "excerpts": [
+              "Pterodactyl Panel\nLet's Get Started! Pterodactyl\u00ae is a free, open-source game server management panel built with PHP, React, and Go. Designed with security in mind, Pterodactyl runs all game servers in isolated Docker containers while exposing a beautiful and intuitive UI to end users. Stop settling for less."
+            ],
+            "title": "Pterodactyl Panel"
+          },
+          {
+            "url": "https://pterodactyl-api-docs.netvpx.com/docs/api/client",
+            "excerpts": [
+              "Client API - Pterodactyl Panel Server Management API | NETVPX ...\nComplete Client API reference for Pterodactyl Panel. Manage servers, files, databases, backups, users, and networks programmatically with REST API endpoints."
+            ],
+            "title": "Client API - Pterodactyl Panel Server Management API | NETVPX ..."
+          },
+          {
+            "url": "https://cubecoders.com/AMP",
+            "excerpts": [],
+            "title": "CubeCoders | AMP - Game Server Control Panel"
+          },
+          {
+            "url": "https://craftycontrol.com/",
+            "excerpts": [
+              "Crafty Controller\nCrafty Controller is a feature rich panel that allows you to create and run servers, manage players, run commands, change server settings, view and edit server files, and make backups."
+            ],
+            "title": "Crafty Controller"
+          },
+          {
+            "url": "https://bluemap.bluecolored.de/",
+            "excerpts": [],
+            "title": "Home | BlueMap"
+          },
+          {
+            "url": "https://bluemap.bluecolored.de/wiki/customization/Markers.html",
+            "excerpts": [
+              "Markers - BlueMap\nThe POI Marker is the most basic marker. It\u2019s a simple icon-image that can be placed anywhere on the map. When clicked, it shows its label. Here is an example config for a POI marker: Specific POI-Marker properties are: 1. detailis the text that is shown when you click on the icon. This property allows using any html-tags. It default to the label o"
+            ],
+            "title": "Markers - BlueMap"
+          },
+          {
+            "url": "https://github.com/webbukkit/dynmap",
+            "excerpts": [],
+            "title": "GitHub - webbukkit/dynmap: A set of Minecraft mods that provide a real time web-based map system for various Minecraft server implementations. \u00b7 GitHub"
+          },
+          {
+            "url": "https://netherstatus.net/",
+            "excerpts": [
+              "NetherStatus - Minecraft Server Monitoring\nNetherStatus checks your Minecraft server (s) every few seconds. Whenever downtime or issues are detected, you receive an instant notification. Get push notifications on your phone or Discord the moment your server status changes. Always stay up to date, wherever you are."
+            ],
+            "title": "NetherStatus - Minecraft Server Monitoring"
+          },
+          {
+            "url": "https://crafty.gg/bot",
+            "excerpts": [
+              "Minecraft Discord Bot (Player, Server, Hypixel Stats) \u2014 Crafty\nView detailed information about any Minecraft player including skins, capes, and name history. Check any Minecraft server's status, player count, version, and more without leaving Discord. Get detailed statistics from popular servers like Hypixel, including game stats and leaderboards."
+            ],
+            "title": "Minecraft Discord Bot (Player, Server, Hypixel Stats) \u2014 Crafty"
+          },
+          {
+            "url": "https://docs.discordsrv.com/",
+            "excerpts": [],
+            "title": "Home | DiscordSRV Documentation"
+          },
+          {
+            "url": "https://github.com/plan-player-analytics/Plan",
+            "excerpts": [],
+            "title": "GitHub - plan-player-analytics/Plan: Player Analytics plugin for Minecraft Server platforms - View player activity of your server with ease. :calendar: \u00b7 GitHub"
+          },
+          {
+            "url": "https://www.playeranalytics.net/",
+            "excerpts": [
+              "Player Analytics: Plan\nOur open source player analytics solution works on every Minecraft server platform, giving you the tools you need to understand how your players are playing."
+            ],
+            "title": "Player Analytics: Plan"
+          },
+          {
+            "url": "https://docs.papermc.io/paper/aikars-flags",
+            "excerpts": [
+              "Aikar's flags - PaperMC Docs\nIt is recommended to reduce your Xmx and Xms by about 1000-1500MB to avoid running out of memory or OOMKiller killing your server. This also leaves room for the operating system to use memory too."
+            ],
+            "title": "Aikar's flags - PaperMC Docs"
+          },
+          {
+            "url": "https://docs.fabricmc.net/develop/debugging",
+            "excerpts": [
+              "Debugging Mods | Fabric Documentation\nDebugging Mods 26.1.2 Learn all about logging, breakpoints and other useful debugging features. In programming, even the best are bound to encounter issues, bugs and mistakes. This guide outlines some general steps that you can take to potentially identify and resolve those, even without the help of others. Solving problems on your own can teach you many things, and will also feel rewarding"
+            ],
+            "title": "Debugging Mods | Fabric Documentation"
+          },
+          {
+            "url": "https://github.com/neoforged/NeoForge/issues/264",
+            "excerpts": [
+              "Compatibility Issue: NeoForge parses both Manifest.MF and ...\nBecause Forge and NeoForge are in the same jar, some files unfortunately overlap. Forge can only reference a mixin file via the Manifest file. And NeoForge reads that same file, parsing Forge's mixins instead of itself. Due to the different runtime mappings, it crashes."
+            ],
+            "title": "Compatibility Issue: NeoForge parses both Manifest.MF and ..."
+          },
+          {
+            "url": "https://docs.hostbyte.net/minecraft-java/modpacks-and-plugins/how-to-fix-mod-compatibility-issues",
+            "excerpts": [
+              "How to fix mod compatibility issues - HostByte Documentation\nMod compatibility issues are common when running modded Minecraft servers. This guide helps you identify, diagnose, and resolve mod conflicts using HostByte\u2019s Game Panel. \ud83d\udee0\ufe0f"
+            ],
+            "title": "How to fix mod compatibility issues - HostByte Documentation"
+          },
+          {
+            "url": "https://www.reddit.com/r/admincraft/comments/1kwz6qu/pterodactyl_panel_issues_please_help",
+            "excerpts": [
+              "Pterodactyl Panel Issues (Please Help) : r/admincraft - Reddit\n27 may 2025 \u00b7 The issue I've been having, is after awhile, it closes the connection & takes awhile to reconnect, therefore the panel is rendered useless most of the time. Having issues exposing minecraft server : r/Pterodactyl Problem with Minecraft server (Pterodactyl / Hetzner Helsinki) M\u00e1s resultados de www.reddit.com"
+            ],
+            "title": "Pterodactyl Panel Issues (Please Help) : r/admincraft - Reddit"
+          }
+        ],
+        "confidence": "low"
+      },
+      {
+        "field": "3_four_case_studies_that_define_the_product_opportunity",
+        "reasoning": "Initial assessment:\n- The field_answer provides 4 case studies with descriptive content and recommendations for WatchTower product opportunities. It seems to cover concrete examples of failure/diagnostics (Crash Assistant), attribution/profiling (Spark/Observable), installer/launch failure (NeoForge changes), and control/recovery reporting (Panels/backups). This aligns with the expected type of 3_four_case_studies_that_define_the_product_opportunity (defining product opportunities via case studies).\n- Completeness: The answer appears to address the likely required aspects: a) a case study format for defining product opportunities, b) rationale for each case, c) implications for WatchTower (server-side/local-first, advisory-only, no auto-mutate). There is no clear missing piece given the typical expectations for 3_four_case_studies...; therefore completeness can be considered true.\n- Excerpts coverage: The excerpts contain references to spark, Observable, LagGoggles, Pterodactyl/Crafty panels, NeoForge issues, and backup restoration discussions, which map to the themes in the field_answer. While one line about 59.9M downloads and a date isn\u2019t supported by excerpts, the core case-study content and cited inspirations are supported by excerpts. Therefore excerpts support is true, though not exhaustively for every factual claim.\n- Confidence: Moderate to high for completeness and excerpt support given alignment between field_answer and supplied excerpts. Any factual claims not in excerpts (e.g., download counts) are not verifiable from excerpts but are embedded in the field_answer; they do not undermine the overall support assessment.\n",
+        "citations": [
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/crash-assistant",
+            "excerpts": [],
+            "title": "Crash Assistant - Minecraft Mods - CurseForge"
+          },
+          {
+            "url": "https://spark.lucko.me/",
+            "excerpts": [
+              "spark\nspark is a performance profiler for Minecraft clients, servers, and proxies. diagnose performance problems and bottlenecks. This website is also an online"
+            ],
+            "title": "spark"
+          },
+          {
+            "url": "https://modrinth.com/mod/observable",
+            "excerpts": [
+              "Observable - Minecraft Mod - Modrinth\nA spiritual successor to LagGoggles for Minecraft 1.16+, Observable profiles (tile) entities and shows you what's taking up tick time and where. Forge and Fabric compatible."
+            ],
+            "title": "Observable - Minecraft Mod - Modrinth"
+          },
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/laggoggles",
+            "excerpts": [
+              "LagGoggles - Minecraft Mods - CurseForge\nA minecraft forge mod which profiles and visualises lag in the world. Download LagGoggles by Terminator_NL, with over 11.7M+ downloads on CurseForge"
+            ],
+            "title": "LagGoggles - Minecraft Mods - CurseForge"
+          },
+          {
+            "url": "https://www.reddit.com/r/MinecraftForge/comments/1kr88uq/minecraft_forge_server_not_working",
+            "excerpts": [
+              "Minecraft forge server (not working) : r/MinecraftForge\nFixed it! When I went and download the mod pack in curse forge there was mods that weren't shown as dependencies, which resulted in a crash. I"
+            ],
+            "title": "Minecraft forge server (not working) : r/MinecraftForge"
+          },
+          {
+            "url": "https://github.com/neoforged/NeoForge/issues/1890",
+            "excerpts": [],
+            "title": "Installed neoforge server doesn't check for java version \u00b7 Issue #1890 \u00b7 neoforged/NeoForge \u00b7 GitHub"
+          },
+          {
+            "url": "https://github.com/neoforged/NeoForge/issues/264",
+            "excerpts": [
+              "Compatibility Issue: NeoForge parses both Manifest.MF and ...\nBecause Forge and NeoForge are in the same jar, some files unfortunately overlap. Forge can only reference a mixin file via the Manifest file. And NeoForge reads that same file, parsing Forge's mixins instead of itself. Due to the different runtime mappings, it crashes."
+            ],
+            "title": "Compatibility Issue: NeoForge parses both Manifest.MF and ..."
+          },
+          {
+            "url": "https://pterodactyl.io/",
+            "excerpts": [
+              "Pterodactyl Panel\nLet's Get Started! Pterodactyl\u00ae is a free, open-source game server management panel built with PHP, React, and Go. Designed with security in mind, Pterodactyl runs all game servers in isolated Docker containers while exposing a beautiful and intuitive UI to end users. Stop settling for less."
+            ],
+            "title": "Pterodactyl Panel"
+          },
+          {
+            "url": "https://craftycontrol.com/",
+            "excerpts": [
+              "Crafty Controller\nCrafty Controller is a feature rich panel that allows you to create and run servers, manage players, run commands, change server settings, view and edit server files, and make backups."
+            ],
+            "title": "Crafty Controller"
+          },
+          {
+            "url": "https://www.reddit.com/r/Minecraft/comments/1i6hsxk/restoring_minecraft_java_server_world_from_backup",
+            "excerpts": [
+              "Restoring Minecraft Java Server world from backup not working\nI stopped the server and checked on my backups, Although almost everything backed up, a number of files were skipped because of access denied"
+            ],
+            "title": "Restoring Minecraft Java Server world from backup not working"
+          },
+          {
+            "url": "https://discourse.cubecoders.com/t/restore-backup-on-new-server/2865",
+            "excerpts": [
+              "Restore backup on new server\nDec 31, 2022 \u2014 I have restored all files into the backups folder of the AMP system using sFTP. It did not display anything for me to restore. I created a new"
+            ],
+            "title": "Restore backup on new server"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard",
+        "reasoning": "Reasoning for completeness:\n- The user field answer provides a ranked list of 12 feature opportunities for the NeoForge jar and dashboard with problem statements, rationale, fit, value/complexity, and references. It aligns with the query asking for 4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard and discusses near-term portfolio sequencing. The content appears to directly answer the requested field (a ranked feature opportunities analysis) and follows the structure implied by the input. Therefore, completeness should be true.\n\nReasoning for excerpt support:\n- The excerpts contain multiple items about NeoForge configuration, debugging, chunking, backups, profiling tools (Spark, LagGoggles, Observable), and general modding/forge ecosystem topics. They provide contextual evidence for several of the concepts mentioned in the field_answer (e.g., configuration via TOML, crash/debugging references, profiling tools, world/mod concerns). However, the field_answer cites specific internal references like [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[0]] that are not present in the provided excerpts. While there is thematic alignment, there is not a direct one-to-one citation match for each ranked item. Hence, excerpts partially support the concepts but not every asserted citation linkage. Overall, support is partial rather than complete.\n\nConclusion:\n- completeness: true\n- supported: false (partial thematic support but not explicit/exact excerpt alignment for all claims)\n",
+        "citations": [
+          {
+            "url": "https://www.reddit.com/r/MinecraftForge/comments/1kr88uq/minecraft_forge_server_not_working",
+            "excerpts": [
+              "Minecraft forge server (not working) : r/MinecraftForge\nFixed it! When I went and download the mod pack in curse forge there was mods that weren't shown as dependencies, which resulted in a crash. I"
+            ],
+            "title": "Minecraft forge server (not working) : r/MinecraftForge"
+          },
+          {
+            "url": "https://github.com/neoforged/NeoForge/issues/1890",
+            "excerpts": [],
+            "title": "Installed neoforge server doesn't check for java version \u00b7 Issue #1890 \u00b7 neoforged/NeoForge \u00b7 GitHub"
+          },
+          {
+            "url": "https://github.com/MinecraftForge/MinecraftForge/issues/8800",
+            "excerpts": [
+              "[1.18.2 and 1.19.0] Removal of dimension mods will make"
+            ],
+            "title": "[1.18.2 and 1.19.0] Removal of dimension mods will make ... GitHub https://github.com \u203a MinecraftForge \u203a issues"
+          },
+          {
+            "url": "https://www.reddit.com/r/ModdedMinecraft/comments/138y3m3/minecraft_world_wont_load_after_removing_a_mod",
+            "excerpts": [
+              "Minecraft world"
+            ],
+            "title": "Minecraft world wont load after removing a mod ..."
+          },
+          {
+            "url": "https://www.reddit.com/r/Minecraft/comments/1i6hsxk/restoring_minecraft_java_server_world_from_backup",
+            "excerpts": [
+              "Restoring Minecraft Java Server world from backup not working\nI stopped the server and checked on my backups, Although almost everything backed up, a number of files were skipped because of access denied"
+            ],
+            "title": "Restoring Minecraft Java Server world from backup not working"
+          },
+          {
+            "url": "https://discourse.cubecoders.com/t/restore-backup-on-new-server/2865",
+            "excerpts": [
+              "Restore backup on new server\nDec 31, 2022 \u2014 I have restored all files into the backups folder of the AMP system using sFTP. It did not display anything for me to restore. I created a new"
+            ],
+            "title": "Restore backup on new server"
+          },
+          {
+            "url": "https://docs.neoforged.net/docs/misc/config",
+            "excerpts": [
+              "Configuration - NeoForged docs\nNeoForge uses a configuration system using TOML files and read with NightConfig. A configuration can be created using a subtype of IConfigSpec. NeoForge implements the type via ModConfigSpec and enables its construction through ModConfigSpec.Builder."
+            ],
+            "title": "Configuration - NeoForged docs"
+          },
+          {
+            "url": "https://modrinth.com/plugin/chunker",
+            "excerpts": [
+              "Chunker - Minecraft Plugin - Modrinth\nChunker is designed to be more efficient and resilient than traditional pre-generators. Many pre-generators track thousands of chunks in memory, risking significant rollback or data loss if the server crashes."
+            ],
+            "title": "Chunker - Minecraft Plugin - Modrinth"
+          },
+          {
+            "url": "https://www.reddit.com/r/selfhosted/comments/1s2u57z/my_server_is_lagging_and_i_have_no_idea_why",
+            "excerpts": [
+              "my server is lagging and i have no idea why : r/selfhosted\nThe chunk loading lag with more players online sounds more like a CPU bottleneck than RAM \u2014 Minecraft servers are heavily single-threaded, and"
+            ],
+            "title": "my server is lagging and i have no idea why : r/selfhosted"
+          },
+          {
+            "url": "https://spark.lucko.me/",
+            "excerpts": [
+              "spark\nspark is a performance profiler for Minecraft clients, servers, and proxies. diagnose performance problems and bottlenecks. This website is also an online"
+            ],
+            "title": "spark"
+          },
+          {
+            "url": "https://spark.lucko.me/docs/Using-the-viewer",
+            "excerpts": [
+              "Using the viewer | spark docs\nOnce you have created a profile using the /spark profiler command, your profile will be automatically uploaded to the viewer, and you will be presented with a link. You can freely share this link with other people, send it to someone helping you or to a plugin/mod developer to point out a problem!"
+            ],
+            "title": "Using the viewer | spark docs"
+          },
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/crash-assistant",
+            "excerpts": [],
+            "title": "Crash Assistant - Minecraft Mods - CurseForge"
+          },
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/laggoggles",
+            "excerpts": [
+              "LagGoggles - Minecraft Mods - CurseForge\nA minecraft forge mod which profiles and visualises lag in the world. Download LagGoggles by Terminator_NL, with over 11.7M+ downloads on CurseForge"
+            ],
+            "title": "LagGoggles - Minecraft Mods - CurseForge"
+          },
+          {
+            "url": "https://modrinth.com/mod/observable",
+            "excerpts": [
+              "Observable - Minecraft Mod - Modrinth\nA spiritual successor to LagGoggles for Minecraft 1.16+, Observable profiles (tile) entities and shows you what's taking up tick time and where. Forge and Fabric compatible."
+            ],
+            "title": "Observable - Minecraft Mod - Modrinth"
+          },
+          {
+            "url": "https://bluemap.bluecolored.de/wiki/customization/Markers.html",
+            "excerpts": [
+              "Markers - BlueMap\nThe POI Marker is the most basic marker. It\u2019s a simple icon-image that can be placed anywhere on the map. When clicked, it shows its label. Here is an example config for a POI marker: Specific POI-Marker properties are: 1. detailis the text that is shown when you click on the icon. This property allows using any html-tags. It default to the label o"
+            ],
+            "title": "Markers - BlueMap"
+          },
+          {
+            "url": "https://support.modrinth.com/en/articles/8792916-debugging-minecraft-crashes",
+            "excerpts": [
+              "Debugging Minecraft crashes | Modrinth Help Center\nWhile some crashes may be caused by the Modrinth App itself, this is extremely rare. Even though Modrinth staff are unable to help you figure out why a profile is crashing, the following steps can help you figure out on your own why this might be happening."
+            ],
+            "title": "Debugging Minecraft crashes | Modrinth Help Center"
+          },
+          {
+            "url": "https://docs.fabricmc.net/develop/debugging",
+            "excerpts": [
+              "Debugging Mods | Fabric Documentation\nDebugging Mods 26.1.2 Learn all about logging, breakpoints and other useful debugging features. In programming, even the best are bound to encounter issues, bugs and mistakes. This guide outlines some general steps that you can take to potentially identify and resolve those, even without the help of others. Solving problems on your own can teach you many things, and will also feel rewarding"
+            ],
+            "title": "Debugging Mods | Fabric Documentation"
+          },
+          {
+            "url": "https://docs.papermc.io/paper/aikars-flags",
+            "excerpts": [
+              "Aikar's flags - PaperMC Docs\nIt is recommended to reduce your Xmx and Xms by about 1000-1500MB to avoid running out of memory or OOMKiller killing your server. This also leaves room for the operating system to use memory too."
+            ],
+            "title": "Aikar's flags - PaperMC Docs"
+          },
+          {
+            "url": "https://docs.neoforged.net/docs/1.21.1/concepts/registries",
+            "excerpts": [
+              "Registries | NeoForged docs\nRegistration is the process of taking the objects of a mod (such as items, blocks, entities, etc.) and making them known to the game."
+            ],
+            "title": "Registries | NeoForged docs"
+          },
+          {
+            "url": "https://github.com/neoforged/NeoForge/issues/264",
+            "excerpts": [
+              "Compatibility Issue: NeoForge parses both Manifest.MF and ...\nBecause Forge and NeoForge are in the same jar, some files unfortunately overlap. Forge can only reference a mixin file via the Manifest file. And NeoForge reads that same file, parsing Forge's mixins instead of itself. Due to the different runtime mappings, it crashes."
+            ],
+            "title": "Compatibility Issue: NeoForge parses both Manifest.MF and ..."
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "5_ideas_that_sound_good_but_violate_the_watchtower_lane",
+        "reasoning": "Assessment: The field answer directly presents a structured list of 8-15 ideas that would violate WatchTower's lane. The provided field_answer is a complete table detailing several candidate ideas, each with justification and safe alternatives, aligned with the user\u2019s request to identify concepts that sound good but fall outside the WatchTower scope. It covers the requested category (items that violate the lane) and provides clear rationale for why each idea is out of scope and what a safe alternative would be. The response appears complete for this field since it fulfills the specific query and does not miss explicit items in the requested category. \n\nEvidence considerations: Excerpts include references to host panels (Pterodactyl, Crafty), player analytics, cloud telemetry, and profiling tools (spark, Observable, LagGoggles). While not a direct one-to-one mapping to every row in the table, they support the notion that these are existing approaches/tools in adjacent spaces, which underpins the field answer\u2019s claims about what would be out of scope versus viable alternatives. This lends some support to the answer content, though the excerpts do not mandate the exact table entries.\n",
+        "citations": [
+          {
+            "url": "https://pterodactyl.io/",
+            "excerpts": [
+              "Pterodactyl Panel\nLet's Get Started! Pterodactyl\u00ae is a free, open-source game server management panel built with PHP, React, and Go. Designed with security in mind, Pterodactyl runs all game servers in isolated Docker containers while exposing a beautiful and intuitive UI to end users. Stop settling for less."
+            ],
+            "title": "Pterodactyl Panel"
+          },
+          {
+            "url": "https://cubecoders.com/AMP",
+            "excerpts": [],
+            "title": "CubeCoders | AMP - Game Server Control Panel"
+          },
+          {
+            "url": "https://craftycontrol.com/",
+            "excerpts": [
+              "Crafty Controller\nCrafty Controller is a feature rich panel that allows you to create and run servers, manage players, run commands, change server settings, view and edit server files, and make backups."
+            ],
+            "title": "Crafty Controller"
+          },
+          {
+            "url": "https://github.com/plan-player-analytics/Plan",
+            "excerpts": [],
+            "title": "GitHub - plan-player-analytics/Plan: Player Analytics plugin for Minecraft Server platforms - View player activity of your server with ease. :calendar: \u00b7 GitHub"
+          },
+          {
+            "url": "https://crafty.gg/bot",
+            "excerpts": [
+              "Minecraft Discord Bot (Player, Server, Hypixel Stats) \u2014 Crafty\nView detailed information about any Minecraft player including skins, capes, and name history. Check any Minecraft server's status, player count, version, and more without leaving Discord. Get detailed statistics from popular servers like Hypixel, including game stats and leaderboards."
+            ],
+            "title": "Minecraft Discord Bot (Player, Server, Hypixel Stats) \u2014 Crafty"
+          },
+          {
+            "url": "https://netherstatus.net/",
+            "excerpts": [
+              "NetherStatus - Minecraft Server Monitoring\nNetherStatus checks your Minecraft server (s) every few seconds. Whenever downtime or issues are detected, you receive an instant notification. Get push notifications on your phone or Discord the moment your server status changes. Always stay up to date, wherever you are."
+            ],
+            "title": "NetherStatus - Minecraft Server Monitoring"
+          },
+          {
+            "url": "https://bluemap.bluecolored.de/",
+            "excerpts": [],
+            "title": "Home | BlueMap"
+          },
+          {
+            "url": "https://github.com/webbukkit/dynmap",
+            "excerpts": [],
+            "title": "GitHub - webbukkit/dynmap: A set of Minecraft mods that provide a real time web-based map system for various Minecraft server implementations. \u00b7 GitHub"
+          },
+          {
+            "url": "https://spark.lucko.me/",
+            "excerpts": [
+              "spark\nspark is a performance profiler for Minecraft clients, servers, and proxies. diagnose performance problems and bottlenecks. This website is also an online"
+            ],
+            "title": "spark"
+          },
+          {
+            "url": "https://modrinth.com/mod/observable",
+            "excerpts": [
+              "Observable - Minecraft Mod - Modrinth\nA spiritual successor to LagGoggles for Minecraft 1.16+, Observable profiles (tile) entities and shows you what's taking up tick time and where. Forge and Fabric compatible."
+            ],
+            "title": "Observable - Minecraft Mod - Modrinth"
+          },
+          {
+            "url": "https://www.curseforge.com/minecraft/mc-mods/laggoggles",
+            "excerpts": [
+              "LagGoggles - Minecraft Mods - CurseForge\nA minecraft forge mod which profiles and visualises lag in the world. Download LagGoggles by Terminator_NL, with over 11.7M+ downloads on CurseForge"
+            ],
+            "title": "LagGoggles - Minecraft Mods - CurseForge"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "6_recommended_build_sequence_and_acceptance_tests",
+        "reasoning": "Assessment reasoning:\n- Field name indicates a specific planning item: 6_recommended_build_sequence_and_acceptance_tests.\n- Field answer provides a structured rollout plan with three phases (Now, Next, Later) and detailed acceptance test criteria, which aligns with a typical build-sequence and testing workflow. This suggests completeness: it covers the requested concept (a recommended build sequence and corresponding acceptance tests) with concrete items, test scenarios, and decision states (blocked, high risk, advisory, not evaluated).\n- Excerpts include related topics such as backups, restoration, diagnostics, and profiling tools (e.g., Spark, Observable), which corroborate the domain context of building/testing a WatchTower/NeoForge-like ops dashboard and its recovery/verification workflows. Therefore, the field answer is reasonably supported by excerpts.\n- The reasoning notes that the answer references patterns and examples from the provided excerpts, reinforcing alignment with the requested content.\n- Overall judgment:\n  - Completeness: true (the answer directly provides a build sequence and acceptance tests with explicit criteria).\n  - Supported: true (excerpts touch on backups, restoration, profiling, and related ops concerns that underpin the proposed plan).",
+        "citations": [
+          {
+            "url": "https://www.reddit.com/r/MinecraftForge/comments/1kr88uq/minecraft_forge_server_not_working",
+            "excerpts": [
+              "Minecraft forge server (not working) : r/MinecraftForge\nFixed it! When I went and download the mod pack in curse forge there was mods that weren't shown as dependencies, which resulted in a crash. I"
+            ],
+            "title": "Minecraft forge server (not working) : r/MinecraftForge"
+          },
+          {
+            "url": "https://github.com/neoforged/NeoForge/issues/1890",
+            "excerpts": [],
+            "title": "Installed neoforge server doesn't check for java version \u00b7 Issue #1890 \u00b7 neoforged/NeoForge \u00b7 GitHub"
+          },
+          {
+            "url": "https://www.reddit.com/r/Minecraft/comments/1i6hsxk/restoring_minecraft_java_server_world_from_backup",
+            "excerpts": [
+              "Restoring Minecraft Java Server world from backup not working\nI stopped the server and checked on my backups, Although almost everything backed up, a number of files were skipped because of access denied"
+            ],
+            "title": "Restoring Minecraft Java Server world from backup not working"
+          },
+          {
+            "url": "https://discourse.cubecoders.com/t/restore-backup-on-new-server/2865",
+            "excerpts": [
+              "Restore backup on new server\nDec 31, 2022 \u2014 I have restored all files into the backups folder of the AMP system using sFTP. It did not display anything for me to restore. I created a new"
+            ],
+            "title": "Restore backup on new server"
+          },
+          {
+            "url": "https://github.com/MinecraftForge/MinecraftForge/issues/8800",
+            "excerpts": [
+              "[1.18.2 and 1.19.0] Removal of dimension mods will make"
+            ],
+            "title": "[1.18.2 and 1.19.0] Removal of dimension mods will make ... GitHub https://github.com \u203a MinecraftForge \u203a issues"
+          },
+          {
+            "url": "https://spark.lucko.me/",
+            "excerpts": [
+              "spark\nspark is a performance profiler for Minecraft clients, servers, and proxies. diagnose performance problems and bottlenecks. This website is also an online"
+            ],
+            "title": "spark"
+          },
+          {
+            "url": "https://bluemap.bluecolored.de/",
+            "excerpts": [],
+            "title": "Home | BlueMap"
+          },
+          {
+            "url": "https://modrinth.com/mod/observable",
+            "excerpts": [
+              "Observable - Minecraft Mod - Modrinth\nA spiritual successor to LagGoggles for Minecraft 1.16+, Observable profiles (tile) entities and shows you what's taking up tick time and where. Forge and Fabric compatible."
+            ],
+            "title": "Observable - Minecraft Mod - Modrinth"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "7_synthesis_watchtower_should_own_the_decision_record",
+        "reasoning": "Assessment notes:\n- The field_description asks for a synthesis of opportunities and decisions for WatchTower in relation to synthesis of own decision record, with emphasis on local-first advisory positioning and clear boundaries (no host panel, no auto-restart, etc.).\n- The provided field_answer delivers a structured comparison table covering dimensions (dimension, opportunity, related tools), timing, and trade-offs, plus explicit WatchTower responses and prioritization guidance. It also includes a narrative justification about tensions and a final recommendation focused on change safety and recovery in a local, non-surveillant manner. \n- Completeness judgment: The answer appears to address all major required aspects: primary mechanism, collaboration with other tools, lifecycle considerations, trade-offs, explicit WatchTower stance, and a concluding prioritization rationale. It does not seem to omit clear recommendations or the constraints specified in the field description. Therefore, completeness is true. \n- Confidence: Moderate-high that the answer aligns with the field description and the user\u2019s intent, though there is no verification excerpt provided to cross-check exact phrasing or additional constraints. \n- Excerpt support: No excerpts were provided in this task input to verify alignment. As excerpts are unavailable, supported is set to false by default in this evaluation. ",
+        "citations": [],
+        "confidence": "medium"
+      }
+    ],
+    "content": {
+      "executive_summary": "- **The Unowned Layer**: Minecraft tooling is fragmented by mechanism: Crash Assistant handles post-crash log presentation, spark handles point-in-time performance profiling, panels handle process and file control, maps handle world visualization, and Discord tools handle reach. None of those product descriptions make the whole change-to-incident-to-recovery loop the primary job -> Make WatchTower the local evidence layer that explains whether a proposed mod, config, runtime, or world change is safe and whether the result actually improved the server. [executive_summary[0]] [84] [executive_summary[1]] [59] [executive_summary[2]] [8] [executive_summary[3]] [41]\n- **Launch Readiness**: A 2025 Forge support thread reports that mods not shown as dependencies caused a crash, while a NeoForge issue is explicitly titled \"Installed neoforge server doesn't check for java version\" -> Build a read-only launch-readiness matrix covering the actual Java binary, loader, dependency graph, sidedness, generated libraries, config parsing, and file permissions. [executive_summary[4]] [131] [executive_summary[5]] [158]\n- **World Change Safety**: A Forge issue documents dimension-mod removal making worlds fail, and a separate support post reports a world that would not load after removing a mod. This is a different problem from a corrupt-chunk playbook and from pack pinning -> Add a pre-change world migration and registry-risk report that is advisory, version-aware, and explicit about uncertainty. [executive_summary[6]] [137] [executive_summary[7]] [138]\n- **Recovery Proof**: Backup monitoring can show that a job ran, but a restoration report says files were skipped because of access denied, and an AMP support thread describes a copied backup that did not appear as restorable. -> Add restore confidence checks, manifests, permissions and completeness warnings, plus an opt-in disposable restore verification that never overwrites the live world. [executive_summary[8]] [74] [executive_summary[9]] [64]\n- **Profiler Context**: spark is strong at CPU profiling, memory inspection, heap summaries, GC monitoring, and shareable viewer links; Observable and LagGoggles add spatial or tile-entity context. WatchTower already integrates spark, so copying those surfaces would be low differentiation -> Preserve the raw profiler integrations and invest in longitudinal evidence, root-cause confidence, and before-after validation. [executive_summary[1]] [59] [executive_summary[10]] [36] [executive_summary[11]] [37]\n- **Chunk and Save Risk**: Chunker describes traditional pre-generators as capable of holding thousands of chunks in memory and risking rollback or data loss if the server crashes. A current community report also frames chunk-loading lag as a CPU bottleneck because server work is heavily single-threaded -> Add a chunk lifecycle and write-pressure planner, not an automatic pre-generator or another restart workflow. [executive_summary[12]] [136] [executive_summary[13]] [135]\n- **Reach Is Commodity**: NetherStatus already offers real-time monitoring and push notifications to iOS, Android, and Discord, while DiscordSRV bridges chat and can expose a remote console. WatchTower's later Discord/webhook work should not become its moat -> Keep the main product local and make any export an optional, minimized incident artifact. [executive_summary[14]] [51] [executive_summary[15]] [44]\n- **Player Analytics Is a Trap**: Plan is explicitly a player analytics plugin, and Crafty's Discord bot exposes player information, name history, server status, and game statistics. Those are useful community products but violate WatchTower's stated no-surveillance lane -> Do not add session histories, leaderboards, player behavior scoring, or identity analytics. [executive_summary[16]] [80] [executive_summary[17]] [50]\n- **Best Differentiator**: The highest-value package is a read-only \"change safety and recovery proof\" workflow: preflight, world/config impact, backup confidence, incident timeline, and measured outcome. It fits local-first advisory operation and is difficult for a host panel, profiler, map, bot, or analytics plugin to reproduce because each sees only one layer -> Ship this before generic dashboards or more notification channels.",
+      "1_the_remaining_pain_is_change_safety_not_another_tps_graph": "WatchTower already covers the standard first response: live health, crash intelligence, spark attribution, JVM advice, mod lookups, config checks for server properties and startup flags, issue prioritization, world pressure, join diffs, backups, logs, and incident stories. The remaining pain is what happens around a change: an administrator cannot reliably predict whether an update or removal is safe, cannot prove that a backup is restorable, and often cannot tell whether a fix worked after the incident has passed.\n\n| Pain point outside the listed WatchTower scope | Evidence found | Why it remains operationally expensive | Product implication |\n|---|---|---|---|\n| Hidden dependencies and loader/runtime mismatch | A Forge support post says undisclosed dependencies caused a crash. A NeoForge issue is titled \"Installed neoforge server doesn't check for java version.\" [1_the_remaining_pain_is_change_safety_not_another_tps_graph[0]] [131] [1_the_remaining_pain_is_change_safety_not_another_tps_graph[1]] [158] | The server can fail before WatchTower's normal runtime evidence is available, and an administrator may debug the wrong layer | Preflight the executable Java version, loader build, dependency closure, and install completeness before launch |\n| Mod and world migration risk | Forge issue #8800 reports a dimension-mod removal failure class. A support post reports a world that would not load after removing a mod. [1_the_remaining_pain_is_change_safety_not_another_tps_graph[2]] [137] [1_the_remaining_pain_is_change_safety_not_another_tps_graph[3]] [138] | A jar diff does not reveal every registry, dimension, entity, block, or persistent-data consequence | Produce a read-only migration-risk report before an administrator changes the mod set |\n| Semantic configuration drift | NeoForge configurations are TOML files read through NightConfig and ModConfigSpec. A syntactically valid file can still encode stale keys, invalid ranges, or an incompatible combination with another mod. [1_the_remaining_pain_is_change_safety_not_another_tps_graph[4]] [15] | Current WatchTower config health is strongest at server.properties and startup flags, while mod behavior often lives in per-mod configs | Add schema-aware validation and cross-config rules, with warnings rather than automatic edits |\n| Chunk generation and save/write pressure | Chunker warns that many pre-generators track thousands of chunks in memory and can risk rollback or data loss after a crash. A community report attributes chunk-loading lag to CPU pressure and Minecraft's single-threaded work. [1_the_remaining_pain_is_change_safety_not_another_tps_graph[5]] [136] [1_the_remaining_pain_is_change_safety_not_another_tps_graph[6]] [135] | A TPS graph says that an incident happened but not whether exploration, generation queues, save backlog, or disk pressure created the risk | Make chunk lifecycle, generation rate, write backlog, and resumability visible as an operator story |\n| Backup confidence rather than backup existence | A restore report says files were skipped because of access denied. An AMP discussion describes a backup copied by SFTP that did not appear in the restore UI. [1_the_remaining_pain_is_change_safety_not_another_tps_graph[7]] [74] [1_the_remaining_pain_is_change_safety_not_another_tps_graph[8]] [64] | A green backup job can still omit critical files or fail at restore time | Verify manifests, permissions, file counts, hashes or sizes, and an opt-in disposable restore path |\n| Soft hangs and phase-specific stalls | Crash Assistant is designed to show a GUI after a crash, while spark is a profiler. Neither product description makes a persistent startup, save, deadlock, or watchdog phase timeline the central workflow. [1_the_remaining_pain_is_change_safety_not_another_tps_graph[9]] [84] [1_the_remaining_pain_is_change_safety_not_another_tps_graph[10]] [59] | A server can be unhealthy without producing a useful crash report, and an administrator loses the sequence of the last successful tick, save, GC event, and log phase | Capture low-overhead phase transitions and an opt-in diagnostic bundle without restarting or mutating the server |\n| Fix validation and support handoff | Modrinth's crash guidance tells users to inspect logs and crash reports, while community support posts routinely ask for latest.log, debug.log, crash reports, mod lists, and Java details. [1_the_remaining_pain_is_change_safety_not_another_tps_graph[11]] [16] [1_the_remaining_pain_is_change_safety_not_another_tps_graph[12]] [105] | Tools help collect evidence or view a profile, but the operator still has to assemble a timeline and decide whether the intervention changed the outcome | Turn each issue into a local evidence chain: observation, hypothesis, change record, result, confidence, and unresolved questions |\n\nThe common mechanism is fragmentation. Panels know that a process is running, profilers know where CPU time went, maps know where blocks and markers are, and bots know whether a status endpoint responds. The administrator still has to perform the joins manually. WatchTower can stand out by making those joins its core product rather than adding another raw signal.\n\nThe first recommendation is therefore not \"more telemetry.\" It is a **change safety plane**. It should answer four questions before an administrator acts: what changed, what could be affected, what evidence says the change is risky, and how will success or failure be measured without silently applying a fix.",
+      "2_what_competing_tools_do_well_and_where_the_gaps_are": "| Tool or workflow | What it does well | What WatchTower still lacks relative to it | Strategic response for WatchTower |\n|---|---|---|---|\n| Crash Assistant | Presents a GUI after a crash, displays affected game or launcher logs, crash reports, and hs_err files, and supports one-click upload, link copying, and reporting actions. The current CurseForge listing reports **59.9M downloads** and a **July 13, 2026** update. [2_what_competing_tools_do_well_and_where_the_gaps_are[0]] [84] | A fast post-crash client experience and a convenient handoff workflow | Do not clone the GUI. Make server-side incidents richer with pre-crash context, version-scoped confidence, world/config impact, and local redaction |\n| spark standalone | Provides a profiler for clients, servers, and proxies, plus memory inspection, heap dumps or summaries, GC monitoring, and a web viewer with shareable links. [2_what_competing_tools_do_well_and_where_the_gaps_are[1]] [59] [2_what_competing_tools_do_well_and_where_the_gaps_are[2]] [95] | WatchTower depends on spark for attribution but does not own the profiler's depth or viewer | Keep spark as a data source. Add persistent baselines, incident correlation, and measured remediation rather than a second flamegraph |\n| SparklyPaper and Purpur | SparklyPaper is a Paper fork focused on high-performance optimizations and improvements for large servers. Purpur exposes extensive Paper-family configuration and customizability. [2_what_competing_tools_do_well_and_where_the_gaps_are[3]] [82] [2_what_competing_tools_do_well_and_where_the_gaps_are[4]] [90] | These are alternate server implementations and configuration surfaces, not NeoForge modpack migration or recovery analysis | Treat them as evidence that operators value explainable, tunable server behavior, not as a platform to imitate |\n| LagGoggles | Profiles and visualizes lag in the world through a custom GUI and was explicitly built to help players understand what causes lag. The current page reports **11.8M downloads** but a last update of **April 16, 2023**. [2_what_competing_tools_do_well_and_where_the_gaps_are[5]] [37] | WatchTower lacks its direct spatial, in-world visualization style | Build an admin-only health overlay tied to issue evidence, not a player-facing replacement for a mature visual profiler |\n| Observable | Profiles tile entities and shows what consumes tick time and where. Its Modrinth page reports **1.4M downloads**, supports client and server use, and lists Fabric, Forge, NeoForge, and Quilt compatibility for several versions. [2_what_competing_tools_do_well_and_where_the_gaps_are[6]] [36] | WatchTower has aggregate world-pressure storytelling but not the same compact spatial attribution experience | Link existing census and spark evidence to coordinates and dimensions, while avoiding duplicate entity profiling |\n| TickProfiler | The research pass did not surface a stable current authoritative page that verifies its 2025-2026 loader and version scope | Current support and differentiating capability are unverified; building around it would create roadmap risk | Treat it as an optional ecosystem input only after version verification. Do not use an unverified tool as the product thesis |\n| Carpet and Scarpet | Fabric Carpet's repository includes a scripting language designed to interact with the world, supporting custom technical experiments and controls. [2_what_competing_tools_do_well_and_where_the_gaps_are[7]] [85] [2_what_competing_tools_do_well_and_where_the_gaps_are[8]] [101] | WatchTower is advisory and NeoForge-focused, not a scripting or command-automation environment | Learn from Carpet's experimentability, but keep WatchTower's actions explicit, reviewable, and non-mutating |\n| Pterodactyl | Provides a free, open-source game-server management panel with Docker isolation and a web UI. Its API ecosystem exposes management operations around servers and infrastructure. [2_what_competing_tools_do_well_and_where_the_gaps_are[9]] [8] [2_what_competing_tools_do_well_and_where_the_gaps_are[10]] [10] | It owns lifecycle, isolation, and hosting control, not mod-specific root-cause or world migration safety | Do not add start, stop, file editing, quotas, or container orchestration to WatchTower |\n| AMP and Crafty | AMP is a self-hosted general game-server control panel. Crafty is a free, open-source Minecraft launcher and manager with a self-hosted web interface; its published feature set includes server administration, files, commands, and backups. [2_what_competing_tools_do_well_and_where_the_gaps_are[11]] [126] [2_what_competing_tools_do_well_and_where_the_gaps_are[12]] [7] | Their strength is control-plane convenience and deployment, while the operator still needs modded diagnosis and recovery confidence | Integrate read-only observations where useful, but leave process and file authority to the panel |\n| BlueMap and Dynmap | BlueMap creates 3D browser maps and can run as a server plugin, Fabric or Forge mod, or standalone command-line tool. Dynmap provides real-time browser maps, multiple renderers, markers, and an integrated webserver. [2_what_competing_tools_do_well_and_where_the_gaps_are[13]] [41] [2_what_competing_tools_do_well_and_where_the_gaps_are[14]] [122] [2_what_competing_tools_do_well_and_where_the_gaps_are[15]] [81] | They show the world but do not explain whether a region is causing MSPT, save pressure, generation backlog, or an incident | Build an internal operational overlay, not a public map product. It should open an issue from a coordinate, not replace BlueMap or Dynmap |\n| Server-status bots | NetherStatus checks servers frequently and provides push notifications on iOS, Android, and Discord. Crafty Bot can report status, player count, version, and player-oriented statistics. [2_what_competing_tools_do_well_and_where_the_gaps_are[16]] [51] [2_what_competing_tools_do_well_and_where_the_gaps_are[17]] [50] | WatchTower lacks their reach and mobile notification surface, but those surfaces are already commoditized and alerting is in the backlog | Keep the core local. If export is later added, send minimal incident summaries, not telemetry streams or player histories |\n| DiscordSRV | Bridges Minecraft and Discord chat and offers a remote console channel that can forward console messages and accept commands; its documentation warns that the channel should be restricted to trusted roles. [2_what_competing_tools_do_well_and_where_the_gaps_are[18]] [44] | WatchTower lacks a community communication bridge, but a command bridge is explicitly parked and introduces security risk | Do not make Discord the control plane. Treat any future integration as an outbound, least-privilege evidence handoff |\n| Plan and related analytics mods | Plan is explicitly a player analytics plugin with web visualization and data collection. [2_what_competing_tools_do_well_and_where_the_gaps_are[19]] [80] [2_what_competing_tools_do_well_and_where_the_gaps_are[20]] [124] | WatchTower intentionally does not collect player behavior, session histories, or engagement analytics | Preserve aggregate player count and join-failure diagnostics only; reject surveillance features |\n| Aikar flags guides | The Paper documentation gives a concrete JVM startup recipe and warns that Xms and Xmx should be reduced by about **1,000-1,500 MB** to leave room for the operating system and avoid OOM-killer risk. [2_what_competing_tools_do_well_and_where_the_gaps_are[21]] [24] | The guidance is Paper-oriented and generic; blindly applying it to a NeoForge modpack can misdiagnose a memory or runtime problem | Explain which recommendations apply, show detected heap and OS or container headroom, and warn rather than rewrite flags |\n| Fabric and NeoForge support workflow | Official and community guidance revolves around logs, crash reports, mod lists, Java details, and reproduction. A NeoForge compatibility issue also shows that loader and manifest interactions can themselves cause crashes. [2_what_competing_tools_do_well_and_where_the_gaps_are[22]] [105] [2_what_competing_tools_do_well_and_where_the_gaps_are[23]] [12] | Manual collection and interpretation are slow, and a support bundle rarely carries a machine-readable causal timeline | Make support evidence structured, local, redacted, and linked to the exact issue and change that preceded it |\n| Paid hosting dashboards | Hosting panels and host documentation help with installation, files, backups, console, and basic compatibility procedures. A HostByte guide calls mod compatibility issues common, while a 2025 Pterodactyl report describes a panel connection problem that made the panel ineffective. [2_what_competing_tools_do_well_and_where_the_gaps_are[24]] [144] [2_what_competing_tools_do_well_and_where_the_gaps_are[25]] [151] | Hosting support is a control and service layer, not a durable local explanation of modpack behavior | Position WatchTower beside a host, not against it: diagnose the modded application while the host owns the machine |\n\nThe table reveals a sharp boundary. Competitors are strong when the operator already knows which layer to inspect: spark for CPU, Observable for spatial tile-entity cost, a panel for process control, a map for geography, and Discord for distribution. WatchTower's opportunity is the uncertainty before that choice. It should answer which layer is implicated and what evidence would falsify the leading hypothesis.",
+      "3_four_case_studies_that_define_the_product_opportunity": "### Case Study: Crash Assistant Wins the Moment, Not the Server Lifecycle\n\nCrash Assistant makes a good client decision: after a crash, immediately present the affected logs, crash report, or hs_err file and make reporting easy. Its current listing shows unusually large adoption, with **59.9M downloads**, and the listing was updated on **July 13, 2026**. That validates the pain of log discovery and handoff, but its stated workflow is a post-crash GUI, not a server-side operational timeline. [3_four_case_studies_that_define_the_product_opportunity[0]] [84]\n\nWatchTower should borrow the moment-of-failure clarity without copying the product. Its server incident should show the last healthy baseline, the first warning, the likely mod or subsystem, the relevant world and dimension, the preceding config or jar change, and the next evidence needed. The recommendation is a **server incident capsule**, not a client crash window: local, redactable, and useful even when no crash report exists.\n\n### Case Study: spark and Observable Prove That Attribution Is Valuable but Fragmented\n\nspark's product surface spans CPU profiling, memory inspection, heap summaries, GC monitoring, and a shareable web viewer. Observable narrows the question to tile entities and locations, while LagGoggles visualizes world lag in a custom interface. These tools succeed because they turn \"the server is laggy\" into a place or call path, but their primary outputs remain measurements or profiles rather than a durable operational decision record. [3_four_case_studies_that_define_the_product_opportunity[1]] [59] [3_four_case_studies_that_define_the_product_opportunity[2]] [36] [3_four_case_studies_that_define_the_product_opportunity[3]] [37]\n\nWatchTower already has spark integration and world-pressure storytelling. Its higher-value extension is to correlate those outputs across time: \"this farm heat increased after mod X was updated,\" \"the proposed setting reduced MSPT but increased save pressure,\" or \"the profile is inconclusive because the sample missed the busy dimension.\" The recommendation is a **before-and-after experiment journal** with confidence, not a competing profiler.\n\n### Case Study: NeoForge Change Failures Happen Below the Dashboard Layer\n\nA 2025 Forge support thread reports that dependencies missing from the visible dependency presentation caused a crash. NeoForge issue #1890 is explicitly about an installed server not checking its Java version, and NeoForge issue #264 describes a loader and manifest interaction that can make a server crash. These are launch and compatibility failures, so a live dashboard may never have a chance to explain them. [3_four_case_studies_that_define_the_product_opportunity[4]] [131] [3_four_case_studies_that_define_the_product_opportunity[5]] [158] [3_four_case_studies_that_define_the_product_opportunity[6]] [12]\n\nThe product decision is to add a **read-only preflight compiler** for the current server directory. It should inspect the actual Java executable, loader and Minecraft versions, declared and observed dependencies, sidedness, generated libraries, mod metadata, config parseability, and file permissions. It should distinguish hard launch blockers from advisory risks, because arbitrary mod code means no static checker can promise a successful boot.\n\n### Case Study: Panels and Backups Demonstrate the Difference Between Control and Proof\n\nPterodactyl, AMP, and Crafty are valuable because they make starting, administering, editing, and backing up a server accessible through a web interface. But the evidence also shows why control is not proof: one restore report says files were skipped because of access denied, and an AMP discussion describes a backup copied into place but not appearing for restoration. A panel can run a backup command while still leaving recovery uncertainty. [3_four_case_studies_that_define_the_product_opportunity[7]] [8] [3_four_case_studies_that_define_the_product_opportunity[8]] [7] [3_four_case_studies_that_define_the_product_opportunity[9]] [74] [3_four_case_studies_that_define_the_product_opportunity[10]] [64]\n\nWatchTower should not become a second panel. It should add a **recovery proof report** that reads backup manifests, detects access errors and missing expected files, records the server and mod environment, and optionally verifies a restore into an explicitly selected disposable location. The live world stays untouched, the action is visible, and the result is a claim with evidence: \"monitoring saw a backup\" versus \"this environment can restore the required world and mod context.\"",
+      "4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard": "The ranking uses operator value and build complexity relative to the supplied product. High value means it reduces irreversible loss, repeated incidents, or diagnosis time. Complexity includes parsing, version compatibility, disk safety, and the need for careful false-positive handling.\n\n| Rank | Opportunity and smallest useful product | Problem statement and evidence | Why competitors miss it | WatchTower fit, value, complexity |\n|---:|---|---|---|---|\n| **1** | **Launch-readiness matrix**: read the actual Java executable, loader, Minecraft version, mod metadata, dependency closure, sidedness, generated libraries, configs, and permissions; output blockers, risks, and unknowns | Hidden dependencies were reported as the cause of a crash, and a NeoForge issue is titled around missing Java-version checks. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[0]] [131] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[1]] [158] | Crash tools start after failure; panels launch what they are given; mod sites expose metadata but do not validate the complete installed server | **Very high value / Medium complexity**. Local, read-only, NeoForge-native, and not pack pinning. Make hard versus soft checks explicit |\n| **2** | **World migration and mod-removal risk report**: inventory registries, dimensions, entities, blocks, persistent data, and world references before a change; recommend a test copy without changing the live world | Dimension-mod removal has a documented Forge failure class, and administrators report worlds not loading after mod removal. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[2]] [137] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[3]] [138] | Panels copy files; crash tools identify the last stack; pack tools compare jars. None owns a conservative world-schema risk report | **Very high / High complexity**. This is not the excluded corrupt-chunk playbook. Start with registry and dimension references, label incomplete coverage, never auto-remove data |\n| **3** | **Recovery confidence verifier**: backup manifest, file count, permission and access-error scan, hash or size consistency, expected world-sidecar check, and opt-in disposable restore verification | A restore report says files were skipped because of access denied; an AMP thread reports a copied backup not appearing in the restore flow. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[4]] [74] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[5]] [64] | Hosting panels expose backup controls but do not necessarily prove that a complete, compatible world can be restored | **High / Medium complexity**. Extends backup monitoring and DR CLI without replacing them. Require explicit destination and confirmation; do not overwrite production |\n| **4** | **Per-mod config semantics linter**: parse NeoForge TOML, detect stale or unknown keys, invalid values, default-versus-edited drift, cross-mod conflicts, and server/client scope mistakes | NeoForge uses TOML, NightConfig, and ModConfigSpec. The current WatchTower config audit is not described as a schema-aware audit of every mod config. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[6]] [15] | Panels provide editors; Aikar gives generic JVM guidance; loaders report syntax or load errors, not the operational meaning of a configuration combination | **High / Medium to high complexity**. Read-only and advisory. Prefer confidence-ranked rules and show the exact source line or schema |\n| **5** | **Chunk lifecycle and write-pressure planner**: generation rate, active generation queue, save backlog, dimension distribution, disk write bursts, pre-generation progress, and resumability warnings | Chunker warns that traditional pre-generators may retain thousands of chunks and risk rollback or data loss after a crash. A current report frames chunk loading as a CPU bottleneck. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[7]] [136] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[8]] [135] | Profilers show a sample; world maps show geography; neither necessarily tells an admin whether exploration or a pregen job is creating a recovery and write-risk window | **High / Medium complexity**. Advisory scheduling signals only; do not add automatic pregeneration, restart advice, or command execution |\n| **6** | **Change impact and before-after notebook**: capture a pre-change baseline, record the admin-confirmed change, compare MSPT, GC, memory, chunk and save signals, and mark the outcome or uncertainty | spark produces profiles and health evidence, but its viewer is a profile handoff rather than a local change ledger. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[9]] [59] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[10]] [95] | A profiler cannot know which config or jar change the operator made; a panel can show the action but not application-level effect | **High / Medium complexity**. Strongest differentiation and low mutation risk. Reuse existing baselines, incident stories, and weekly digest |\n| **7** | **Soft-hang and phase timeline**: startup, first world load, tick, save, GC, and shutdown phase markers; detect stalled progress and offer an opt-in diagnostic bundle | Crash Assistant is post-crash; spark is profiling. A server can fail to progress without a useful crash report. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[11]] [84] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[9]] [59] | Neither is primarily a durable server lifecycle timeline for a no-crash hang or stalled save | **High / High complexity**. Keep sampling low overhead, make thread dumps opt-in, and never auto-restart |\n| **8** | **Internal operational heatmap**: overlay WatchTower issues, chunk pressure, generation, save latency, and incident markers by dimension and coordinate; link each marker to evidence | LagGoggles and Observable show spatial lag or tile-entity cost, while BlueMap and Dynmap show maps and markers. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[12]] [37] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[13]] [36] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[14]] [122] | Public maps have a player/world presentation goal, and profilers have an attribution goal; neither is a local incident map | **Medium to high / Medium complexity**. Valuable if it remains an ops overlay, not a new public map or player feature |\n| **9** | **Version-scoped issue fingerprinting**: attach signatures to exact loader, mod, Java, and pack state; show likely, confirmed, and contradicted hypotheses; allow local operator feedback | Modrinth guidance and community support depend on reading logs and recognizing recurring signatures. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[15]] [16] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[16]] [105] | Crash Assistant eases collection, and mod sites provide lookups, but neither is a local, longitudinal confidence ledger for one server | **High / High complexity**. This can be WatchTower's moat, but stale rules and false positives are real failure modes; require evidence links and an \"unknown\" state |\n| **10** | **Support-pack quality gate**: verify required logs and environment fields, redact secrets, identify missing time windows, attach the incident timeline, and deduplicate repeated cases | Community workflows ask for logs, crash reports, mod lists, Java details, and reproduction. Crash Assistant offers uploads and links. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[15]] [16] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[11]] [84] | Upload tools make sharing easy but do not guarantee that the bundle is complete, minimally sensitive, or tied to a causal timeline | **Medium / Low to medium complexity**. Extend the existing Support pack builder; do not create a cloud support service |\n| **11** | **Runtime envelope advisor**: separate Java heap, native memory, container or OS headroom, disk, threads, and file descriptors; explain whether generic flags apply | Aikar's Paper guide recommends leaving about 1,000-1,500 MB outside Xms/Xmx to avoid OOM-killer risk, but the guidance is not a universal NeoForge prescription. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[17]] [24] | A host panel sees resource limits; a JVM guide gives generic flags; neither necessarily explains the actual local envelope and application evidence together | **Medium to high / Medium complexity**. Extends existing GC, JVM, RAM, and OOM findings without rewriting flags or becoming a host panel |\n| **12** | **Registry, tag, recipe, and script smoke report**: read-only consistency checks for references to missing content, broken tags, unresolved recipes, and script or datapack outputs before a maintenance event | NeoForge's registry model makes blocks, items, and entities known to the game; community and loader failures show that compatibility can occur below basic TPS monitoring. [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[18]] [110] [4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard[19]] [12] | Script mods can fail semantically while the process remains alive; generic crash tools usually wait for a visible failure | **High / High complexity**. Advisory only, with dry-run checks and explicit limitations; do not auto-edit scripts, datapacks, or world data |\n\nThe top five are the strongest near-term portfolio because they protect irreversible assets and reduce diagnosis time without competing with an established category. The most defensible sequence is launch-readiness, change impact, recovery confidence, then world and config analysis. The heatmap, fingerprinting, and smoke report are valuable second-wave features because they require more version-specific knowledge and create more false-positive risk.",
+      "5_ideas_that_sound_good_but_violate_the_watchtower_lane": "| Tempting idea | Why it sounds useful | Why it is out of lane | Safe alternative |\n|---|---|---|---|\n| Full host-panel replacement | Pterodactyl, AMP, and Crafty prove there is demand for web console, files, schedules, backups, process controls, and resource limits. [5_ideas_that_sound_good_but_violate_the_watchtower_lane[0]] [8] [5_ideas_that_sound_good_but_violate_the_watchtower_lane[1]] [126] [5_ideas_that_sound_good_but_violate_the_watchtower_lane[2]] [7] | It changes WatchTower from an application-operations advisor into a control plane, duplicates mature products, and expands security and deployment scope | Read host or panel state where available, then explain modded application health. Keep start, stop, file edit, and quota authority outside WatchTower |\n| Player analytics, leaderboards, or behavior scoring | Plan and Discord bots show that activity, names, and player statistics can be productized. [5_ideas_that_sound_good_but_violate_the_watchtower_lane[3]] [80] [5_ideas_that_sound_good_but_violate_the_watchtower_lane[4]] [50] | It is surveillance-adjacent, not required to answer whether the server is healthy, and conflicts with the explicit no-player-analytics position | Keep aggregate player count, join failure, and pack-sync facts needed for operations; do not retain behavior histories |\n| Cloud-required telemetry or a hosted status service | NetherStatus demonstrates the reach of push monitoring across devices and Discord. [5_ideas_that_sound_good_but_violate_the_watchtower_lane[5]] [51] | It violates local-first, creates a data custody and availability dependency, and turns operational evidence into a service obligation | Keep evidence local. If export is later allowed, make it opt-in, minimized, redacted, and useful without a cloud account |\n| Auto-restart, auto-apply, quarantine, or silent mutation | Automation can reduce toil and appears to close the loop | It can turn a diagnosis into world loss, incompatible configs, or an unavailable server; it also conflicts with advisory-only behavior and the listed backlog | Show a proposed action, expected effect, risk, and verification plan. Require the operator to act outside WatchTower |\n| Public map or social map replacement | BlueMap and Dynmap are visible, mature ways to explore worlds and place markers. [5_ideas_that_sound_good_but_violate_the_watchtower_lane[6]] [41] [5_ideas_that_sound_good_but_violate_the_watchtower_lane[7]] [81] | It is player-facing presentation, not incident triage, and would pull WatchTower toward rendering and access-control work | Build an internal issue heatmap that links coordinates to operational evidence |\n| Generic profiler replacement | spark, Observable, LagGoggles, and Carpet cover strong profiling or experimentation use cases. [5_ideas_that_sound_good_but_violate_the_watchtower_lane[8]] [59] [5_ideas_that_sound_good_but_violate_the_watchtower_lane[9]] [36] [5_ideas_that_sound_good_but_violate_the_watchtower_lane[10]] [37] | Reimplementing sampling, flamegraphs, or in-world profiling creates technical debt and weak differentiation | Integrate, preserve links, and add context, comparison, confidence, and remediation validation |\n| Multi-server fleet, proxy, or Fabric expansion as the next moat | These could expand addressable users | Fleet/cloud, network/proxy awareness, and Fabric support are already excluded or parked; they dilute the NeoForge local-first thesis | Make the single-server NeoForge experience exceptionally safe and evidence-rich before broadening scope |\n\nThe key product boundary is **authority**. WatchTower may read more evidence than it currently reads, but it should not silently acquire the authority to mutate the server. A useful rule is: if a feature's success is measured by how many commands or files WatchTower changes, it is probably a control-plane feature; if success is measured by fewer unknowns and better operator decisions, it belongs.",
+      "6_recommended_build_sequence_and_acceptance_tests": "### Now: Make Every Change Explainable\n\nShip the launch-readiness matrix, change impact notebook, support-pack quality gate, and runtime envelope advisor first. The smallest useful release can read the installed server and produce a report before a boot or update: executable Java, loader and Minecraft version, dependency and sidedness risks, config parse status, permissions, disk and memory headroom, and explicit unknowns. It should then attach a baseline and a result record to the next operator-confirmed change.\n\nAcceptance tests should include a missing dependency, an intentionally wrong Java executable, a client-only jar on the server, an invalid TOML file, and a valid but suspicious configuration. The output must distinguish \"blocked,\" \"high risk,\" \"advisory,\" and \"not evaluated.\" The operator must be able to export the evidence locally without creating a cloud account. The dependency and Java evidence comes directly from the support and NeoForge issue patterns above. [6_recommended_build_sequence_and_acceptance_tests[0]] [131] [6_recommended_build_sequence_and_acceptance_tests[1]] [158]\n\n### Next: Protect World State and Prove Recovery\n\nAdd the world migration and mod-removal risk report, registry and reference smoke checks, and recovery confidence verifier. Start with high-confidence structures: dimension identifiers, registry names, missing content references, world directory completeness, file permissions, and backup manifests. Do not claim that static analysis proves safety. Every report should say what it checked, what it could not inspect, and why a disposable test restore is recommended.\n\nThe recovery verifier should never overwrite the live world. If it creates a temporary restore, it must display the destination, required disk space, source backup, environment metadata, and cleanup responsibility before the operator confirms. This directly addresses the gap between a completed backup job and a usable recovery path documented in the restore reports. [6_recommended_build_sequence_and_acceptance_tests[2]] [74] [6_recommended_build_sequence_and_acceptance_tests[3]] [64] [6_recommended_build_sequence_and_acceptance_tests[4]] [137]\n\n### Later: Make Performance Evidence Operational\n\nAdd the chunk lifecycle planner, soft-hang timeline, internal heatmap, and version-scoped issue fingerprints after the safety foundations are stable. These features should consume existing WatchTower metrics and spark output rather than add a second profiler. The heatmap should open an Issue, show its evidence, and identify whether the signal is entity pressure, generation, save pressure, or an uncertain correlation.\n\nThe failure mode to avoid is a visually impressive dashboard that still leaves the admin asking what to do. Every visualization needs a decision path: observe, compare, collect a specific artifact, or defer because evidence is insufficient. That is the difference between a map or graph and an ops product. [6_recommended_build_sequence_and_acceptance_tests[5]] [59] [6_recommended_build_sequence_and_acceptance_tests[6]] [41] [6_recommended_build_sequence_and_acceptance_tests[7]] [36]",
+      "7_synthesis_watchtower_should_own_the_decision_record": "| Dimension | WatchTower opportunity | spark and profiler tools | Host panels and paid hosting | Maps and Discord tools | Plan and player analytics |\n|---|---|---|---|---|---|\n| Primary mechanism | Local evidence correlation, risk explanation, and advisory next steps | Sampling and attribution of CPU, memory, GC, or tick work | Process, file, backup, user, and infrastructure control | World presentation, reach, status, chat, or remote commands | Player data collection, visualization, and activity analysis |\n| Best time horizon | Before a change, during an incident, and after remediation | Mostly a diagnostic sample or shared profile | Ongoing lifecycle and resource administration | Live or near-live visibility and communication | Longitudinal player history |\n| Main trade-off | Must manage false positives, version drift, and incomplete static analysis | Rich detail but requires operator interpretation and sampling context | Powerful authority but not modpack-specific reasoning | High usability but weak causal or recovery context | Useful for communities but conflicts with no-surveillance scope |\n| WatchTower's response | Preflight, world/config impact, recovery proof, change journal, and local issue confidence | Integrate rather than replace | Stay beside the control plane | Add a private ops overlay and optional minimal export | Exclude behavior analytics and identity histories |\n\nThe non-obvious tension is that the most popular tools solve the visible symptom while the most damaging admin mistakes occur at transitions. A profiler is excellent after an operator knows that a tick path matters. A panel is excellent after the operator knows which process or file action is safe. A map is excellent after the operator knows that a region is relevant. WatchTower can create value earlier by making the transition itself observable.\n\nThe second tension is between automation and trust. A host panel or command bridge can make a change instantly, but a modded world has opaque Java code, generated data, scripts, registries, and version-specific behavior. WatchTower should be opinionated in its evidence and conservative in its authority: it can say \"this removal has dimension references and the last restore check is incomplete,\" but it should not delete a jar, rewrite a config, restart a server, or quarantine a world.\n\nThe third tension is between breadth and moat. Supporting every loader, fleet, proxy, status channel, map, and analytics use case would increase reach but erase the product's reason to exist. The moat is narrower: a single NeoForge server can understand its installed runtime, mod and config state, world references, backup confidence, and remediation outcome in one local record. That is not another dashboard. It is an evidence-backed decision system for the riskiest moments in modded server operations.\n\nThe final recommendation is to prioritize the **change safety and recovery proof loop**. If WatchTower can reliably answer \"what will this change touch, what evidence says it is safe, what did it change, and can I recover if it was not safe?\" while remaining local, read-only, and non-surveillant, it will complement every major competitor rather than compete with any one of them."
+    },
+    "type": "json",
+    "beta_fields": null,
+    "mcp_tool_calls": null,
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "executive_summary": {
+          "type": "string",
+          "title": "Executive Summary"
+        },
+        "1_the_remaining_pain_is_change_safety_not_another_tps_graph": {
+          "type": "string",
+          "title": "1. The Remaining Pain Is Change Safety, Not Another TPS Graph"
+        },
+        "2_what_competing_tools_do_well_and_where_the_gaps_are": {
+          "type": "string",
+          "title": "2. What Competing Tools Do Well - and Where the Gaps Are"
+        },
+        "3_four_case_studies_that_define_the_product_opportunity": {
+          "type": "string",
+          "title": "3. Four Case Studies That Define the Product Opportunity"
+        },
+        "4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard": {
+          "type": "string",
+          "title": "4. Ranked Feature Opportunities for the NeoForge Jar and Dashboard"
+        },
+        "5_ideas_that_sound_good_but_violate_the_watchtower_lane": {
+          "type": "string",
+          "title": "5. Ideas That Sound Good but Violate the WatchTower Lane"
+        },
+        "6_recommended_build_sequence_and_acceptance_tests": {
+          "type": "string",
+          "title": "6. Recommended Build Sequence and Acceptance Tests"
+        },
+        "7_synthesis_watchtower_should_own_the_decision_record": {
+          "type": "string",
+          "title": "7. Synthesis: WatchTower Should Own the Decision Record"
+        }
+      },
+      "required": [
+        "executive_summary",
+        "1_the_remaining_pain_is_change_safety_not_another_tps_graph",
+        "2_what_competing_tools_do_well_and_where_the_gaps_are",
+        "3_four_case_studies_that_define_the_product_opportunity",
+        "4_ranked_feature_opportunities_for_the_neoforge_jar_and_dashboard",
+        "5_ideas_that_sound_good_but_violate_the_watchtower_lane",
+        "6_recommended_build_sequence_and_acceptance_tests",
+        "7_synthesis_watchtower_should_own_the_decision_record"
+      ]
+    }
+  }
+}

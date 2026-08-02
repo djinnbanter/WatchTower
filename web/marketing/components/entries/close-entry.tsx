@@ -18,8 +18,8 @@ export function CloseEntry() {
     <ShiftEntry {...meta} ambient={<DeskShapeGrid />}>
       <div className="relative z-[1] grid items-end gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
         <Reveal>
-          <MarginNote className="mb-4">End of shift</MarginNote>
-          <h2 className="wt-entry max-w-[14ch] text-[color:var(--wt-text)]">
+          <MarginNote className="mb-5 text-[0.8125rem]">End of shift</MarginNote>
+          <h2 className="wt-display max-w-[16ch] text-[color:var(--wt-text)]">
             {CLOSE_HEADLINE}
           </h2>
         </Reveal>
@@ -34,7 +34,7 @@ export function CloseEntry() {
                 onPointerDown={(e) => burst(e.clientX, e.clientY, 'accent')}
                 className="inline-flex"
               >
-                <Cta href={DEMO_URL} withArrow>
+                <Cta href={DEMO_URL} withArrow newTab>
                   Open the demo
                 </Cta>
               </span>

@@ -1,0 +1,4 @@
+date,mspt_avg,mspt_p95,tps_avg,players_peak,low_tps_minutes
+2026-07-16,8.9,21,20,7,0
+2026-07-17,9.2,24,19.9,6,2
+# preview stub — full export available against a live Watchtower server

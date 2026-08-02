@@ -1,0 +1,220 @@
+/* === Misc: Kbd, Spinner, Progress, Tooltip, Stack, Grid, ScrollRegion, Card, CopyButton === */
+
+/* --- Kbd --- */
+.ui-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--ui-sp-4);
+  min-width: 20px;
+  height: 20px;
+  border-radius: var(--ui-rad-s);
+  border: 1px solid var(--ui-line-strong);
+  background: var(--ui-bg3);
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-text-xs);
+  font-weight: 500;
+  color: var(--ui-text-mid);
+  line-height: 1;
+}
+
+/* --- Spinner --- */
+.ui-spinner {
+  display: block;
+  flex-shrink: 0;
+  transform-origin: center;
+  animation: ui-spin 0.7s linear infinite;
+}
+
+@keyframes ui-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ui-spinner__track {
+  stroke: var(--ui-line-strong);
+}
+
+.ui-spinner__arc {
+  stroke: currentColor;
+}
+
+/* --- Progress --- */
+.ui-progress {
+  width: 100%;
+  height: 4px;
+  background: var(--ui-bg3);
+  border-radius: var(--ui-rad-full);
+  overflow: hidden;
+}
+
+.ui-progress__bar {
+  height: 100%;
+  border-radius: var(--ui-rad-full);
+  background: var(--ui-accent);
+  transition: width var(--ui-dur-3) var(--ui-ease-out);
+}
+
+.ui-progress--ok .ui-progress__bar    { background: var(--ui-ok); }
+.ui-progress--warn .ui-progress__bar  { background: var(--ui-warn); }
+.ui-progress--danger .ui-progress__bar { background: var(--ui-danger); }
+.ui-progress--info .ui-progress__bar  { background: var(--ui-info); }
+
+/* --- Tooltip trigger + shared float tips (portaled to body) --- */
+.ui-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+.ui-float-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.ui-float-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  display: block;
+  min-width: 8rem;
+  max-width: min(18rem, calc(100vw - 16px));
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--ui-rad-m, 8px);
+  border: 1px solid var(--ui-line-strong, #3a4250);
+  background: var(--ui-bg3, #1c222c);
+  color: var(--ui-text-hi, #e8eef6);
+  font-size: var(--ui-text-xs, 0.75rem);
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  box-shadow: var(--ui-shadow-pop, 0 8px 24px rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+.ui-float-tip__title {
+  font-weight: 600;
+  color: var(--ui-text-hi, #e8eef6);
+  margin-bottom: 0.35rem;
+}
+
+.ui-float-tip__muted {
+  color: var(--ui-text-low, #8b95a5);
+}
+
+.ui-float-tip__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--ui-text-mid, #b0b8c4);
+}
+
+.ui-float-tip__row + .ui-float-tip__row {
+  margin-top: 2px;
+}
+
+.ui-float-tip__row strong {
+  font-family: var(--ui-font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ui-text-hi, #e8eef6);
+}
+
+/* Legacy class kept for any in-tree tips */
+.ui-tooltip__content {
+  position: absolute;
+  bottom: calc(100% + var(--ui-sp-6, 6px));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.65rem;
+  background: var(--ui-bg3, #1c222c);
+  border: 1px solid var(--ui-line-strong, #3a4250);
+  border-radius: var(--ui-rad-s, 6px);
+  font-size: var(--ui-text-xs, 0.75rem);
+  line-height: 1.4;
+  color: var(--ui-text-hi, #e8eef6);
+  white-space: normal;
+  max-width: min(18rem, calc(100vw - 16px));
+  pointer-events: none;
+  z-index: 200;
+  box-shadow: var(--ui-shadow-pop, 0 8px 24px rgba(0, 0, 0, 0.35));
+}
+
+/* --- Stack --- */
+.ui-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-stack--row {
+  flex-direction: row;
+}
+
+.ui-stack--wrap {
+  flex-wrap: wrap;
+}
+
+/* --- Grid --- */
+.ui-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--ui-grid-min, 180px)), 1fr));
+}
+
+/* --- ScrollRegion --- */
+.ui-scroll {
+  overflow: auto;
+  position: relative;
+  outline: none;
+}
+
+.ui-scroll:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 2px;
+}
+
+.ui-scroll--fade-edges {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black var(--ui-sp-16),
+    black calc(100% - var(--ui-sp-16)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black var(--ui-sp-16),
+    black calc(100% - var(--ui-sp-16)),
+    transparent 100%
+  );
+}
+
+/* --- Card plate owned by 30-patterns/instrument.css (.ui-card) --- */
+
+/* Status pip (replaces left accent bars) */
+.ui-pip {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ui-text-low);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-text-low) 25%, transparent);
+  flex-shrink: 0;
+}
+.ui-pip--ok { background: var(--ui-ok); box-shadow: 0 0 0 2px var(--ui-ok-soft); }
+.ui-pip--warn { background: var(--ui-warn); box-shadow: 0 0 0 2px var(--ui-warn-soft); }
+.ui-pip--danger { background: var(--ui-danger); box-shadow: 0 0 0 2px var(--ui-danger-soft); }
+.ui-pip--info { background: var(--ui-info); box-shadow: 0 0 0 2px var(--ui-info-soft); }
+.ui-pip--accent { background: var(--ui-accent); box-shadow: 0 0 0 2px var(--ui-accent-soft); }
+
+/* --- CopyButton flash state --- */
+.ui-copy-btn--copied {
+  color: var(--ui-ok) !important;
+}

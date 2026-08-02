@@ -17,7 +17,7 @@ cd WatchTower
 ./gradlew :watchtower-core:test :neoforge-1.21:build
 
 # Optional — React dashboard preview (fixtures; Vite on :8081)
-cd web/dashboard-alpha && npm ci && npm run preview
+cd web/dashboard && npm ci && npm run preview
 
 cd ../dr-viewer && npm ci && cd ../..
 node tools/test-dr-analyze.mjs
@@ -71,7 +71,7 @@ GPL-3.0-or-later — see [LICENSE](LICENSE). By contributing, you agree that you
 | `watchtower-core/` | Report engine, collectors, analysis (loader-agnostic) |
 | `watchtower-cli/` | DR CLI when the server will not boot |
 | `mods/neoforge-1.21/` | NeoForge mod (dashboard HTTP, commands, live metrics) |
-| `web/dashboard-alpha/` | Embedded React dashboard (Vite) — synced into the NeoForge 1.21 JAR at build |
+| `web/dashboard/` | Embedded React dashboard (Vite) — synced into the NeoForge 1.21 JAR at build |
 | `web/dashboard/` | Legacy Preact archive — do not re-point Gradle here |
 | `web/dr-viewer/` | Static DR viewer (`npm run sync:dashboard` copies shared assets) |
 | `tools/` | Smoke tests, wiki sync, issue import helpers |

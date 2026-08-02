@@ -19,13 +19,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Parse TOML into a form field tree and clean-rewrite serialize.
+ * Parse TOML into a form field tree; apply value edits in-place (preserve layout/comments).
  * Loader-free — uses TomlJ (shaded at runtime in the core jar).
  */
 public final class TomlFormModel {
 
     private static final Pattern KEY_LINE = Pattern.compile(
             "^\\s*([A-Za-z0-9_.-]+)\\s*=.*$");
+    private static final Pattern ASSIGN = Pattern.compile(
+            "^(\\s*)([A-Za-z0-9_.-]+)(\\s*=\\s*)(.*)$");
+    private static final Pattern TABLE_HDR = Pattern.compile(
+            "^\\s*\\[([^\\]]+)]\\s*(?:#.*)?$");
 
     private TomlFormModel() {
     }
@@ -57,12 +61,87 @@ public final class TomlFormModel {
         }
     }
 
+
+    /**
+     * Patch leaf values into existing TOML text. Preserves comments, blanks, indentation,
+     * key order, and section layout. Unknown/new paths are not inserted.
+     * Empty original falls back to {@link #serialize}.
+     */
+    public static String applyValues(String originalToml, JsonArray fields) {
+        if (fields == null) {
+            throw new IllegalArgumentException("fields required");
+        }
+        Map<String, JsonElement> values = new LinkedHashMap<>();
+        collectLeafValues(fields, values);
+        if (originalToml == null || originalToml.isEmpty()) {
+            return serialize(fields);
+        }
+        Map<String, JsonElement> originals = new LinkedHashMap<>();
+        ParseResult parsedOriginal = parse(originalToml);
+        if (parsedOriginal.formOk()) {
+            collectLeafValues(parsedOriginal.fields(), originals);
+        }
+        String nl = originalToml.contains("\r\n") ? "\r\n" : "\n";
+        String[] lines = originalToml.split("\\R", -1);
+        String currentTable = "";
+        List<String> outLines = new ArrayList<>(lines.length);
+        for (String raw : lines) {
+            String trimmed = raw.trim();
+            if (trimmed.startsWith("[[")) {
+                outLines.add(raw);
+                continue;
+            }
+            Matcher table = TABLE_HDR.matcher(raw);
+            if (table.matches()) {
+                currentTable = table.group(1).trim();
+                outLines.add(raw);
+                continue;
+            }
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                outLines.add(raw);
+                continue;
+            }
+            Matcher assign = ASSIGN.matcher(raw);
+            if (!assign.matches()) {
+                outLines.add(raw);
+                continue;
+            }
+            String key = assign.group(2);
+            String path = currentTable.isEmpty() ? key : currentTable + "." + key;
+            JsonElement next = values.get(path);
+            if (next == null) {
+                outLines.add(raw);
+                continue;
+            }
+            JsonElement prev = originals.get(path);
+            if (prev != null && jsonValuesEqual(prev, next)) {
+                outLines.add(raw);
+                continue;
+            }
+            String rhs = assign.group(4);
+            int hash = indexOfUnquotedHash(rhs);
+            String comment = hash >= 0 ? rhs.substring(hash) : "";
+            String formatted = formatTomlValue(next);
+            StringBuilder line = new StringBuilder();
+            line.append(assign.group(1)).append(key).append(assign.group(3)).append(formatted);
+            if (!comment.isEmpty()) {
+                if (comment.startsWith(" ") || comment.startsWith("\t")) {
+                    line.append(comment);
+                } else {
+                    line.append(' ').append(comment);
+                }
+            }
+            outLines.add(line.toString());
+        }
+        return String.join(nl, outLines);
+    }
+
+    /** Clean rewrite from field tree. Prefer {@link #applyValues} when an original file exists. */
     public static String serialize(JsonArray fields) {
         if (fields == null) {
             throw new IllegalArgumentException("fields required");
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("# WatchTower form rewrite\n");
         List<JsonObject> rootScalars = new ArrayList<>();
         List<JsonObject> tables = new ArrayList<>();
         for (JsonElement el : fields) {
@@ -133,6 +212,89 @@ public final class TomlFormModel {
             }
         }
         return hints;
+    }
+
+
+    private static void collectLeafValues(JsonArray fields, Map<String, JsonElement> out) {
+        for (JsonElement el : fields) {
+            if (!el.isJsonObject()) {
+                throw new IllegalArgumentException("invalid field");
+            }
+            JsonObject o = el.getAsJsonObject();
+            if (!o.has("kind") || !o.has("path")) {
+                throw new IllegalArgumentException("invalid field");
+            }
+            String kind = o.get("kind").getAsString();
+            if ("table".equals(kind)) {
+                JsonArray children = o.getAsJsonArray("children");
+                if (children != null) {
+                    collectLeafValues(children, out);
+                }
+                continue;
+            }
+            switch (kind) {
+                case "bool", "integer", "number", "string", "array" -> {
+                    if (!o.has("value")) {
+                        throw new IllegalArgumentException("invalid field");
+                    }
+                    out.put(o.get("path").getAsString(), o.get("value"));
+                }
+                default -> throw new IllegalArgumentException("invalid field kind: " + kind);
+            }
+        }
+    }
+
+    private static int indexOfUnquotedHash(String rhs) {
+        boolean inStr = false;
+        for (int i = 0; i < rhs.length(); i++) {
+            char c = rhs.charAt(i);
+            if (c == '"' && (i == 0 || rhs.charAt(i - 1) != '\\')) {
+                inStr = !inStr;
+            } else if (c == '#' && !inStr) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean jsonValuesEqual(JsonElement a, JsonElement b) {
+        if (a == null || b == null) {
+            return a == b;
+        }
+        if (a.isJsonPrimitive() && b.isJsonPrimitive()) {
+            JsonPrimitive pa = a.getAsJsonPrimitive();
+            JsonPrimitive pb = b.getAsJsonPrimitive();
+            if (pa.isBoolean() && pb.isBoolean()) {
+                return pa.getAsBoolean() == pb.getAsBoolean();
+            }
+            if (pa.isString() && pb.isString()) {
+                return pa.getAsString().equals(pb.getAsString());
+            }
+            if (pa.isNumber() && pb.isNumber()) {
+                return Double.compare(pa.getAsDouble(), pb.getAsDouble()) == 0;
+            }
+            return false;
+        }
+        if (a.isJsonArray() && b.isJsonArray()) {
+            JsonArray aa = a.getAsJsonArray();
+            JsonArray bb = b.getAsJsonArray();
+            if (aa.size() != bb.size()) {
+                return false;
+            }
+            for (int i = 0; i < aa.size(); i++) {
+                if (!jsonValuesEqual(aa.get(i), bb.get(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return a.equals(b);
+    }
+
+    private static String formatTomlValue(JsonElement value) {
+        StringBuilder sb = new StringBuilder();
+        appendValue(sb, value);
+        return sb.toString();
     }
 
     private static void walkTable(

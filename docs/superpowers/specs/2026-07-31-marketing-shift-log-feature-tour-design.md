@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-31  
 **Surface:** `web/marketing` home page (`/`) — Shift Log entries, rail, entry copy  
-**Status:** Design approved in chat; pending implementation plan  
+**Status:** Implemented (see plan `docs/superpowers/plans/2026-07-31-marketing-shift-log-feature-tour.md`)  
 **Parent:** `docs/superpowers/specs/2026-07-31-marketing-shift-log-design.md`  
 **Related:** `docs/superpowers/specs/2026-07-31-marketing-hero-welcome-design.md` (amended: gauges leave Welcome)
 

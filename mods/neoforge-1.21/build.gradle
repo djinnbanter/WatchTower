@@ -131,25 +131,25 @@ tasks.named('jar', Jar).configure {
     dependsOn tasks.named('syncDashboard')
 }
 
-def dashboardAlphaDir = rootProject.file('web/dashboard-alpha')
-def dashboardAlphaDist = new File(dashboardAlphaDir, 'dist')
+def dashboardDir = rootProject.file('web/dashboard')
+def dashboardDist = new File(dashboardDir, 'dist')
 def dashboardWebOut = layout.buildDirectory.dir('generated/resources/assets/watchtower/web')
 
 tasks.register('buildDashboardAssets', Exec) {
-    workingDir dashboardAlphaDir
+    workingDir dashboardDir
     // Windows-friendly npm invocation
     if (System.getProperty('os.name').toLowerCase().contains('windows')) {
         commandLine 'cmd', '/c', 'npm', 'run', 'build'
     } else {
         commandLine 'npm', 'run', 'build'
     }
-    inputs.dir(new File(dashboardAlphaDir, 'src'))
-    inputs.dir(new File(dashboardAlphaDir, 'assets'))
+    inputs.dir(new File(dashboardDir, 'src'))
+    inputs.dir(new File(dashboardDir, 'assets'))
     inputs.dir(rootProject.file('docs/wiki'))
-    inputs.file(new File(dashboardAlphaDir, 'package.json'))
-    inputs.file(new File(dashboardAlphaDir, 'vite.config.ts'))
-    inputs.file(new File(dashboardAlphaDir, 'index.html'))
-    outputs.dir(dashboardAlphaDist)
+    inputs.file(new File(dashboardDir, 'package.json'))
+    inputs.file(new File(dashboardDir, 'vite.config.ts'))
+    inputs.file(new File(dashboardDir, 'index.html'))
+    outputs.dir(dashboardDist)
 }
 
 tasks.register('syncDashboard', Copy) {
@@ -160,11 +160,11 @@ tasks.register('syncDashboard', Copy) {
         if (outDir.exists()) {
             outDir.deleteDir()
         }
-        if (!dashboardAlphaDist.isDirectory()) {
-            throw new GradleException("dashboard-alpha dist missing after build: ${dashboardAlphaDist}")
+        if (!dashboardDist.isDirectory()) {
+            throw new GradleException("dashboard dist missing after build: ${dashboardDist}")
         }
     }
-    from(dashboardAlphaDist)
+    from(dashboardDist)
     into dashboardWebOut
     outputs.dir(dashboardWebOut)
 }
