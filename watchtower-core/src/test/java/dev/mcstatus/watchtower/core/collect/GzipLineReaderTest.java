@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,5 +29,22 @@ class GzipLineReaderTest {
         List<Path> files = GzipLineReader.iterLogFiles(tmp.toString(), 5, windowStart);
         long gzCount = files.stream().filter(p -> p.toString().endsWith(".gz")).count();
         assertTrue(gzCount >= 5, "expected multiple gz files in 48h window, got " + gzCount);
+    }
+
+    @Test
+    void iterLogFilesIncludesJadeAndKubejsSidecars() throws Exception {
+        Path server = Files.createTempDirectory("wt-logs");
+        Path logs = Files.createDirectories(server.resolve("logs"));
+        Files.writeString(logs.resolve("latest.log"), "x\n");
+        Files.writeString(logs.resolve("JadeErrorOutput.txt"), "INSTANCE\n");
+        Path kjs = Files.createDirectories(logs.resolve("kubejs"));
+        Files.writeString(kjs.resolve("server.log"), "WARN recipe\n");
+        Files.writeString(kjs.resolve("startup.log"), "ok\n");
+        Files.writeString(kjs.resolve("client.log"), ""); // empty OK
+
+        List<Path> found = GzipLineReader.iterLogFiles(server.toString(), 1, Instant.now().getEpochSecond());
+        assertTrue(found.stream().anyMatch(p -> p.getFileName().toString().equals("JadeErrorOutput.txt")));
+        assertTrue(found.stream().anyMatch(p -> p.toString().replace('\\', '/').endsWith("kubejs/server.log")));
+        assertTrue(found.stream().anyMatch(p -> p.toString().replace('\\', '/').endsWith("kubejs/startup.log")));
     }
 }

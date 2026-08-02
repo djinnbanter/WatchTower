@@ -52,6 +52,18 @@ public final class GzipLineReader {
                 break;
             }
         }
+        Path jade = base.resolve("JadeErrorOutput.txt");
+        if (Files.isRegularFile(jade)) {
+            files.add(jade);
+        }
+        Path kjsServer = base.resolve("kubejs").resolve("server.log");
+        Path kjsStartup = base.resolve("kubejs").resolve("startup.log");
+        if (Files.isRegularFile(kjsServer)) {
+            files.add(kjsServer);
+        }
+        if (Files.isRegularFile(kjsStartup)) {
+            files.add(kjsStartup);
+        }
         return files;
     }
 
