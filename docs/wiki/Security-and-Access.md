@@ -78,7 +78,7 @@ On **bloom.host**, Pterodactyl, and public VPS hosts: do not forward port 8787 p
 ## Technical details
 
 - Credentials: hashed in `watchtower/dashboard-auth.json`
-- Session: 24 hours default; “Remember this device” = 7 days
+- Session: 24 hours default; “Remember me” = 7 days (sessions also survive a Minecraft restart while the cookie is still valid)
 - Security headers: `X-Frame-Options`, CSP — scripts served locally
 - `dashboardAuthToken` in old TOML configs is **ignored** in 1.0.0+
 

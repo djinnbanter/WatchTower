@@ -18,8 +18,11 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -655,19 +658,31 @@ public final class StagingBuilder {
         }
     }
 
-    /** Ensure soft-disabled jars appear in optional.mods even when native list is running-only. */
+    /**
+     * Soft-disabled jars on disk must show as disabled in the catalog even while the JVM still
+     * has the mod loaded (rename does not unload). Prefer updating the running row's
+     * {@code jar_file}/{@code disabled} over appending a duplicate id.
+     */
     public static void mergeDisabledJarsFromDisk(JsonArray mods, String serverDir) {
         if (mods == null || serverDir == null || serverDir.isBlank()) {
             return;
         }
         Set<String> jars = new HashSet<>();
+        Map<String, JsonObject> byJar = new HashMap<>();
+        Map<String, JsonObject> byId = new HashMap<>();
         for (var el : mods) {
             if (!el.isJsonObject()) {
                 continue;
             }
             JsonObject m = el.getAsJsonObject();
             if (m.has("jar_file") && !m.get("jar_file").isJsonNull()) {
-                jars.add(m.get("jar_file").getAsString());
+                String jarName = m.get("jar_file").getAsString();
+                jars.add(jarName);
+                byJar.put(jarName.toLowerCase(Locale.ROOT), m);
+            }
+            String id = normalizeModIdKey(strId(m));
+            if (!id.isBlank()) {
+                byId.putIfAbsent(id, m);
             }
         }
         for (var el : ModJarMetadataReader.listModsFromDir(serverDir)) {
@@ -678,16 +693,69 @@ public final class StagingBuilder {
             if (!disk.has("disabled") || !disk.get("disabled").getAsBoolean()) {
                 continue;
             }
-            String jar = disk.has("jar_file") ? disk.get("jar_file").getAsString() : null;
-            if (jar == null || jar.isBlank() || jars.contains(jar)) {
+            String jar = disk.has("jar_file") && !disk.get("jar_file").isJsonNull()
+                    ? disk.get("jar_file").getAsString()
+                    : null;
+            if (jar == null || jar.isBlank()) {
+                continue;
+            }
+            String jarKey = jar.toLowerCase(Locale.ROOT);
+            if (jars.contains(jar) || byJar.containsKey(jarKey)) {
+                JsonObject existing = byJar.get(jarKey);
+                if (existing != null) {
+                    existing.addProperty("disabled", true);
+                    existing.addProperty("jar_file", jar);
+                }
+                continue;
+            }
+            String enabledName = ModJarDisable.enabledNameFor(jar);
+            JsonObject existing = byJar.get(enabledName.toLowerCase(Locale.ROOT));
+            if (existing == null && disk.has("id") && !disk.get("id").isJsonNull()) {
+                String diskId = normalizeModIdKey(disk.get("id").getAsString());
+                if (!diskId.isBlank()) {
+                    existing = byId.get(diskId);
+                }
+            }
+            if (existing != null) {
+                String prevJar = existing.has("jar_file") && !existing.get("jar_file").isJsonNull()
+                        ? existing.get("jar_file").getAsString()
+                        : null;
+                existing.addProperty("jar_file", jar);
+                existing.addProperty("disabled", true);
+                if (disk.has("world_risk") && disk.get("world_risk").isJsonObject()) {
+                    existing.add("world_risk", disk.get("world_risk").deepCopy());
+                }
+                if (prevJar != null) {
+                    jars.remove(prevJar);
+                    byJar.remove(prevJar.toLowerCase(Locale.ROOT));
+                }
+                jars.add(jar);
+                byJar.put(jarKey, existing);
                 continue;
             }
             mods.add(disk.deepCopy());
             jars.add(jar);
+            byJar.put(jarKey, mods.get(mods.size() - 1).getAsJsonObject());
+            String appendedId = normalizeModIdKey(strId(disk));
+            if (!appendedId.isBlank()) {
+                byId.putIfAbsent(appendedId, mods.get(mods.size() - 1).getAsJsonObject());
+            }
         }
     }
 
     private static String strId(JsonObject mod) {
         return mod.has("id") ? mod.get("id").getAsString() : "";
+    }
+
+    /** Strip leftover TOML comment/quote junk so dirty disk ids still match live rows. */
+    static String normalizeModIdKey(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+        String cleaned = ModJarMetadataReader.parseTomlScalar(raw.strip());
+        if (cleaned == null) {
+            return "";
+        }
+        return cleaned.strip().toLowerCase(Locale.ROOT);
     }
 }

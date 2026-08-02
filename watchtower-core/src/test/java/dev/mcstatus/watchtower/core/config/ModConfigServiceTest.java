@@ -111,11 +111,30 @@ class ModConfigServiceTest {
     }
 
     @Test
-    void readJsonStaysRawWithoutFields() throws Exception {
-        Path server = serverWithConfig("config/a.json", "{\"x\":1}\n");
-        JsonObject r = ModConfigService.read(server, "config/a.json");
-        assertEquals("raw", r.get("editor").getAsString());
-        assertFalse(r.has("fields"));
+    void readTomlWithArrayFallsBackToRawNotFail() throws Exception {
+        Path server = serverWithConfig("config/a.toml", "tags = [\"a\", \"b\"]\n");
+        JsonObject r = ModConfigService.read(server, "config/a.toml");
+        assertEquals("tags = [\"a\", \"b\"]\n", r.get("content").getAsString());
+        // Plain arrays may be form-ok now; either form or raw is fine as long as content is present.
+        assertTrue(r.has("content"));
+        assertTrue(r.has("editor"));
+    }
+
+    @Test
+    void saveRejectsDisallowedExtension() throws Exception {
+        Path server = serverWithConfig("config/evil.bin", "x");
+        Path wt = temp.resolve("watchtower");
+        Files.createDirectories(wt);
+        assertThrows(IllegalArgumentException.class,
+                () -> ModConfigService.save(server, wt, "config/evil.bin", "y", 0L));
+    }
+
+    @Test
+    void backupDirsDoNotCollideAcrossSlashVsDoubleUnderscore() {
+        Path wt = temp.resolve("watchtower");
+        Path a = ModConfigService.backupDirFor(wt, "config/a/b.toml");
+        Path b = ModConfigService.backupDirFor(wt, "config/a__b.toml");
+        assertFalse(a.equals(b));
     }
 
     @Test

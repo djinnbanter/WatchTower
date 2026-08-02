@@ -97,6 +97,90 @@ describe('buildCatalogRows', () => {
     assert.equal(disabled!.disabled, true);
     assert.equal(disabled!.jar_file, 'dimmod.jar.disabled');
   });
+
+  it('marks still-running soft-disabled jars as disabled', () => {
+    const badgeMaps = buildBadgeMaps(
+      {
+        mods_light: {
+          mods: [{ id: 'dimmod', disabled: true, jar_file: 'dimmod-1.0.jar.disabled' }],
+        },
+      },
+      {
+        mods: [{ id: 'dimmod', display_name: 'DimMod', jar_file: 'dimmod-1.0.jar' }],
+      },
+    );
+    const factsMods = enrichedFactsMods(
+      {
+        mods_light: {
+          mods: [{ id: 'dimmod', disabled: true, jar_file: 'dimmod-1.0.jar.disabled' }],
+        },
+      },
+      { mods: [{ id: 'dimmod', display_name: 'DimMod', jar_file: 'dimmod-1.0.jar' }] },
+    );
+    const rows = buildCatalogRows(
+      { mods: [{ id: 'dimmod', display_name: 'DimMod', jar_file: 'dimmod-1.0.jar', version: '1.0' }] },
+      factsMods,
+      badgeMaps,
+    );
+    const row = rows.find((r) => r.id === 'dimmod');
+    assert.ok(row);
+    assert.equal(row!.disabled, true);
+    assert.equal(row!.jar_file, 'dimmod-1.0.jar.disabled');
+  });
+
+  it('keeps soft-disable when modrinth_scan has a stale jar_file', () => {
+    const factsMods = enrichedFactsMods(
+      {
+        mods_light: {
+          mods: [{ id: 'dimmod', disabled: true, jar_file: 'dimmod-1.0.jar.disabled' }],
+        },
+        modrinth_scan: {
+          mods: [
+            {
+              id: 'dimmod',
+              jar_file: 'dimmod-1.0.jar',
+              modrinth_icon_url: 'https://cdn.modrinth.com/dim.png',
+            },
+          ],
+        },
+      },
+      { mods: [{ id: 'dimmod', display_name: 'DimMod', jar_file: 'dimmod-1.0.jar' }] },
+    );
+    assert.equal(factsMods[0].disabled, true);
+    assert.equal(factsMods[0].jar_file, 'dimmod-1.0.jar.disabled');
+    assert.equal(factsMods[0].modrinth_icon_url, 'https://cdn.modrinth.com/dim.png');
+  });
+
+  it('dedupes soft-disable twin with NeoForge #mandatory junk id', () => {
+    const badgeMaps = buildBadgeMaps({ mods_light: { mods: [] } }, { mods: [] });
+    const rows = buildCatalogRows(
+      {
+        mods: [
+          {
+            id: '"aiimprovements" #mandatory',
+            display_name: '"AI-Improvements" #mandatory',
+            version: '"${file.jarVersion}" #mandatory',
+            jar_file: 'AI-Improvements-1.21-0.5.3.jar.disabled',
+            disabled: true,
+          },
+          {
+            id: 'aiimprovements',
+            display_name: 'AI Improvements',
+            version: '0.5.3',
+            jar_file: 'AI-Improvements-1.21-0.5.3.jar',
+          },
+        ],
+      },
+      [],
+      badgeMaps,
+    );
+    assert.equal(rows.filter((r) => r.id === 'aiimprovements').length, 1);
+    const row = rows.find((r) => r.id === 'aiimprovements');
+    assert.ok(row);
+    assert.equal(row!.disabled, true);
+    assert.equal(row!.jar_file, 'AI-Improvements-1.21-0.5.3.jar.disabled');
+    assert.equal(row!.display_name, 'AI Improvements');
+  });
 });
 
 describe('mergeModSources', () => {

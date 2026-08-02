@@ -71,9 +71,12 @@ class ModJarDisableTest {
     }
 
     @Test
-    void missingJarFails(@TempDir Path mods) {
-        var r = ModJarDisable.disable(mods, "missing.jar");
-        assertFalse(r.ok());
-        assertEquals("not_found", r.errorCode());
+    void enableFindsDisabledJarWhenUiStillHasEnabledName(@TempDir Path mods) throws Exception {
+        Files.writeString(mods.resolve("foo-1.0.jar.disabled"), "x");
+        var r = ModJarDisable.enable(mods, "foo-1.0.jar");
+        assertTrue(r.ok());
+        assertEquals("foo-1.0.jar", r.jarAfter());
+        assertTrue(Files.exists(mods.resolve("foo-1.0.jar")));
+        assertFalse(Files.exists(mods.resolve("foo-1.0.jar.disabled")));
     }
 }

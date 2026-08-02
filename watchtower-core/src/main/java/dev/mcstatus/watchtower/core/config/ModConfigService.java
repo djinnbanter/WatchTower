@@ -63,6 +63,22 @@ public final class ModConfigService {
         if (!target.startsWith(configRoot)) {
             throw new IllegalArgumentException("path escapes config/");
         }
+        Path name = target.getFileName();
+        if (name == null || !isAllowedName(name.toString())) {
+            throw new IllegalArgumentException("file type not editable under config/");
+        }
+        if (Files.exists(target)) {
+            try {
+                Path realRoot = configRoot.toRealPath();
+                Path realTarget = target.toRealPath();
+                if (!realTarget.startsWith(realRoot)) {
+                    throw new IllegalArgumentException("path escapes config/");
+                }
+                return realTarget;
+            } catch (IOException e) {
+                throw new IllegalArgumentException("cannot resolve config path: " + e.getMessage());
+            }
+        }
         return target;
     }
 
@@ -289,8 +305,10 @@ public final class ModConfigService {
     }
 
     static Path backupDirFor(Path watchtowerDir, String pathKey) {
-        String safe = pathKey.replace("/", "__").replace("\\", "__");
-        return watchtowerDir.resolve("config-backups").resolve(safe);
+        // URL-safe base64 so config/a/b.toml and config/a__b.toml never share a folder.
+        String encoded = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(pathKey.replace('\\', '/').getBytes(StandardCharsets.UTF_8));
+        return watchtowerDir.resolve("config-backups").resolve(encoded);
     }
 
     private static String normalizeRel(String relativePath) {

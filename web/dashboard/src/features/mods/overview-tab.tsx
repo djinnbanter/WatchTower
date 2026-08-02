@@ -161,6 +161,8 @@ export function OverviewTab({
   const [selected, setSelected] = useState<CatalogRow | null>(null);
   const [seedApplied, setSeedApplied] = useState(false);
   const [seedFor, setSeedFor] = useState<string | null>(null);
+  /** Soft-disable/enable jar state waiting for ops-cache to catch up (avoids stale catalog snap-back). */
+  const pendingJarRef = useRef<Map<string, { jar: string; disabled: boolean }>>(new Map());
 
   // Re-apply deep-link when ?mod= changes (e.g. another Changes row).
   if (initialModId !== seedFor) {
@@ -233,11 +235,45 @@ export function OverviewTab({
       if (catalog.length) setSeedApplied(true);
     }
 
-    if (selected && filtered.some((m) => m.id === selected.id)) return;
-    if (selected && catalog.some((m) => m.id === selected.id) && initialModId === selected.id) {
-      // Keep a deep-linked selection visible in the detail panel even if a
-      // later search filter temporarily hides it from the list.
-      return;
+    if (selected) {
+      const fresh =
+        filtered.find((m) => m.id === selected.id) ??
+        catalog.find((m) => m.id === selected.id);
+      if (fresh) {
+        const pending = pendingJarRef.current.get(selected.id);
+        if (pending) {
+          const freshDisabled = Boolean(fresh.disabled);
+          const freshJar = String(fresh.jar_file ?? fresh.jar ?? '');
+          if (freshDisabled === pending.disabled && freshJar === pending.jar) {
+            pendingJarRef.current.delete(selected.id);
+            setSelected(fresh);
+          } else if (
+            Boolean(selected.disabled) !== pending.disabled ||
+            String(selected.jar_file ?? '') !== pending.jar
+          ) {
+            setSelected({
+              ...fresh,
+              jar_file: pending.jar,
+              jar: pending.jar,
+              disabled: pending.disabled,
+            });
+          }
+          // Stale catalog must not replace optimistic soft-disable/enable.
+          if (filtered.some((m) => m.id === selected.id) || initialModId === selected.id) return;
+        } else if (
+          Boolean(fresh.disabled) !== Boolean(selected.disabled) ||
+          String(fresh.jar_file ?? '') !== String(selected.jar_file ?? '') ||
+          String(fresh.jar ?? '') !== String(selected.jar ?? '')
+        ) {
+          setSelected(fresh);
+        }
+        if (filtered.some((m) => m.id === selected.id)) return;
+        if (initialModId === selected.id) {
+          // Keep a deep-linked selection visible in the detail panel even if a
+          // later search filter temporarily hides it from the list.
+          return;
+        }
+      }
     }
     if (filtered.length) setSelected(filtered[0]);
     else if (selected) setSelected(null);
@@ -378,6 +414,21 @@ export function OverviewTab({
           badgeMaps={badgeMaps}
           factsMods={factsMods}
           onSelectMod={selectModById}
+          onJarStateChange={({ jar, disabled }) => {
+            if (selected?.id) {
+              pendingJarRef.current.set(selected.id, { jar, disabled });
+            }
+            setSelected((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    jar_file: jar,
+                    jar,
+                    disabled,
+                  }
+                : prev,
+            );
+          }}
         />
       </div>
     </div>

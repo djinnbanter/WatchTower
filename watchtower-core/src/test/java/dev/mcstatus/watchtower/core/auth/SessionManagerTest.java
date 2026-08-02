@@ -79,4 +79,22 @@ class SessionManagerTest {
         assertNotNull(sessions.get(mine.sessionId()));
         assertNull(sessions.get(theirs.sessionId()));
     }
+
+    @Test
+    void rememberSessionSurvivesNewManagerLoad() throws Exception {
+        Path key = tempDir.resolve(".auth-key");
+        Path store = tempDir.resolve("dashboard-sessions.json");
+        AuthKeyStore keys = new AuthKeyStore(key);
+        SessionManager first = new SessionManager(keys, store);
+        SessionManager.SessionState state = first.createSession(
+                "acc_1", "ella", AccountRole.OWNER, false, false, true,
+                SessionManager.REMEMBER_TTL_SECONDS, true);
+        String cookie = first.cookieValue(state);
+
+        SessionManager second = new SessionManager(new AuthKeyStore(key), store);
+        SessionManager.SessionState resolved = second.resolveCookie(cookie);
+        assertNotNull(resolved);
+        assertEquals("ella", resolved.username());
+        assertTrue(resolved.remember());
+    }
 }

@@ -44,6 +44,9 @@ public final class RunningModsCollector {
         }
         if (mod.jarFile() != null && !mod.jarFile().isBlank()) {
             row.addProperty("jar_file", mod.jarFile());
+            if (ModJarDisable.isDisabledName(mod.jarFile())) {
+                row.addProperty("disabled", true);
+            }
         }
         if (mod.nested()) {
             row.addProperty("nested", true);

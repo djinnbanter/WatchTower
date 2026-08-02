@@ -7,6 +7,7 @@ import { useCanWrite, VIEW_ONLY_TITLE } from '@/app/permissions';
 import { Button, EmptyState, StatusPill } from '@/ui/patterns';
 import { modIconUrl } from './modrinth';
 import { toTree } from './mod-graph';
+import { softDisabledFromRow } from './catalog';
 import { bucketLabel, humanizeSideSignal, modDisplayName, sideSummaryForMod } from './side';
 import { BUCKET_TONE } from './side';
 import type { BadgeMaps, CatalogRow, DepTreeNode, SideSummary } from './types';
@@ -307,24 +308,40 @@ export function ModDetailPanel({
   badgeMaps,
   factsMods,
   onSelectMod,
+  onJarStateChange,
 }: {
   mod: CatalogRow | null;
   showTechNames: boolean;
   badgeMaps: BadgeMaps;
   factsMods: Record<string, unknown>[];
   onSelectMod?: (id: string) => void;
+  /** Keep list selection in sync after soft-disable / enable rename. */
+  onJarStateChange?: (next: { jar: string; disabled: boolean }) => void;
 }) {
   const canWrite = useCanWrite();
   const qc = useQueryClient();
   const [confirmRisk, setConfirmRisk] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const jarName = mod ? String(mod.jar_file ?? mod.jar ?? '') : '';
-  const disabled = mod?.disabled === true;
+  // Optimistic jar state so Disabling… does not snap back to Enabled before ops-cache refreshes.
+  const [jarOverride, setJarOverride] = useState<{ jar: string; disabled: boolean } | null>(null);
 
   useEffect(() => {
     setConfirmRisk(false);
     setActionError(null);
-  }, [mod?.id, jarName]);
+    setJarOverride(null);
+  }, [mod?.id]);
+
+  useEffect(() => {
+    if (!jarOverride || !mod) return;
+    const catalogDisabled = softDisabledFromRow(mod);
+    const catalogJar = String(mod.jar_file ?? mod.jar ?? '');
+    if (catalogDisabled === jarOverride.disabled && catalogJar === jarOverride.jar) {
+      setJarOverride(null);
+    }
+  }, [mod, jarOverride]);
+
+  const jarName = jarOverride?.jar ?? (mod ? String(mod.jar_file ?? mod.jar ?? '') : '');
+  const disabled = jarOverride ? jarOverride.disabled : softDisabledFromRow(mod ?? undefined);
 
   const invalidateMods = () => {
     void qc.invalidateQueries({ queryKey: ['ops-cache'] });
@@ -332,12 +349,21 @@ export function ModDetailPanel({
     void qc.invalidateQueries({ queryKey: ['overview-meta'] });
   };
 
+  const applyJarAfter = (data: Record<string, unknown>, nextDisabled: boolean) => {
+    const after = String(data.jar_after ?? jarName);
+    if (!after) return;
+    const next = { jar: after, disabled: nextDisabled };
+    setJarOverride(next);
+    onJarStateChange?.(next);
+  };
+
   const disableM = useMutation({
     mutationFn: (confirm: boolean) =>
       api.modsDisable({ jar: jarName, confirm_world_risk: confirm || undefined }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       setConfirmRisk(false);
       setActionError(null);
+      applyJarAfter(data, true);
       invalidateMods();
     },
     onError: (e: Error) => {
@@ -353,8 +379,9 @@ export function ModDetailPanel({
 
   const enableM = useMutation({
     mutationFn: () => api.modsEnable({ jar: jarName }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       setActionError(null);
+      applyJarAfter(data, false);
       invalidateMods();
     },
     onError: (e: Error) => setActionError(e?.message ?? 'Enable failed'),

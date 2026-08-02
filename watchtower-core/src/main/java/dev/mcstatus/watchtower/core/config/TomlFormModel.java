@@ -58,6 +58,10 @@ public final class TomlFormModel {
         } catch (UnsupportedStructureException e) {
             warnings.add(e.getMessage() != null ? e.getMessage() : "unsupported_structure");
             return new ParseResult(false, new JsonArray(), warnings);
+        } catch (RuntimeException e) {
+            // TomlJ may throw UnsupportedOperationException on some array shapes (e.g. containsTables).
+            warnings.add(e.getMessage() != null ? e.getMessage() : "unsupported_structure");
+            return new ParseResult(false, new JsonArray(), warnings);
         }
     }
 
@@ -319,7 +323,7 @@ public final class TomlFormModel {
                 out.add(node);
             } else if (table.isArray(key)) {
                 TomlArray arr = table.getArray(key);
-                if (arr.containsTables()) {
+                if (arrayHasTables(arr)) {
                     throw new UnsupportedStructureException("unsupported_structure: array of tables at " + dotted);
                 }
                 out.add(leaf(key, dotted, sectionPath, arrayToJson(arr), hints));
@@ -335,6 +339,23 @@ public final class TomlFormModel {
                 throw new UnsupportedStructureException("unsupported_structure: value at " + dotted);
             }
         }
+    }
+
+    /** Avoid TomlJ {@code containsTables()} — it throws on plain value arrays in 1.1.x. */
+    private static boolean arrayHasTables(TomlArray arr) {
+        if (arr == null) {
+            return false;
+        }
+        for (int i = 0; i < arr.size(); i++) {
+            Object v = arr.get(i);
+            if (v instanceof TomlTable) {
+                return true;
+            }
+            if (v instanceof TomlArray nested && arrayHasTables(nested)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static JsonArray arrayToJson(TomlArray arr) {
@@ -354,7 +375,7 @@ public final class TomlFormModel {
             } else if (v instanceof String s) {
                 out.add(s);
             } else if (v instanceof TomlArray nested) {
-                if (nested.containsTables()) {
+                if (arrayHasTables(nested)) {
                     throw new UnsupportedStructureException("unsupported_structure: array of tables");
                 }
                 out.add(arrayToJson(nested));
@@ -489,7 +510,28 @@ public final class TomlFormModel {
     }
 
     private static String escapeToml(String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+        if (s == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(s.length() + 8);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '\\' -> sb.append("\\\\");
+                case '"' -> sb.append("\\\"");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
+                    if (c < 0x20) {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+                }
+            }
+        }
+        return sb.toString();
     }
 
     private static final class UnsupportedStructureException extends RuntimeException {

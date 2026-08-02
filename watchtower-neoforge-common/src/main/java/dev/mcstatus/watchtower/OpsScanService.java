@@ -427,6 +427,8 @@ public final class OpsScanService {
         JsonArray mods = RunningModsCollector.toJsonArray(rows);
         // Fold nested ModList peers under parents before persisting.
         ModNesting.foldRunningMods(mods, server.serverDirectory().toAbsolutePath().toString());
+        // Soft-disabled jars stay loaded until reboot — stamp disabled + jar_file from disk.
+        StagingBuilder.mergeDisabledJarsFromDisk(mods, server.serverDirectory().toAbsolutePath().toString());
         OpsCacheWriter.applyRunningMods(
                 WatchtowerPaths.opsCachePath(server),
                 WatchtowerPaths.statePath(server),

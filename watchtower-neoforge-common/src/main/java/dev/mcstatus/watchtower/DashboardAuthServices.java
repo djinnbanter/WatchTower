@@ -34,7 +34,7 @@ public final class DashboardAuthServices {
         try {
             keyStore = new AuthKeyStore(WatchtowerPaths.authKeyPath(server));
             authStore = new DashboardAuthStore(WatchtowerPaths.dashboardAuthPath(server), keyStore);
-            sessionManager = new SessionManager(keyStore);
+            sessionManager = new SessionManager(keyStore, WatchtowerPaths.dashboardSessionsPath(server));
             rateLimiter = new LoginRateLimiter();
 
             if (authStore.migrationWriteFailure() != null) {
@@ -77,9 +77,7 @@ public final class DashboardAuthServices {
     }
 
     public static void shutdown() {
-        if (sessionManager != null) {
-            sessionManager.revokeAll();
-        }
+        // Leave dashboard-sessions.json on disk so Remember me survives the next boot.
         authStore = null;
         keyStore = null;
         sessionManager = null;

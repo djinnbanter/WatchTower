@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 
@@ -87,10 +88,10 @@ public final class DashboardAuthHttp {
         AccountRole role = AccountRole.fromWire(account.role);
         long ttl = remember ? SessionManager.REMEMBER_TTL_SECONDS : SessionManager.DEFAULT_TTL_SECONDS;
         SessionManager.SessionState session = DashboardAuthServices.sessions().createSession(
-                account.id, account.username, role, mustChange, totpEnabled, !totpEnabled, ttl);
+                account.id, account.username, role, mustChange, totpEnabled, !totpEnabled, ttl, remember);
         store.recordLogin(account.id);
         DashboardAudit.record("login_ok", session, null, remember ? "remember=true" : null, ip);
-        setSessionCookie(ex, session, remember, secureCookie(ex));
+        setSessionCookie(ex, session, secureCookie(ex));
 
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
@@ -131,6 +132,7 @@ public final class DashboardAuthHttp {
             sendJson(ex, 401, errorJson("session_expired", "Session expired — sign in again"));
             return;
         }
+        setSessionCookie(ex, updated, secureCookie(ex));
         JsonObject out = new JsonObject();
         out.addProperty("ok", true);
         out.addProperty("username", updated.username());
@@ -844,11 +846,17 @@ public final class DashboardAuthHttp {
     public static void setSessionCookie(
             HttpExchange ex,
             SessionManager.SessionState session,
-            boolean remember,
             boolean secure
     ) {
         String value = DashboardAuthServices.sessions().cookieValue(session);
-        long maxAge = remember ? SessionManager.REMEMBER_TTL_SECONDS : SessionManager.DEFAULT_TTL_SECONDS;
+        long maxAge = session.remember()
+                ? SessionManager.REMEMBER_TTL_SECONDS
+                : SessionManager.DEFAULT_TTL_SECONDS;
+        // Prefer remaining TTL so a refreshed cookie (e.g. after TOTP) does not extend past expires_at.
+        long remaining = Math.max(0L, session.expiresAtEpochSec() - Instant.now().getEpochSecond());
+        if (remaining > 0 && remaining < maxAge) {
+            maxAge = remaining;
+        }
         appendCookie(ex, sessionCookieHeader(value, maxAge, secure));
     }
 

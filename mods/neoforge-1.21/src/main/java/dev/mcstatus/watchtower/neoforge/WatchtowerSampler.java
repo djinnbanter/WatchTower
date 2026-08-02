@@ -12,6 +12,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.neoforged.neoforgespi.language.IModInfo;
 
+import dev.mcstatus.watchtower.core.collect.ModJarDisable;
 import dev.mcstatus.watchtower.core.collect.ModJarMetadataReader;
 import dev.mcstatus.watchtower.runtime.ModRuntime;
 import dev.mcstatus.watchtower.runtime.WatchtowerSample;
@@ -206,11 +207,34 @@ public final class WatchtowerSampler {
                         jarFile = p.getFileName() != null ? p.getFileName().toString() : null;
                         if (modsDir != null && jarFile != null) {
                             Path direct = modsDir.resolve(jarFile);
-                            nested = !Files.isRegularFile(direct)
-                                    || normalized.toLowerCase(Locale.ROOT).contains("/jarjar/")
-                                    || normalized.toLowerCase(Locale.ROOT).contains("META-INF/jars/".toLowerCase(Locale.ROOT));
-                            if (nested) {
-                                parentJar = nestedToParent.get(id.toLowerCase(Locale.ROOT));
+                            // Soft-disable renames foo.jar → foo.jar.disabled without unloading.
+                            // Do not treat the missing enabled basename as nested jar-in-jar.
+                            if (!Files.isRegularFile(direct)
+                                    && jarFile.toLowerCase(Locale.ROOT).endsWith(".jar")
+                                    && !ModJarDisable.isDisabledName(jarFile)) {
+                                Path softDisabled = modsDir.resolve(ModJarDisable.disabledNameFor(jarFile));
+                                if (Files.isRegularFile(softDisabled)) {
+                                    jarFile = softDisabled.getFileName().toString();
+                                    nested = false;
+                                } else {
+                                    nested = normalized.toLowerCase(Locale.ROOT).contains("/jarjar/")
+                                            || normalized.toLowerCase(Locale.ROOT).contains(
+                                                    "META-INF/jars/".toLowerCase(Locale.ROOT));
+                                    if (!nested) {
+                                        nested = true;
+                                    }
+                                    if (nested) {
+                                        parentJar = nestedToParent.get(id.toLowerCase(Locale.ROOT));
+                                    }
+                                }
+                            } else {
+                                nested = !Files.isRegularFile(direct)
+                                        || normalized.toLowerCase(Locale.ROOT).contains("/jarjar/")
+                                        || normalized.toLowerCase(Locale.ROOT).contains(
+                                                "META-INF/jars/".toLowerCase(Locale.ROOT));
+                                if (nested) {
+                                    parentJar = nestedToParent.get(id.toLowerCase(Locale.ROOT));
+                                }
                             }
                         }
                     }

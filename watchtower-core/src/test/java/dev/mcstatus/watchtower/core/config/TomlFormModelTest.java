@@ -172,4 +172,25 @@ class TomlFormModelTest {
         assertEquals(original, TomlFormModel.applyValues(original, r.fields()));
     }
 
+    @Test
+    void plainValueArraysAreFormEditable() {
+        var r = TomlFormModel.parse("tags = [\"a\", \"b\"]\nx = 1\n");
+        assertTrue(r.formOk(), "plain arrays must not kill the form editor");
+        assertTrue(r.fields().size() >= 1);
+    }
+
+    @Test
+    void escapeTomlKeepsNewlinesValid() {
+        JsonArray fields = new JsonArray();
+        JsonObject leaf = new JsonObject();
+        leaf.addProperty("kind", "string");
+        leaf.addProperty("key", "name");
+        leaf.addProperty("path", "name");
+        leaf.addProperty("section", "");
+        leaf.addProperty("value", "line1\nline2");
+        fields.add(leaf);
+        String out = TomlFormModel.serialize(fields);
+        assertTrue(out.contains("\\n"));
+        assertTrue(TomlFormModel.parse(out).formOk());
+    }
 }

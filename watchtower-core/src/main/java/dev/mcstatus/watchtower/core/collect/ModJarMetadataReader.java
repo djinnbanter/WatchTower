@@ -419,9 +419,13 @@ public final class ModJarMetadataReader {
             }
             List<ModEntry> out = new ArrayList<>();
             for (ParsedModBlock block : blocks) {
+                String version = block.version();
+                if (version == null || version.isBlank() || isUnresolvedPlaceholder(version)) {
+                    version = versionFromFilename(jarPath, block.modId());
+                }
                 out.add(new ModEntry(
                         block.modId(),
-                        block.version() != null ? block.version() : versionFromFilename(jarPath, block.modId()),
+                        version,
                         block.displayName(),
                         block.description(),
                         block.modLoader(),
@@ -616,12 +620,15 @@ public final class ModJarMetadataReader {
 
     private static String versionFromFilename(Path jarPath, String modId) {
         String name = jarPath.getFileName().toString();
-        if (name.endsWith(".jar")) {
+        name = ModJarDisable.enabledNameFor(name);
+        if (name.toLowerCase(Locale.ROOT).endsWith(".jar")) {
             name = name.substring(0, name.length() - 4);
         }
-        String prefix = modId + "-";
-        if (name.startsWith(prefix)) {
-            return name.substring(prefix.length());
+        if (modId != null && !modId.isBlank()) {
+            String prefix = modId + "-";
+            if (name.regionMatches(true, 0, prefix, 0, prefix.length())) {
+                return name.substring(prefix.length());
+            }
         }
         return "?";
     }
@@ -682,7 +689,7 @@ public final class ModJarMetadataReader {
                 continue;
             }
             String key = line.substring(0, eq).strip();
-            String value = unquote(line.substring(eq + 1).strip());
+            String value = parseTomlScalar(line.substring(eq + 1).strip());
             if (depOwner != null) {
                 depFields.put(key, value);
             } else if (inMod && depOwner == null) {
@@ -753,6 +760,41 @@ public final class ModJarMetadataReader {
         return new ModDependency(modId, type, mandatory, fields.get("side"), versionRange);
     }
 
+    /**
+     * NeoForge template tomls often append {@code #mandatory} after quoted scalars.
+     * Strip trailing comments outside quotes, then unquote — otherwise values become
+     * {@code "aiimprovements" #mandatory} and soft-disable merge misses the running row.
+     */
+    static String parseTomlScalar(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        return unquote(stripInlineComment(raw).strip());
+    }
+
+    static String stripInlineComment(String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        boolean inDouble = false;
+        boolean inSingle = false;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '"' && !inSingle) {
+                if (i == 0 || value.charAt(i - 1) != '\\') {
+                    inDouble = !inDouble;
+                }
+            } else if (c == '\'' && !inDouble) {
+                if (i == 0 || value.charAt(i - 1) != '\\') {
+                    inSingle = !inSingle;
+                }
+            } else if (c == '#' && !inDouble && !inSingle) {
+                return value.substring(0, i).strip();
+            }
+        }
+        return value;
+    }
+
     private static String unquote(String value) {
         if (value.startsWith("\"\"\"")) {
             int end = value.indexOf("\"\"\"", 3);
@@ -763,6 +805,10 @@ public final class ModJarMetadataReader {
             return value.substring(1, value.length() - 1);
         }
         return value;
+    }
+
+    static boolean isUnresolvedPlaceholder(String value) {
+        return value != null && value.contains("${");
     }
 
     private static String str(JsonObject o, String key) {

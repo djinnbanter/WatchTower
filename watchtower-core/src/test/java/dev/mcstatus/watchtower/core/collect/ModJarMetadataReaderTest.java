@@ -249,6 +249,37 @@ class ModJarMetadataReaderTest {
         assertFalse(mod.get("disabled").getAsBoolean());
     }
 
+    @Test
+    void stripsMandatoryCommentsAndPlaceholders(@TempDir Path modsDir) throws IOException {
+        Path jar = modsDir.resolve("AI-Improvements-1.21-0.5.3.jar.disabled");
+        writeJar(jar, """
+                modLoader="javafml" #mandatory
+                loaderVersion="[1,)" #mandatory
+                license="All Rights Reserved"
+
+                [[mods]]
+                modId="aiimprovements" #mandatory
+                version="${file.jarVersion}" #mandatory
+                displayName="AI-Improvements" #mandatory
+                """);
+        var entries = ModJarMetadataReader.readJar(jar);
+        assertEquals(1, entries.size());
+        assertEquals("aiimprovements", entries.get(0).id());
+        assertEquals("AI-Improvements", entries.get(0).displayName());
+        assertFalse(entries.get(0).version().contains("${"));
+        assertFalse(entries.get(0).version().contains("#"));
+        JsonObject json = ModJarMetadataReader.toJson(entries.get(0));
+        assertTrue(json.get("disabled").getAsBoolean());
+    }
+
+    @Test
+    void parseTomlScalarStripsInlineComments() {
+        assertEquals("aiimprovements", ModJarMetadataReader.parseTomlScalar("\"aiimprovements\" #mandatory"));
+        assertEquals("AI-Improvements", ModJarMetadataReader.parseTomlScalar("\"AI-Improvements\" #mandatory"));
+        assertEquals("${file.jarVersion}", ModJarMetadataReader.parseTomlScalar("\"${file.jarVersion}\" #mandatory"));
+        assertEquals("has # inside", ModJarMetadataReader.parseTomlScalar("\"has # inside\""));
+    }
+
     private static void writeJar(Path jar, String toml) throws IOException {
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(jar))) {
             zos.putNextEntry(new ZipEntry("META-INF/neoforge.mods.toml"));

@@ -131,4 +131,13 @@ public final class WatchtowerPaths {
     public static Path authKeyPath(ServerContext ctx) {
         return authKeyPath(ctx.serverDirectory());
     }
+
+    /** Persisted dashboard sessions (Remember me / restart survival). */
+    public static Path dashboardSessionsPath(Path serverDir) {
+        return watchtowerRoot(serverDir).resolve("dashboard-sessions.json");
+    }
+
+    public static Path dashboardSessionsPath(ServerContext ctx) {
+        return dashboardSessionsPath(ctx.serverDirectory());
+    }
 }

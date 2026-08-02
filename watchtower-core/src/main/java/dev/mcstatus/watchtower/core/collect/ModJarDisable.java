@@ -70,7 +70,7 @@ public final class ModJarDisable {
     }
 
     public static Result disable(Path modsDir, String jarBasename) {
-        Path resolved = resolveTopLevelJar(modsDir, jarBasename);
+        Path resolved = resolveExistingTopLevelJar(modsDir, jarBasename);
         if (resolved == null) {
             return Result.fail("invalid_jar", "Jar must be a top-level file under mods/");
         }
@@ -98,7 +98,7 @@ public final class ModJarDisable {
     }
 
     public static Result enable(Path modsDir, String jarBasename) {
-        Path resolved = resolveTopLevelJar(modsDir, jarBasename);
+        Path resolved = resolveExistingTopLevelJar(modsDir, jarBasename);
         if (resolved == null) {
             return Result.fail("invalid_jar", "Jar must be a top-level file under mods/");
         }
@@ -160,5 +160,26 @@ public final class ModJarDisable {
             return null;
         }
         return resolved;
+    }
+
+    /**
+     * Prefer the basename that actually exists on disk. UI may still hold the pre-rename
+     * {@code foo.jar} after soft-disable (or {@code foo.jar.disabled} after enable).
+     */
+    static Path resolveExistingTopLevelJar(Path modsDir, String jarBasename) {
+        Path primary = resolveTopLevelJar(modsDir, jarBasename);
+        if (primary == null) {
+            return null;
+        }
+        if (Files.isRegularFile(primary)) {
+            return primary;
+        }
+        String name = primary.getFileName().toString();
+        String alt = isDisabledName(name) ? enabledNameFor(name) : disabledNameFor(name);
+        Path alternate = resolveTopLevelJar(modsDir, alt);
+        if (alternate != null && Files.isRegularFile(alternate)) {
+            return alternate;
+        }
+        return primary;
     }
 }

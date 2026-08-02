@@ -16,6 +16,7 @@
 | `watchtower/live-history.json` | Live chart history (seconds) |
 | `watchtower/performance-rollups.json` | Minute-by-minute history for **Insights** |
 | `watchtower/dashboard-auth.json` | Named accounts (schema 2, hashed) — **Settings → Security** / **Accounts** |
+| `watchtower/dashboard-sessions.json` | Signed-in sessions (so Remember me survives a server restart) |
 | `watchtower/audit-log.jsonl` | Settings / ack / account / sign-in / mod disable ledger — **Settings → Audit log** |
 | `mods/*.jar.disabled` | Soft-disabled jars (WatchTower **Mods → Disable**; loader ignores until Enable + restart) |
 | `watchtower/restore-verify/` | Test-restore sandboxes only (1.1.20); never the live world |
@@ -28,6 +29,7 @@
 ```text
 watchtower/
   dashboard-auth.json       # Schema 2 accounts + 2FA (do not edit by hand)
+  dashboard-sessions.json   # Active dashboard sessions (Remember me / restart)
   audit-log.jsonl           # Append-only audit ledger (2000 / 90 days)
   watchtower.conf           # Settings file
   snapshot.json             # Quick TPS/lag snapshot
