@@ -2,7 +2,13 @@ package dev.mcstatus.watchtower.core.analyze;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.collect.CrashReportParser;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -111,5 +117,51 @@ class CrashNarratorTest {
         assertFalse(n.plainEnglish().toLowerCase().contains("flywheel"));
         assertFalse(n.fixHints().toString().toLowerCase().contains("contraption"));
         assertFalse(n.fixHints().toString().toLowerCase().contains("flywheel"));
+    }
+
+    @Test
+    void opacApiMismatchMentionsVersionAlignment() throws Exception {
+        Path p = resolveCrashIntel("opac-nsm-command.txt");
+        String text = Files.readString(p);
+        var parsed = CrashReportParser.parse(text, List.of());
+        JsonObject report = new JsonObject();
+        parsed.applyTo(report);
+        CrashNarrator.Narrative n = CrashNarrator.narrate(report, new JsonArray());
+        String plain = n.plainEnglish().toLowerCase(Locale.ROOT);
+        assertTrue(plain.contains("better commands") || plain.contains("opac"),
+                "plain English should name Better Commands / OPAC");
+        assertTrue(plain.contains("version") || plain.contains("match") || plain.contains("mismatch"),
+                "plain English should mention version mismatch");
+        String hints = n.fixHints().toString().toLowerCase(Locale.ROOT);
+        assertTrue(hints.contains("align") || hints.contains("version"),
+                "Fix must include version alignment language");
+        assertFalse(n.manualReview());
+    }
+
+    @Test
+    void sparkShutdownNoiseIsStopPathNotGameplay() throws Exception {
+        Path p = resolveCrashIntel("spark-shutdown-profiler.txt");
+        String text = Files.readString(p);
+        var parsed = CrashReportParser.parse(text, List.of());
+        JsonObject report = new JsonObject();
+        parsed.applyTo(report);
+        CrashNarrator.Narrative n = CrashNarrator.narrate(report, new JsonArray());
+        String plain = n.plainEnglish().toLowerCase(Locale.ROOT);
+        assertTrue(plain.contains("stop") || plain.contains("shutdown"),
+                "plain English should mention server stop path");
+        assertFalse(plain.contains("gameplay"), "must not say gameplay instability");
+        String hints = n.fixHints().toString().toLowerCase(Locale.ROOT);
+        assertTrue(hints.contains("shutdown") || hints.contains("stop") || hints.contains("low"),
+                "Fix should frame stop-path / low priority");
+        assertFalse(hints.contains("gameplay"));
+        assertFalse(n.manualReview());
+    }
+
+    private static Path resolveCrashIntel(String name) {
+        Path p = Path.of("samples", "fixtures", "crash-intelligence", name);
+        if (!Files.isRegularFile(p)) {
+            p = Path.of("..", "samples", "fixtures", "crash-intelligence", name);
+        }
+        return p;
     }
 }

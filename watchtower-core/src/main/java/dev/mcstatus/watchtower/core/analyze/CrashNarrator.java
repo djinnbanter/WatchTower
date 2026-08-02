@@ -249,6 +249,24 @@ public final class CrashNarrator {
                     false);
         }
 
+        if (CrashClassifier.FK_SHUTDOWN_NOISE.equals(failureKind)) {
+            return new Narrative(
+                    "Spark hit an inactive profiler while the server was stopping — this is shutdown-path noise, not mid-play instability.",
+                    "Shutdown noise",
+                    "high",
+                    classification.fixHints(),
+                    false);
+        }
+
+        if (CrashClassifier.FK_API_VERSION_MISMATCH.equals(failureKind)) {
+            return new Narrative(
+                    "OPAC Better Commands and OpenPartiesAndClaims versions do not match — Better Commands called an OPAC API method that is missing.",
+                    "Mod API version mismatch",
+                    "high",
+                    classification.fixHints(),
+                    false);
+        }
+
         if ("mod".equals(classification.category()) && (suspect != null || classification.primaryModId() != null)
                 && CrashClassifier.FK_MOD_RUNTIME.equals(failureKind)) {
             String mod = suspect != null ? suspect : classification.primaryModId();

@@ -4,11 +4,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.mcstatus.watchtower.core.analyze.CrashClassifier;
+import dev.mcstatus.watchtower.core.collect.CrashReportParser;
 import dev.mcstatus.watchtower.core.collect.MixinConfigIndex;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -232,6 +235,39 @@ class CrashClassifierTest {
                 """;
         CrashClassifier.Classification c = CrashClassifier.classifyLight(head);
         assertEquals(CrashClassifier.FK_WATCHDOG, c.failureKind());
+    }
+
+    @Test
+    void opacNoSuchMethodIsApiVersionMismatch() throws Exception {
+        Path p = resolveCrashIntel("opac-nsm-command.txt");
+        String text = Files.readString(p);
+        var parsed = CrashReportParser.parse(text, List.of());
+        JsonObject report = new JsonObject();
+        parsed.applyTo(report);
+        var c = CrashClassifier.classify(report);
+        assertEquals(CrashClassifier.FK_API_VERSION_MISMATCH, c.failureKind());
+        assertEquals("opac_better_commands", c.primaryModId());
+        String hints = c.fixHints().toString().toLowerCase(Locale.ROOT);
+        assertTrue(hints.contains("align") || hints.contains("version"),
+                "hints should mention version alignment");
+        assertTrue(hints.contains("opac") || hints.contains("openparties") || hints.contains("better commands"),
+                "hints should name OPAC / Better Commands");
+    }
+
+    @Test
+    void sparkProfilerInactiveOnStopIsShutdownNoise() throws Exception {
+        Path p = resolveCrashIntel("spark-shutdown-profiler.txt");
+        String text = Files.readString(p);
+        var parsed = CrashReportParser.parse(text, List.of());
+        JsonObject report = new JsonObject();
+        parsed.applyTo(report);
+        var c = CrashClassifier.classify(report);
+        assertEquals(CrashClassifier.FK_SHUTDOWN_NOISE, c.failureKind());
+        assertEquals("spark", c.primaryModId());
+        String hints = c.fixHints().toString().toLowerCase(Locale.ROOT);
+        assertTrue(hints.contains("shutdown") || hints.contains("stop"),
+                "hints should mention stop/shutdown path");
+        assertFalse(hints.contains("gameplay"), "must not frame as gameplay instability");
     }
 
     private static Path resolveCrashIntel(String name) {
