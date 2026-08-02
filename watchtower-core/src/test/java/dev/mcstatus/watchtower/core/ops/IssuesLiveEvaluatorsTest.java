@@ -422,6 +422,29 @@ class IssuesLiveEvaluatorsTest {
     }
 
     @Test
+    void fromWorldPressureMapsPregenOutrunningDisk() {
+        JsonObject cache = new JsonObject();
+        JsonObject wp = new JsonObject();
+        JsonArray classifiers = new JsonArray();
+        JsonObject c = new JsonObject();
+        c.addProperty("kind", "pregen_outrunning_disk");
+        c.addProperty("dimension", "minecraft:overworld");
+        c.addProperty("severity", "warning");
+        c.addProperty("headline", "Pregen is outrunning the disk");
+        c.addProperty("detail", "Chunky active with high write latency");
+        JsonArray steps = new JsonArray();
+        steps.add("Pause pregen and wait for the disk to catch up.");
+        c.add("next_steps", steps);
+        classifiers.add(c);
+        wp.add(OpsCacheSchema.WORLD_PRESSURE_CLASSIFIERS, classifiers);
+        cache.add(OpsCacheSchema.WORLD_PRESSURE, wp);
+        List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromWorldPressure(cache, true);
+        assertEquals(1, rows.size());
+        assertEquals("WORLD_PRESSURE:PREGEN_OUTRUNNING_DISK:MINECRAFT:OVERWORLD", rows.get(0).normalizedKey());
+        assertTrue(rows.get(0).fixSteps().get(0).toLowerCase().contains("pregen"));
+    }
+
+    @Test
     void fromJoinClinicProducesJoinSyncKey() throws Exception {
         JsonObject cache = loadFixture("samples/fixtures/issues-live/join-sync-positive.json");
         List<IssuesLiveRecord> rows = IssuesLiveEvaluators.fromJoinClinic(cache, true);
