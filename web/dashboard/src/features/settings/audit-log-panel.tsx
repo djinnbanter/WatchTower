@@ -224,6 +224,7 @@ export function AuditLogPanel() {
         <HeroTabNav
           layoutGroupId="st-audit-bands"
           className="st-ledger__bands"
+          stretch={false}
           aria-label="Audit log filter"
           value={band}
           items={BANDS.map((b) => ({

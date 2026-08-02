@@ -11,14 +11,7 @@
 }
 
 .st-ledger__bands {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.15rem;
-  margin: 0 0.85rem 0.85rem;
-  padding: 0.2rem;
-  border-radius: var(--radius-wt-lg);
-  border: 1px solid var(--wt-line);
-  background: color-mix(in srgb, var(--wt-bg2) 55%, transparent);
+  margin: 0 1rem 0.75rem;
 }
 
 .st-ledger__band {
@@ -132,11 +125,22 @@
 }
 
 .st-ledger__meta {
-  margin-top: 0.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.45rem;
+  margin-top: 0.25rem;
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
   font-size: var(--wt-fs-xs, 0.68rem);
   color: var(--wt-text-low);
   line-height: 1.35;
+}
+
+.st-ledger__chip {
+  display: inline-block;
+  padding: 0.08rem 0.4rem;
+  border-radius: var(--radius-wt-sm);
+  border: 1px solid color-mix(in srgb, var(--wt-line) 80%, transparent);
+  background: color-mix(in srgb, var(--wt-bg2) 55%, transparent);
 }
 
 .st-ledger__more {
@@ -162,11 +166,20 @@
 }
 
 /* Accounts table */
-.st-accounts__table-wrap {
-  overflow-x: auto;
+.st-accounts__shell {
   border-radius: var(--radius-wt);
   border: 1px solid var(--wt-line);
   background: color-mix(in srgb, var(--wt-bg1) 90%, transparent);
+  box-shadow: var(--wt-shadow);
+  overflow: hidden;
+}
+
+.st-accounts__table-wrap {
+  overflow-x: auto;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 .st-accounts__table {
@@ -219,7 +232,7 @@
 .st-accounts__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.15rem 0.25rem;
+  gap: 0.35rem 0.65rem;
 }
 
 .st-accounts__confirm {
@@ -260,9 +273,11 @@
 .st-accounts__new {
   display: flex;
   flex-wrap: wrap;
+  gap: 0.75rem;
   align-items: flex-end;
-  gap: 0.65rem 0.85rem;
-  padding-top: 0.25rem;
+  padding: 0.85rem 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--wt-line) 85%, transparent);
+  background: color-mix(in srgb, var(--wt-bg2) 35%, transparent);
 }
 
 .st-accounts__new-field {

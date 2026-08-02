@@ -276,8 +276,9 @@ export function AccountsPanel() {
             </div>
           ) : null}
 
-          <div className="st-accounts__table-wrap">
-            <table className="st-accounts__table">
+          <div className="st-accounts__shell">
+            <div className="st-accounts__table-wrap">
+              <table className="st-accounts__table">
               <thead>
                 <tr>
                   <th scope="col">Person</th>
@@ -421,56 +422,57 @@ export function AccountsPanel() {
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
 
-          <form
-            className="st-accounts__new"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!newUsername.trim() || createMut.isPending) return;
-              setFormError('');
-              createMut.mutate();
-            }}
-          >
-            <label className="st-accounts__new-field">
-              <span className="text-xs text-wt-text-low">Username</span>
-              <input
-                type="text"
-                value={newUsername}
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="e.g. jordan"
-                onChange={(e) => {
-                  setNewUsername(e.target.value);
-                  setFormError('');
-                }}
-                className="st-accounts__input"
-              />
-            </label>
-            <label className="st-accounts__new-field">
-              <span className="text-xs text-wt-text-low">Role</span>
-              <select
-                className="st-accounts__select"
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value as typeof newRole)}
-              >
-                {ROLE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button
-              kind="primary"
-              type="submit"
-              disabled={busy || !newUsername.trim()}
-              className="self-end"
+            <form
+              className="st-accounts__new"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newUsername.trim() || createMut.isPending) return;
+                setFormError('');
+                createMut.mutate();
+              }}
             >
-              Add account
-            </Button>
-          </form>
+              <label className="st-accounts__new-field">
+                <span className="text-xs text-wt-text-low">Username</span>
+                <input
+                  type="text"
+                  value={newUsername}
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="e.g. jordan"
+                  onChange={(e) => {
+                    setNewUsername(e.target.value);
+                    setFormError('');
+                  }}
+                  className="st-accounts__input"
+                />
+              </label>
+              <label className="st-accounts__new-field">
+                <span className="text-xs text-wt-text-low">Role</span>
+                <select
+                  className="st-accounts__select"
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value as typeof newRole)}
+                >
+                  {ROLE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                kind="primary"
+                type="submit"
+                disabled={busy || !newUsername.trim()}
+                className="self-end"
+              >
+                Add account
+              </Button>
+            </form>
+          </div>
           {formError ? <p className="text-sm text-wt-danger">{formError}</p> : null}
         </div>
       </Section>
