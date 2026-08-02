@@ -175,6 +175,7 @@ export function findings(profile: UnknownRecord): SparkFinding[] {
 }
 
 function friendlyMetricLabel(metric: string): string {
+  const leaf = metric.includes('.') ? metric.split('.').pop() || metric : metric;
   const known: Record<string, string> = {
     tps_1m: 'TPS (1 min)',
     tps_5m: 'TPS (5 min)',
@@ -187,9 +188,16 @@ function friendlyMetricLabel(metric: string): string {
     total_windows: 'Total windows',
     cpu_process: 'Process CPU',
     cpu_system: 'System CPU',
+    own_pct: 'Own time',
+    self_pct: 'Own time',
+    involvement_pct: 'Involvement',
+    involve_pct: 'Involvement',
+    top_method: 'Top method',
+    top_label: 'Top method',
   };
+  if (known[leaf]) return known[leaf];
   if (known[metric]) return known[metric];
-  return metric
+  return leaf
     .replaceAll('_', ' ')
     .replace(/\bmspt\b/gi, 'MSPT')
     .replace(/\btps\b/gi, 'TPS');
@@ -448,6 +456,37 @@ export function entityTypeLabel(id: string): string {
     .join(' ') || id;
 }
 
+/** Stable bar color for an entity type (Night Watch channel tokens). */
+export function entityTypeBarColor(id: string): string {
+  const key = id.trim().toLowerCase();
+  const leaf = key.includes(':') ? key.slice(key.indexOf(':') + 1) : key;
+
+  if (leaf.includes('experience_orb') || leaf === 'xp_orb') return 'var(--wt-warn)';
+  if (leaf === 'item') return 'var(--wt-accent)';
+  if (leaf.includes('glue') || leaf.includes('contraption')) {
+    return 'color-mix(in srgb, var(--wt-accent) 40%, var(--wt-warn))';
+  }
+  if (
+    /creeper|zombie|skeleton|enderman|blaze|wither|spider|phantom|pillager|vindicator|ravager|guardian|shulker|hoglin|piglin_brute|drowned|husk|stray|witch|vex|evoker/.test(
+      leaf,
+    )
+  ) {
+    return 'var(--wt-danger)';
+  }
+  if (
+    /sheep|chicken|cow|pig|rabbit|horse|cat|wolf|fox|bee|axolot|villager|iron_golem|snow_golem|strider|allay|mooshroom|goat|camel|sniffer|panda|parrot/.test(
+      leaf,
+    )
+  ) {
+    return 'var(--wt-ok)';
+  }
+  if (/frame|painting|armor_stand|mannequin|statue|marker|display|wire|hanging|seat/.test(leaf)) {
+    return 'var(--wt-info, var(--wt-accent))';
+  }
+  if (leaf.includes('player')) return 'var(--wt-accent)';
+  return 'color-mix(in srgb, var(--wt-accent) 65%, var(--wt-text-mid))';
+}
+
 const WORLD_LABELS: Record<string, string> = {
   overworld: 'Overworld',
   the_nether: 'The Nether',
@@ -539,6 +578,34 @@ export function hotspotChunkBBox(hotspots: UnknownRecord[]): ChunkBBox | null {
   }
   if (!Number.isFinite(minX)) return null;
   return { minX, maxX, minZ, maxZ };
+}
+
+/** Fit bbox for Map camera: focus near the busiest hotspot so dual clusters stay visible at min zoom. */
+export const MAP_FIT_RADIUS = 24;
+
+export function hotspotFitBBox(hotspots: UnknownRecord[]): ChunkBBox | null {
+  if (!hotspots.length) return null;
+
+  let seed: UnknownRecord | null = null;
+  let best = -1;
+  for (const row of hotspots) {
+    const n = numeric(row.total_entities);
+    if (n > best) {
+      best = n;
+      seed = row;
+    }
+  }
+  if (!seed) return hotspotChunkBBox(hotspots);
+
+  const sx = numeric(seed.chunk_x);
+  const sz = numeric(seed.chunk_z);
+  const near = hotspots.filter((row) => {
+    const x = numeric(row.chunk_x, NaN);
+    const z = numeric(row.chunk_z, NaN);
+    if (!Number.isFinite(x) || !Number.isFinite(z)) return false;
+    return Math.abs(x - sx) <= MAP_FIT_RADIUS && Math.abs(z - sz) <= MAP_FIT_RADIUS;
+  });
+  return hotspotChunkBBox(near.length ? near : [seed]);
 }
 
 export function hotspotHeatIntensity(totalEntities: number, maxEntities: number): number {

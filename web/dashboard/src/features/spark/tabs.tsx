@@ -44,6 +44,7 @@ import {
   buildOperatorReportMarkdown,
   compositionPieSegments,
   concentrationBarRows,
+  entityTypeBarColor,
   entityTypeLabel,
   findings,
   methods,
@@ -86,6 +87,27 @@ function confidenceLabel(value: string): string {
   if (value === 'correlated') return 'Likely related';
   if (value === 'contextual') return 'Worth checking';
   return value;
+}
+
+function severityLabel(value: string): string {
+  if (value === 'critical' || value === 'danger' || value === 'error') return 'Critical';
+  if (value === 'warn' || value === 'warning' || value === 'degraded') return 'Warn';
+  if (value === 'info') return 'Info';
+  if (value === 'ok' || value === 'healthy' || value === 'good') return 'Ok';
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Note';
+}
+
+/** Hide schema-ish paths like source_rollups.own_pct from operator UI. */
+function isInternalEvidencePath(path: string): boolean {
+  const p = path.trim();
+  if (!p) return true;
+  if (/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$/i.test(p)) return true;
+  if (p.includes('_rollups') || p.startsWith('context.') || p.startsWith('analysis.')) return true;
+  return false;
+}
+
+function isNumericEvidenceValue(value: string): boolean {
+  return /^-?[\d.,]+$/.test(value.trim());
 }
 
 function CountMetric({
@@ -500,7 +522,7 @@ export function FindingsView({
                   onItemSelect={(entry) => {
                     if (entry.kind === 'finding') selectFinding(entry.finding.id);
                   }}
-                  showGradients
+                  showGradients={false}
                   enableArrowNavigation
                   displayScrollbar
                   renderItem={(entry, _index, selected) => {
@@ -512,7 +534,9 @@ export function FindingsView({
                         <span className="sp-finding-row__rank">{entry.rank}</span>
                         <span className="sp-finding-row__title">{entry.finding.title}</span>
                         <span className="sp-finding-row__meta">
-                          <StatusPill tone={toneFor(entry.finding.severity)}>{entry.finding.severity}</StatusPill>
+                          <StatusPill tone={toneFor(entry.finding.severity)}>
+                            {severityLabel(entry.finding.severity)}
+                          </StatusPill>
                           <span className="sp-confidence">{confidenceLabel(entry.finding.confidence)}</span>
                         </span>
                       </div>
@@ -529,7 +553,9 @@ export function FindingsView({
                       <h3>{selectedFinding.title}</h3>
                     </div>
                     <div className="sp-finding-detail__pills">
-                      <StatusPill tone={toneFor(selectedFinding.severity)}>{selectedFinding.severity}</StatusPill>
+                      <StatusPill tone={toneFor(selectedFinding.severity)}>
+                        {severityLabel(selectedFinding.severity)}
+                      </StatusPill>
                       <span className="sp-confidence">{confidenceLabel(selectedFinding.confidence)}</span>
                     </div>
                   </div>
@@ -541,13 +567,18 @@ export function FindingsView({
                       <div className="sp-finding-metrics">
                         {selectedFinding.evidence.map((item) => (
                           item.value ? (
-                            <div className="sp-finding-metric" key={item.raw || `${item.label}:${item.value}`}>
+                            <div
+                              className={`sp-finding-metric${!isNumericEvidenceValue(item.value) || item.value.length > 16 ? ' sp-finding-metric--prose' : ''}`}
+                              key={item.raw || `${item.label}:${item.value}`}
+                            >
                               <span className="sp-finding-metric__label">{item.label}</span>
-                              <span className="sp-finding-metric__value">
+                              <span className="sp-finding-metric__value" title={item.value}>
                                 {item.value}
                                 {item.unit ? <small>{item.unit}</small> : null}
                               </span>
-                              {item.path ? <span className="sp-finding-metric__path">{item.path}</span> : null}
+                              {item.path && !isInternalEvidencePath(item.path) ? (
+                                <span className="sp-finding-metric__path" title={item.path}>{item.path}</span>
+                              ) : null}
                             </div>
                           ) : (
                             <div className="sp-finding-note" key={item.raw || item.label}>
@@ -997,6 +1028,9 @@ function Fact({ label, value, stack = false }: { label: string; value: string | 
 
 const HOTSPOT_VIRTUALIZE_THRESHOLD = 50;
 const HOTSPOT_CARD_ESTIMATE = 220;
+/** World cards stay scannable; Spark → Map owns the full spatial set. */
+const WORLD_BUSY_CHUNK_CAP = 36;
+const HOTSPOT_COL_MIN_PX = 224; /* ~14rem — match .sp-hotspot-grid */
 
 function HotspotCard({
   row,
@@ -1054,14 +1088,30 @@ function HotspotGrid({
   onInspect: (row: UnknownRecord) => void;
 }) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const [lanes, setLanes] = useState(2);
   const virtualize = hotspots.length > HOTSPOT_VIRTUALIZE_THRESHOLD;
   const virtualizer = useVirtualizer({
     count: virtualize ? hotspots.length : 0,
     getScrollElement: () => parentRef.current,
     estimateSize: () => HOTSPOT_CARD_ESTIMATE,
-    overscan: 6,
+    overscan: 8,
     gap: 12,
+    lanes: virtualize ? Math.max(1, lanes) : 1,
   });
+
+  useEffect(() => {
+    if (!virtualize) return undefined;
+    const el = parentRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const sync = () => {
+      const next = Math.max(1, Math.floor(el.clientWidth / HOTSPOT_COL_MIN_PX));
+      setLanes((prev) => (prev === next ? prev : next));
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [virtualize]);
 
   if (!hotspots.length) {
     return <EmptyState title="No busy chunks listed">This capture didn’t include chunk entity maps.</EmptyState>;
@@ -1077,6 +1127,7 @@ function HotspotGrid({
     );
   }
 
+  const colCount = Math.max(1, lanes);
   return (
     <div className="sp-hotspot-grid sp-hotspot-grid--virtual" ref={parentRef}>
       <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
@@ -1091,8 +1142,9 @@ function HotspotGrid({
               style={{
                 position: 'absolute',
                 top: 0,
-                left: 0,
-                width: '100%',
+                left: `${(vRow.lane / colCount) * 100}%`,
+                width: `calc(${100 / colCount}% - 0.55rem)`,
+                paddingRight: 0,
                 transform: `translateY(${vRow.start}px)`,
               }}
             >
@@ -1215,6 +1267,7 @@ export function WorldView({ profile }: { profile: UnknownRecord }) {
                 const share = numeric(world.share_pct);
                 const tops = array<UnknownRecord>(world.top_entities).slice(0, 6);
                 const topCount = tops.reduce((sum, row) => sum + numeric(row.count), 0);
+                const leadTypeCount = Math.max(1, ...tops.map((row) => numeric(row.count)));
                 return (
                   <div className="relative rounded-[var(--radius-wt)] border border-wt-line bg-wt-bg1/90 shadow-[var(--wt-shadow)] overflow-hidden sp-world-card" key={id}>
                     <div className="sp-world-card__head">
@@ -1228,24 +1281,29 @@ export function WorldView({ profile }: { profile: UnknownRecord }) {
                       <span>entities</span>
                     </div>
                     <div className="sp-world-card__bar" aria-hidden="true">
-                      <span style={{ width: `${Math.max(3, Math.min(100, share || 0))}%` }} />
+                      <span style={{ width: `${Math.max(4, Math.min(100, share || 0))}%` }} />
                     </div>
                     {tops.length ? (
                       <div className="sp-world-card__types">
                         <div className="sp-eyebrow">Most common</div>
                         {tops.map((row, index) => {
                           const count = numeric(row.count);
-                          const ofWorld = entities > 0 ? (count / entities) * 100 : 0;
+                          const ofLead = (count / leadTypeCount) * 100;
+                          const typeId = text(row.id);
                           return (
-                            <div className="sp-world-type" key={`${id}:${text(row.id)}`}>
+                            <div className="sp-world-type" key={`${id}:${typeId}`}>
                               <span className="sp-world-type__rank">{index + 1}</span>
                               <div className="sp-world-type__body">
                                 <div className="sp-world-type__line">
-                                  <span>{entityTypeLabel(text(row.id))}</span>
+                                  <span>{entityTypeLabel(typeId)}</span>
                                   <code>{count.toLocaleString()}</code>
                                 </div>
-                                <div className="sp-world-type__bar" aria-hidden="true">
-                                  <span style={{ width: `${Math.max(2, Math.min(100, ofWorld))}%` }} />
+                                <div
+                                  className="sp-world-type__bar"
+                                  aria-hidden="true"
+                                  style={{ ['--sp-type-color' as string]: entityTypeBarColor(typeId) }}
+                                >
+                                  <span style={{ width: `${Math.max(4, Math.min(100, ofLead))}%` }} />
                                 </div>
                               </div>
                             </div>
@@ -1269,8 +1327,15 @@ export function WorldView({ profile }: { profile: UnknownRecord }) {
         )}
       </Section>
 
-      <Section title="Busy chunks" hint="Block ranges are approximate (chunk × 16). Open a chunk to see every entity type counted there.">
-        <HotspotGrid hotspots={hotspots} onInspect={setSelectedHotspot} />
+      <Section
+        title="Busy chunks"
+        hint={
+          hotspots.length > WORLD_BUSY_CHUNK_CAP
+            ? `Showing the ${WORLD_BUSY_CHUNK_CAP} busiest of ${hotspots.length}. Block ranges are approximate (chunk × 16). Spark → Map has the full heat map.`
+            : 'Block ranges are approximate (chunk × 16). Open a chunk to see every entity type counted there.'
+        }
+      >
+        <HotspotGrid hotspots={hotspots.slice(0, WORLD_BUSY_CHUNK_CAP)} onInspect={setSelectedHotspot} />
       </Section>
 
       {selectedHotspot ? (

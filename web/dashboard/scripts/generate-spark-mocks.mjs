@@ -50,6 +50,75 @@ function normalizeProfile(profile, fileName) {
   };
 }
 
+/** Drop absurd coords and pad neighborhood cells so Spark → Map preview reads as a real heat board. */
+const MAP_COORD_LIMIT = 4096;
+const MAP_ENRICH_PER_DIM = 64;
+
+function enrichEntityHotspotsForMap(profile) {
+  const ctx = profile.context;
+  if (!ctx || !Array.isArray(ctx.entity_hotspots)) return profile;
+
+  const cleaned = ctx.entity_hotspots.filter((row) => {
+    const x = Number(row.chunk_x);
+    const z = Number(row.chunk_z);
+    return Number.isFinite(x) && Number.isFinite(z)
+      && Math.abs(x) < MAP_COORD_LIMIT && Math.abs(z) < MAP_COORD_LIMIT;
+  });
+
+  const byDim = new Map();
+  for (const row of cleaned) {
+    const dim = String(row.dimension || 'overworld');
+    if (!byDim.has(dim)) byDim.set(dim, []);
+    byDim.get(dim).push(row);
+  }
+
+  const out = [];
+  for (const [dim, list] of byDim) {
+    list.sort((a, b) => (Number(b.total_entities) || 0) - (Number(a.total_entities) || 0));
+    const existing = new Set(list.map((h) => `${h.chunk_x},${h.chunk_z}`));
+    const expanded = [...list];
+
+    for (const center of list.slice(0, 3)) {
+      const cx = Number(center.chunk_x);
+      const cz = Number(center.chunk_z);
+      const base = Math.max(8, Number(center.total_entities) || 10);
+      const topType = center.top_type || 'minecraft:item';
+      for (let dx = -3; dx <= 3; dx += 1) {
+        for (let dz = -3; dz <= 3; dz += 1) {
+          if (dx === 0 && dz === 0) continue;
+          const key = `${cx + dx},${cz + dz}`;
+          if (existing.has(key)) continue;
+          const dist = Math.max(Math.abs(dx), Math.abs(dz));
+          const count = Math.max(3, Math.round(base * (0.5 / dist)));
+          existing.add(key);
+          expanded.push({
+            dimension: dim,
+            chunk_x: cx + dx,
+            chunk_z: cz + dz,
+            block_x_min: (cx + dx) * 16,
+            block_x_max: (cx + dx) * 16 + 15,
+            block_z_min: (cz + dz) * 16,
+            block_z_max: (cz + dz) * 16 + 15,
+            total_entities: count,
+            top_type: topType,
+            top_count: count,
+            entity_counts: [{ id: topType, count }],
+            same_dimension_players: center.same_dimension_players ?? 0,
+            nearest_player_chunk_distance: center.nearest_player_chunk_distance ?? null,
+            preview_map_enriched: true,
+          });
+        }
+      }
+    }
+
+    expanded.sort((a, b) => (Number(b.total_entities) || 0) - (Number(a.total_entities) || 0));
+    out.push(...expanded.slice(0, MAP_ENRICH_PER_DIM));
+  }
+
+  ctx.entity_hotspots = out;
+  return profile;
+}
+
 function fixtureStats(fileName) {
   const fixturePath = path.join(fixtureDir, fileName);
   if (!fs.existsSync(fixturePath)) return {};
@@ -69,7 +138,7 @@ const treeIndex = {};
 for (const { key, file } of FIXTURE_MAP) {
   const golden = loadGolden(key);
   if (!golden) continue;
-  const normalized = normalizeProfile(golden, file);
+  const normalized = enrichEntityHotspotsForMap(normalizeProfile(golden, file));
   const sourcePath = normalized.source_path;
   profiles[sourcePath] = normalized;
   const stats = fixtureStats(file);

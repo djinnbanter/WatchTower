@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { EmptyState } from '@/ui/patterns';
+import { ChunkDetailModal } from './tabs';
+import { PanZoomChunkBoard } from './pan-zoom-chunk-board';
 import {
   array,
   busiestHotspotDimension,
@@ -16,13 +18,20 @@ export function MapView({ profile }: { profile: UnknownRecord }) {
   const hotspots = array<UnknownRecord>(context.entity_hotspots);
   const dims = hotspotDimensions(hotspots);
   const [dimension, setDimension] = useState(() => busiestHotspotDimension(hotspots) || dims[0] || '');
-  const painted = mapHotspotsForDimension(hotspots, dimension);
+  const [selected, setSelected] = useState<UnknownRecord | null>(null);
+  const profileKey = text(profile.source_path) || text(profile.source_file) || text(profile.captured_at);
 
   useEffect(() => {
     const nextDims = hotspotDimensions(hotspots);
     if (dimension && nextDims.includes(dimension)) return;
     setDimension(busiestHotspotDimension(hotspots) || nextDims[0] || '');
   }, [hotspots, dimension]);
+
+  useEffect(() => {
+    setSelected(null);
+  }, [dimension, profileKey]);
+
+  const painted = dimension ? mapHotspotsForDimension(hotspots, dimension) : [];
 
   if (!hotspots.length) {
     return (
@@ -49,14 +58,25 @@ export function MapView({ profile }: { profile: UnknownRecord }) {
             </button>
           ))}
         </div>
-        <p className="sp-map__hint">
-          Heat from this Spark profile · {painted.length} chunk{painted.length === 1 ? '' : 's'}
-          {text(dimension) ? ` · ${worldDimensionLabel(dimension)}` : ''}
-        </p>
+        <div className="sp-map__legend" aria-hidden="true">
+          <span>Fewer</span>
+          <span className="sp-map__legend-swatch" />
+          <span>More entities</span>
+        </div>
       </div>
-      <div className="sp-map__board-slot" data-testid="sp-map-board-slot">
-        <EmptyState title="Map board pending">Implement pan-zoom board next.</EmptyState>
+      <p className="sp-map__hint">
+        Chunk coordinates · drag to pan · scroll to zoom · click a square for entity details
+      </p>
+      <div className="sp-map__board-slot">
+        {painted.length ? (
+          <PanZoomChunkBoard hotspots={painted} onInspect={setSelected} />
+        ) : (
+          <EmptyState title="No chunks in this dimension">
+            Try another dimension — this profile has no busy chunks here.
+          </EmptyState>
+        )}
       </div>
+      {selected ? <ChunkDetailModal hotspot={selected} onClose={() => setSelected(null)} /> : null}
     </div>
   );
 }
