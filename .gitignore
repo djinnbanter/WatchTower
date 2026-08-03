@@ -52,5 +52,12 @@ Thumbs.db
 .tmp-support-bundle/
 .tmp*/
 
+# Local wiki sync working copy (never publish)
+.wiki-sync/
+
 # Maintainer-only dev docs (not published — keep local copies)
 docs/dev/
+
+# Local research scratch / agent run artifacts (not published)
+docs/research/
+docs/superpowers/
