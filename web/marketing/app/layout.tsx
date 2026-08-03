@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { ThemeProvider } from '@/components/theme-provider';
 import { HERO_OVERVIEW, TAGLINE } from '@/content/product';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   ...(process.env.NEXT_PUBLIC_SITE_URL
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SiteFooter />
           </div>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
