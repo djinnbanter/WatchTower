@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 
@@ -55,9 +55,10 @@ Thumbs.db
 # Local wiki sync working copy (never publish)
 .wiki-sync/
 
-# Maintainer-only dev docs (not published — keep local copies)
+# Maintainer-only dev docs (not published â€” keep local copies)
 docs/dev/
 
 # Local research scratch / agent run artifacts (not published)
 docs/research/
+# Agent design specs/plans - local only (do not force-add)
 docs/superpowers/

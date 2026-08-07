@@ -11,33 +11,33 @@
  */
 
 /** Single hero line. Product: local ops dashboard for dedicated MC servers (PRODUCT.md). */
-export const TAGLINE = 'The ops dashboard for your Minecraft server.';
+export const TAGLINE = "What's happening on your Minecraft server, and what to do next.";
 
 /** Source: PRODUCT.md Product Purpose, README.md. */
 export const SUPPORT_LINE =
-  'It watches the server while it runs, then tells you what to fix. Everything stays on the machine you already use.';
+  'Local ops dashboard for a dedicated host. Watches while the game runs. Data stays on that machine.';
 
 /** Hero welcome overview. Source: PRODUCT.md purpose + local-first host. */
 export const HERO_OVERVIEW =
-  'It watches the server while it runs, then tells you what to fix. Everything stays on the machine you already use.';
+  'Local ops dashboard for a NeoForge dedicated server. Watches while the game runs, then tells you what to fix. No cloud account. Data stays on the host.';
 
 /** Hero context strip. Source: PRODUCT.md local-first / dedicated host / no required cloud. */
 export const HERO_CONTEXT =
   'Local-first · dedicated host · no cloud required';
 
 /** Scroll cue into the Live dashboard beat. */
-export const SCROLL_CUE = 'Scroll the dashboard';
+export const SCROLL_CUE = 'Scroll into Live';
 
 /** Close CTA headline. */
-export const CLOSE_HEADLINE = 'Try the demo, then get it on Modrinth.';
+export const CLOSE_HEADLINE = 'Open the demo, then grab the jar.';
 
 /** Close CTA body. */
 export const CLOSE_BODY =
-  'The demo is the real dashboard on sample data. Click around before you install.';
+  'The demo is the real dashboard on sample fixtures. Click around first if you want, then install from Modrinth.';
 
 /** Footer product blurb. */
 export const FOOTER_BLURB =
-  'A local ops dashboard for Minecraft dedicated servers. It runs on the machine your server already runs on.';
+  'Local ops dashboard for Minecraft dedicated servers. Runs as a jar on the same machine as the game.';
 
 /**
  * Feature-tour capability + brings for Shift Log product beats.
@@ -46,17 +46,17 @@ export const FOOTER_BLURB =
 export const TOUR = {
   live: {
     capability:
-      'Live charts for ticks, lag, memory, players, and host load - no need to open latest.log.',
+      'TPS, lag, memory, players, and host load on charts while the server runs. You do not need latest.log open for the basics.',
     note: 'dashboard · Live',
     /** Source: docs/wiki/Live-Charts.md */
     brings: [
       {
         title: 'Game vitals',
-        detail: 'TPS (ticks per second), tick lag (MSPT), memory, and player count with health colours.',
+        detail: 'TPS, MSPT, memory, and player count, with health colours on the numbers.',
       },
       {
         title: 'Host and storage',
-        detail: 'CPU, disk, and Java heap as separate readouts.',
+        detail: 'CPU, disk, and Java heap as their own readouts.',
       },
       {
         title: 'Network, thermal, world jobs',
@@ -64,13 +64,13 @@ export const TOUR = {
       },
       {
         title: 'Windows you pick',
-        detail: 'Ranges from 5 minutes to 30 days. Hover or drag for the exact time and value.',
+        detail: 'From 5 minutes out to 30 days. Hover or drag for the exact time and value.',
       },
     ],
   },
   issues: {
     capability:
-      'A ranked fix inbox for live finds, scan results, boot problems, and crash pointers.',
+      'Ranked inbox for live finds, scan results, boot problems, and crash pointers. Pick a row, see what to do.',
     note: 'dashboard · Issues',
     /** Source: docs/wiki/Issues.md */
     brings: [
@@ -82,7 +82,7 @@ export const TOUR = {
       {
         title: 'Severity bands',
         detail:
-          'Critical, Warning, and Info. Covers jar drift, world pressure, join clinic, silent script fails, and more.',
+          'Critical, Warning, and Info. Jar drift, world pressure, join clinic, silent script fails, and more.',
       },
       {
         title: 'Fix and Details',
@@ -96,7 +96,7 @@ export const TOUR = {
     ],
   },
   crashes: {
-    capability: 'Fingerprint-grouped crashes with Fix, Evidence, and Details tabs.',
+    capability: 'Crashes grouped by fingerprint, with Fix, Evidence, and Details tabs.',
     note: 'dashboard · Crashes',
     /** Source: docs/wiki/Crashes.md + PRODUCT.md advisory */
     brings: [
@@ -120,13 +120,13 @@ export const TOUR = {
   },
   overview: {
     capability:
-      'Home screen after login: health grade, needs-attention list, and jump links into the dashboard.',
+      'First screen after login: health grade, needs-attention list, and jumps into the rest of the dashboard.',
     note: 'dashboard · Overview',
     /** Source: docs/wiki/Dashboard-Overview.md */
     brings: [
       {
         title: 'Health grade',
-        detail: 'Letter grade from WatchTower signals, from Strong through Poor.',
+        detail: 'Letter grade from WatchTower signals, Strong through Poor.',
       },
       {
         title: 'Needs attention',
@@ -135,17 +135,17 @@ export const TOUR = {
       {
         title: 'Restart advice',
         detail:
-          'Safe, Caution, or Wait labels. Advisory only - WatchTower does not restart the server.',
+          'Safe, Caution, or Wait. Advisory only. WatchTower does not restart the server.',
       },
       {
         title: 'Jump cards',
-        detail: 'Cards into performance insight, weekly digest, storage, Spark, and boot profile.',
+        detail: 'Shortcuts into performance insight, weekly digest, storage, Spark, and boot profile.',
       },
     ],
   },
   insights: {
     capability:
-      'Day-and-week views: busy hours, world pressure, storage trends, and a weekly digest.',
+      'Day and week views for busy hours, world pressure, storage trends, and a weekly digest.',
     note: 'dashboard · Insights',
     /** Source: docs/wiki/Insights.md */
     brings: [
@@ -175,12 +175,12 @@ export const TWO_QUESTIONS = [
   {
     q: 'Is the server okay right now?',
     detail:
-      'A health grade, live vitals, and restart advice. WatchTower never restarts anything for you.',
+      'Health grade, live vitals, and restart advice. WatchTower never restarts anything for you.',
   },
   {
     q: 'What should I fix next?',
     detail:
-      'Issues, crashes, mods, backups, and world pressure. Each one has a plain next step.',
+      'Issues, crashes, mods, backups, and world pressure. Each row says what to do next.',
   },
 ] as const;
 
@@ -198,7 +198,7 @@ export const READOUTS = [
 export const PROMISES = [
   {
     title: 'Your data stays yours',
-    body: "Your files stay on your server. We don't upload logs by default. Anonymous diagnostics and Cloud sync are opt-in.",
+    body: "Files stay on your server. We don't upload logs by default. Anonymous diagnostics and Cloud sync are opt-in.",
   },
   {
     title: "You're in control",
@@ -206,11 +206,11 @@ export const PROMISES = [
   },
   {
     title: 'Ops, not surveillance',
-    body: "It helps you run the server. It doesn't track players like an analytics product.",
+    body: "Helps you run the server. Does not track players like an analytics product.",
   },
   {
     title: 'Drop-in beside your host',
-    body: "A jar in mods/. Not a second control panel you have to keep running.",
+    body: 'A jar in mods/. Not a second control panel you have to keep running.',
   },
 ] as const;
 
@@ -244,4 +244,5 @@ export const LINKS = {
   license: 'https://github.com/djinnbanter/WatchTower/blob/main/LICENSE',
 } as const;
 
-export const FOOTNOTE = 'Free forever on your machine. GPL-3.0-or-later. Runs where the server runs.';
+export const FOOTNOTE =
+  'Free forever on your machine. GPL-3.0-or-later. Runs where the server runs.';

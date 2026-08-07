@@ -148,9 +148,10 @@ export function ModIcon({
   const [broken, setBroken] = useState(false);
   const letter = (name || '?').trim().charAt(0).toUpperCase() || '?';
   const cls = size > 36 ? 'md-catalog__icon md-detail__icon' : 'md-catalog__icon';
+  const dim = { width: size, height: size };
   if (!url || broken) {
     return (
-      <span className={`${cls} md-catalog__icon--ph`} aria-hidden>
+      <span className={`${cls} md-catalog__icon--ph`} style={dim} aria-hidden>
         {letter}
       </span>
     );
@@ -162,6 +163,7 @@ export function ModIcon({
       alt=""
       width={size}
       height={size}
+      style={dim}
       loading="lazy"
       referrerPolicy="no-referrer"
       onError={() => setBroken(true)}
@@ -587,9 +589,11 @@ export function ModDetailPanel({
               {mod.modrinth_outdated ? (
                 <Button
                   kind="default"
-                  onClick={() => navigate({ tab: 'mods', view: 'updates', mod: mod.id })}
+                  onClick={() =>
+                    navigate({ tab: 'mods', view: 'updates', filter: null, mod: mod.id })
+                  }
                 >
-                  Open Updates
+                  Open update details
                 </Button>
               ) : null}
             </div>

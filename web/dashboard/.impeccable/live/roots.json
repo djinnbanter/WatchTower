@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "appRoot": "D:\\mc-status\\web\\dashboard",
+  "repoRoot": "D:\\mc-status",
+  "contextRoot": "D:\\mc-status",
+  "sessionRoot": "D:\\mc-status\\web\\dashboard\\.impeccable\\live",
+  "productPath": "D:\\mc-status\\PRODUCT.md",
+  "designPath": "D:\\mc-status\\DESIGN.md",
+  "resolvedFrom": "target:web\\dashboard"
+}

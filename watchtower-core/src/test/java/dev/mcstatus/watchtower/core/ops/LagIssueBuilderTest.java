@@ -46,6 +46,65 @@ class LagIssueBuilderTest {
     }
 
     @Test
+    void buildFindings_usesQuotaWhenCpuLimitKnown() {
+        JsonObject incident = new JsonObject();
+        incident.addProperty("players_online", 1);
+        JsonObject ctx = new JsonObject();
+        ctx.addProperty("cpu_cores_used", 10.5);
+        ctx.addProperty("cpu_limit_cores", 12.0);
+        ctx.addProperty("host_cpu_pct", 7.0);
+        incident.add("context", ctx);
+
+        JsonArray findings = LagIssueBuilder.buildFindings(incident);
+        boolean hasCpu = false;
+        for (JsonElement el : findings) {
+            JsonObject f = el.getAsJsonObject();
+            if ("host_cpu".equals(f.get("category").getAsString())) {
+                hasCpu = true;
+                assertTrue(f.get("text").getAsString().contains("vs plan"));
+                assertTrue(f.get("text").getAsString().contains("12.0"));
+            }
+        }
+        assertTrue(hasCpu);
+    }
+
+    @Test
+    void buildFindings_skipsCpuWhenUnderQuota() {
+        JsonObject incident = new JsonObject();
+        incident.addProperty("players_online", 1);
+        JsonObject ctx = new JsonObject();
+        ctx.addProperty("cpu_cores_used", 3.0);
+        ctx.addProperty("cpu_limit_cores", 12.0);
+        ctx.addProperty("host_cpu_pct", 90.0);
+        incident.add("context", ctx);
+
+        JsonArray findings = LagIssueBuilder.buildFindings(incident);
+        for (JsonElement el : findings) {
+            assertNotEquals("host_cpu", el.getAsJsonObject().get("category").getAsString());
+        }
+    }
+
+    @Test
+    void buildFindings_fallsBackToHostCpuWithoutLimit() {
+        JsonObject incident = new JsonObject();
+        incident.addProperty("players_online", 1);
+        JsonObject ctx = new JsonObject();
+        ctx.addProperty("host_cpu_pct", 90.0);
+        incident.add("context", ctx);
+
+        JsonArray findings = LagIssueBuilder.buildFindings(incident);
+        boolean hasCpu = false;
+        for (JsonElement el : findings) {
+            JsonObject f = el.getAsJsonObject();
+            if ("host_cpu".equals(f.get("category").getAsString())) {
+                hasCpu = true;
+                assertTrue(f.get("text").getAsString().contains("Host CPU elevated"));
+            }
+        }
+        assertTrue(hasCpu);
+    }
+
+    @Test
     void buildFindings_tagsConfirmedVsManual() {
         JsonObject incident = new JsonObject();
         incident.addProperty("players_online", 1);

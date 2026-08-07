@@ -79,6 +79,13 @@ describe('buildCatalogRows', () => {
     assert.equal(matchesCatalogFilter(off, 'disabled', true), true);
   });
 
+  it('filters mods with available updates', () => {
+    const stale = { id: 'create', display_name: 'Create', modrinth_outdated: true };
+    const fresh = { id: 'jei', display_name: 'JEI', modrinth_outdated: false };
+    assert.equal(matchesCatalogFilter(stale, 'updates', true), true);
+    assert.equal(matchesCatalogFilter(fresh, 'updates', true), false);
+  });
+
   it('keeps disabled-only inventory jars in the catalog', () => {
     const badgeMaps = buildBadgeMaps(
       { mods_light: { mods: [{ id: 'dimmod', disabled: true, jar_file: 'dimmod.jar.disabled' }] } },

@@ -11,10 +11,10 @@ export default function FaqPage() {
   return (
     <main>
       <section className="mx-auto w-full max-w-[54rem] px-5 pb-10 pt-20 md:px-8 md:pb-12 md:pt-28">
-        <MarginNote className="mb-5">Field answers · {count}</MarginNote>
+        <MarginNote className="mb-5">{count} answers</MarginNote>
         <h1 className="wt-display-sm text-[color:var(--wt-text)] text-balance">FAQ</h1>
         <p className="mt-5 max-w-[48ch] text-[1.0625rem] leading-relaxed text-[color:var(--wt-text-mid)]">
-          Straight answers for dedicated-server admins. Scope, trust, and what lives on the host.
+          Scope, trust, and what sits on the host. Written for dedicated-server admins.
         </p>
       </section>
 

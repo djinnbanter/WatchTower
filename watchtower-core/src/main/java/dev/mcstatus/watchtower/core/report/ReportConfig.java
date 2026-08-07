@@ -73,6 +73,7 @@ public final class ReportConfig {
     private final int chunkGenFailThreshold;
     private final int chunkGenFailWindowMin;
     private final boolean metricsContextBanner;
+    private final String cpuDisplay;
     private final boolean updateCheck;
     private final boolean l1RollupEnabled;
     private final int l1RetentionDays;
@@ -130,6 +131,7 @@ public final class ReportConfig {
     private final boolean joinClinicEnabled;
     private final boolean modDisableEnabled;
     private final boolean modConfigEditEnabled;
+    private final boolean modMutateEnabled;
     private final boolean worldRiskEnabled;
     private final boolean configAuditEnabled;
     private final int reportRetentionCount;
@@ -205,6 +207,7 @@ public final class ReportConfig {
         this.chunkGenFailThreshold = b.chunkGenFailThreshold;
         this.chunkGenFailWindowMin = b.chunkGenFailWindowMin;
         this.metricsContextBanner = b.metricsContextBanner;
+        this.cpuDisplay = b.cpuDisplay;
         this.updateCheck = b.updateCheck;
         this.l1RollupEnabled = b.l1RollupEnabled;
         this.l1RetentionDays = b.l1RetentionDays;
@@ -262,6 +265,7 @@ public final class ReportConfig {
         this.joinClinicEnabled = b.joinClinicEnabled;
         this.modDisableEnabled = b.modDisableEnabled;
         this.modConfigEditEnabled = b.modConfigEditEnabled;
+        this.modMutateEnabled = b.modMutateEnabled;
         this.worldRiskEnabled = b.worldRiskEnabled;
         this.configAuditEnabled = b.configAuditEnabled;
         this.reportRetentionCount = b.reportRetentionCount;
@@ -347,6 +351,7 @@ public final class ReportConfig {
         b.chunkGenFailThreshold = parseInt(env.get("CHUNK_GEN_FAIL_THRESHOLD"), 3);
         b.chunkGenFailWindowMin = parseInt(env.get("CHUNK_GEN_FAIL_WINDOW_MIN"), 30);
         b.metricsContextBanner = isTruthy(env.get("METRICS_CONTEXT_BANNER"), true);
+        b.cpuDisplay = normalizeCpuDisplay(env.get("CPU_DISPLAY"));
         b.updateCheck = isTruthy(env.get("UPDATE_CHECK"), true);
         b.l1RollupEnabled = isTruthy(env.get("L1_ROLLUP_ENABLED"), true);
         b.l1RetentionDays = parseInt(env.get("L1_RETENTION_DAYS"), 90);
@@ -409,6 +414,7 @@ public final class ReportConfig {
         b.joinClinicEnabled = isTruthy(env.get("JOIN_CLINIC_ENABLED"), true);
         b.modDisableEnabled = isTruthy(env.get("MOD_DISABLE_ENABLED"), true);
         b.modConfigEditEnabled = isTruthy(env.get("MOD_CONFIG_EDIT_ENABLED"), true);
+        b.modMutateEnabled = isTruthy(env.get("MOD_MUTATE_ENABLED"), true);
         b.worldRiskEnabled = isTruthy(env.get("WORLD_RISK_ENABLED"), true);
         b.configAuditEnabled = isTruthy(env.get("CONFIG_AUDIT_ENABLED"), true);
         b.reportRetentionCount = parseInt(env.get("REPORT_RETENTION_COUNT"), ReportRetentionPolicy.DEFAULT_RETENTION_COUNT);
@@ -474,6 +480,18 @@ public final class ReportConfig {
         }
         String v = value.toLowerCase(Locale.ROOT);
         return v.equals("1") || v.equals("true") || v.equals("yes");
+    }
+
+    /** Coerce to {@code auto}|{@code panel}|{@code quota}|{@code host}. */
+    public static String normalizeCpuDisplay(String value) {
+        if (value == null || value.isBlank()) {
+            return "auto";
+        }
+        String v = value.strip().toLowerCase(Locale.ROOT);
+        return switch (v) {
+            case "panel", "quota", "host", "auto" -> v;
+            default -> "auto";
+        };
     }
 
     private static int parseInt(String value, int defaultValue) {
@@ -623,6 +641,8 @@ public final class ReportConfig {
     public int chunkGenFailThreshold() { return chunkGenFailThreshold; }
     public int chunkGenFailWindowMin() { return chunkGenFailWindowMin; }
     public boolean metricsContextBanner() { return metricsContextBanner; }
+    /** {@code auto}, {@code panel}, {@code quota}, or {@code host}. */
+    public String cpuDisplay() { return cpuDisplay; }
     public boolean updateCheck() { return updateCheck; }
     public boolean l1RollupEnabled() { return l1RollupEnabled; }
     public int l1RetentionDays() { return l1RetentionDays; }
@@ -692,6 +712,7 @@ public final class ReportConfig {
     public boolean joinClinicEnabled() { return joinClinicEnabled; }
     public boolean modDisableEnabled() { return modDisableEnabled; }
     public boolean modConfigEditEnabled() { return modConfigEditEnabled; }
+    public boolean modMutateEnabled() { return modMutateEnabled; }
     public boolean worldRiskEnabled() { return worldRiskEnabled; }
     public boolean configAuditEnabled() { return configAuditEnabled; }
     public int reportRetentionCount() { return reportRetentionCount; }
@@ -767,6 +788,7 @@ public final class ReportConfig {
         private int chunkGenFailThreshold = 3;
         private int chunkGenFailWindowMin = 30;
         private boolean metricsContextBanner = true;
+        private String cpuDisplay = "auto";
         private boolean updateCheck = true;
         private boolean l1RollupEnabled = true;
         private int l1RetentionDays = 90;
@@ -824,6 +846,7 @@ public final class ReportConfig {
         private boolean joinClinicEnabled = true;
         private boolean modDisableEnabled = true;
         private boolean modConfigEditEnabled = true;
+        private boolean modMutateEnabled = true;
         private boolean worldRiskEnabled = true;
         private boolean configAuditEnabled = true;
         private int reportRetentionCount = ReportRetentionPolicy.DEFAULT_RETENTION_COUNT;
@@ -945,6 +968,7 @@ public final class ReportConfig {
         public Builder joinClinicEnabled(boolean v) { this.joinClinicEnabled = v; return this; }
         public Builder modDisableEnabled(boolean v) { this.modDisableEnabled = v; return this; }
         public Builder modConfigEditEnabled(boolean v) { this.modConfigEditEnabled = v; return this; }
+        public Builder modMutateEnabled(boolean v) { this.modMutateEnabled = v; return this; }
         public Builder worldRiskEnabled(boolean v) { this.worldRiskEnabled = v; return this; }
         public Builder configAuditEnabled(boolean v) { this.configAuditEnabled = v; return this; }
         public Builder reportRetentionCount(int v) { this.reportRetentionCount = v; return this; }
@@ -1083,6 +1107,7 @@ public final class ReportConfig {
             this.chunkGenFailThreshold = c.chunkGenFailThreshold();
             this.chunkGenFailWindowMin = c.chunkGenFailWindowMin();
             this.metricsContextBanner = c.metricsContextBanner();
+            this.cpuDisplay = c.cpuDisplay();
             this.updateCheck = c.updateCheck();
             this.l1RollupEnabled = c.l1RollupEnabled();
             this.l1RetentionDays = c.l1RetentionDays();
@@ -1131,6 +1156,7 @@ public final class ReportConfig {
             this.joinClinicEnabled = c.joinClinicEnabled();
             this.modDisableEnabled = c.modDisableEnabled();
             this.modConfigEditEnabled = c.modConfigEditEnabled();
+            this.modMutateEnabled = c.modMutateEnabled();
             this.worldRiskEnabled = c.worldRiskEnabled();
             this.configAuditEnabled = c.configAuditEnabled();
             this.reportRetentionCount = c.reportRetentionCount();

@@ -62,4 +62,30 @@ class IncidentChainBuilderTest {
         assertFalse(watchdog.has("incident_id"));
         assertEquals(CrashClassifier.FK_WATCHDOG, watchdog.get("failure_kind").getAsString());
     }
+
+    @Test
+    void doesNotPairCategoryModWithoutModRuntimeKind() {
+        JsonArray summaries = new JsonArray();
+
+        JsonObject primary = new JsonObject();
+        primary.addProperty("file", "crash-modload.txt");
+        primary.addProperty("time", "2026-06-03T15:00:00+01:00");
+        primary.addProperty("failure_kind", CrashClassifier.FK_MOD_LOAD_DEPENDENCY);
+        primary.addProperty("category", "mod");
+        summaries.add(primary);
+
+        JsonObject watchdog = new JsonObject();
+        watchdog.addProperty("file", "crash-wd.txt");
+        watchdog.addProperty("time", "2026-06-03T15:00:30+01:00");
+        watchdog.addProperty("failure_kind", CrashClassifier.FK_WATCHDOG);
+        watchdog.addProperty("exception", "java.lang.Error: ServerHangWatchdog");
+        summaries.add(watchdog);
+
+        IncidentChainBuilder.link(summaries);
+
+        assertFalse(primary.has("incident_id"));
+        assertFalse(watchdog.has("incident_id"));
+        assertEquals(CrashClassifier.FK_WATCHDOG, watchdog.get("failure_kind").getAsString());
+        assertFalse(watchdog.has("paired_primary_file"));
+    }
 }

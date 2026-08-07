@@ -5,6 +5,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -411,6 +412,23 @@ class DashboardAuthStoreTest {
                 () -> store.updateAppearance(ownerId, "neon", "signal"));
         assertThrows(IllegalArgumentException.class,
                 () -> store.updateAppearance(ownerId, "dark", "hotpink"));
+    }
+
+    @Test
+    void setCapabilitiesGrantsAdminMutateAndClearsOwnerExtras() throws Exception {
+        DashboardAuthStore store = freshStoreWithOwner();
+        String ownerId = store.ownerAccount().id;
+        store.createAccount("marco", AccountRole.ADMIN, ownerId);
+        String marcoId = store.findByUsername("marco").id;
+
+        assertFalse(AccountCapabilities.canMutateMods(store.findById(marcoId)));
+        store.setCapabilities(marcoId, List.of(AccountCapabilities.MODS_MUTATE, "unknown"));
+        assertEquals(List.of(AccountCapabilities.MODS_MUTATE), store.findById(marcoId).capabilities);
+        assertTrue(AccountCapabilities.canMutateMods(store.findById(marcoId)));
+
+        store.setCapabilities(ownerId, List.of(AccountCapabilities.MODS_MUTATE));
+        assertTrue(store.findById(ownerId).capabilities.isEmpty());
+        assertTrue(AccountCapabilities.canMutateMods(store.findById(ownerId)));
     }
 
     private DashboardAuthStore freshStoreWithOwner() throws Exception {

@@ -18,6 +18,11 @@ import {
   mockReportMods,
 } from './mock-mods-catalog.mjs';
 import {
+  loadPreviewModsFromDir,
+  resolvePreviewModsDir,
+  toFixtureRunningMods,
+} from './preview-mods-dir.mjs';
+import {
   clamp,
   round1,
   round2,
@@ -32,6 +37,12 @@ import {
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = join(root, 'data');
 const previewProfile = (process.env.PREVIEW_PROFILE || 'normal').trim().toLowerCase();
+const previewModsDir = resolvePreviewModsDir();
+const previewDiskMods = previewModsDir ? loadPreviewModsFromDir(previewModsDir) : [];
+/** Active running mods for this generate pass (disk folder or baked catalog). */
+const ACTIVE_RUNNING_MODS = previewDiskMods.length
+  ? toFixtureRunningMods(previewDiskMods)
+  : MOCK_RUNNING_MODS;
 
 function isoAt(ms) {
   return new Date(ms).toISOString();
@@ -740,7 +751,7 @@ function generateByMods() {
     ['spark', 0.008],
   ];
   const rest = Math.max(0, 1.2 - weights.reduce((s, [, w]) => s + w, 0));
-  const byId = new Map(MOCK_RUNNING_MODS.map((m) => [m.id, m]));
+  const byId = new Map(ACTIVE_RUNNING_MODS.map((m) => [m.id, m]));
   const rows = weights.map(([id, gb]) => {
     const mod = byId.get(id);
     const version = mod?.version ?? '1.0.0';
@@ -776,6 +787,9 @@ function latestFromSamples(samples, now, simMeta = null) {
     entities: simMeta?.entities ?? 1247,
     chunks: simMeta?.chunks ?? 3842,
     host_cpu_pct: last('host_cpu') ?? 42,
+    cpu_cores_used: last('cpu_cores') ?? round2(((last('host_cpu') ?? 42) / 100) * 3.2),
+    cpu_limit_cores: 12,
+    cpu_source: 'cgroup_v2',
     heap_mb: { used: heapUsed, committed: 8192, max: 8192 },
     mem_available_gb: last('mem_available_gb') ?? 12.5,
     disk_use_pct: last('disk_use_pct') ?? 42,
@@ -995,8 +1009,8 @@ function generateOpsCache(now, performanceRollups) {
   };
   const runningMods = {
     scanned_at: offsetIso(now, -2 * 60_000 + 5000),
-    count: MOCK_RUNNING_MODS.length,
-    mods: MOCK_RUNNING_MODS,
+    count: ACTIVE_RUNNING_MODS.length,
+    mods: ACTIVE_RUNNING_MODS,
   };
   const inventoryDiff = mockModsInventoryDiff(now);
   const rightNowAt = offsetIso(now, -30_000);
@@ -1234,7 +1248,7 @@ function generateOpsCache(now, performanceRollups) {
     mods_inventory: {
       scanned_at: offsetIso(now, -2 * 60_000),
       tldr: mockModsInventoryTldr(inventoryDiff),
-      jar_count: MOCK_RUNNING_MODS.length,
+      jar_count: ACTIVE_RUNNING_MODS.length,
       diff: inventoryDiff,
     },
     disk_jump: {
@@ -2096,7 +2110,7 @@ const snapshot = {
   players_online: latest.players_online,
   entities: latest.entities,
   chunks: latest.chunks,
-  mod_count: MOCK_RUNNING_MODS.length,
+  mod_count: ACTIVE_RUNNING_MODS.length,
 };
 
 function writeReportsIndex(nowMs) {
@@ -2363,7 +2377,9 @@ function patchFactsModFixtures() {
   const factsPath = join(dataDir, 'facts.json');
   const facts = JSON.parse(readFileSync(factsPath, 'utf8'));
   if (!facts.optional) facts.optional = {};
-  facts.optional.mods = mockReportMods();
+  facts.optional.mods = previewDiskMods.length
+    ? ACTIVE_RUNNING_MODS.map((m) => ({ ...m }))
+    : mockReportMods();
   facts.optional.mod_log_errors = mockModLogErrors(Date.now()).map(({ source, last_seen_epoch, ...rest }) => rest);
   facts.optional.mod_recommendations = MOCK_MOD_RECOMMENDATIONS;
   facts.optional.client_only_mods = MOCK_CLIENT_ONLY_MODS;
@@ -2988,6 +3004,9 @@ try {
   const { applyProfile } = await import('./apply-preview-profile.mjs');
   applyProfile(previewProfile, { now });
   console.log(`  PREVIEW_PROFILE=${previewProfile}`);
+  if (previewModsDir) {
+    console.log(`  PREVIEW_MODS_DIR=${previewModsDir} (${ACTIVE_RUNNING_MODS.length} jars)`);
+  }
 } catch (e) {
   console.error(`Could not apply PREVIEW_PROFILE=${previewProfile}:`, e.message || e);
   process.exitCode = 1;

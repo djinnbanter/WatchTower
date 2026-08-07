@@ -140,7 +140,10 @@ public final class HostEnvironmentDetector {
         }
 
         if (limitCores != null) {
-            parts.add("CPU % is vs quota");
+            String cpuSource = strOrNull(systemBasics, "cpu_source");
+            if (cpuSource != null && cpuSource.startsWith("cgroup")) {
+                parts.add("CPU % is vs quota");
+            }
         }
 
         if (parts.isEmpty()) {

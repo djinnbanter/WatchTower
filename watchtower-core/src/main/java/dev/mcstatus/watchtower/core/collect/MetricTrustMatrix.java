@@ -16,12 +16,14 @@ public final class MetricTrustMatrix {
         metrics.add("heap", trusted());
 
         if (cgroupMemory) {
-            metrics.add("host_cpu_pct", approximate("Cgroup-scoped; quota labeled when known."));
+            metrics.add("host_cpu_pct", approximate(
+                    "Prefer Settings → Monitoring CPU mode; cgroup cores when available."));
             metrics.add("mem_used_gb", trusted());
             metrics.add("mem_total_gb", trusted());
             metrics.add("mem_available_gb", misleading("Use container limit or Java heap instead."));
         } else if ("container".equals(deployment)) {
-            metrics.add("host_cpu_pct", misleading("Host aggregate CPU reflects the whole machine, not your allocation."));
+            metrics.add("host_cpu_pct", misleading(
+                    "Host aggregate CPU reflects the whole machine, not your allocation — use panel/quota mode when cgroup is readable."));
             metrics.add("mem_used_gb", unavailable("cgroup_unreadable"));
             metrics.add("mem_total_gb", unavailable("cgroup_unreadable"));
             metrics.add("mem_available_gb", misleading("Use Java heap headroom instead of host MemAvailable."));

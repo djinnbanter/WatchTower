@@ -16,6 +16,7 @@ import dev.mcstatus.watchtower.core.ops.OpsCacheWriter;
 import dev.mcstatus.watchtower.core.collect.ExtrasCollector;
 import dev.mcstatus.watchtower.core.collect.HostEnvironmentDetector;
 import dev.mcstatus.watchtower.core.collect.HostMetricsCollector;
+import dev.mcstatus.watchtower.core.collect.CpuUsageSampler;
 import dev.mcstatus.watchtower.core.collect.JvmHealthCollector;
 import dev.mcstatus.watchtower.core.collect.LivePregenTailer;
 import dev.mcstatus.watchtower.core.collect.PerCoreCpuSampler;
@@ -195,7 +196,10 @@ public final class LiveMetricsService {
 
     public void unbindServer() {
         try {
-            flushOpenRollupMinute(Instant.now().getEpochSecond());
+            long minute = openRollupMinuteEpoch >= 0
+                    ? openRollupMinuteEpoch
+                    : floorMinuteEpoch(Instant.now().getEpochSecond());
+            flushOpenRollupMinute(minute);
             rollupWriter.flushToDisk();
         } catch (Exception e) {
             ModRuntime.logger().debug("Performance rollup flush on stop: {}", e.toString());
@@ -330,7 +334,7 @@ public final class LiveMetricsService {
         if (!l1Enabled) {
             return;
         }
-        long minute = now - (now % 60);
+        long minute = floorMinuteEpoch(now);
         if (openRollupMinuteEpoch >= 0 && minute > openRollupMinuteEpoch) {
             flushOpenRollupMinute(openRollupMinuteEpoch);
             openRollupMinuteEpoch = minute;
@@ -778,14 +782,29 @@ public final class LiveMetricsService {
             ModRuntime.logger().debug("Live JVM health sample failed: {}", e.toString());
         }
 
-        Double hostCpu = HostCpuProbe.readHostCpuPct();
-        if (hostCpu != null) {
-            o.addProperty("host_cpu_pct", round1(hostCpu));
+        CpuUsageSampler.Reading cpu = HostCpuProbe.sample();
+        if (cpu.hostCpuPct() != null) {
+            o.addProperty("host_cpu_pct", round1(cpu.hostCpuPct()));
+        }
+        if (cpu.coresUsed() != null) {
+            o.addProperty("cpu_cores_used", round2(cpu.coresUsed()));
+        }
+        if (cpu.cpuSource() != null && !cpu.cpuSource().isBlank()) {
+            o.addProperty("cpu_source", cpu.cpuSource());
+        }
+        if (cpu.limitCores() != null) {
+            o.addProperty("cpu_limit_cores", round2(cpu.limitCores()));
         }
 
         String serverDir = server.serverDirectory().toAbsolutePath().toString();
         JsonObject sys = HostMetricsCollector.collectSystemBasics(serverDir);
         copySystemFields(o, sys);
+        if (cpu.cpuSource() != null && !cpu.cpuSource().isBlank()) {
+            o.addProperty("cpu_source", cpu.cpuSource());
+        }
+        if (cpu.limitCores() != null && !o.has("cpu_limit_cores")) {
+            o.addProperty("cpu_limit_cores", round2(cpu.limitCores()));
+        }
         String javaVersion = System.getProperty("java.version");
         if (javaVersion != null && !javaVersion.isBlank()) {
             o.addProperty("java_version", javaVersion);
@@ -899,5 +918,13 @@ public final class LiveMetricsService {
 
     private static double round2(double v) {
         return Math.round(v * 100.0) / 100.0;
+    }
+
+    /** Floor epoch seconds to the start of its UTC minute. */
+    static long floorMinuteEpoch(long epochSec) {
+        if (epochSec < 0) {
+            return epochSec - ((epochSec % 60) + 60) % 60;
+        }
+        return epochSec - (epochSec % 60);
     }
 }

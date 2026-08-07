@@ -20,11 +20,11 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         q: 'Is WatchTower a host panel?',
-        a: "No. It won't start or stop the server, manage files, or replace the console. Keep using Pterodactyl, Crafty, AMP, or bare metal for that. WatchTower sits beside them.",
+        a: "No. It won't start or stop the server, manage files, or replace the console. Keep Pterodactyl, Crafty, AMP, or bare metal for that. WatchTower sits beside them.",
       },
       {
         q: 'Is this player analytics?',
-        a: "No. No retention, GeoIP, or leaderboards. Seeing who's online during lag or a crash is ops triage, not surveillance.",
+        a: "No. No retention, GeoIP, or leaderboards. Seeing who's online during lag or a crash is ops triage, not player tracking.",
       },
       {
         q: 'Does it support Fabric?',
@@ -32,7 +32,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: 'Do I need Spark?',
-        a: 'No. Spark is optional. Install it when you want lag profiles turned into plain next steps. The deep Spark workspace is still alpha.',
+        a: 'No. Spark is optional. Install it when you want lag profiles broken into next steps. The deep Spark workspace is still alpha.',
       },
       {
         q: 'Does Modrinth download jars for me?',
@@ -42,7 +42,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
   },
   {
     label: 'Trust',
-    blurb: 'Control, data, and money questions.',
+    blurb: 'Control, data, and money.',
     items: [
       {
         q: 'Do I need a cloud account?',
@@ -54,7 +54,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: 'Will it restart my server?',
-        a: 'No. Overview can say Safe, Caution, or Wait for a restart. WatchTower only advises. It never restarts the server for you and never quietly edits mods or the world.',
+        a: 'No. Overview can say Safe, Caution, or Wait. WatchTower only advises. It never restarts the server for you and never quietly edits mods or the world.',
       },
       {
         q: 'Is it free?',

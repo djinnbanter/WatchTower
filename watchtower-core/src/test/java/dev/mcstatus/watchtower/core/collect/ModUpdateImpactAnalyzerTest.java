@@ -13,6 +13,44 @@ import static org.junit.jupiter.api.Assertions.*;
 class ModUpdateImpactAnalyzerTest {
 
     @Test
+    void needInstallBlockerEmitsProjectAndVersionIdsForInstallCta() {
+        JsonArray mods = new JsonArray();
+        mods.add(mod("create", "6.0.0", null));
+
+        JsonArray updates = new JsonArray();
+        JsonObject row = new JsonObject();
+        row.addProperty("mod_id", "create");
+        row.addProperty("latest_compatible", "6.0.1");
+        updates.add(row);
+
+        Map<String, ModrinthLookupService.SideInfo> byId = new HashMap<>();
+        byId.put("create", sideWithDeps("create",
+                List.of(new ModrinthLookupService.VersionDependency(
+                        "flywheelproj",
+                        "flywheelVerAbc",
+                        "required",
+                        "Flywheel",
+                        "flywheel"))));
+
+        JsonArray enriched = ModUpdateImpactAnalyzer.enrich(mods, updates, byId);
+        JsonObject blocker = enriched.get(0).getAsJsonObject()
+                .getAsJsonArray("blockers").get(0).getAsJsonObject();
+
+        assertEquals("need_install", blocker.get("kind").getAsString());
+        assertEquals("Flywheel", blocker.get("display_name").getAsString());
+        assertEquals("flywheel", blocker.get("mod_id").getAsString(),
+                "mod_id should prefer Modrinth slug for Install CTA depModId");
+        assertEquals("flywheelproj", blocker.get("project_id").getAsString());
+        assertTrue(
+                blocker.has("version_id") || blocker.has("modrinth_version_id"),
+                "Install CTA needs version_id or modrinth_version_id");
+        String versionId = blocker.has("version_id")
+                ? blocker.get("version_id").getAsString()
+                : blocker.get("modrinth_version_id").getAsString();
+        assertEquals("flywheelVerAbc", versionId);
+    }
+
+    @Test
     void missingRequiredDependencyIsBreak() {
         JsonArray mods = new JsonArray();
         mods.add(mod("create", "6.0.0", null));
@@ -35,7 +73,7 @@ class ModUpdateImpactAnalyzerTest {
         JsonObject blocker = out.getAsJsonArray("blockers").get(0).getAsJsonObject();
         assertEquals("need_install", blocker.get("kind").getAsString());
         assertEquals("Flywheel", blocker.get("display_name").getAsString());
-        assertEquals("flywheelproj", blocker.get("mod_id").getAsString());
+        assertEquals("flywheel", blocker.get("mod_id").getAsString());
     }
 
     @Test

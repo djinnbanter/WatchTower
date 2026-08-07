@@ -52,6 +52,8 @@ public final class ModrinthLookupService {
     private static final int HASH_CHUNK_SIZE = 128;
     private static final int PROJECT_ID_CHUNK_SIZE = 100;
     private static final int DESCRIPTION_MAX_CHARS = 800;
+    /** Cap Modrinth version changelogs stored on mods / update rows. */
+    private static final int CHANGELOG_MAX_CHARS = 4000;
     private static final long HIT_TTL_SECONDS = 30L * 24 * 3600;
     private static final long MISS_RETRY_SECONDS = 7L * 24 * 3600;
 
@@ -115,6 +117,7 @@ public final class ModrinthLookupService {
             String iconUrl,
             String description,
             List<VersionDependency> compatibleDependencies,
+            String compatibleChangelog,
             Instant fetchedAt) {
 
         public SideInfo {
@@ -132,7 +135,7 @@ public final class ModrinthLookupService {
                 boolean miss) {
             this(projectId, slug, clientSide, serverSide, title, miss,
                     null, null, false, null, null, null,
-                    null, null, null, null, null, null, List.of(), null);
+                    null, null, null, null, null, null, List.of(), null, null);
         }
 
         /** 12-arg form used by tests and crash-suspect rebuild. */
@@ -151,7 +154,7 @@ public final class ModrinthLookupService {
                 String compatibleUrl) {
             this(projectId, slug, clientSide, serverSide, title, miss,
                     versionId, versionNumber, outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
-                    null, null, null, null, null, null, List.of(), null);
+                    null, null, null, null, null, null, List.of(), null, null);
         }
 
         /** 18-arg form without deps (cache load / project fetch). */
@@ -176,7 +179,7 @@ public final class ModrinthLookupService {
                 String description) {
             this(projectId, slug, clientSide, serverSide, title, miss,
                     versionId, versionNumber, outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
-                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, List.of(), null);
+                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, List.of(), null, null);
         }
 
         /** 19-arg form with deps but no fetchedAt. */
@@ -202,7 +205,7 @@ public final class ModrinthLookupService {
                 List<VersionDependency> compatibleDependencies) {
             this(projectId, slug, clientSide, serverSide, title, miss,
                     versionId, versionNumber, outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
-                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, compatibleDependencies, null);
+                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, compatibleDependencies, null, null);
         }
 
         public static SideInfo missInfo() {
@@ -212,7 +215,8 @@ public final class ModrinthLookupService {
         public SideInfo withFetchedAt(Instant at) {
             return new SideInfo(projectId, slug, clientSide, serverSide, title, miss,
                     versionId, versionNumber, outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
-                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, compatibleDependencies, at);
+                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, compatibleDependencies,
+                    compatibleChangelog, at);
         }
 
         public Instant fetchedAtOrEpoch() {
@@ -222,7 +226,8 @@ public final class ModrinthLookupService {
         public SideInfo withVersion(String versionId, String versionNumber) {
             return new SideInfo(projectId, slug, clientSide, serverSide, title, miss,
                     versionId, versionNumber, outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
-                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, compatibleDependencies, fetchedAt);
+                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, compatibleDependencies,
+                    compatibleChangelog, fetchedAt);
         }
 
         public SideInfo withCompatibleUpdate(
@@ -231,7 +236,7 @@ public final class ModrinthLookupService {
                 String compatibleVersionNumber,
                 String compatibleUrl) {
             return withCompatibleUpdate(outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
-                    compatibleDependencies);
+                    compatibleDependencies, compatibleChangelog);
         }
 
         public SideInfo withCompatibleUpdate(
@@ -240,17 +245,29 @@ public final class ModrinthLookupService {
                 String compatibleVersionNumber,
                 String compatibleUrl,
                 List<VersionDependency> compatibleDependencies) {
+            return withCompatibleUpdate(outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
+                    compatibleDependencies, compatibleChangelog);
+        }
+
+        public SideInfo withCompatibleUpdate(
+                boolean outdated,
+                String compatibleVersionId,
+                String compatibleVersionNumber,
+                String compatibleUrl,
+                List<VersionDependency> compatibleDependencies,
+                String compatibleChangelog) {
             List<VersionDependency> deps = compatibleDependencies == null
                     ? List.of()
                     : List.copyOf(compatibleDependencies);
             return new SideInfo(projectId, slug, clientSide, serverSide, title, miss,
                     versionId, versionNumber, outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
-                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, deps, fetchedAt);
+                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, deps, compatibleChangelog,
+                    fetchedAt);
         }
 
         public SideInfo withDependencies(List<VersionDependency> dependencies) {
             return withCompatibleUpdate(outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
-                    dependencies);
+                    dependencies, compatibleChangelog);
         }
 
         public SideInfo withLinks(
@@ -262,7 +279,8 @@ public final class ModrinthLookupService {
                 String description) {
             return new SideInfo(projectId, slug, clientSide, serverSide, title, miss,
                     versionId, versionNumber, outdated, compatibleVersionId, compatibleVersionNumber, compatibleUrl,
-                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, compatibleDependencies, fetchedAt);
+                    wikiUrl, sourceUrl, issuesUrl, discordUrl, iconUrl, description, compatibleDependencies,
+                    compatibleChangelog, fetchedAt);
         }
 
         public String projectUrl() {
@@ -650,6 +668,9 @@ public final class ModrinthLookupService {
             if (info.compatibleUrl() != null) {
                 mod.addProperty("modrinth_compatible_url", info.compatibleUrl());
             }
+            if (info.compatibleChangelog() != null && !info.compatibleChangelog().isBlank()) {
+                mod.addProperty("modrinth_compatible_changelog", info.compatibleChangelog());
+            }
             if (info.outdated() && info.compatibleVersionNumber() != null) {
                 mod.addProperty("modrinth_update_label",
                         loaderLabel + " build " + info.compatibleVersionNumber() + " available");
@@ -719,6 +740,9 @@ public final class ModrinthLookupService {
             } else if (mod.has("modrinth_cta_url")) {
                 row.addProperty("modrinth_compatible_url", mod.get("modrinth_cta_url").getAsString());
             }
+            if (mod.has("modrinth_compatible_changelog")) {
+                row.addProperty("changelog", mod.get("modrinth_compatible_changelog").getAsString());
+            }
             if (mod.has("modrinth_update_label")) {
                 row.addProperty("label", mod.get("modrinth_update_label").getAsString());
             }
@@ -740,11 +764,75 @@ public final class ModrinthLookupService {
             return;
         }
         JsonArray mods = optional.getAsJsonArray("mods");
-        JsonArray updates = ModUpdateImpactAnalyzer.enrich(mods, buildUpdatesSummary(mods), Map.of());
+        Map<String, SideInfo> byId = Map.of();
+        if (config != null && config.modrinthLookup() && serverDir != null && !serverDir.isBlank()) {
+            List<Candidate> candidates = ModrinthScanJob.buildCandidates(optional, serverDir);
+            Path cacheFile = Path.of(serverDir, "watchtower", "modrinth-cache.json");
+            Map<Path, String> hashByPath = new HashMap<>();
+            hashCandidates(candidates, hashByPath, ModrinthScanProgress.NOOP);
+            Map<String, SideInfo> byHash = lookupCacheOnly(candidates, cacheFile, hashByPath);
+            Map<String, SideInfo> loaded = new HashMap<>();
+            for (Candidate c : candidates) {
+                String hash = hashByPath.get(c.jarPath());
+                if (hash == null) {
+                    continue;
+                }
+                SideInfo info = byHash.get(hash);
+                if (info != null && !info.miss()) {
+                    loaded.put(c.modId(), info);
+                }
+            }
+            byId = loaded;
+        }
+
+        JsonArray summary = buildUpdatesSummary(mods);
+        if (byId.isEmpty()) {
+            mergeUpdateIdentityPreservingImpact(optional, summary);
+            return;
+        }
+        JsonArray updates = ModUpdateImpactAnalyzer.enrich(mods, summary, byId);
         if (updates.isEmpty()) {
             optional.remove("modrinth_updates");
         } else {
             optional.add("modrinth_updates", updates);
+        }
+    }
+
+    private static void mergeUpdateIdentityPreservingImpact(JsonObject optional, JsonArray summary) {
+        JsonArray prior = optional.has("modrinth_updates") && optional.get("modrinth_updates").isJsonArray()
+                ? optional.getAsJsonArray("modrinth_updates") : new JsonArray();
+        Map<String, JsonObject> priorByMod = new HashMap<>();
+        for (JsonElement el : prior) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            String modId = str(row, "mod_id");
+            if (modId != null) {
+                priorByMod.put(modId, row);
+            }
+        }
+        JsonArray merged = new JsonArray();
+        for (JsonElement el : summary) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject().deepCopy();
+            String modId = str(row, "mod_id");
+            JsonObject old = modId != null ? priorByMod.get(modId) : null;
+            if (old != null) {
+                for (String key : List.of("impact_verdict", "impact_summary", "blockers", "co_updates", "dependents")) {
+                    if (old.has(key) && !old.get(key).isJsonNull()) {
+                        row.add(key, old.get(key).deepCopy());
+                    }
+                }
+            }
+            merged.add(row);
+        }
+        if (merged.isEmpty()) {
+            optional.remove("modrinth_updates");
+        } else {
+            optional.add("modrinth_updates", merged);
         }
     }
 
@@ -831,12 +919,22 @@ public final class ModrinthLookupService {
     }
 
     /**
-     * Resolve Minecraft version for Modrinth compatible-update queries.
-     * Live NeoForge facts omit a {@code minecraft} mod row from {@code optional.mods}, so we also
-     * read spark / startup platform blocks, jar/version MC hints (majority + patch-level preferred),
-     * and NeoForge version mapping.
+     * Live-aware MC version: facts authoritative fields, then snapshot/platform, then jar heuristics.
      */
-    public static String minecraftVersionFromFacts(JsonObject facts) {
+    public static String resolveMinecraftVersion(JsonObject facts, String serverDir) {
+        String fromFacts = minecraftVersionFromFactsAuthoritative(facts);
+        if (fromFacts != null && !fromFacts.isBlank()) {
+            return fromFacts;
+        }
+        String fromServer = minecraftVersionFromServerDir(serverDir);
+        if (fromServer != null && !fromServer.isBlank()) {
+            return fromServer;
+        }
+        return minecraftVersionFromFactsHeuristics(facts);
+    }
+
+    /** Meta / native / spark / minecraft mod row only — no jar-suffix heuristics. */
+    public static String minecraftVersionFromFactsAuthoritative(JsonObject facts) {
         if (facts == null) {
             return null;
         }
@@ -871,17 +969,40 @@ public final class ModrinthLookupService {
                 if (fromMods != null) {
                     return fromMods;
                 }
-                String fromSuffix = minecraftFromModVersionSuffixes(optional.getAsJsonArray("mods"));
-                if (fromSuffix != null) {
-                    return fromSuffix;
-                }
-                String fromLoader = minecraftFromNeoForgeMod(optional.getAsJsonArray("mods"));
-                if (fromLoader != null) {
-                    return fromLoader;
-                }
             }
         }
         return null;
+    }
+
+    /** Jar-suffix majority votes and NeoForge mod version mapping. */
+    public static String minecraftVersionFromFactsHeuristics(JsonObject facts) {
+        if (facts == null) {
+            return null;
+        }
+        JsonObject optional = facts.has("optional") && facts.get("optional").isJsonObject()
+                ? facts.getAsJsonObject("optional") : null;
+        if (optional != null && optional.has("mods") && optional.get("mods").isJsonArray()) {
+            String fromSuffix = minecraftFromModVersionSuffixes(optional.getAsJsonArray("mods"));
+            if (fromSuffix != null) {
+                return fromSuffix;
+            }
+            return minecraftFromNeoForgeMod(optional.getAsJsonArray("mods"));
+        }
+        return null;
+    }
+
+    /**
+     * Resolve Minecraft version for Modrinth compatible-update queries.
+     * Live NeoForge facts omit a {@code minecraft} mod row from {@code optional.mods}, so we also
+     * read spark / startup platform blocks, jar/version MC hints (majority + patch-level preferred),
+     * and NeoForge version mapping.
+     */
+    public static String minecraftVersionFromFacts(JsonObject facts) {
+        String authoritative = minecraftVersionFromFactsAuthoritative(facts);
+        if (authoritative != null) {
+            return authoritative;
+        }
+        return minecraftVersionFromFactsHeuristics(facts);
     }
 
     /**
@@ -1232,6 +1353,17 @@ public final class ModrinthLookupService {
         return t.substring(0, DESCRIPTION_MAX_CHARS - 1) + "…";
     }
 
+    private static String truncateChangelog(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String t = raw.strip();
+        if (t.length() <= CHANGELOG_MAX_CHARS) {
+            return t;
+        }
+        return t.substring(0, CHANGELOG_MAX_CHARS - 1) + "…";
+    }
+
     private static SideInfo fetchCompatible(
             ScanSession session,
             SideInfo info,
@@ -1282,7 +1414,8 @@ public final class ModrinthLookupService {
             }
         }
 
-        SideInfo updated = info.withCompatibleUpdate(outdated, compatId, compatNum, compatUrl, deps);
+        String changelog = truncateChangelog(str(newest, "changelog"));
+        SideInfo updated = info.withCompatibleUpdate(outdated, compatId, compatNum, compatUrl, deps, changelog);
         // Preserve existing timestamp; stamp now only when missing (compat-only path).
         if (updated.fetchedAt() == null) {
             updated = updated.withFetchedAt(Instant.now());
@@ -1432,7 +1565,7 @@ public final class ModrinthLookupService {
     }
 
     /** Prefer versions whose game_versions include {@code mc} (or its major.minor parent). */
-    static JsonArray preferMatchingGameVersion(JsonArray versions, String mc) {
+    public static JsonArray preferMatchingGameVersion(JsonArray versions, String mc) {
         if (versions == null || versions.isEmpty() || mc == null || mc.isBlank()) {
             return versions == null ? new JsonArray() : versions;
         }
@@ -1823,6 +1956,7 @@ public final class ModrinthLookupService {
                         str(e, "icon_url"),
                         str(e, "description"),
                         deps,
+                        str(e, "compatible_changelog"),
                         fetchedAt);
                 map.put(hash, info);
             }
@@ -1881,6 +2015,9 @@ public final class ModrinthLookupService {
                 }
                 if (info.compatibleUrl() != null) {
                     row.addProperty("compatible_url", info.compatibleUrl());
+                }
+                if (info.compatibleChangelog() != null) {
+                    row.addProperty("compatible_changelog", info.compatibleChangelog());
                 }
                 if (info.wikiUrl() != null) {
                     row.addProperty("wiki_url", info.wikiUrl());

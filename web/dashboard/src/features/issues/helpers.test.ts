@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { fromLedgerRow, groupByBand, type IssueItem } from './helpers.ts';
+import { buildActiveItems, fromLedgerRow, groupByBand, type IssueItem } from './helpers.ts';
 
 function item(partial: Partial<IssueItem> & Pick<IssueItem, 'key' | 'issueId' | 'severity' | 'title'>): IssueItem {
   return {
@@ -86,5 +86,68 @@ describe('fromLedgerRow JOIN_SYNC', () => {
     });
     assert.equal(item.primaryAction?.tab, 'session');
     assert.equal(item.primaryAction?.label, 'Open Session activity');
+  });
+});
+
+describe('buildActiveItems peek vs issues_live dedupe', () => {
+  it('does not duplicate lag peek when issues_live already has TICK_LAG', () => {
+    const items = buildActiveItems({
+      peek: {
+        lag_issues: [
+          {
+            incident_id: 'inc-1',
+            title: 'Lag spike',
+            narrative: 'MSPT climbed',
+            severity: 'critical',
+            started_at: '2026-08-06T12:00:00Z',
+          },
+        ],
+      },
+      ops: {
+        issues_live: [
+          {
+            id: 'TICK_LAG',
+            status: 'open',
+            severity: 'critical',
+            message: 'Tick lag detected',
+            source: 'ops',
+          },
+        ],
+      },
+      facts: {},
+      acks: {},
+      suppressedIds: new Set(),
+    });
+
+    const lagLike = items.filter(
+      (i) =>
+        i.kind === 'lag' ||
+        i.issueId === 'TICK_LAG' ||
+        i.key === 'issue:TICK_LAG' ||
+        i.key.startsWith('lag:'),
+    );
+    assert.equal(lagLike.length, 1, `expected one lag card, got ${lagLike.map((i) => i.key).join(',')}`);
+    assert.equal(lagLike[0]?.key, 'issue:TICK_LAG');
+  });
+
+  it('keeps peek lag when issues_live has no lag keys', () => {
+    const items = buildActiveItems({
+      peek: {
+        lag_issues: [
+          {
+            incident_id: 'inc-2',
+            title: 'Lag spike',
+            narrative: 'MSPT climbed',
+            severity: 'warning',
+            started_at: '2026-08-06T12:00:00Z',
+          },
+        ],
+      },
+      ops: { issues_live: [] },
+      facts: {},
+      acks: {},
+      suppressedIds: new Set(),
+    });
+    assert.ok(items.some((i) => i.key === 'lag:inc-2'));
   });
 });

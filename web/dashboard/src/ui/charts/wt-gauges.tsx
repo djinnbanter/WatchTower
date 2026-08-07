@@ -170,13 +170,16 @@ export function WtCpuGauge({
   value,
   className,
   size,
+  max = 100,
 }: {
   value: number;
   className?: string;
   size?: number;
+  /** Panel-style CPU can exceed 100 (100% = 1 core). */
+  max?: number;
 }) {
   return (
-    <WtGauge value={value} max={100} label="CPU" suffix="%" tone="cpu" className={className} size={size} />
+    <WtGauge value={value} max={max} label="CPU" suffix="%" tone="cpu" className={className} size={size} />
   );
 }
 

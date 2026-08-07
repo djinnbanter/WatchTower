@@ -55,11 +55,10 @@ export function Showcases() {
       <div className="mx-auto max-w-[84rem] px-5 pb-3 pt-10 lg:px-8 md:pt-12">
         <Reveal>
           <h2 className="wt-display-sm max-w-3xl text-[color:var(--wt-text)]">
-            The surfaces you open when something feels wrong.
+            Live, Issues, Crashes, Insights.
           </h2>
           <p className="wt-lead mt-3 max-w-2xl">
-            These cards use sample data from the real dashboard. Open the demo if you want to click
-            around.
+            Sample fixtures from the real dashboard UI. Open the demo if you want to click around.
           </p>
         </Reveal>
       </div>

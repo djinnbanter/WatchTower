@@ -27,6 +27,9 @@ public final class SupportRedactor {
             "(?i)^(\\s*(?:[A-Za-z0-9_.\\-]*?)?"
                     + "(?:password|passwd|token|secret|webhook|api[_-]?key|rcon[_-]?password"
                     + "|auth[_-]?token|client[_-]?secret|access[_-]?key)\\s*[=:]\\s*)(.*)$");
+    private static final Pattern INLINE_SECRET_ASSIGN = Pattern.compile(
+            "(?i)((?:password|passwd|token|secret|webhook|api[_-]?key|rcon[_-]?password"
+                    + "|auth[_-]?token|client[_-]?secret|access[_-]?key)\\s*[=:]\\s*)([^\"\\s,\\]}+]+)");
 
     private SupportRedactor() {
     }
@@ -70,7 +73,8 @@ public final class SupportRedactor {
 
     /** Redact IP-like strings inside JSON text without parsing structure. */
     public static String redactJsonText(String json) {
-        return redactText(json);
+        String scrubbed = redactText(json);
+        return INLINE_SECRET_ASSIGN.matcher(scrubbed).replaceAll("$1[REDACTED]");
     }
 
     public static boolean looksLikeSecretKey(String key) {

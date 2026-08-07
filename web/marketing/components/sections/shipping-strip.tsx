@@ -24,7 +24,7 @@ const ITEMS: ShippingItem[] = [
   {
     id: 'mods',
     label: 'Mods',
-    detail: 'Modrinth lookup. Never downloads jars.',
+    detail: 'Lookup and hints. Never downloads jars.',
     href: LINKS.modrinth,
     external: true,
     accent: '#1BD96A',
@@ -35,21 +35,21 @@ const ITEMS: ShippingItem[] = [
   {
     id: 'backups',
     label: 'Backups',
-    detail: 'Advisory status, not a host panel.',
+    detail: 'Freshness and integrity checks. Not a host panel.',
     href: '/features',
     mark: <Archive size={15} strokeWidth={1.6} aria-hidden />,
   },
   {
     id: 'support',
     label: 'Support packs',
-    detail: 'Redacted evidence when you need help.',
+    detail: 'Redacted zip for a helper or mod author.',
     href: '/features',
     mark: <LifeBuoy size={15} strokeWidth={1.6} aria-hidden />,
   },
   {
     id: 'spark',
     label: 'Spark',
-    detail: 'Lag proof. Deep workspace is alpha.',
+    detail: 'Optional lag profiles. Deep workspace is alpha.',
     href: '/features',
     tag: 'alpha',
     tagTone: 'lantern',
@@ -58,7 +58,7 @@ const ITEMS: ShippingItem[] = [
   {
     id: 'cli',
     label: 'CLI',
-    detail: "When the game won't boot.",
+    detail: 'Disaster recovery when Minecraft will not boot.',
     href: '/features',
     mark: <Terminal size={15} strokeWidth={1.6} aria-hidden />,
   },
@@ -136,10 +136,10 @@ export function ShippingStrip() {
             <div className="relative flex flex-col gap-4 p-4 md:flex-row md:items-end md:justify-between md:gap-6 md:p-5">
               <div className="min-w-0 md:max-w-[18rem]">
                 <h3 className="text-base font-semibold tracking-tight text-[color:var(--wt-text)]">
-                  Also on the dashboard
+                  Also in the jar
                 </h3>
                 <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-[color:var(--wt-text-mid)]">
-                  More surfaces in the jar. Modrinth is lookup only.
+                  Mods, backups, support packs, Spark, CLI. Modrinth is lookup only.
                 </p>
               </div>
 
@@ -147,7 +147,7 @@ export function ShippingStrip() {
                 href="/features"
                 className="group inline-flex shrink-0 items-center gap-2 self-start text-sm font-semibold text-[color:var(--wt-accent)] no-underline transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:opacity-85 active:scale-[0.98] md:self-auto"
               >
-                All surfaces
+                All features
                 <span
                   className="inline-flex h-7 w-7 items-center justify-center border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px"
                   style={{ borderRadius: 'var(--wt-radius-sm)' }}

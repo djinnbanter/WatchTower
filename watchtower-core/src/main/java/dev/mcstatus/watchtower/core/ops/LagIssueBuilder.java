@@ -257,11 +257,24 @@ public final class LagIssueBuilder {
             }
         }
 
-        if (ctx != null && ctx.has("host_cpu_pct")) {
-            double cpu = ctx.get("host_cpu_pct").getAsDouble();
-            if (cpu >= 85) {
-                findings.add(finding("confirmed", "host_cpu",
-                        String.format(Locale.US, "Host CPU elevated (%.0f%%)", cpu)));
+        if (ctx != null) {
+            Double coresUsed = ctx.has("cpu_cores_used") && !ctx.get("cpu_cores_used").isJsonNull()
+                    ? ctx.get("cpu_cores_used").getAsDouble() : null;
+            Double limitCores = ctx.has("cpu_limit_cores") && !ctx.get("cpu_limit_cores").isJsonNull()
+                    ? ctx.get("cpu_limit_cores").getAsDouble() : null;
+            if (coresUsed != null && limitCores != null && limitCores > 0) {
+                double ofPlan = 100.0 * coresUsed / limitCores;
+                if (ofPlan >= 85) {
+                    findings.add(finding("confirmed", "host_cpu",
+                            String.format(Locale.US, "CPU high vs plan (%.0f%% of %.1f cores)",
+                                    ofPlan, limitCores)));
+                }
+            } else if (ctx.has("host_cpu_pct") && !ctx.get("host_cpu_pct").isJsonNull()) {
+                double cpu = ctx.get("host_cpu_pct").getAsDouble();
+                if (cpu >= 85) {
+                    findings.add(finding("confirmed", "host_cpu",
+                            String.format(Locale.US, "Host CPU elevated (%.0f%%)", cpu)));
+                }
             }
         }
 

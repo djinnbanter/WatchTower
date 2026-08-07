@@ -252,6 +252,104 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  /** Assisted mod mutate — status (busy / needs_restart / active job). */
+  modsMutateStatus: () => apiFetch<Record<string, unknown>>('/api/mods/mutate/status'),
+  /** List Modrinth versions for a mod (or project). */
+  modsMutateVersions: (params: { mod_id?: string; project_id?: string }) => {
+    const q = new URLSearchParams();
+    if (params.mod_id) q.set('mod_id', params.mod_id);
+    if (params.project_id) q.set('project_id', params.project_id);
+    return apiFetch<Record<string, unknown>>(`/api/mods/mutate/versions?${q}`);
+  },
+  modsMutateSwap: (payload: {
+    mod_id: string;
+    modrinth_version_id: string;
+    impact_fingerprint: string;
+    confirm: true;
+    jar?: string;
+    project_id?: string;
+    expected_sha512?: string;
+  }) =>
+    apiFetch<Record<string, unknown>>('/api/mods/mutate/swap', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  modsMutateBatch: (payload: {
+    steps?: Array<{
+      mod_id: string;
+      modrinth_version_id: string;
+      jar?: string;
+      project_id?: string;
+      expected_sha512?: string;
+    }>;
+    /** Alias accepted by the client; sent as `steps` to match the server. */
+    items?: Array<{
+      mod_id: string;
+      modrinth_version_id: string;
+      jar?: string;
+      project_id?: string;
+      expected_sha512?: string;
+    }>;
+    impact_fingerprint: string;
+    confirm: true;
+    continue_on_failure?: boolean;
+    allow_non_safe?: boolean;
+    impact_verdict?: string;
+    impact_summary?: string;
+  }) => {
+    const { items, steps, ...rest } = payload;
+    return apiFetch<Record<string, unknown>>('/api/mods/mutate/batch', {
+      method: 'POST',
+      body: JSON.stringify({ ...rest, steps: steps ?? items ?? [] }),
+    });
+  },
+  modsMutateInstall: (payload: {
+    mod_id?: string;
+    modrinth_project_id?: string;
+    project_id?: string;
+    modrinth_version_id?: string;
+    dependent_mod_id?: string;
+    confirm: true;
+    impact_fingerprint?: string;
+    expected_sha512?: string;
+  }) => {
+    const projectId = payload.project_id || payload.modrinth_project_id;
+    const modId = payload.mod_id || payload.dependent_mod_id || '';
+    return apiFetch<Record<string, unknown>>('/api/mods/mutate/install', {
+      method: 'POST',
+      body: JSON.stringify({
+        confirm: true,
+        mod_id: modId,
+        project_id: projectId,
+        modrinth_version_id: payload.modrinth_version_id,
+        impact_fingerprint: payload.impact_fingerprint,
+        expected_sha512: payload.expected_sha512,
+      }),
+    });
+  },
+  modsMutateQuarantine: (payload: {
+    mod_id: string;
+    confirm: true;
+    jar?: string;
+    confirm_world_risk?: boolean;
+  }) =>
+    apiFetch<Record<string, unknown>>('/api/mods/mutate/quarantine', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  modsMutateUndo: (payload: ({ backup_id: string } | { mod_id: string }) & { confirm?: true }) =>
+    apiFetch<Record<string, unknown>>('/api/mods/mutate/undo', {
+      method: 'POST',
+      body: JSON.stringify({ confirm: true, ...payload }),
+    }),
+  modsMutateJob: (id: string) =>
+    apiFetch<Record<string, unknown>>(`/api/mods/mutate/jobs/${encodeURIComponent(id)}`),
+  modsMutateBackups: (modId?: string) => {
+    const q = modId ? `?mod_id=${encodeURIComponent(modId)}` : '';
+    return apiFetch<Record<string, unknown>>(`/api/mods/mutate/backups${q}`);
+  },
+
   /** List sandboxed files under config/ (Mods → Configs). */
   modsConfigsList: () => apiFetch<Record<string, unknown>>('/api/mods/configs'),
   /** Read one config file by relative path (config/...). */
@@ -301,7 +399,7 @@ export const api = {
   reportsStatus: () => apiFetch<Record<string, unknown>>('/api/reports/status'),
   updateCheck: () => apiFetch<Record<string, unknown>>('/api/update-check'),
   modrinthStatus: () => apiFetch<Record<string, unknown>>('/api/modrinth/status'),
-  /** Start a Modrinth lookup scan (cached; never downloads jars). */
+  /** Start a Modrinth lookup scan (cached; jar downloads only via assisted mutate). */
   modrinthScanStart: () =>
     apiFetch<Record<string, unknown>>('/api/modrinth/scan', { method: 'POST', body: '{}' }),
   activeProfile: () => apiFetch<Record<string, unknown>>('/api/preview/profile'),
@@ -397,6 +495,8 @@ export const api = {
     minecraft_uuid?: string;
     minecraft_name?: string;
     clear_minecraft?: boolean;
+    capabilities?: string[];
+    mods_mutate?: boolean;
   }) =>
     apiFetch<Record<string, unknown>>('/api/accounts/update', {
       method: 'POST',

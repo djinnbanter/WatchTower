@@ -71,4 +71,39 @@ class CgroupProbeTest {
         assertNotNull(mem.usedGb());
         assertTrue(mem.usedGb() > 0);
     }
+
+    @Test
+    void readsCgroupV2CpuUsageNanos() throws Exception {
+        Path cgroupRoot = temp.resolve("cgroup");
+        Path slice = cgroupRoot.resolve("docker/abc");
+        Files.createDirectories(slice);
+        Files.writeString(slice.resolve("cpu.stat"), """
+                usage_usec 2500000
+                user_usec 2000000
+                system_usec 500000
+                """, StandardCharsets.UTF_8);
+        Path selfCgroup = temp.resolve("self.cgroup");
+        Files.writeString(selfCgroup, "0::/docker/abc" + System.lineSeparator());
+
+        Long nanos = CgroupProbe.readCpuUsageNanos(selfCgroup, cgroupRoot);
+        assertNotNull(nanos);
+        assertEquals(2_500_000_000L, nanos);
+    }
+
+    @Test
+    void readsCgroupV1CpuacctUsageNanos() throws Exception {
+        Path cgroupRoot = temp.resolve("cgroup");
+        Path cpuacct = cgroupRoot.resolve("cpuacct/docker/xyz");
+        Files.createDirectories(cpuacct);
+        Files.writeString(cpuacct.resolve("cpuacct.usage"), "5000000000", StandardCharsets.UTF_8);
+        Path memory = cgroupRoot.resolve("memory/docker/xyz");
+        Files.createDirectories(memory);
+        Path selfCgroup = temp.resolve("self.cgroup");
+        Files.writeString(selfCgroup, "12:cpu,cpuacct:/docker/xyz" + System.lineSeparator()
+                + "11:memory:/docker/xyz" + System.lineSeparator());
+
+        Long nanos = CgroupProbe.readCpuUsageNanos(selfCgroup, cgroupRoot);
+        assertNotNull(nanos);
+        assertEquals(5_000_000_000L, nanos);
+    }
 }

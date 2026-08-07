@@ -175,6 +175,15 @@ export function mockReportMods() {
     create.modrinth_outdated = true;
     create.modrinth_compatible_url = 'https://modrinth.com/mod/create/versions';
     create.modrinth_update_label = 'NeoForge build 6.0.1 available';
+    create.nested_mod_ids = ['flywheel'];
+    create.jar_in_jar = [
+      {
+        id: 'flywheel',
+        display_name: 'Flywheel',
+        version: '1.0.2',
+        nested_path: 'META-INF/jarjar/flywheel.jar',
+      },
+    ];
   }
   const appleskin = byId.get('appleskin');
   if (appleskin) {

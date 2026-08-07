@@ -63,6 +63,28 @@ class CrashFingerprintGrouperTest {
     }
 
     @Test
+    void memberJsonKeepsPairedPrimaryFile() {
+        JsonArray input = new JsonArray();
+        JsonObject row = new JsonObject();
+        row.addProperty("file", "crash-wd.txt");
+        row.addProperty("time", "2026-06-03T15:01:00+01:00");
+        row.addProperty("failure_kind", CrashClassifier.FK_WATCHDOG_FOLLOWUP);
+        row.addProperty("exception", "java.lang.Error: ServerHangWatchdog");
+        row.addProperty("incident_id", "inc-crash-create.txt");
+        row.addProperty("paired_primary_file", "crash-create.txt");
+        row.addProperty("plain_english", "The main server thread stopped responding.");
+        input.add(row);
+
+        JsonObject result = CrashFingerprintGrouper.group(input, new JsonObject());
+        JsonArray groups = result.getAsJsonArray("groups");
+        assertFalse(groups.isEmpty());
+        JsonObject member = groups.get(0).getAsJsonObject()
+                .getAsJsonArray("members").get(0).getAsJsonObject();
+        assertEquals("crash-create.txt", member.get("paired_primary_file").getAsString());
+        assertEquals("inc-crash-create.txt", member.get("incident_id").getAsString());
+    }
+
+    @Test
     void ackKeysReduceUnreviewed() throws Exception {
         JsonArray input = JsonParser.parseString(Files.readString(resolveFixture("grouped-input.json"), StandardCharsets.UTF_8))
                 .getAsJsonArray();

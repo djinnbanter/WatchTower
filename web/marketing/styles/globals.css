@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@fontsource-variable/geist";
+@import "@fontsource-variable/ibm-plex-sans";
 @import "@fontsource-variable/jetbrains-mono";
 
 /*
@@ -77,6 +78,8 @@
   --wt-radius-md: 4px;
   --wt-radius-lg: 6px;
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Marketing display only — body/UI stays Geist; instruments stay JetBrains. */
+  --font-display: "IBM Plex Sans Variable", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
   --wt-fs-display: clamp(2.75rem, 7vw, 5rem);
   --wt-fs-display-sm: clamp(1.85rem, 3.8vw, 2.75rem);
@@ -104,6 +107,7 @@
   --color-wt-warn: var(--wt-warn);
   --color-wt-danger: var(--wt-danger);
   --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
   --font-mono: var(--font-mono);
 }
 
@@ -173,6 +177,7 @@ body {
 }
 
 .wt-display {
+  font-family: var(--font-display);
   font-size: var(--wt-fs-display);
   font-weight: 600;
   line-height: 1.02;
@@ -181,6 +186,7 @@ body {
 }
 
 .wt-display-sm {
+  font-family: var(--font-display);
   font-size: var(--wt-fs-display-sm);
   font-weight: 600;
   line-height: 1.08;
@@ -189,6 +195,7 @@ body {
 }
 
 .wt-hero {
+  font-family: var(--font-display);
   font-size: var(--wt-fs-hero);
   font-weight: 600;
   line-height: 0.94;
@@ -197,6 +204,7 @@ body {
 }
 
 .wt-entry {
+  font-family: var(--font-display);
   font-size: var(--wt-fs-entry);
   font-weight: 600;
   line-height: 1.05;

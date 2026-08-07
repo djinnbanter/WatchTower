@@ -5,6 +5,7 @@ import { navigate } from '@/app/router';
 import { asArray, asRecord, str } from '@/lib/utils';
 import { Button, EmptyState, StatusPill } from '@/ui/patterns';
 import { ModsSearch } from './components';
+import { guessModIdFromConfigPath } from './config-paths';
 
 export function ForensicsTab({
   factsOptional,
@@ -207,9 +208,15 @@ export function ForensicsTab({
                         <button
                           type="button"
                           className="md-forensics__finding-path md-forensics__finding-path--link"
-                          onClick={() =>
-                            navigate({ tab: 'mods', view: 'configs', panel: path, mod: null })
-                          }
+                          onClick={() => {
+                            const guessed = guessModIdFromConfigPath(path);
+                            navigate({
+                              tab: 'mods',
+                              view: 'overview',
+                              mod: guessed,
+                              panel: path,
+                            });
+                          }}
                         >
                           {path}
                         </button>

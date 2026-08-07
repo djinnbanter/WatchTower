@@ -57,6 +57,12 @@ public final class LagSpikeDetector {
                 if (healthy >= HEALTHY_RESET_SAMPLES) {
                     OpsCacheWriter.updateLagIssueResolution(
                             paths.opsCachePath, tps, mspt, config.tpsWarn(), config.msptWarn());
+                    try {
+                        OpsScanService.refreshIssuesLive(server);
+                    } catch (Exception refreshErr) {
+                        ModRuntime.logger().debug("Issues live refresh after lag resolve failed: {}",
+                                refreshErr.toString());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -109,6 +115,12 @@ public final class LagSpikeDetector {
         JsonObject lagEvent = ActivityLedgerScanner.lagIncidentEvent(id, Instant.now());
         OpsCacheWriter.applyLagIncident(paths.opsCachePath, paths.statePath, incident, lagIssue, lagEvent);
         OpsScanService.rebuildIncidentStories(server);
+        try {
+            OpsScanService.refreshIssuesLive(server);
+        } catch (Exception refreshErr) {
+            ModRuntime.logger().debug("Issues live refresh after lag capture failed: {}",
+                    refreshErr.toString());
+        }
 
         ModRuntime.logger().info("Watchtower auto-captured lag incident {} (MSPT {}, TPS {})",
                 id, String.format("%.1f", mspt), String.format("%.1f", tps));

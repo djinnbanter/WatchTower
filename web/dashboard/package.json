@@ -7,6 +7,7 @@
     "build": "node scripts/build-wiki.mjs && tsc -b && vite build && node scripts/copy-static-assets.mjs",
     "build:wiki": "node scripts/build-wiki.mjs",
     "preview": "node scripts/build-wiki.mjs && node scripts/apply-preview-profile.mjs normal && vite --port 8081 --strictPort",
+    "preview:create-smp": "node scripts/preview-create-smp.mjs",
     "preview:fresh": "node scripts/build-wiki.mjs && node scripts/apply-preview-profile.mjs fresh && vite --port 8081 --strictPort",
     "preview:live": "node scripts/build-wiki.mjs && vite --port 8081 --strictPort --mode live",
     "generate:mock": "node scripts/generate-mock-data.mjs",
@@ -24,7 +25,7 @@
     "test:issues": "tsx --test src/features/issues/helpers.test.ts",
     "test:spark-map": "tsx --test src/features/spark/map-helpers.test.ts",
     "test:session": "tsx --test src/features/session/*.test.ts",
-    "test:settings": "tsx --test src/app/permissions.test.ts src/app/session-store.test.ts src/app/accents.test.ts src/features/wizard/persist.test.ts src/ui/player-avatar.test.ts src/features/settings/audit-log-helpers.test.ts",
+    "test:settings": "tsx --test src/app/permissions.test.ts src/app/permissions-mutate.test.ts src/app/session-store.test.ts src/app/accents.test.ts src/features/wizard/persist.test.ts src/ui/player-avatar.test.ts src/features/settings/audit-log-helpers.test.ts",
     "test:ui-consistency": "tsx --test scripts/ui-consistency-banlist.test.ts",
     "audit:packaging": "node ../../tools/audit-dashboard-packaging.mjs",
     "audit:parity": "node ../../tools/audit-dashboard-parity.mjs"

@@ -38,13 +38,13 @@ export function enrichedFactsMods(
   return mergeModSources(base, fromScan);
 }
 
+/** Primary Library chrome filters (Updates lives in the main sidebar under Mods). */
 export const CATALOG_FILTERS = [
   { value: 'all' as const, label: 'All' },
   { value: 'enabled' as const, label: 'Enabled' },
   { value: 'disabled' as const, label: 'Disabled' },
   { value: 'client' as const, label: 'Client' },
   { value: 'server' as const, label: 'Server' },
-  { value: 'unresolved' as const, label: 'Unresolved' },
 ];
 
 export const CATALOG_SORT_OPTIONS = [
@@ -238,7 +238,11 @@ export function sortCatalogRows(
   return list;
 }
 
-export function sideBadgeSpecsForRow(row: CatalogRow, badgeMaps: BadgeMaps): BadgeSpec[] {
+export function sideBadgeSpecsForRow(
+  row: CatalogRow,
+  badgeMaps: BadgeMaps,
+  opts?: { omitUpdateBadge?: boolean },
+): BadgeSpec[] {
   const badges: BadgeSpec[] = [];
   const id = row.id;
   const side = row.side_score;
@@ -261,7 +265,9 @@ export function sideBadgeSpecsForRow(row: CatalogRow, badgeMaps: BadgeMaps): Bad
     badges.push({ key: 'u', tone: 'neutral', label: 'unresolved' });
   }
 
-  if (row.modrinth_outdated) badges.push({ key: 'upd', tone: 'warn', label: 'Update' });
+  if (row.modrinth_outdated && !opts?.omitUpdateBadge) {
+    badges.push({ key: 'upd', tone: 'warn', label: 'Update' });
+  }
   if (meta?.is_mcreator) badges.push({ key: 'mc', tone: 'neutral', label: 'MCreator' });
   if (meta?.loader_hint === 'fabric_in_neoforge_jar') {
     badges.push({ key: 'fab', tone: 'warn', label: 'Fabric jar' });

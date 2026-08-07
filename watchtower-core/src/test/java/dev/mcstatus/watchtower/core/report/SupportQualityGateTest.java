@@ -8,6 +8,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -170,7 +171,7 @@ class SupportQualityGateTest {
     }
 
     @Test
-    void hangDumpPassesWhenFilePresent() throws Exception {
+    void hangDumpPassesWhenFilePresentAndPackable() throws Exception {
         Path serverDir = temp.resolve("server");
         Path hangs = serverDir.resolve("watchtower/hangs");
         Files.createDirectories(hangs);
@@ -186,7 +187,31 @@ class SupportQualityGateTest {
     }
 
     @Test
-    void secretsRedactedPassesWhenRedactorAvailable() throws Exception {
+    void hangDumpWarnsWhenFileTooLargeForHardBudget() throws Exception {
+        Path serverDir = temp.resolve("server-big");
+        Path hangs = serverDir.resolve("watchtower/hangs");
+        Files.createDirectories(hangs);
+        byte[] big = new byte[64 * 1024];
+        Arrays.fill(big, (byte) 'x');
+        Files.write(hangs.resolve("hang-big.txt"), big);
+        Path ops = temp.resolve("ops-big.json");
+        Files.writeString(ops, """
+                {"soft_hang":{"active":true,"stall_seconds":48}}
+                """, StandardCharsets.UTF_8);
+
+        SupportComposeOptions opts = SupportComposeOptions.quickDefaults().toBuilder()
+                .maxZipEvidenceBytes(1024)
+                .build();
+
+        SupportQualityGate.Result r = SupportQualityGate.evaluate(
+                serverDir, ops, new JsonObject(), opts);
+        assertEquals(SupportQualityGate.Status.WARN, find(r, "hang_dump").status());
+        assertTrue(find(r, "hang_dump").message().toLowerCase().contains("large")
+                || find(r, "hang_dump").message().toLowerCase().contains("limit"));
+    }
+
+    @Test
+    void secretsRedactedPassesWhenCanaryIsScrubbed() throws Exception {
         Path serverDir = temp.resolve("server");
         Files.createDirectories(serverDir);
         Path ops = temp.resolve("ops-cache.json");
@@ -194,7 +219,26 @@ class SupportQualityGateTest {
 
         SupportQualityGate.Result r = SupportQualityGate.evaluate(
                 serverDir, ops, new JsonObject(), SupportComposeOptions.quickDefaults());
-        assertEquals(SupportQualityGate.Status.PASS, find(r, "secrets_redacted").status());
+        SupportQualityGate.Check c = find(r, "secrets_redacted");
+        assertEquals(SupportQualityGate.Status.PASS, c.status());
+        assertTrue(c.message().toLowerCase().contains("strip")
+                || c.message().toLowerCase().contains("redact"));
+    }
+
+    @Test
+    void checkSecretsRedactedWarnsIfCanaryLeaks() {
+        String canary = """
+                password=hunter2
+                host 203.0.113.10
+                id 123e4567-e89b-12d3-a456-426614174000
+                """;
+        String scrubbed = SupportRedactor.redactText(canary);
+        assertFalse(scrubbed.contains("hunter2"));
+        assertFalse(scrubbed.contains("203.0.113.10"));
+        assertFalse(scrubbed.contains("123e4567-e89b-12d3-a456-426614174000"));
+
+        SupportQualityGate.Check ok = SupportQualityGate.checkSecretsRedacted();
+        assertEquals(SupportQualityGate.Status.PASS, ok.status());
     }
 
     @Test

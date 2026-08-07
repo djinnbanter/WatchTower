@@ -80,12 +80,23 @@ public final class ModUpdateImpactAnalyzer {
                 String localId = resolveLocalId(dep, projectToModId, modsById);
                 if ("required".equals(type)) {
                     if (localId == null) {
-                        String key = dep.projectId() != null ? dep.projectId() : "unknown";
-                        blockers.add(blocker(
-                                key,
+                        String modKey = (dep.slug() != null && !dep.slug().isBlank())
+                                ? dep.slug()
+                                : (dep.projectId() != null ? dep.projectId() : "unknown");
+                        JsonObject b = blocker(
+                                modKey,
                                 displayNameForDep(dep, null, modsById),
                                 "need_install",
-                                "Required dependency is not installed in this pack."));
+                                "Required dependency is not installed in this pack.");
+                        if (dep.projectId() != null && !dep.projectId().isBlank()) {
+                            b.addProperty("project_id", dep.projectId());
+                            b.addProperty("modrinth_project_id", dep.projectId());
+                        }
+                        if (dep.versionId() != null && !dep.versionId().isBlank()) {
+                            b.addProperty("version_id", dep.versionId());
+                            b.addProperty("modrinth_version_id", dep.versionId());
+                        }
+                        blockers.add(b);
                         continue;
                     }
                     JsonObject local = modsById.get(localId);

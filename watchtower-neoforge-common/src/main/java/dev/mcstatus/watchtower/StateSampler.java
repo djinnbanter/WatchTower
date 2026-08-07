@@ -11,6 +11,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.mcstatus.watchtower.core.collect.CpuUsageSampler;
 import dev.mcstatus.watchtower.core.util.WatchtowerPathLocks;
 
 import java.io.IOException;
@@ -58,14 +59,22 @@ public final class StateSampler {
                 tpsSamples.add(tpsEntry);
                 state.add("tps_samples", pruneSamples(tpsSamples, cutoff));
 
-                Double hostPct = HostCpuProbe.readHostCpuPct();
-                if (hostPct != null) {
+                CpuUsageSampler.Reading cpu = HostCpuProbe.sample();
+                if (cpu.hostCpuPct() != null || cpu.coresUsed() != null) {
                     JsonArray cpuSamples = state.has("cpu_samples")
                             ? state.getAsJsonArray("cpu_samples")
                             : new JsonArray();
                     JsonObject cpuEntry = new JsonObject();
                     cpuEntry.addProperty("time", nowIso);
-                    cpuEntry.addProperty("host_pct", round1(hostPct));
+                    if (cpu.hostCpuPct() != null) {
+                        cpuEntry.addProperty("host_pct", round1(cpu.hostCpuPct()));
+                    }
+                    if (cpu.coresUsed() != null) {
+                        cpuEntry.addProperty("cores_used", round2(cpu.coresUsed()));
+                    }
+                    if (cpu.limitCores() != null) {
+                        cpuEntry.addProperty("limit_cores", round2(cpu.limitCores()));
+                    }
                     cpuSamples.add(cpuEntry);
                     state.add("cpu_samples", pruneSamples(cpuSamples, cutoff));
                 }
@@ -119,5 +128,9 @@ public final class StateSampler {
 
     private static double round1(double value) {
         return Math.round(value * 10.0) / 10.0;
+    }
+
+    private static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

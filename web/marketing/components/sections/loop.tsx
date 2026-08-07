@@ -10,9 +10,9 @@ import { READOUTS } from '@/content/product';
 const MARKS: LucideIcon[] = [Eye, ScanSearch, Inbox];
 
 const BLURBS = [
-  'Continuous. No scheduled audit homework.',
-  'Logs, mods, crashes, and disk while you work.',
-  'Ranked findings with a clear next step.',
+  'Runs the whole time the game does.',
+  'Logs, mods, crashes, and disk in the background.',
+  'Ranked findings. Each one has a next step.',
 ] as const;
 
 /**
@@ -56,11 +56,10 @@ export function Loop() {
               <div className="relative flex flex-col gap-4 border-b border-[color:var(--wt-line)] px-5 py-6 md:flex-row md:items-end md:justify-between md:gap-8 md:px-7 md:py-7">
                 <div className="min-w-0 max-w-2xl">
                   <h2 className="wt-display-sm text-[color:var(--wt-text)]">
-                    Watching, scanning, and a fix inbox.
+                    Watching feeds the fix inbox.
                   </h2>
                   <p className="mt-3 text-[0.9375rem] leading-relaxed text-[color:var(--wt-text-mid)] md:text-[1.0625rem]">
-                    It runs the whole time the game does. No giant scheduled audit to sit through,
-                    and nothing you have to remember to start.
+                    No daily homework report. The loop is already running while you play.
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--wt-ok)]">

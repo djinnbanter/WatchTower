@@ -101,8 +101,8 @@ Parked apply / onboarding polish (still wanted, not scheduled):
 
 - **First-hour sanity check** — green/amber/red on Java, loader, client-only jars, missing deps
 - **Safe guided fixes** — apply vetted `server.properties` changes with preview and undo
-- **Jar quarantine** — move a bad or client-only jar aside (not delete), with Undo
-- **Assisted Safe updates** — Modrinth Safe path: download, verify, back up old jar, swap
+- **Jar quarantine** — *in progress* — move a bad or client-only jar aside (not delete), with Undo (dashboard + mutate API)
+- **Assisted Safe updates** — *in progress / single-swap path shipping* — Modrinth Safe path: download, verify, back up old jar, swap (batch + install follow)
 - **Player-safe ops context** — lag vs timeout hints and richer restart roster
 - **Player-safe explain / richer Discord paste** — short player blurb vs admin detail beyond today's support pack
 - **Config secret sniff** — catch webhooks/tokens in known config paths

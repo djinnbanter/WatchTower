@@ -235,6 +235,15 @@ Canonical `failure_kind` values: `mod_runtime`, `mod_load_dependency`, `mod_load
 | `/api/mods/scan` | POST | Force unified log scan + running mods → updates ops-cache; returns `{ scanned_at, mod_error_count, running_mod_count, mod_log_errors[], running_mods[], kubejs_failures[] }` |
 | `/api/mods/disable` | POST | Soft-disable top-level jar under `mods/` — `{ jar, confirm_world_risk? }` → rename to `*.jar.disabled` (admin+; `MOD_DISABLE_ENABLED`; 400 `world_risk_confirm_required` when high risk and confirm missing) |
 | `/api/mods/enable` | POST | Re-enable — `{ jar }` basename of `*.jar.disabled` (or `*.disabled`) → rename back to `*.jar` |
+| `/api/mods/mutate/status` | GET | Mutate lock + `needs_restart` + active job summary (logged in) |
+| `/api/mods/mutate/versions` | GET | Compatible Modrinth versions for `?mod_id=` / `?project_id=` (metadata only) |
+| `/api/mods/mutate/jobs/:id` | GET | Poll mutate job (`queued`→`done`/`failed`/`cancelled`) |
+| `/api/mods/mutate/backups` | GET | List jar backups (`?mod_id=` optional) |
+| `/api/mods/mutate/swap` | POST | Start single swap — `{ mod_id, modrinth_version_id, impact_fingerprint, confirm:true }` → 202; requires **`mods.mutate`**; `MOD_MUTATE_ENABLED`; 409 `mutate_busy` |
+| `/api/mods/mutate/batch` | POST | Batch swaps — `{ steps:[{mod_id,modrinth_version_id}], impact_fingerprint, confirm:true, continue_on_failure? }` |
+| `/api/mods/mutate/install` | POST | Install missing required dep — `{ mod_id, project_id?, modrinth_version_id, confirm:true }` |
+| `/api/mods/mutate/quarantine` | POST | Move live jar to `watchtower/mod-backups/` — `{ mod_id, confirm:true, confirm_world_risk? }` |
+| `/api/mods/mutate/undo` | POST | Restore backup — `{ backup_id }` or `{ mod_id }` + `confirm:true` |
 | `/api/mods/configs` | GET | List files under `config/` (`files[]`: `path`, `size`, `mtime`, `has_backup`, `secret_hint`). With `?path=` — read one file (`content`, `mtime`, `parse_warnings[]`, `editor`: `form`\|`raw`, and `fields[]` when `editor=form`). Requires `MOD_CONFIG_EDIT_ENABLED` (default true); otherwise 403 |
 | `/api/mods/configs` | PUT | Save — `{ path, expected_mtime, content? }` or `{ path, expected_mtime, fields? }` → backup then write (admin+). Prefer `fields` for TOML form saves (server serializes). `409` on mtime conflict; max 512 KiB. Audit `config_saved` (path only) |
 | `/api/mods/configs/undo` | POST | `{ path }` — restore newest backup (admin+). Audit `config_undone` |

@@ -18,7 +18,7 @@ public final class IncidentChainBuilder {
     }
 
     /**
-     * Pair mod_runtime / category=mod primaries with a subsequent watchdog within 120s.
+     * Pair mod_runtime primaries with a subsequent watchdog within 120s.
      * Mutates summaries in place: shared {@code incident_id}, follow-up {@code failure_kind}
      * {@code watchdog_followup}, and {@code paired_primary_file}.
      */
@@ -42,8 +42,7 @@ public final class IncidentChainBuilder {
         for (int i = 0; i < rows.size(); i++) {
             JsonObject primary = rows.get(i);
             String kind = str(primary, "failure_kind");
-            if (!CrashClassifier.FK_MOD_RUNTIME.equals(kind)
-                    && !"mod".equals(str(primary, "category"))) {
+            if (!CrashClassifier.FK_MOD_RUNTIME.equals(kind)) {
                 continue;
             }
             Instant pt = TimeParse.parseTime(str(primary, "time"));

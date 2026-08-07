@@ -41,11 +41,18 @@ import {
   WtTpsGauge,
   WtCpuGauge,
 } from '@/ui/charts';
-import { mergeStableTimeSeriesRows, rowsVisuallyEqual } from '@/ui/charts/adapters';
+import { mergeStableTimeSeriesRows, rowsVisuallyEqual, LIVE_SERIES_KEYS } from '@/ui/charts/adapters';
 import type { SeriesSpec } from '@/ui/charts/wt-series';
 import { asArray, asRecord, bool, get, num, str } from '@/lib/utils';
 import { acksMapFromResponse } from '@/features/issues/helpers';
 import { filterLiveTakeaways, openLiveIssueTakeaways } from './takeaways';
+import {
+  deriveCpuPct,
+  cpuElevated,
+  formatCpuCaption,
+  normalizeCpuDisplaySetting,
+  resolveEffectiveCpuMode,
+} from './cpu-display';
 import './live.css';
 
 /**
@@ -413,6 +420,14 @@ export function PageView({ route: _route }: { route: RouteState }) {
     return next;
   }, [clockMs, followLive, pinnedWindow, rows, slideLive, windowMs]);
 
+  const cpuDisplaySetting = normalizeCpuDisplaySetting(asRecord(settingsQ.data).cpu_display);
+  const cpuLimitCores = (() => {
+    const live = asRecord(liveQ.data);
+    const latest = asRecord(live.latest);
+    const n = num(latest.cpu_limit_cores, NaN);
+    return Number.isFinite(n) ? n : null;
+  })();
+
   const windowRows = useMemo(() => {
     const sliced = sliceRowsByWindow(rows, chartWindow);
     let next: ReturnType<typeof toBklitRows>;
@@ -426,13 +441,23 @@ export function PageView({ route: _route }: { route: RouteState }) {
         chartWindow.end.getTime(),
       ) as ReturnType<typeof toBklitRows>;
     }
+    next = next.map((row) => {
+      const cores = typeof row.cpu_cores === 'number' ? row.cpu_cores : null;
+      const host = typeof row.host_cpu === 'number' ? row.host_cpu : null;
+      const display = deriveCpuPct(cpuDisplaySetting, {
+        coresUsed: cores,
+        hostCpuPct: host,
+        limitCores: cpuLimitCores,
+      });
+      return display == null ? row : { ...row, display_cpu: display };
+    });
     // Reuse the previous array when the decimated series is unchanged — stops the
     // chart shell rebuilding paths on every samples poll for 7d/30d.
     const prev = windowRowsRef.current;
-    if (rowsVisuallyEqual(prev, next)) return prev;
+    if (rowsVisuallyEqual(prev, next, [...LIVE_SERIES_KEYS, 'display_cpu'])) return prev;
     windowRowsRef.current = next;
     return next;
-  }, [chartWindow, rows]);
+  }, [chartWindow, rows, cpuDisplaySetting, cpuLimitCores]);
 
   const chartXDomain = useMemo((): [Date, Date] | undefined => {
     if (!chartWindow) return undefined;
@@ -516,7 +541,19 @@ export function PageView({ route: _route }: { route: RouteState }) {
 
   const tps = latest ? num(latest.tps) : 0;
   const mspt = latest ? num(latest.mspt) : 0;
-  const cpu = latest ? num(latest.host_cpu_pct) : 0;
+  const cpuInputs = {
+    coresUsed: latest && Number.isFinite(num(latest.cpu_cores_used, NaN)) ? num(latest.cpu_cores_used) : null,
+    limitCores: latest && Number.isFinite(num(latest.cpu_limit_cores, NaN)) ? num(latest.cpu_limit_cores) : null,
+    hostCpuPct: latest && Number.isFinite(num(latest.host_cpu_pct, NaN)) ? num(latest.host_cpu_pct) : null,
+  };
+  const cpu = latest ? (deriveCpuPct(cpuDisplaySetting, cpuInputs) ?? 0) : 0;
+  const cpuCaption = latest ? formatCpuCaption(cpuDisplaySetting, cpuInputs) : '';
+  const cpuWarn = cpuElevated(cpuInputs);
+  const cpuMode = resolveEffectiveCpuMode(cpuDisplaySetting, cpuInputs);
+  const cpuGaugeMax =
+    cpuMode === 'panel'
+      ? Math.max(100, cpuInputs.limitCores != null ? cpuInputs.limitCores * 100 : Math.ceil(Math.max(cpu, 100) / 100) * 100)
+      : 100;
   const diskPct = latest ? num(latest.disk_use_pct, num(storage.use_pct)) : 0;
   const packageC = num(thermal.package_c);
   const ambientC = num(thermal.ambient_c);
@@ -592,7 +629,10 @@ export function PageView({ route: _route }: { route: RouteState }) {
                     <WtDiskGauge value={diskPct} size={HERO_DIAL} />
                   </div>
                   <div className="lv-vitals__dial">
-                    <WtCpuGauge value={cpu} size={HERO_DIAL} />
+                    <WtCpuGauge value={cpu} max={cpuGaugeMax} size={HERO_DIAL} />
+                    {cpuCaption ? (
+                      <div className="mt-1 text-center text-[10px] leading-tight text-wt-text-low">{cpuCaption}</div>
+                    ) : null}
                   </div>
                 </>
               ) : (
@@ -794,13 +834,13 @@ export function PageView({ route: _route }: { route: RouteState }) {
               {hostOpen ? (
                 <div className="lv-chart-grid">
                   <SeriesChart
-                    title="Host CPU %"
+                    title={cpuMode === 'host' ? 'Host CPU %' : 'CPU %'}
                     rows={windowRows}
                     xDomain={chartXDomain}
                     loading={chartLoading}
                     error={chartError}
                     empty={chartEmpty}
-                    series={[{ dataKey: 'host_cpu', color: 'var(--wt-ch-cpu)' }]}
+                    series={[{ dataKey: 'display_cpu', color: 'var(--wt-ch-cpu)' }]}
                   />
                   <SeriesChart
                     title="RAM used (GB)"

@@ -1,45 +1,45 @@
 {
-  "version": "1.0.0",
+  "version": "1.2.0-beta.1",
   "stale": false,
-  "last_report_at": "2026-08-01T19:23:51.780Z",
+  "last_report_at": "2026-08-03T19:46:14.998Z",
   "age_hours": 2,
-  "ops_cache_updated_at": "2026-08-01T21:23:51.780Z",
-  "report_reconcile_at": "2026-08-01T19:23:51.780Z",
-  "activity_scanned_at": "2026-08-01T21:23:21.780Z",
-  "mods_scanned_at": "2026-08-01T21:21:51.780Z",
-  "running_mod_count": 58,
+  "ops_cache_updated_at": "2026-08-03T21:46:14.998Z",
+  "report_reconcile_at": "2026-08-03T19:46:14.998Z",
+  "activity_scanned_at": "2026-08-03T21:45:44.998Z",
+  "mods_scanned_at": "2026-08-03T21:44:14.998Z",
+  "running_mod_count": 284,
   "ops_poll_active": false,
   "ops_log_scan_active": true,
   "backup_poll_active": true,
-  "backups_scanned_at": "2026-08-01T21:05:51.780Z",
+  "backups_scanned_at": "2026-08-03T21:28:14.998Z",
   "health_grade": "D",
   "scorecard": {
     "grade": "critical",
     "grade_word": "Critical",
     "performance": {
-      "low_tps_minutes_24h": 48,
+      "low_tps_minutes_24h": 38,
       "low_tps_minutes_7d": 48,
-      "mspt_p95_24h": 126,
+      "mspt_p95_24h": 135.4,
       "mspt_jitter_max_24h": 18.1,
-      "subtitle": "48 low-TPS minutes (24h) · MSPT p95 126ms"
+      "subtitle": "38 low-TPS minutes (24h) · MSPT p95 135ms"
     },
     "crashes": {
       "unreviewed": 12,
       "latest_label": "Create contraption collision — mf.axis null (evidence-backed)",
       "latest_file": "crash-2026-06-22_14-33-07-server.txt",
-      "latest_at": "2026-08-01T20:38:51.000Z"
+      "latest_at": "2026-08-03T21:01:14.000Z"
     }
   },
   "crash_tldr": {
     "label": "Create contraption collision — mf.axis null (evidence-backed)",
     "file": "crash-2026-06-22_14-33-07-server.txt",
-    "at": "2026-08-01T20:38:51.000Z",
+    "at": "2026-08-03T21:01:14.000Z",
     "unreviewed": 12
   },
   "lag_tldr": {
     "label": "Lag spike — MSPT 118ms · TPS 8.4",
     "narrative": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
-    "incident_id": "2026-08-01T21-15-51Z",
+    "incident_id": "2026-08-03T21-38-14Z",
     "severity": "critical"
   },
   "mod_tldr": {
@@ -49,7 +49,7 @@
     "count": 6
   },
   "right_now": {
-    "updated_at": "2026-08-01T21:23:21.780Z",
+    "updated_at": "2026-08-03T21:45:44.998Z",
     "signals": [
       {
         "type": "backup_job",
@@ -107,7 +107,7 @@
   "log_stale_tldr": {
     "active": true,
     "gap_minutes": 22.4,
-    "last_mtime": "2026-08-01T21:01:51.780Z"
+    "last_mtime": "2026-08-03T21:24:14.998Z"
   },
   "mods_changed_tldr": {
     "label": "3 added, 2 removed, 4 updated, 1 drifted since last report",
@@ -125,12 +125,12 @@
     "grade": "critical",
     "mod_id": "sable",
     "pct": 21,
-    "captured_at": "2026-08-01T20:38:51.780Z",
+    "captured_at": "2026-08-03T21:01:14.998Z",
     "fresh": true
   },
   "rss_hint": {
     "show": true,
-    "rss_gb": 11.23,
+    "rss_gb": 11.56,
     "heap_max_gb": 8,
     "message": "Native memory (RSS) is elevated vs Java heap max — possible off-heap/native leak; check mods using JNI or large direct buffers."
   },
@@ -170,12 +170,12 @@
       }
     ],
     "quiet_window": {
-      "next_start_at": "2026-08-02T03:00:00Z",
-      "next_end_at": "2026-08-02T05:00:00Z",
+      "next_start_at": "2026-08-04T03:00:00Z",
+      "next_end_at": "2026-08-04T05:00:00Z",
       "avg_players": 0.2,
       "avg_mspt": 24,
       "sample_minutes": 42
     },
-    "checked_at": "2026-08-01T21:23:51.780Z"
+    "checked_at": "2026-08-03T21:46:14.998Z"
   }
 }

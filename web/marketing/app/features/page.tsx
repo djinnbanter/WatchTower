@@ -29,7 +29,7 @@ export default function FeaturesPage() {
       <section className="border-t border-[color:var(--wt-line)] py-16 md:py-20">
         <div className="mx-auto flex w-full max-w-[84rem] flex-col gap-6 px-5 md:flex-row md:items-end md:justify-between md:px-8">
           <p className="max-w-[40ch] text-[1.0625rem] leading-relaxed text-[color:var(--wt-text-mid)]">
-            Open the demo on sample data, or get the jar on Modrinth.
+            Open the demo on sample fixtures, or get the jar on Modrinth.
           </p>
           <div className="flex flex-wrap items-center gap-2.5">
             <Cta href={DEMO_URL} withArrow newTab>

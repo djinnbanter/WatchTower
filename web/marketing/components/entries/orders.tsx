@@ -29,7 +29,7 @@ export function OrdersEntry() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
           <h2 className="wt-entry max-w-[11ch] text-[color:var(--wt-text)]">Standing orders.</h2>
           <p className="max-w-[34ch] text-[1.0625rem] leading-relaxed text-[color:var(--wt-text-mid)] sm:pb-1 sm:text-right">
-            What we promise, and what we do not do.
+            Promises that stick, and work we refuse.
           </p>
         </div>
       </Reveal>

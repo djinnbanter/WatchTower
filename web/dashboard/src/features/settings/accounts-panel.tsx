@@ -19,6 +19,8 @@ type AccountRow = {
   is_you: boolean;
   minecraft_uuid: string | null;
   minecraft_name: string | null;
+  capabilities: string[];
+  mods_mutate: boolean;
 };
 
 type ConfirmKind = 'disable' | 'enable' | 'remove' | 'reset';
@@ -47,6 +49,14 @@ function parseAccounts(payload: Record<string, unknown>): AccountRow[] {
         is_you: bool(r.is_you),
         minecraft_uuid: str(r.minecraft_uuid) || null,
         minecraft_name: str(r.minecraft_name) || null,
+        capabilities: Array.isArray(r.capabilities)
+          ? r.capabilities.filter((c): c is string => typeof c === 'string')
+          : [],
+        mods_mutate:
+          r.mods_mutate === true ||
+          (Array.isArray(r.capabilities) &&
+            r.capabilities.some((c) => c === 'mods.mutate')) ||
+          str(r.role) === 'owner',
       } satisfies AccountRow;
     })
     .filter((row): row is AccountRow => row != null);
@@ -151,8 +161,15 @@ export function AccountsPanel() {
   });
 
   const updateMut = useMutation({
-    mutationFn: (args: { id: string; patch: { role?: string; disabled?: boolean } }) =>
-      api.updateAccount(args.id, args.patch),
+    mutationFn: (args: {
+      id: string;
+      patch: {
+        role?: string;
+        disabled?: boolean;
+        mods_mutate?: boolean;
+        capabilities?: string[];
+      };
+    }) => api.updateAccount(args.id, args.patch),
     onSuccess: (_res, vars) => {
       setRowErrors((prev) => {
         const next = { ...prev };
@@ -284,6 +301,7 @@ export function AccountsPanel() {
                   <th scope="col">Person</th>
                   <th scope="col">Minecraft</th>
                   <th scope="col">Role</th>
+                  <th scope="col">Mod jars</th>
                   <th scope="col">Two-factor</th>
                   <th scope="col">Last seen</th>
                   <th scope="col">Actions</th>
@@ -321,6 +339,7 @@ export function AccountsPanel() {
                           disabled={busy || row.disabled}
                           options={playerOptions}
                           compact
+                          isYou={row.is_you}
                         />
                       </td>
                       <td>
@@ -347,6 +366,36 @@ export function AccountsPanel() {
                               </option>
                             ))}
                           </select>
+                        )}
+                      </td>
+                      <td>
+                        {row.role === 'owner' ? (
+                          <span className="st-accounts__role-static" title="Owners can always change mod jars">
+                            Always allowed
+                          </span>
+                        ) : row.role === 'admin' ? (
+                          <label className="st-accounts__mutate">
+                            <input
+                              type="checkbox"
+                              checked={row.mods_mutate}
+                              disabled={busy || row.disabled}
+                              aria-label={`Allow mod jar changes for ${row.username}`}
+                              onChange={(e) => {
+                                setRowErrors((prev) => {
+                                  const next = { ...prev };
+                                  delete next[row.id];
+                                  return next;
+                                });
+                                updateMut.mutate({
+                                  id: row.id,
+                                  patch: { mods_mutate: e.target.checked },
+                                });
+                              }}
+                            />
+                            <span>Allow mod jar changes</span>
+                          </label>
+                        ) : (
+                          <span className="text-xs text-wt-text-low">View only</span>
                         )}
                       </td>
                       <td>

@@ -1,9 +1,12 @@
 package dev.mcstatus.watchtower;
 
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.collect.ModMutateJob;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public final class WatchtowerRuntimeState {
@@ -50,6 +53,14 @@ public final class WatchtowerRuntimeState {
     private volatile int discoveryProgressTotal;
     private volatile JsonObject lastDiscoveryStatus;
     private volatile JsonObject discoveryCounts = new JsonObject();
+
+    private volatile ModMutateJob activeMutateJob;
+    private final Map<String, ModMutateJob> recentMutateJobs = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, ModMutateJob> eldest) {
+            return size() > 48;
+        }
+    };
 
     public synchronized boolean tryBeginReport() {
         if (reportRunning) {
@@ -106,6 +117,19 @@ public final class WatchtowerRuntimeState {
 
     public boolean isReportRunning() {
         return reportRunning;
+    }
+
+    /**
+     * Best-effort clear of discovery/report busy flags when the server stops or unbinds
+     * mid-audit. Idempotent. Does not write a successful last-report result.
+     */
+    public synchronized void releaseRunningLocksOnStop() {
+        if (reportRunning) {
+            finishReport(false, "Interrupted because the server stopped.", null, null, null, null);
+        }
+        if (discoveryRunning) {
+            finishDiscovery(false, "Interrupted because the server stopped.", null);
+        }
     }
 
     public String getReportStage() {
@@ -394,5 +418,71 @@ public final class WatchtowerRuntimeState {
 
     public JsonObject getLastDiscoveryStatus() {
         return lastDiscoveryStatus;
+    }
+
+    /**
+     * Claim the single-writer mutate lock. Returns false when another non-terminal job is active.
+     */
+    public synchronized boolean tryBeginMutate(ModMutateJob job) {
+        if (job == null) {
+            return false;
+        }
+        if (isMutateBusy()) {
+            return false;
+        }
+        activeMutateJob = job;
+        rememberMutateJob(job);
+        return true;
+    }
+
+    /**
+     * Release the mutate lock only when {@code jobId} matches the active job.
+     * Stale finishes from an earlier runner must not clear a newer job's lock.
+     */
+    public synchronized void finishMutate(String jobId) {
+        if (activeMutateJob == null) {
+            return;
+        }
+        rememberMutateJob(activeMutateJob);
+        if (jobId != null && jobId.equals(activeMutateJob.id)) {
+            activeMutateJob = null;
+        }
+    }
+
+    public synchronized ModMutateJob getActiveMutateJob() {
+        return activeMutateJob;
+    }
+
+    /** Busy until {@link #finishMutate(String)} clears the active slot (even if the job is terminal). */
+    public synchronized boolean isMutateBusy() {
+        return activeMutateJob != null;
+    }
+
+    public synchronized void updateMutateJob(ModMutateJob job) {
+        if (job == null) {
+            return;
+        }
+        if (activeMutateJob != null && job.id != null && job.id.equals(activeMutateJob.id)) {
+            activeMutateJob = job;
+        }
+        rememberMutateJob(job);
+    }
+
+    /** Active job first, then a recent finished job by id (brief retention). */
+    public synchronized ModMutateJob getMutateJob(String jobId) {
+        if (jobId == null || jobId.isBlank()) {
+            return null;
+        }
+        if (activeMutateJob != null && jobId.equals(activeMutateJob.id)) {
+            return activeMutateJob;
+        }
+        return recentMutateJobs.get(jobId);
+    }
+
+    private void rememberMutateJob(ModMutateJob job) {
+        if (job == null || job.id == null || job.id.isBlank()) {
+            return;
+        }
+        recentMutateJobs.put(job.id, job);
     }
 }

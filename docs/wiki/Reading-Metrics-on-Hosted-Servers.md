@@ -23,9 +23,26 @@ Watchtower labels metrics so you know what to trust. **Charts show memory in use
 | Metric | Common mistake | What Watchtower does |
 |--------|----------------|----------------------|
 | **Host RAM** | Looks like you have tons of free RAM | Shows **Java heap** on Overview; **used/total** on Live |
-| **Host CPU %** | Hard to compare without core count | Shows quota when known |
+| **Host CPU %** | Whole-host % looks tiny on a big CPU (e.g. 7% while the panel shows ~300%) | Samples **container CPU** when cgroup is readable; Settings → **Monitoring → CPU display** |
 | **Temperature** | Often missing in Docker | Clear “unavailable” message |
 | **Backups** | Panel backups may be outside the container | Badge + [[Backups]] tab / Settings → Backups |
+
+---
+
+## CPU display modes
+
+Under **Settings → Monitoring → CPU display**:
+
+| Mode | Meaning |
+|------|---------|
+| **Auto (recommended)** | Panel style when container CPU is readable; otherwise whole-host |
+| **Panel style** | 100% = 1 core (can show 300% = ~3 cores — matches Pterodactyl-style panels) |
+| **Of my plan** | Percent of allocated cores (needs a CPU limit from the container) |
+| **Of whole host** | Classic host-wide busy % from `/proc/stat` |
+
+Changing the mode re-scales charts from stored **cores used** when that history exists. Older points that only have host % stay on the host scale.
+
+Lag Issues use **of-plan %** when a limit is known (independent of the display setting), so picking “of whole host” cannot hide overload on a capped plan.
 
 ---
 

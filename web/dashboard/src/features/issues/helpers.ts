@@ -442,26 +442,6 @@ export function buildActiveItems(input: {
     items.push(item);
   };
 
-  for (const e of asArray<Record<string, unknown>>(peek.lag_issues)) {
-    if (e.resolved) continue;
-    const key = `lag:${str(e.incident_id, str(e.id))}`;
-    if (!str(e.incident_id, str(e.id))) continue;
-    push(fromLagEntry(e, key));
-  }
-  for (const e of asArray<Record<string, unknown>>(peek.mod_issues)) {
-    if (e.resolved) continue;
-    const key = `mod:${str(e.mod_id, str(e.id))}`;
-    if (!str(e.mod_id, str(e.id))) continue;
-    push(fromModEntry(e, key));
-  }
-  const logStale = asRecord(peek.log_stale);
-  if (logStale.active || logStale.stale) {
-    push(fromLogStale(logStale));
-  }
-
-  const crash = crashPointerFromOps(ops);
-  if (crash) push(crash);
-
   for (const row of asArray<Record<string, unknown>>(ops.issues_live)) {
     const status = str(row.status, 'open').toLowerCase();
     if (status === 'resolved' || status === 'reviewed' || status === 'suppressed') continue;
@@ -469,6 +449,41 @@ export function buildActiveItems(input: {
   }
 
   for (const b of bootIssuesFromStartup(ops)) push(b);
+
+  const liveBare = new Set(
+    items.map((i) => bareIssueId(i.issueId ?? i.key)).filter(Boolean),
+  );
+  const liveHasLag =
+    liveBare.has('TICK_LAG') || liveBare.has('MSPT_HIGH') || liveBare.has('TPS_LOW');
+  const liveHasLogStale = liveBare.has('LOG_STALE') || seen.has('log_stale');
+
+  if (!liveHasLag) {
+    for (const e of asArray<Record<string, unknown>>(peek.lag_issues)) {
+      if (e.resolved) continue;
+      const key = `lag:${str(e.incident_id, str(e.id))}`;
+      if (!str(e.incident_id, str(e.id))) continue;
+      push(fromLagEntry(e, key));
+    }
+  }
+
+  for (const e of asArray<Record<string, unknown>>(peek.mod_issues)) {
+    if (e.resolved) continue;
+    const modId = str(e.mod_id, str(e.id));
+    if (!modId) continue;
+    const key = `mod:${modId}`;
+    if (seen.has(key) || liveBare.has(modId) || liveBare.has(key)) continue;
+    push(fromModEntry(e, key));
+  }
+
+  if (!liveHasLogStale) {
+    const logStale = asRecord(peek.log_stale);
+    if (logStale.active || logStale.stale) {
+      push(fromLogStale(logStale));
+    }
+  }
+
+  const crash = crashPointerFromOps(ops);
+  if (crash) push(crash);
 
   const factsIssues = asArray<Record<string, unknown>>(
     asRecord(facts.issues).entries ?? facts.issues,

@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import dev.mcstatus.watchtower.core.collect.CraftyCollector;
 import dev.mcstatus.watchtower.core.collect.CrashMtimeScanner;
 import dev.mcstatus.watchtower.core.collect.CgroupProbe;
+import dev.mcstatus.watchtower.core.collect.CpuUsageSampler;
 import dev.mcstatus.watchtower.core.collect.ExternalBackupDetector;
 import dev.mcstatus.watchtower.core.collect.HostMetricsCollector;
 import dev.mcstatus.watchtower.core.collect.ModsInventoryDiff;
@@ -672,9 +673,15 @@ public final class OpsScanService {
                     OpsLogTailScanner.DEFAULT_TAIL_LINES,
                     5000);
             JsonObject ctx = tail.context();
-            Double hostCpu = HostCpuProbe.readHostCpuPct();
-            if (hostCpu != null) {
-                ctx.addProperty("host_cpu_pct", round1(hostCpu));
+            CpuUsageSampler.Reading cpu = HostCpuProbe.sample();
+            if (cpu.hostCpuPct() != null) {
+                ctx.addProperty("host_cpu_pct", round1(cpu.hostCpuPct()));
+            }
+            if (cpu.coresUsed() != null) {
+                ctx.addProperty("cpu_cores_used", round2(cpu.coresUsed()));
+            }
+            if (cpu.limitCores() != null) {
+                ctx.addProperty("cpu_limit_cores", round2(cpu.limitCores()));
             }
             incident.add("context", ctx);
         } catch (IOException e) {

@@ -66,6 +66,10 @@ public final class CrashNarrator {
             suspect = CrashClassifier.sanitizeModId(modFile);
         }
         String failureKind = classification.failureKind();
+        String rowFailureKind = str(crash, "failure_kind");
+        if (CrashClassifier.FK_WATCHDOG_FOLLOWUP.equals(rowFailureKind)) {
+            failureKind = rowFailureKind;
+        }
         String stallMod = classification.stallModId();
 
         if (CrashClassifier.FK_MOD_LOAD_MIXIN.equals(failureKind)) {
@@ -210,7 +214,7 @@ public final class CrashNarrator {
                 || CrashClassifier.FK_WATCHDOG_FOLLOWUP.equals(failureKind)) {
             int ms = watchdogMs != null ? watchdogMs : 60000;
             int sec = Math.max(1, ms / 1000);
-            if (CrashClassifier.FK_WATCHDOG_PREGEN.equals(failureKind) || stallMod != null) {
+            if (CrashClassifier.FK_WATCHDOG_PREGEN.equals(failureKind)) {
                 String stall = stallMod != null ? stallMod : "map render";
                 return new Narrative(
                     "Server tick hang — " + stall + " blocked while Chunky pregen was active (~" + sec
@@ -348,7 +352,6 @@ public final class CrashNarrator {
         return combined.contains("mod loading has failed")
                 || combined.contains("modloadingcrash")
                 || combined.contains("modloadingexception")
-                || (failure != null && !failure.isBlank())
                 || (exception != null && exception.contains("ModLoading"));
     }
 

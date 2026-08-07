@@ -56,7 +56,7 @@ export function FaqFoot() {
   return (
     <Reveal delay={0.08}>
       <div className="faq-foot">
-        <p className="faq-foot__copy">Need more detail, or want to vote on what ships next?</p>
+        <p className="faq-foot__copy">More detail on the wiki. Feature votes and bugs go on GitHub Issues.</p>
         <div className="faq-foot__links">
           <a href={LINKS.wiki}>Wiki</a>
           <a href={`${LINKS.github}/issues`}>GitHub Issues</a>

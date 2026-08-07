@@ -26,6 +26,7 @@ class LiveHistoryStoreTest {
         snap.addProperty("tps", 19.8);
         snap.addProperty("mspt", 2.5);
         snap.addProperty("host_cpu_pct", 42.0);
+        snap.addProperty("cpu_cores_used", 3.0);
         snap.addProperty("players_online", 3);
         snap.addProperty("mem_available_gb", 8.5);
         snap.addProperty("disk_use_pct", 12.0);
@@ -40,6 +41,9 @@ class LiveHistoryStoreTest {
         JsonObject samples = store.getSamples(1);
         assertEquals(1, samples.getAsJsonArray("tps").size());
         assertEquals(1, samples.getAsJsonArray("heap_mb").size());
+        assertEquals(1, samples.getAsJsonArray("host_cpu").size());
+        assertEquals(1, samples.getAsJsonArray("cpu_cores").size());
+        assertEquals(3.0, samples.getAsJsonArray("cpu_cores").get(0).getAsJsonObject().get("v").getAsDouble(), 0.01);
         assertEquals(1, samples.getAsJsonArray("mem_available_gb").size());
         assertEquals(1, samples.getAsJsonArray("disk_use_pct").size());
 

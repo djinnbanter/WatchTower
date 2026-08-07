@@ -3,6 +3,7 @@ package dev.mcstatus.watchtower.core.report;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.mcstatus.watchtower.core.analyze.HangDumpWriter;
 import dev.mcstatus.watchtower.core.ops.OpsCacheReader;
 import dev.mcstatus.watchtower.core.ops.OpsCacheSchema;
 import dev.mcstatus.watchtower.core.ops.OpsModsTreeSource;
@@ -104,14 +105,10 @@ public final class SupportQualityGate {
         checks.add(checkLogPresent(serverDir, opts));
         checks.add(checkModList(ops));
         checks.add(checkJavaLoader(ops));
-        checks.add(new Check(
-                "secrets_redacted",
-                Status.PASS,
-                "Secrets, IPs, and UUIDs are stripped when the zip is built.",
-                false));
+        checks.add(checkSecretsRedacted());
         checks.add(checkCrashIfRelevant(opts, cat));
         checks.add(checkIncidentWindow(opts, cat));
-        checks.add(checkHangDump(serverDir, ops));
+        checks.add(checkHangDump(serverDir, ops, opts));
 
         int pass = 0;
         int warn = 0;
@@ -134,6 +131,29 @@ public final class SupportQualityGate {
                 message != null && !message.isBlank() ? message : "Could not fully check this pack.",
                 false);
         return new Result(Instant.now(), true, new Summary(0, 1, 0), List.of(c));
+    }
+
+    static Check checkSecretsRedacted() {
+        String canary = String.join("\n",
+                "password=watchtower-gate-canary",
+                "peer 198.51.100.20",
+                "uuid 00000000-1111-2222-3333-444444444444");
+        String scrubbed = SupportRedactor.redactText(canary);
+        boolean leaked = scrubbed.contains("watchtower-gate-canary")
+                || scrubbed.contains("198.51.100.20")
+                || scrubbed.contains("00000000-1111-2222-3333-444444444444");
+        if (leaked) {
+            return new Check(
+                    "secrets_redacted",
+                    Status.WARN,
+                    "Secret scrubber failed a self-check — do not share this pack until WatchTower is updated.",
+                    false);
+        }
+        return new Check(
+                "secrets_redacted",
+                Status.PASS,
+                "Secrets, IPs, and UUIDs are stripped when the zip is built.",
+                false);
     }
 
     private static Check checkLogPresent(Path serverDir, SupportComposeOptions opts) {
@@ -281,14 +301,28 @@ public final class SupportQualityGate {
                 false);
     }
 
-    private static Check checkHangDump(Path serverDir, JsonObject ops) {
-        boolean dumpPresent = hangDumpPresent(serverDir);
+    private static Check checkHangDump(Path serverDir, JsonObject ops, SupportComposeOptions opts) {
+        long hard = opts != null ? opts.maxZipEvidenceBytes() : SupportComposeOptions.HARD_BUDGET_BYTES;
+        if (hard <= 0) {
+            hard = SupportComposeOptions.HARD_BUDGET_BYTES;
+        }
+        HangPresence presence = inspectHangs(serverDir, hard);
         boolean softHangContext = softHangContext(ops);
-        if (dumpPresent) {
+
+        if (presence.packable()) {
             return new Check(
                     "hang_dump",
                     Status.PASS,
-                    "Hang dump included under watchtower/hangs.",
+                    softHangContext
+                            ? "Hang dump is present and small enough to pack."
+                            : "Hang dump included under watchtower/hangs.",
+                    false);
+        }
+        if (presence.presentButOverBudget()) {
+            return new Check(
+                    "hang_dump",
+                    Status.WARN,
+                    "Hang dump on disk is too large for this pack's size limit — it will be omitted.",
                     false);
         }
         if (softHangContext) {
@@ -305,22 +339,48 @@ public final class SupportQualityGate {
                 false);
     }
 
-    private static boolean hangDumpPresent(Path serverDir) {
+    private record HangPresence(boolean packable, boolean presentButOverBudget) {
+        static HangPresence none() {
+            return new HangPresence(false, false);
+        }
+    }
+
+    private static HangPresence inspectHangs(Path serverDir, long hardBudget) {
         if (serverDir == null) {
-            return false;
+            return HangPresence.none();
         }
         Path dir = serverDir.resolve("watchtower").resolve("hangs");
         if (!Files.isDirectory(dir)) {
-            return false;
+            return HangPresence.none();
         }
+        boolean any = false;
+        boolean anyPackable = false;
+        boolean anyOver = false;
         try (var stream = Files.list(dir)) {
-            return stream.anyMatch(p -> {
+            for (Path p : stream.toList()) {
                 String n = p.getFileName().toString();
-                return Files.isRegularFile(p) && (n.endsWith(".txt") || n.endsWith(".log"));
-            });
-        } catch (Exception e) {
-            return false;
+                if (!Files.isRegularFile(p) || !(n.endsWith(".txt") || n.endsWith(".log"))) {
+                    continue;
+                }
+                any = true;
+                long size = Files.size(p);
+                long counted = Math.min(size, HangDumpWriter.MAX_BYTES);
+                if (counted <= hardBudget) {
+                    anyPackable = true;
+                } else {
+                    anyOver = true;
+                }
+            }
+        } catch (Exception ignored) {
+            return HangPresence.none();
         }
+        if (anyPackable) {
+            return new HangPresence(true, false);
+        }
+        if (any && anyOver) {
+            return new HangPresence(false, true);
+        }
+        return HangPresence.none();
     }
 
     private static boolean softHangContext(JsonObject ops) {

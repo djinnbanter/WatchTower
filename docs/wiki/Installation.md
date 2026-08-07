@@ -57,8 +57,8 @@ If you enable **Modrinth lookup** (Welcome options or **Settings → Monitoring*
 
 - Watchtower may send **SHA-512 hashes of jar files** to `api.modrinth.com` (capped; cached)
 - No world, logs, or player data are sent
-- Watchtower **never downloads jars** into `mods/`
-- Leave it off for zero Modrinth network traffic
+- Lookup alone does not change jars. Assisted swap / install / quarantine only runs when an account with **mods.mutate** confirms a job (WatchTower never auto-restarts)
+- Leave Modrinth lookup off for zero Modrinth network traffic
 
 More detail: [[Mods]].
 

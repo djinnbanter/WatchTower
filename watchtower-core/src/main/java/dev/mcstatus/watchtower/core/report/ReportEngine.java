@@ -182,6 +182,15 @@ public final class ReportEngine {
                 : now.minusHours(config.lookbackHours());
         String lookbackSinceStr = lookbackSince.format(WINDOW_FMT);
 
+        String explicit = firstNonBlank(config.windowStart(), config.since());
+        if (explicit != null) {
+            Instant explicitInstant = TimeParse.parseTime(explicit);
+            if (explicitInstant != null) {
+                return new Window(explicitInstant.atZone(ZoneId.systemDefault()).format(WINDOW_FMT));
+            }
+            return new Window(explicit);
+        }
+
         if (config.disasterRecovery() || !config.incremental() || !Files.isRegularFile(statePath)) {
             return new Window(lookbackSinceStr);
         }
@@ -199,6 +208,16 @@ public final class ReportEngine {
         ZonedDateTime overlapSince = lastInstant.atZone(ZoneId.systemDefault()).minusMinutes(5);
         ZonedDateTime windowStart = overlapSince.isAfter(lookbackSince) ? overlapSince : lookbackSince;
         return new Window(windowStart.format(WINDOW_FMT));
+    }
+
+    private static String firstNonBlank(String a, String b) {
+        if (a != null && !a.isBlank()) {
+            return a;
+        }
+        if (b != null && !b.isBlank()) {
+            return b;
+        }
+        return null;
     }
 
     private static String readLastRun(Path statePath) throws IOException {

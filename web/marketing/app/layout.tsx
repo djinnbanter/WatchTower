@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { ThemeProvider } from '@/components/theme-provider';
 import { HERO_OVERVIEW, TAGLINE } from '@/content/product';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   ...(process.env.NEXT_PUBLIC_SITE_URL
@@ -42,7 +43,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             hold the sample fixtures.
           OWN-WORLD: Night Watch Desk at marketing scale. Tonal plates, hairlines only,
             tight 2/4/6px corners, Signal Blue scarce, Lantern Amber as the sole light
-            source (rail fill). Paper light theme. Geist display, JetBrains Mono for
+            source (rail fill). Paper light theme. IBM Plex Sans for marketing
+            display/hero/entry titles; Geist for body/UI; JetBrains Mono for
             numerals and system chrome. 12px label floor.
           STORY: Welcome, Live vitals, Issues Fix inbox, Crashes / OOM review, Overview
             grade, Insights schedule, demo.
@@ -68,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SiteFooter />
           </div>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

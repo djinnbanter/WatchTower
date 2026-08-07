@@ -116,10 +116,7 @@ public final class ModrinthScanJob {
                     byId.put(candidate.modId(), info);
                 }
             }
-            String minecraftVersion = ModrinthLookupService.minecraftVersionFromFacts(facts);
-            if (minecraftVersion == null || minecraftVersion.isBlank()) {
-                minecraftVersion = ModrinthLookupService.minecraftVersionFromServerDir(serverDir);
-            }
+            String minecraftVersion = ModrinthLookupService.resolveMinecraftVersion(facts, serverDir);
             String loader = resolveLoader(config, facts);
             if (minecraftVersion != null && !minecraftVersion.isBlank()) {
                 stats(status).addProperty("minecraft_version", minecraftVersion);

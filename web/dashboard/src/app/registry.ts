@@ -3,6 +3,15 @@ import type { RouteState } from '@/app/router';
 
 export type PageComponent = ComponentType<{ route: RouteState }>;
 
+/** Nested rail link under a parent page (same tab, different `view`). */
+export type PageRailChild = {
+  id: string;
+  title: string;
+  /** Query `view=` value. */
+  view: string;
+  badge?: () => number | string | null;
+};
+
 export type PageDef = {
   id: string;
   title: string;
@@ -19,6 +28,8 @@ export type PageDef = {
   hideShellTitle?: boolean;
   render: PageComponent | LazyExoticComponent<PageComponent>;
   badge?: () => number | string | null;
+  /** Nested subpages in the main rail (e.g. Mods → Conflicts). */
+  children?: PageRailChild[];
 };
 
 const pages = new Map<string, PageDef>();

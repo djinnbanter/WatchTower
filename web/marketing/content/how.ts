@@ -12,7 +12,7 @@ export type PipelineNode = {
 };
 
 export const HOW_LEDE =
-  'WatchTower watches your server while it runs, works out what it is seeing, and turns that into a short list of what to fix.';
+  'WatchTower reads what the server is doing while it runs, then turns that into a short list of what to fix.';
 
 export const COLLECT_NODES: readonly PipelineNode[] = [
   { id: 'vitals', label: 'Vitals', detail: 'TPS, MSPT, heap, CPU, disk' },
@@ -25,7 +25,7 @@ export const COLLECT_NODES: readonly PipelineNode[] = [
 export const UNDERSTAND_LABEL = 'Analysis engine';
 
 export const UNDERSTAND_COPY =
-  'It spots real problems in what the server is doing - crashes, lag, overloaded worlds, failed joins - then writes a plain next step for each one.';
+  'Looks for crashes, lag, overloaded worlds, and failed joins in that data, then writes a next step for each one.';
 
 export const ADVISE_NODES: readonly PipelineNode[] = [
   { id: 'fix-inbox', label: 'Fix inbox', detail: 'Ranked issues, one next step each' },

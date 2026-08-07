@@ -30,14 +30,14 @@ export type FeatureCapability = {
 };
 
 export const FEATURE_LEDE =
-  'The smaller tools under each dashboard surface - not a second pass through Overview and Live.';
+  'What ships under Overview, Live, Issues, and the rest. This is the catalog, not another walk through the home screens.';
 
 export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'health-grade',
     title: 'Health grade + restart advice',
     blurb:
-      'Letter grade, plain reasons when it is not Strong, and Safe / Caution / Wait restart advice. Long uptime plus worse GC can suggest a quiet maintenance window. WatchTower does not restart the server for you.',
+      'Letter grade, reasons when it is not Strong, and Safe / Caution / Wait for a restart. Long uptime plus worse GC can point at a quiet maintenance window. WatchTower does not restart the server for you.',
     tag: 'Overview',
     weight: 'lead',
     tone: 'danger',
@@ -46,7 +46,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'fix-inbox',
     title: 'Fix inbox ranking',
     blurb:
-      'Watching and Scanning feed a ranked inbox with one plain next step per issue. No giant scheduled audit dump.',
+      'Watching and Scanning fill a ranked inbox. Each issue has a next step. You do not run a big scheduled audit to keep it useful.',
     tag: 'Issues',
     weight: 'lead',
     tone: 'danger',
@@ -55,7 +55,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'join-clinic',
     title: 'Join / pack sync clinic',
     blurb:
-      'Failed joins map to named mod diffs on Session. Player-safe copy of the fix - read-only, no jar downloads.',
+      'Failed joins map to named mod diffs on Session. Player-safe copy of the fix. Read-only. No jar downloads.',
     tag: 'Session',
     weight: 'lead',
     tone: 'accent',
@@ -64,7 +64,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'world-pressure',
     title: 'World pressure',
     blurb:
-      'Entity, item, and chunk census that spots item storms, mob spikes, and unattended loaders.',
+      'Entity, item, and chunk census for item storms, mob spikes, and unattended loaders.',
     tag: 'Insights',
     weight: 'lead',
     tone: 'mspt',
@@ -73,7 +73,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'support-pack',
     title: 'Support pack redaction',
     blurb:
-      'Build a redacted zip (facts, brief, evidence) for a helper or mod author. Discord copy presets stay consistent with the pack.',
+      'Build a redacted zip (facts, brief, evidence) for a helper or mod author. Discord copy presets match the pack.',
     tag: 'Support',
     weight: 'lead',
     tone: 'ok',
@@ -81,7 +81,8 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'live-vitals',
     title: 'Live vitals charts',
-    blurb: 'TPS, MSPT, players, heap, CPU, and host charts while you watch - including honest hosted-panel metrics.',
+    blurb:
+      'TPS, MSPT, players, heap, CPU, and host charts while you watch. Hosted-panel metrics stay honest about what they can see.',
     tag: 'Live',
     weight: 'standard',
     tone: 'tps',
@@ -90,7 +91,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'gc-ram',
     title: 'GC / JVM + RAM advice',
     blurb:
-      'GC pause share of wall time, JVM flags profile, and RAM advice that uses your host or container memory limit - not a one-size guess.',
+      'GC pause share of wall time, JVM flags profile, and RAM advice that uses your host or container memory limit. Not a one-size guess.',
     tag: 'Live',
     weight: 'standard',
     tone: 'heap',
@@ -98,7 +99,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'crash-fingerprints',
     title: 'Crash fingerprints',
-    blurb: 'Crash reports grouped and explained in plain English, with context from nearby logs.',
+    blurb: 'Crash reports grouped and explained in plain English, with nearby log lines for context.',
     tag: 'Crashes',
     weight: 'standard',
     tone: 'danger',
@@ -106,7 +107,8 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'external-kill',
     title: 'External kill / OOM',
-    blurb: 'Host OOM killer vs panel force-kill when there is no crash report - plus the right fix path.',
+    blurb:
+      'Host OOM killer vs panel force-kill when there is no crash report, plus which fix path to take.',
     tag: 'Crashes',
     weight: 'standard',
     tone: 'danger',
@@ -114,7 +116,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'silent-fails',
     title: 'Silent script fails',
-    blurb: 'KubeJS, CraftTweaker, datapack, and /reload errors that never crash still become Issues.',
+    blurb: 'KubeJS, CraftTweaker, datapack, and /reload errors that never crash still show up as Issues.',
     tag: 'Issues',
     weight: 'standard',
     tone: 'warn',
@@ -131,7 +133,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'jar-drift',
     title: 'Pack / jar drift',
-    blurb: 'Checksum baseline drift and high-confidence client-only jars surfaced on Issues.',
+    blurb: 'Checksum baseline drift and high-confidence client-only jars land on Issues.',
     tag: 'Mods',
     weight: 'standard',
     tone: 'warn',
@@ -140,7 +142,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'jar-disable',
     title: 'Soft jar disable / enable',
     blurb:
-      'Rename a mod jar to `*.jar.disabled` so it skips the next boot (or rename it back). Filter All / Enabled / Disabled. High world risk asks you to confirm first. Admins only - no delete.',
+      'Rename a mod jar to `*.jar.disabled` so it skips the next boot (or rename it back). Filter All / Enabled / Disabled. High world risk asks you to confirm first. Admins only. No delete.',
     tag: 'Mods',
     weight: 'standard',
     tone: 'warn',
@@ -158,7 +160,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'schedule-load',
     title: 'Schedule + load trends',
     blurb:
-      'Busy vs quiet hours so you plan restarts around real load. Times follow the timezone you set in the dashboard.',
+      'Busy vs quiet hours so you plan restarts around actual load. Times follow the timezone you set in the dashboard.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'players',
@@ -166,7 +168,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'storage-runway',
     title: 'Storage + disk runway',
-    blurb: 'Dimension storage scan plus roughly how many days of disk left - not just a percent full.',
+    blurb: 'Dimension storage scan, plus roughly how many days of disk left. More than a percent-full bar.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'disk',
@@ -174,7 +176,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'storage-space-map',
     title: 'Storage space map',
-    blurb: 'A treemap of what is using disk space. Drill into World, Logs, Mods, or Backups.',
+    blurb: 'Treemap of what is using disk. Drill into World, Logs, Mods, or Backups.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'disk',
@@ -198,7 +200,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'spark',
     title: 'Spark lag proof',
-    blurb: 'Optional Spark companion turns a profile into what ate the tick. Deep Spark workspace is Alpha.',
+    blurb: 'Optional Spark companion turns a profile into what ate the tick. Deep Spark workspace is alpha.',
     tag: 'Spark',
     weight: 'standard',
     tone: 'lantern',
@@ -216,7 +218,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'backups',
     title: 'Backup health',
     blurb:
-      'See whether local backups look present and fresh, then verify zip/tar.gz integrity. Optional test restore only under `watchtower/restore-verify/` - never into the live world.',
+      'See whether local backups look present and fresh, then verify zip/tar.gz integrity. Optional test restore only under `watchtower/restore-verify/`. Never into the live world.',
     tag: 'Backups',
     weight: 'standard',
     tone: 'ok',
@@ -224,7 +226,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'activity',
     title: 'Activity / incident stories',
-    blurb: 'Pulls lag spikes, crashes, and missed backups into one readable incident thread.',
+    blurb: 'Lag spikes, crashes, and missed backups pulled into one incident thread you can read.',
     tag: 'Activity',
     weight: 'standard',
     tone: 'mspt',
@@ -232,7 +234,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'logs',
     title: 'Log tail',
-    blurb: 'latest.log triage in the dashboard so you are not bouncing to the host panel for every line.',
+    blurb: 'latest.log triage in the dashboard so you are not jumping to the host panel for every line.',
     tag: 'Logs',
     weight: 'standard',
     tone: 'info',
@@ -240,7 +242,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'startup',
     title: 'Startup watch',
-    blurb: 'First-minutes and boot health when the process comes up.',
+    blurb: 'First minutes and boot health when the process comes up.',
     tag: 'Startup',
     weight: 'standard',
     tone: 'accent',
@@ -248,7 +250,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'sources',
     title: 'Sources freshness',
-    blurb: 'Poller freshness and what data pull is next so you know if Watching is current.',
+    blurb: 'Poller freshness and which data pull is next, so you know if Watching is current.',
     tag: 'Sources',
     weight: 'standard',
     tone: 'tps',
@@ -273,7 +275,7 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'auth',
     title: 'Secure login + optional 2FA',
-    blurb: 'Login required by default; optional 2FA for the dashboard.',
+    blurb: 'Login required by default. Optional 2FA for the dashboard.',
     tag: 'Settings',
     weight: 'standard',
     tone: 'ok',

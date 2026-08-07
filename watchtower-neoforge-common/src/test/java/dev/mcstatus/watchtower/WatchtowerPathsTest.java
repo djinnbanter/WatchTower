@@ -18,6 +18,17 @@ class WatchtowerPathsTest {
     }
 
     @Test
+    void modStagingAndBackupsDirsUseWatchtowerFilesConstants() {
+        Path server = Path.of("server");
+        assertEquals(
+                Path.of("server", "watchtower", "mod-staging"),
+                WatchtowerPaths.modStagingDir(server));
+        assertEquals(
+                Path.of("server", "watchtower", "mod-backups"),
+                WatchtowerPaths.modBackupsDir(server));
+    }
+
+    @Test
     void sampleHeapOnlyReturnsFiniteValues() {
         WatchtowerSample.HeapMb heap = WatchtowerSample.sampleHeapOnly();
         assertTrue(heap.used() >= 0);

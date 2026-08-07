@@ -11,7 +11,7 @@ import {
 
 /**
  * Pointer-reactive hero tagline.
- * "OPS DASHBOARD" carries the product noun in full signal; the rest stays quieter.
+ * Product noun stays loud; the surrounding clause stays quieter.
  */
 export function HeroTagline() {
   const reduce = useReducedMotion();
@@ -93,9 +93,9 @@ function TaglineParts({
 }): ReactNode {
   return (
     <>
-      <span className={restClass}>The </span>
-      <span className={markClass}>ops dashboard</span>
-      <span className={restClass}> for your Minecraft server</span>
+      <span className={restClass}>What&apos;s happening on your </span>
+      <span className={markClass}>Minecraft server</span>
+      <span className={restClass}>, and what to do next</span>
     </>
   );
 }

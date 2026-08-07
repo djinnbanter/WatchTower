@@ -305,17 +305,18 @@ public final class SupportComposer {
                             .forEach(hangFiles::add);
                 }
                 for (Path hang : hangFiles) {
-                    long size = Files.size(hang);
-                    if (!budget.canFit(size) || budget.softExceeded()) {
-                        recordEvidence(evidenceFiles, "evidence/hangs/" + hang.getFileName(), 0, "budget");
-                        continue;
-                    }
                     String zipName = "evidence/hangs/" + hang.getFileName();
                     String text = Files.readString(hang, StandardCharsets.UTF_8);
                     if (text.length() > HangDumpWriter.MAX_BYTES) {
                         text = text.substring(0, (int) HangDumpWriter.MAX_BYTES);
                     }
+                    text = SupportRedactor.redactText(text);
                     long bytes = text.getBytes(StandardCharsets.UTF_8).length;
+                    if (shouldOmitHangForBudget(budget, bytes)) {
+                        budget.omit(zipName, "exceeds max_zip_evidence_bytes");
+                        recordEvidence(evidenceFiles, zipName, 0, "budget");
+                        continue;
+                    }
                     extras.add(SupportBundlePackager.ExtraEntry.text(zipName, text));
                     recordEvidence(evidenceFiles, zipName, bytes, null);
                     budget = budget.withUsed(budget.usedBytes() + bytes);
@@ -377,13 +378,14 @@ public final class SupportComposer {
         if (options.includeSnapshot()) {
             Path snap = wtDir.resolve("snapshot.json");
             if (Files.isRegularFile(snap)) {
-                long size = Files.size(snap);
                 String zipName = "performance/snapshot.json";
+                String text = SupportRedactor.redactJsonText(Files.readString(snap, StandardCharsets.UTF_8));
+                long size = utf8Len(text);
                 if (!budget.canFit(size)) {
                     budget.omit(zipName, "exceeds max_zip_evidence_bytes");
                     recordEvidence(evidenceFiles, zipName, 0, "exceeds max_zip_evidence_bytes");
                 } else {
-                    extras.add(SupportBundlePackager.ExtraEntry.file(zipName, snap));
+                    extras.add(SupportBundlePackager.ExtraEntry.text(zipName, text));
                     recordEvidence(evidenceFiles, zipName, size, null);
                     budget = budget.withUsed(budget.usedBytes() + size);
                 }
@@ -564,5 +566,9 @@ public final class SupportComposer {
             }
         }
         return null;
+    }
+
+    static boolean shouldOmitHangForBudget(BudgetState budget, long hangBytes) {
+        return budget == null || !budget.canFit(hangBytes);
     }
 }

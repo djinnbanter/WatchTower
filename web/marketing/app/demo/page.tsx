@@ -9,24 +9,24 @@ export default function DemoPage() {
 
   return (
     <main className="mx-auto max-w-[48rem] px-5 py-16 lg:px-8 lg:py-24">
-      <h1 className="wt-display-sm text-[color:var(--wt-text)]">Try the interactive demo</h1>
+      <h1 className="wt-display-sm text-[color:var(--wt-text)]">Demo</h1>
       <p className="wt-lead mt-4">
-        This is the real WatchTower dashboard UI, filled with sample data. You can open every tab.
-        Changes are not saved. Buttons still click; the demo just does not keep what you do.
+        Real WatchTower dashboard UI on sample fixtures. Open any tab. Clicks work; nothing is
+        saved.
       </p>
 
       <ul className="mt-10 space-y-4 border-t border-[color:var(--wt-line)] pt-8 text-sm text-[color:var(--wt-text-mid)]">
         <li className="flex gap-3">
           <span className="wt-label shrink-0 pt-0.5">Data</span>
-          <span>Sample fixtures only. Not your server.</span>
+          <span>Sample fixtures. Not your server.</span>
         </li>
         <li className="flex gap-3">
           <span className="wt-label shrink-0 pt-0.5">Tabs</span>
-          <span>Every surface is openable.</span>
+          <span>Every surface opens.</span>
         </li>
         <li className="flex gap-3">
           <span className="wt-label shrink-0 pt-0.5">Live</span>
-          <span>Does not connect to a live Minecraft process.</span>
+          <span>No live Minecraft process behind it.</span>
         </li>
       </ul>
 

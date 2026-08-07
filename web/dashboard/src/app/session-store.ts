@@ -69,11 +69,32 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
     if (isFixturePreview()) {
       const previewRole = new URLSearchParams(window.location.search).get('role') ?? 'owner';
-      set({
-        gate: 'none',
-        session: { authenticated: true, fully_authenticated: true, username: 'admin', preview: true, role: previewRole },
-        bootPhase: 'loading',
-      });
+      try {
+        const session = await api.session();
+        set({
+          gate: 'none',
+          session: {
+            ...session,
+            authenticated: true,
+            fully_authenticated: true,
+            preview: true,
+            role: previewRole,
+          },
+          bootPhase: 'loading',
+        });
+      } catch {
+        set({
+          gate: 'none',
+          session: {
+            authenticated: true,
+            fully_authenticated: true,
+            username: 'admin',
+            preview: true,
+            role: previewRole,
+          },
+          bootPhase: 'loading',
+        });
+      }
       await get().resumeAfterAuth();
       return;
     }

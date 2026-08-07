@@ -112,4 +112,62 @@ class CrashNarratorTest {
         assertFalse(n.fixHints().toString().toLowerCase().contains("contraption"));
         assertFalse(n.fixHints().toString().toLowerCase().contains("flywheel"));
     }
+
+    @Test
+    void nonBlankFailureAloneDoesNotForceModLoadNarrative() {
+        JsonObject crash = new JsonObject();
+        crash.addProperty("file", "crash-odd.txt");
+        crash.addProperty("time", "2026-08-06T12:00:00+01:00");
+        crash.addProperty("summary", "Something odd happened");
+        crash.addProperty("failure_message", "See stack below");
+        crash.addProperty("exception", "java.lang.IllegalStateException: odd");
+
+        CrashNarrator.Narrative n = CrashNarrator.narrate(crash, new JsonArray());
+        assertNotEquals("Mod failed to load", n.likelyCause(),
+                "any non-blank failure_message must not force mod-load narration");
+        assertFalse(n.plainEnglish().toLowerCase().contains("failed while loading"),
+                "must not use mod-load plain English solely because failure_message is set");
+    }
+
+    @Test
+    void realModLoadingExceptionStillNarratesModLoad() {
+        JsonObject crash = new JsonObject();
+        crash.addProperty("exception", "net.neoforged.fml.ModLoadingException: Mod foo failed");
+        crash.addProperty("failure_message", "Mod foo failed to load");
+        CrashNarrator.Narrative n = CrashNarrator.narrate(crash, new JsonArray());
+        assertEquals("Mod failed to load", n.likelyCause());
+    }
+
+    @Test
+    void watchdogFollowupDoesNotUsePregenTemplateEvenWithStallMod() {
+        JsonObject crash = new JsonObject();
+        crash.addProperty("exception",
+                "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds");
+        crash.addProperty("failure_kind", CrashClassifier.FK_WATCHDOG_FOLLOWUP);
+        crash.addProperty("stall_mod_id", "chunky");
+        crash.addProperty("watchdog_tick_ms", 60000);
+        crash.addProperty("paired_primary_file", "crash-create.txt");
+
+        CrashNarrator.Narrative n = CrashNarrator.narrate(crash, new JsonArray());
+        assertEquals("Server hung", n.likelyCause());
+        assertFalse(n.plainEnglish().toLowerCase().contains("chunky pregen"),
+                "follow-up must not claim Chunky pregen contention");
+        assertTrue(n.plainEnglish().toLowerCase().contains("thread dump")
+                        || n.plainEnglish().toLowerCase().contains("tick watchdog"),
+                "follow-up should use generic watchdog narration");
+    }
+
+    @Test
+    void watchdogPregenKindStillUsesPregenTemplate() {
+        JsonObject crash = new JsonObject();
+        crash.addProperty("exception",
+                "java.lang.Error: ServerHangWatchdog detected that a single server tick took 60.00 seconds");
+        crash.addProperty("failure_kind", CrashClassifier.FK_WATCHDOG_PREGEN);
+        crash.addProperty("stall_mod_id", "chunky");
+        crash.addProperty("watchdog_tick_ms", 60000);
+
+        CrashNarrator.Narrative n = CrashNarrator.narrate(crash, new JsonArray());
+        assertEquals("Tick hang / pregen contention", n.likelyCause());
+        assertTrue(n.plainEnglish().toLowerCase().contains("pregen"));
+    }
 }

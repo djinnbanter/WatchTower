@@ -142,6 +142,7 @@ public final class WatchtowerBootstrap {
 
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
+        STATE.releaseRunningLocksOnStop();
         ServerContext ctx = ModRuntime.context();
         HTTP.stop();
         OpsPollScheduler.get().unbind();

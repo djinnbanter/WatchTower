@@ -49,3 +49,24 @@ export function useCanWrite(): boolean {
 export function useIsOwner(): boolean {
   return canManageAccounts(useRole());
 }
+
+const MODS_MUTATE_CAP = 'mods.mutate';
+
+/**
+ * True when the session may run assisted mod jar changes (swap / install / quarantine).
+ * Owner always may; others need can_mutate_mods or the mods.mutate capability.
+ */
+export function canMutateMods(session: Record<string, unknown> | null | undefined): boolean {
+  if (!session || typeof session !== 'object') return false;
+  if (session.can_mutate_mods === true) return true;
+  if (roleFromSession(session) === 'owner') return true;
+  const caps = session.capabilities;
+  if (Array.isArray(caps)) {
+    return caps.some((c) => typeof c === 'string' && c.trim() === MODS_MUTATE_CAP);
+  }
+  return false;
+}
+
+export function useCanMutateMods(): boolean {
+  return canMutateMods(useSessionStore((s) => s.session));
+}

@@ -29,6 +29,7 @@ public final class LiveHistoryStore {
     private final List<LiveSeriesRetention.Point> msptSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> tpsSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> hostCpuSeries = new ArrayList<>();
+    private final List<LiveSeriesRetention.Point> cpuCoresSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> playersSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> heapMbSeries = new ArrayList<>();
     private final List<LiveSeriesRetention.Point> gcPausePctSeries = new ArrayList<>();
@@ -83,6 +84,7 @@ public final class LiveHistoryStore {
             loadSeries(series, "mspt", msptSeries);
             loadSeries(series, "tps", tpsSeries);
             loadSeries(series, "host_cpu", hostCpuSeries);
+            loadSeries(series, "cpu_cores", cpuCoresSeries);
             loadSeries(series, "players", playersSeries);
             loadSeries(series, "heap_mb", heapMbSeries);
             loadSeries(series, "gc_pause_pct", gcPausePctSeries);
@@ -129,6 +131,10 @@ public final class LiveHistoryStore {
             if (snapshot.has("host_cpu_pct") && !snapshot.get("host_cpu_pct").isJsonNull()) {
                 LiveSeriesRetention.appendPoint(hostCpuSeries, epoch,
                         snapshot.get("host_cpu_pct").getAsDouble(), retentionHours, MAX_SERIES_POINTS);
+            }
+            if (snapshot.has("cpu_cores_used") && !snapshot.get("cpu_cores_used").isJsonNull()) {
+                LiveSeriesRetention.appendPoint(cpuCoresSeries, epoch,
+                        snapshot.get("cpu_cores_used").getAsDouble(), retentionHours, MAX_SERIES_POINTS);
             }
             if (snapshot.has("players_online")) {
                 LiveSeriesRetention.appendPoint(playersSeries, epoch,
@@ -286,6 +292,7 @@ public final class LiveHistoryStore {
             out.add("mspt", cappedSeriesArray(msptSeries, cutoff, cap));
             out.add("tps", cappedSeriesArray(tpsSeries, cutoff, cap));
             out.add("host_cpu", cappedSeriesArray(hostCpuSeries, cutoff, cap));
+            out.add("cpu_cores", cappedSeriesArray(cpuCoresSeries, cutoff, cap));
             out.add("players", cappedSeriesArray(playersSeries, cutoff, cap));
             out.add("heap_mb", cappedSeriesArray(heapMbSeries, cutoff, cap));
             out.add("gc_pause_pct", cappedSeriesArray(gcPausePctSeries, cutoff, cap));
@@ -452,6 +459,7 @@ public final class LiveHistoryStore {
         series.add("mspt", seriesArray(msptSeries, 0));
         series.add("tps", seriesArray(tpsSeries, 0));
         series.add("host_cpu", seriesArray(hostCpuSeries, 0));
+        series.add("cpu_cores", seriesArray(cpuCoresSeries, 0));
         series.add("players", seriesArray(playersSeries, 0));
         series.add("heap_mb", seriesArray(heapMbSeries, 0));
         series.add("gc_pause_pct", seriesArray(gcPausePctSeries, 0));

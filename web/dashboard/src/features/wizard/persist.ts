@@ -9,6 +9,8 @@ export type SetupWizardRecord = {
   discovery?: 'ok' | 'pending' | 'failed' | 'skipped';
   skipped?: boolean;
   securityDeferred?: boolean;
+  /** Baseline lookback window in days (1–30) chosen on Options. */
+  baselineDays?: number;
   [key: string]: unknown;
 };
 

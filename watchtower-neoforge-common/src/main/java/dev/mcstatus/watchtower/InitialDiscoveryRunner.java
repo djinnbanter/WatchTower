@@ -48,6 +48,23 @@ public final class InitialDiscoveryRunner {
     private InitialDiscoveryRunner() {
     }
 
+    /** Resolve lookback hours from conf for the first baseline; null if unset. */
+    static Integer lookbackHoursFromConf(ServerContext server) {
+        if (server == null) {
+            return null;
+        }
+        try {
+            var map = WatchtowerConfWriter.readMap(WatchtowerPaths.confPath(server));
+            if (!map.containsKey("LOOKBACK_HOURS")) {
+                return null;
+            }
+            int hours = WatchtowerConfWriter.readInt(map, "LOOKBACK_HOURS", 24);
+            return Math.max(1, Math.min(720, hours));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public static CompletableFuture<Void> runAsync(
             ServerContext server,
             WatchtowerRuntimeState state,
@@ -126,7 +143,8 @@ public final class InitialDiscoveryRunner {
             }
 
             // Full baseline: non-incremental, conf lookback, no wall-clock timeout.
-            ReportRunOptions options = new ReportRunOptions(null, null, false, false, true);
+            ReportRunOptions options = new ReportRunOptions(
+                    lookbackHoursFromConf(server), null, false, false, true);
             ReportConfig config = ModReportConfig.forServer(server, options);
             Path reportDir = WatchtowerPaths.reportDir(server);
 

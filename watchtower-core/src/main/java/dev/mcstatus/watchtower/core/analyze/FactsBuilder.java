@@ -983,9 +983,26 @@ public final class FactsBuilder {
             summaries.add(row);
         }
         IncidentChainBuilder.link(summaries);
+        refreshFollowupNarratives(summaries, mods, classifyCtx);
         optional.add("crash_summaries", summaries);
         if (!allRuleHits.isEmpty()) {
             optional.add("crash_rule_hits", allRuleHits);
+        }
+    }
+
+    /** Package-visible for tests: re-narrate watchdog_followup rows after pairing. */
+    static void refreshFollowupNarratives(JsonArray summaries, JsonArray mods,
+                                          CrashClassifier.ClassifyContext ctx) {
+        for (JsonElement el : summaries) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            if (!CrashClassifier.FK_WATCHDOG_FOLLOWUP.equals(str(row, "failure_kind"))) {
+                continue;
+            }
+            CrashNarrator.Narrative followNarrative = CrashNarrator.narrate(row, mods, ctx);
+            CrashNarrator.enrichSummary(row, followNarrative);
         }
     }
 
@@ -1181,9 +1198,9 @@ public final class FactsBuilder {
         if (optional == null || meta == null) {
             return;
         }
-        // Reports must not initiate Modrinth I/O. This only rebuilds the summary from fields
-        // already stored on optional.mods by the dedicated scan/cache path.
-        ModrinthLookupService.enrichCrashSuspects(optional, null, null);
+        String serverDir = str(meta, "server_dir");
+        ReportConfig config = ReportConfig.builder().modrinthLookup(true).build();
+        ModrinthLookupService.enrichCrashSuspects(optional, config, serverDir);
     }
 
     private static void enrichCrashModLinks(JsonObject optional, JsonArray modRecs) {
@@ -1309,6 +1326,7 @@ public final class FactsBuilder {
         copyIfPresent(modRow, target, "modrinth_version_url");
         copyIfPresent(modRow, target, "modrinth_compatible_url");
         copyIfPresent(modRow, target, "modrinth_compatible_version_number");
+        copyIfPresent(modRow, target, "modrinth_compatible_changelog");
         copyIfPresent(modRow, target, "modrinth_cta_url");
         if (modRow.has("modrinth_outdated") && !modRow.get("modrinth_outdated").isJsonNull()) {
             target.addProperty("modrinth_outdated", modRow.get("modrinth_outdated").getAsBoolean());

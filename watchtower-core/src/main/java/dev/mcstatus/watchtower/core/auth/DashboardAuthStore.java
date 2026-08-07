@@ -127,6 +127,11 @@ public final class DashboardAuthStore {
         guardLastOwner(accountId);
         DashboardAuthRecord r = requireAccount(accountId);
         r.role = role.wire();
+        if (role == AccountRole.OWNER) {
+            r.capabilities = new ArrayList<>();
+        } else if (r.capabilities == null) {
+            r.capabilities = new ArrayList<>();
+        }
         save();
     }
 
@@ -510,6 +515,20 @@ public final class DashboardAuthStore {
         }
     }
 
+    /**
+     * Persist capability flags for an account. Owner accounts always clear extras
+     * (Owner has every known capability implicitly; {@code mods.mutate} is never required on disk).
+     */
+    public void setCapabilities(String accountId, List<String> capabilities) throws IOException {
+        DashboardAuthRecord r = requireAccount(accountId);
+        if (AccountRole.fromWire(r.role) == AccountRole.OWNER) {
+            r.capabilities = new ArrayList<>();
+        } else {
+            r.capabilities = AccountCapabilities.normalize(capabilities);
+        }
+        save();
+    }
+
     private static void normalize(DashboardAuthRecord r) {
         if (r.id == null || r.id.isBlank()) {
             r.id = "acc_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
@@ -519,6 +538,11 @@ public final class DashboardAuthStore {
         }
         if (r.recovery_code_hashes == null) {
             r.recovery_code_hashes = new ArrayList<>();
+        }
+        if (AccountRole.fromWire(r.role) == AccountRole.OWNER) {
+            r.capabilities = new ArrayList<>();
+        } else {
+            r.capabilities = AccountCapabilities.normalize(r.capabilities);
         }
     }
 

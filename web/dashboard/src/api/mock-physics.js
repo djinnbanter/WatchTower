@@ -261,6 +261,8 @@ export function stepSim(state, tMs, stepSec = 30, rng = Math.random) {
     tps: round2(tps),
     mspt: round1(mspt),
     host_cpu: round1(cpu),
+    // Cores used for panel/quota display (Docker-style); ~3 cores when busy on a 12-thread plan.
+    cpu_cores: round2(clamp((cpu / 100) * 3.2, 0.05, 3.5)),
     heap_mb: Math.round(state.heap),
     mem_available_gb: round2(state.memAvail),
     mem_used_gb: round2(clamp(MOCK_MEM_TOTAL_GB - state.memAvail, 0, MOCK_MEM_TOTAL_GB)),
@@ -333,6 +335,7 @@ function emptyLiveSeries() {
     tps: [],
     mspt: [],
     host_cpu: [],
+    cpu_cores: [],
     heap_mb: [],
     mem_available_gb: [],
     mem_used_gb: [],
@@ -353,6 +356,7 @@ function pushLiveSample(series, bandwidth, diskIo, t, m) {
   series.tps.push({ t: iso, v: m.tps });
   series.mspt.push({ t: iso, v: m.mspt });
   series.host_cpu.push({ t: iso, v: m.host_cpu });
+  series.cpu_cores.push({ t: iso, v: m.cpu_cores });
   series.heap_mb.push({ t: iso, v: m.heap_mb });
   series.mem_available_gb.push({ t: iso, v: m.mem_available_gb });
   series.mem_used_gb.push({ t: iso, v: m.mem_used_gb });

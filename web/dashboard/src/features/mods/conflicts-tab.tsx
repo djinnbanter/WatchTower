@@ -311,16 +311,13 @@ export function ConflictsTab({
           aria-label="Search conflicts"
         />
         <div className="md-conflicts__summary" aria-label="Severity counts">
-          {counts.critical > 0 ? (
-            <StatusPill tone="danger">{counts.critical} critical</StatusPill>
-          ) : null}
-          {counts.warning > 0 ? (
-            <StatusPill tone="warn">{counts.warning} warning</StatusPill>
-          ) : null}
-          {counts.info > 0 ? <StatusPill tone="info">{counts.info} info</StatusPill> : null}
+          <StatusPill tone="danger">{counts.critical} critical</StatusPill>
+          <StatusPill tone="warn">{counts.warning} warning</StatusPill>
+          <StatusPill tone="info">{counts.info} info</StatusPill>
         </div>
         <span className="md-chrome__count">
-          {rows.length ? `${filtered.length} of ${rows.length}` : '0 conflicts'}
+          {rows.length} conflict{rows.length === 1 ? '' : 's'}
+          {search.trim() && filtered.length !== rows.length ? ` · ${filtered.length} shown` : ''}
         </span>
       </div>
 

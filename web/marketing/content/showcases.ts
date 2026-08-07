@@ -16,30 +16,29 @@ export type Showcase = {
 export const HOME_SHOWCASES: Showcase[] = [
   {
     id: 'live',
-    title: 'Charts while the ticks land',
-    blurb:
-      'Live charts for TPS, lag, and memory. Calm readouts first. Being right beats looking flashy.',
+    title: 'Charts while ticks land',
+    blurb: 'TPS, lag, and memory while the server runs. Numbers first, decoration second.',
     readout: 'tps / mspt / heap',
   },
   {
     id: 'crashes',
-    title: 'Crash logs in plain English',
+    title: 'Crash reports, grouped',
     blurb:
-      "Crash reports grouped and explained with nearby log context, so you're not grepping latest.log at two in the morning.",
+      'Matching crashes stacked together with nearby log context, so you are not grepping latest.log at 2am.',
     readout: 'grouped / explained',
   },
   {
     id: 'issues',
-    title: 'A fix inbox, not homework',
+    title: 'A fix inbox',
     blurb:
-      'Issues ranks what watching and scanning already found, with a plain next step on each one. No giant audit dump you have to remember to run.',
-    readout: 'ranked / actionable',
+      'Watching and scanning already found these. Each row has a next step. No daily audit report to remember to run.',
+    readout: 'ranked / next step',
   },
   {
     id: 'insights',
-    title: 'Patterns across the week',
+    title: 'Week patterns',
     blurb:
-      'Schedule pressure, load, world pressure, storage, and a weekly digest. Handy after the bad minute has already passed.',
+      'Busy hours, load, world pressure, storage, and a weekly digest. Useful after the bad minute is over.',
     readout: 'schedule / load / storage / digest',
   },
 ];

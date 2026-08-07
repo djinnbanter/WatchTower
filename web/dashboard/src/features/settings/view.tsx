@@ -60,6 +60,7 @@ const CONF_PANELS: ReadonlySet<PanelId> = new Set(['general', 'monitoring', 'ale
 const EDITABLE_KEYS = [
   'update_check',
   'metrics_context_banner',
+  'cpu_display',
   'tps_warn',
   'mspt_warn',
   'ops_poll_sec',
@@ -106,6 +107,7 @@ function toSettingsWritePayload(form: FormState): Record<string, unknown> {
   const map: Record<string, string> = {
     update_check: 'updateCheck',
     metrics_context_banner: 'metricsContextBanner',
+    cpu_display: 'cpuDisplay',
     tps_warn: 'tpsWarn',
     mspt_warn: 'msptWarn',
     ops_poll_sec: 'opsPollSec',
@@ -430,6 +432,77 @@ export function PageView({ route }: { route: RouteState }) {
                   onChange={(v) => set('mspt_warn', v)}
                 />
               </SettingsPair>
+            </SettingsStack>
+          </Section>
+          <Section
+            title="CPU display"
+            hint="How Overview and Live show the CPU percent. Changing the mode re-scales charts from stored cores when available."
+          >
+            <SettingsStack>
+              <div className="st-row">
+                <div className="min-w-0">
+                  <div className="st-row__label">CPU percent mode</div>
+                  <div className="st-row__hint">
+                    Pick how 100% is counted. Host panels often treat one core as 100%; a 4-core plan can
+                    read as 400% in that style.
+                  </div>
+                </div>
+                <div
+                  className="st-cpu-modes mt-3"
+                  role="radiogroup"
+                  aria-label="CPU percent mode"
+                >
+                  {(
+                    [
+                      {
+                        id: 'auto',
+                        label: 'Auto',
+                        badge: 'Recommended',
+                        blurb:
+                          'Uses per-core when WatchTower can see container CPU. Otherwise falls back to the whole machine.',
+                      },
+                      {
+                        id: 'panel',
+                        label: 'Per core',
+                        blurb:
+                          'Same scale many host panels use: 100% = one full core. Can go past 100% on multi-core plans.',
+                      },
+                      {
+                        id: 'quota',
+                        label: 'Against your plan',
+                        blurb:
+                          '100% = all cores your plan allocates. Needs a readable container CPU limit; otherwise WatchTower falls back.',
+                      },
+                      {
+                        id: 'host',
+                        label: 'Whole machine',
+                        blurb:
+                          'Percent of the entire host CPU, not just this container. Useful when you share a box with other workloads.',
+                      },
+                    ] as const
+                  ).map((opt) => {
+                    const on = str(form.cpu_display, 'auto') === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => set('cpu_display', opt.id)}
+                        className={`st-cpu-mode${on ? ' is-active' : ''}`}
+                      >
+                        <span className="st-cpu-mode__head">
+                          <span className="st-cpu-mode__label">{opt.label}</span>
+                          {'badge' in opt && opt.badge ? (
+                            <span className="st-cpu-mode__badge">{opt.badge}</span>
+                          ) : null}
+                        </span>
+                        <span className="st-cpu-mode__blurb">{opt.blurb}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </SettingsStack>
           </Section>
           <Section

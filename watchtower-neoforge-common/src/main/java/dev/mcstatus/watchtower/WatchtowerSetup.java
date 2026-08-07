@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Creates watchtower directories and optional watchtower.conf (no bash/python bundle).
@@ -72,11 +74,59 @@ public final class WatchtowerSetup {
         ModRuntime.logger().info("Created default config: {}", conf);
     }
 
+    /**
+     * Upsert TOML seed keys only when absent from conf text.
+     * Keys: LOOKBACK_HOURS, INCREMENTAL, LIVE_RETENTION_HOURS.
+     */
+    static String seedTomlDefaultsIfAbsent(
+            String confText,
+            int lookbackHours,
+            boolean incremental,
+            int liveRetentionHours) {
+        String updated = confText != null ? confText : "";
+        Map<String, String> map = parseConfKeys(updated);
+        if (!map.containsKey("LOOKBACK_HOURS")) {
+            updated = WatchtowerConfWriter.upsertLine(
+                    updated, "LOOKBACK_HOURS", String.valueOf(lookbackHours));
+        }
+        if (!map.containsKey("INCREMENTAL")) {
+            updated = WatchtowerConfWriter.upsertLine(
+                    updated, "INCREMENTAL", incremental ? "true" : "false");
+        }
+        if (!map.containsKey("LIVE_RETENTION_HOURS")) {
+            updated = WatchtowerConfWriter.upsertLine(
+                    updated, "LIVE_RETENTION_HOURS", String.valueOf(liveRetentionHours));
+        }
+        return updated;
+    }
+
+    private static Map<String, String> parseConfKeys(String text) {
+        Map<String, String> map = new HashMap<>();
+        for (String line : text.split("\\R")) {
+            line = line.strip();
+            if (line.isEmpty() || line.startsWith("#")) {
+                continue;
+            }
+            int eq = line.indexOf('=');
+            if (eq > 0) {
+                map.put(line.substring(0, eq).strip(), line.substring(eq + 1).strip());
+            }
+        }
+        return map;
+    }
+
     private static void syncTomlIntoConf(Path conf) throws IOException {
         String text = Files.readString(conf, StandardCharsets.UTF_8);
-        String updated = WatchtowerConfWriter.upsertLine(text, "LOOKBACK_HOURS", String.valueOf(ModRuntime.config().lookbackHours()));
-        updated = WatchtowerConfWriter.upsertLine(updated, "INCREMENTAL", ModRuntime.config().incremental() ? "true" : "false");
-        updated = WatchtowerConfWriter.upsertLine(updated, "LIVE_RETENTION_HOURS", String.valueOf(ModRuntime.config().liveRetentionHours()));
+        int lookback = 24;
+        int liveRetention = 2160;
+        boolean incremental = true;
+        try {
+            lookback = ModRuntime.config().lookbackHours();
+            liveRetention = ModRuntime.config().liveRetentionHours();
+            incremental = ModRuntime.config().incremental();
+        } catch (IllegalStateException ignored) {
+        }
+        String updated = seedTomlDefaultsIfAbsent(text, lookback, incremental, liveRetention);
         updated = ensureBackupSection(updated);
         if (!updated.equals(text)) {
             Files.writeString(conf, updated, StandardCharsets.UTF_8);

@@ -12,6 +12,10 @@ public final class WatchtowerFiles {
     public static final String SUPPORT_FACTS_INFIX = "-support-";
     public static final String OPS_CACHE_FILENAME = "ops-cache.json";
     public static final String CONFIG_BACKUPS_DIR = "config-backups";
+    /** In-flight Modrinth jar downloads for assisted mutate jobs. */
+    public static final String MOD_STAGING_DIR = "mod-staging";
+    /** Successful swap/quarantine jar backups + index. */
+    public static final String MOD_BACKUPS_DIR = "mod-backups";
 
     private WatchtowerFiles() {
     }

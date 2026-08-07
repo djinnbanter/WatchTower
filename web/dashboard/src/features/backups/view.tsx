@@ -9,6 +9,7 @@ import { Button, EmptyState, ErrorState, HeroCard, StatusPill } from '@/ui/patte
 import { WtLinearDualGauge } from '@/ui/charts';
 import { asArray, asRecord, bool, fmtDate, num, str, timeAgo } from '@/lib/utils';
 import './backups.css';
+import { isCleanupDisabled } from './cleanup-busy';
 
 const ARCHIVE_CAP = 25;
 /** Keep verifying chrome visible even when light-verify finishes instantly. */
@@ -833,7 +834,11 @@ export function PageView({ route: _route }: { route: RouteState }) {
                               {jobId ? (
                                 <Button
                                   kind="ghost"
-                                  disabled={!canWrite || cleanupMutation.isPending}
+                                  disabled={isCleanupDisabled({
+                                    canWrite,
+                                    cleanupPending: cleanupMutation.isPending,
+                                    jobStatus,
+                                  })}
                                   title={canWrite ? undefined : VIEW_ONLY_TITLE}
                                   onClick={() => cleanupMutation.mutate(jobId)}
                                 >

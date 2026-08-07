@@ -37,6 +37,7 @@ import dev.mcstatus.watchtower.core.analyze.SafeRestartAdvisor;
 import dev.mcstatus.watchtower.core.analyze.ModRestartNudge;
 import dev.mcstatus.watchtower.core.analyze.WorldRiskAnalyzer;
 import dev.mcstatus.watchtower.core.collect.ModJarDisable;
+import dev.mcstatus.watchtower.core.collect.ModMutateJob;
 import dev.mcstatus.watchtower.core.config.ModConfigService;
 import dev.mcstatus.watchtower.core.collect.ModsInventoryDiff;
 import dev.mcstatus.watchtower.core.collect.ServerPropertiesReader;
@@ -143,6 +144,11 @@ public final class DashboardHttpServer {
             "/api/mods/enable",
             "/api/mods/configs",
             "/api/mods/configs/undo",
+            "/api/mods/mutate/swap",
+            "/api/mods/mutate/batch",
+            "/api/mods/mutate/install",
+            "/api/mods/mutate/quarantine",
+            "/api/mods/mutate/undo",
             "/api/backups/verify",
             "/api/backups/test-restore",
             "/api/backups/test-restore/cleanup");
@@ -238,6 +244,15 @@ public final class DashboardHttpServer {
             server.createContext("/api/mods/forensics/config-health", this::handleModsForensicsConfigHealth);
             server.createContext("/api/mods/configs", this::handleModsConfigs);
             server.createContext("/api/mods/configs/undo", this::handleModsConfigsUndo);
+            server.createContext("/api/mods/mutate/status", this::handleModsMutateStatus);
+            server.createContext("/api/mods/mutate/versions", this::handleModsMutateVersions);
+            server.createContext("/api/mods/mutate/swap", this::handleModsMutateSwap);
+            server.createContext("/api/mods/mutate/batch", this::handleModsMutateBatch);
+            server.createContext("/api/mods/mutate/install", this::handleModsMutateInstall);
+            server.createContext("/api/mods/mutate/quarantine", this::handleModsMutateQuarantine);
+            server.createContext("/api/mods/mutate/undo", this::handleModsMutateUndo);
+            server.createContext("/api/mods/mutate/jobs", this::handleModsMutateJobs);
+            server.createContext("/api/mods/mutate/backups", this::handleModsMutateBackups);
             server.createContext("/api/ops-cache", this::handleOpsCache);
             server.createContext("/api/client-mods/ignores", this::handleClientModIgnores);
             server.createContext("/api/client-mods/ignore", this::handleClientModIgnore);
@@ -294,6 +309,10 @@ public final class DashboardHttpServer {
         }
         sparkProfileCache.clear();
         serverContext = null;
+        WatchtowerRuntimeState state = ModRuntime.state();
+        if (state != null) {
+            state.releaseRunningLocksOnStop();
+        }
     }
 
     private void handleRoot(HttpExchange ex) throws IOException {
@@ -715,6 +734,10 @@ public final class DashboardHttpServer {
                     text = WatchtowerConfWriter.upsertLine(text, "METRICS_CONTEXT_BANNER",
                             banner ? "true" : "false");
                 }
+                if (json.has("cpuDisplay") && !json.get("cpuDisplay").isJsonNull()) {
+                    String mode = ReportConfig.normalizeCpuDisplay(json.get("cpuDisplay").getAsString());
+                    text = WatchtowerConfWriter.upsertLine(text, "CPU_DISPLAY", mode);
+                }
                 if (json.has("diskWarnPct") && !json.get("diskWarnPct").isJsonNull()) {
                     int diskWarn = Math.max(50, Math.min(99, json.get("diskWarnPct").getAsInt()));
                     text = WatchtowerConfWriter.upsertLine(text, "DISK_WARN_PCT", String.valueOf(diskWarn));
@@ -776,6 +799,7 @@ public final class DashboardHttpServer {
                         || json.has("sparkAutoCaptureCooldownSec")
                         || json.has("updateCheck")
                         || json.has("metricsContextBanner")
+                        || json.has("cpuDisplay")
                         || json.has("diskWarnPct")
                         || json.has("diskFillWarnDays")
                         || json.has("backupStaleHours")
@@ -789,6 +813,14 @@ public final class DashboardHttpServer {
                         || json.has("reportRetentionCount");
                 if (wroteConf) {
                     Files.writeString(conf, text, StandardCharsets.UTF_8);
+                }
+
+                if (json.has("opsLogScanSec")) {
+                    try {
+                        AlwaysOnOpsLogScheduler.get().refreshSchedule();
+                    } catch (Exception e) {
+                        ModRuntime.logger().warn("Failed to refresh Always-On ops-log schedule after settings save: {}", e.toString());
+                    }
                 }
 
                 JsonObject applied = buildSettingsJson();
@@ -943,6 +975,9 @@ public final class DashboardHttpServer {
                 WatchtowerConfWriter.readInt(map, "CHUNK_WRITE_SUSTAINED_SCANS", config.chunkWriteSustainedScans()));
         out.addProperty("metrics_context_banner",
                 WatchtowerConfWriter.readBool(map, "METRICS_CONTEXT_BANNER", config.metricsContextBanner()));
+        out.addProperty("cpu_display",
+                ReportConfig.normalizeCpuDisplay(
+                        map.getOrDefault("CPU_DISPLAY", config.cpuDisplay())));
         out.addProperty("update_check",
                 WatchtowerConfWriter.readBool(map, "UPDATE_CHECK", config.updateCheck()));
         out.addProperty("hostname", resolveHostname());
@@ -3428,6 +3463,20 @@ public final class DashboardHttpServer {
             send(ex, 503, "text/plain", "Server not ready");
             return;
         }
+        WatchtowerRuntimeState mutateState = ModRuntime.requireState();
+        if (mutateState.isMutateBusy()) {
+            JsonObject err = new JsonObject();
+            err.addProperty("ok", false);
+            err.addProperty("error", "mutate_busy");
+            err.addProperty("error_code", "mutate_busy");
+            err.addProperty("message", "A mod jar change is running — wait for it to finish");
+            ModMutateJob active = mutateState.getActiveMutateJob();
+            if (active != null) {
+                err.addProperty("job_id", active.id);
+            }
+            sendJson(ex, 409, err);
+            return;
+        }
         ReportConfig config = ModReportConfig.forServer(serverContext);
         if (!config.modDisableEnabled()) {
             JsonObject err = new JsonObject();
@@ -3541,6 +3590,69 @@ public final class DashboardHttpServer {
         out.addProperty("jar_after", result.jarAfter());
         out.add("world_risk", worldRisk);
         sendJson(ex, 200, out);
+    }
+
+    private void handleModsMutateStatus(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        ModMutateHttp.handleStatus(ex, serverContext, ModRuntime.requireState());
+    }
+
+    private void handleModsMutateVersions(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        ModMutateHttp.handleVersions(ex, serverContext);
+    }
+
+    private void handleModsMutateSwap(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        ModMutateHttp.handleSwap(ex, serverContext, ModRuntime.requireState());
+    }
+
+    private void handleModsMutateBatch(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        ModMutateHttp.handleBatch(ex, serverContext, ModRuntime.requireState());
+    }
+
+    private void handleModsMutateInstall(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        ModMutateHttp.handleInstall(ex, serverContext, ModRuntime.requireState());
+    }
+
+    private void handleModsMutateQuarantine(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        ModMutateHttp.handleQuarantine(ex, serverContext, ModRuntime.requireState());
+    }
+
+    private void handleModsMutateUndo(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        ModMutateHttp.handleUndo(ex, serverContext, ModRuntime.requireState());
+    }
+
+    private void handleModsMutateJobs(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        ModMutateHttp.handleJobGet(ex, ModRuntime.requireState());
+    }
+
+    private void handleModsMutateBackups(HttpExchange ex) throws IOException {
+        if (!requireApiAuth(ex)) {
+            return;
+        }
+        ModMutateHttp.handleBackups(ex, serverContext);
     }
 
     private void handleModsForensicsStatus(HttpExchange ex) throws IOException {
@@ -5238,6 +5350,13 @@ public final class DashboardHttpServer {
         sendJson(ex, 200, out);
     }
 
+    static boolean shouldRejectCleanupBecauseBusy(boolean restoreBusy, String jobStatus) {
+        if (restoreBusy) {
+            return true;
+        }
+        return jobStatus != null && "running".equalsIgnoreCase(jobStatus.trim());
+    }
+
     private void handleBackupTestRestoreCleanup(HttpExchange ex) throws IOException {
         if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
             send(ex, 405, "text/plain", "Method not allowed");
@@ -5252,6 +5371,16 @@ public final class DashboardHttpServer {
         }
         try {
             ReportConfig config = ModReportConfig.forServer(serverContext);
+            JsonObject persistedJob = StateManager.getBackupTestRestore(WatchtowerPaths.statePath(serverContext));
+            String persistedStatus = persistedJob != null && persistedJob.has("status")
+                    ? persistedJob.get("status").getAsString() : null;
+            if (shouldRejectCleanupBecauseBusy(BackupVerifyScheduler.get().isRestoreBusy(), persistedStatus)) {
+                JsonObject err = new JsonObject();
+                err.addProperty("error", "busy");
+                err.addProperty("message", "Test restore is still running — wait for it to finish before Cleanup.");
+                sendJson(ex, 409, err);
+                return;
+            }
             JsonObject body = GSON.fromJson(
                     new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8), JsonObject.class);
             if (body == null) {
@@ -6342,6 +6471,11 @@ public final class DashboardHttpServer {
             }
             if (optional.has("backup_inventory")) {
                 out.add("backup_inventory", optional.get("backup_inventory"));
+            }
+            try {
+                BackupPollScheduler.get().refreshSchedule();
+            } catch (Exception e) {
+                ModRuntime.logger().warn("Failed to refresh backup poll schedule after dirs save: {}", e.toString());
             }
             sendJson(ex, 200, out);
         } catch (Exception e) {

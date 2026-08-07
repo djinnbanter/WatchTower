@@ -70,7 +70,7 @@ public final class ModJarDisable {
     }
 
     public static Result disable(Path modsDir, String jarBasename) {
-        Path resolved = resolveTopLevelJar(modsDir, jarBasename);
+        Path resolved = ModJarPaths.resolveTopLevelJar(modsDir, jarBasename);
         if (resolved == null) {
             return Result.fail("invalid_jar", "Jar must be a top-level file under mods/");
         }
@@ -98,7 +98,7 @@ public final class ModJarDisable {
     }
 
     public static Result enable(Path modsDir, String jarBasename) {
-        Path resolved = resolveTopLevelJar(modsDir, jarBasename);
+        Path resolved = ModJarPaths.resolveTopLevelJar(modsDir, jarBasename);
         if (resolved == null) {
             return Result.fail("invalid_jar", "Jar must be a top-level file under mods/");
         }
@@ -129,36 +129,5 @@ public final class ModJarDisable {
                 return Result.fail("io_error", e2.getMessage() != null ? e2.getMessage() : "rename failed");
             }
         }
-    }
-
-    /**
-     * Resolve a basename under {@code modsDir}. Returns null if path escapes, contains separators,
-     * or is not a single path segment.
-     */
-    static Path resolveTopLevelJar(Path modsDir, String jarBasename) {
-        if (modsDir == null || jarBasename == null) {
-            return null;
-        }
-        String raw = jarBasename.trim();
-        if (raw.isEmpty()) {
-            return null;
-        }
-        if (raw.contains("/") || raw.contains("\\") || raw.contains("..")) {
-            return null;
-        }
-        // Reject nested segments after normalize tricks
-        Path name = Path.of(raw);
-        if (name.getNameCount() != 1) {
-            return null;
-        }
-        Path modsAbs = modsDir.toAbsolutePath().normalize();
-        Path resolved = modsAbs.resolve(name.getFileName().toString()).normalize();
-        if (!resolved.startsWith(modsAbs)) {
-            return null;
-        }
-        if (!resolved.getParent().equals(modsAbs)) {
-            return null;
-        }
-        return resolved;
     }
 }

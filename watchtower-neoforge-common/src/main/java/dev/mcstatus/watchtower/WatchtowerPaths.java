@@ -131,4 +131,20 @@ public final class WatchtowerPaths {
     public static Path authKeyPath(ServerContext ctx) {
         return authKeyPath(ctx.serverDirectory());
     }
+
+    public static Path modStagingDir(Path serverDir) {
+        return watchtowerRoot(serverDir).resolve(WatchtowerFiles.MOD_STAGING_DIR).normalize();
+    }
+
+    public static Path modStagingDir(ServerContext ctx) {
+        return modStagingDir(ctx.serverDirectory());
+    }
+
+    public static Path modBackupsDir(Path serverDir) {
+        return watchtowerRoot(serverDir).resolve(WatchtowerFiles.MOD_BACKUPS_DIR).normalize();
+    }
+
+    public static Path modBackupsDir(ServerContext ctx) {
+        return modBackupsDir(ctx.serverDirectory());
+    }
 }

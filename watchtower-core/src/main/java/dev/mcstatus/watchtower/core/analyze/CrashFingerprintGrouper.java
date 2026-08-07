@@ -512,6 +512,7 @@ public final class CrashFingerprintGrouper {
             copyOpt(row, extras, "stall_mod_id");
             copyOpt(row, extras, "matched_rule_id");
             copyOpt(row, extras, "matched_pack_id");
+            copyOpt(row, extras, "paired_primary_file");
             return new Member(file, time, incidentId, acked, str(row, "display_label"), extras);
         }
 

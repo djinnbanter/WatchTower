@@ -109,4 +109,41 @@ describe('buildStorageTreemapTree', () => {
     assert.equal(backups!.tone, 'ok');
     assert.equal(backups!.children![0]!.label, '2026-06-23_08-00-00.zip');
   });
+
+  it('sets root valueGb to sum of children when backups are included', () => {
+    const tree = buildStorageTreemapTree({
+      totalGb: 10,
+      worldGb: 8,
+      modsGb: NaN,
+      logsGb: NaN,
+      otherGb: NaN,
+      dims: [],
+      mods: [],
+      logs: [],
+      otherRows: [],
+      backups: [
+        {
+          key: 'bak:newest.zip',
+          label: '2026-06-23_08-00-00.zip',
+          path: '/srv/backups/minecraft/2026-06-23_08-00-00.zip',
+          gb: 0.82,
+        },
+        {
+          key: 'bak:older.zip',
+          label: '2026-06-22_08-00-00.zip',
+          path: '/srv/backups/minecraft/2026-06-22_08-00-00.zip',
+          gb: 0.8,
+        },
+      ],
+      backupsGb: 5,
+      includeBackups: true,
+    });
+    assert.ok(tree);
+    const childSum = tree.children!.reduce((s, c) => s + c.valueGb, 0);
+    assert.equal(tree.valueGb, childSum);
+    assert.equal(tree.valueGb, 8 + 5);
+    assert.notEqual(tree.valueGb, 10);
+    const backups = tree.children!.find((c) => c.id === 'backups');
+    assert.ok(backups?.children?.length === 2);
+  });
 });

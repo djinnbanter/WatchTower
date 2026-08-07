@@ -11,6 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -146,6 +147,27 @@ class SupportComposerTest {
         assertTrue(brief.contains("open 0 critical / 1 warning"), brief);
         assertTrue(brief.contains("reviewed 1 critical / 0 warning"), brief);
         assertTrue(brief.contains("not Overview scorecard grade"), brief);
+    }
+
+    @Test
+    void shouldOmitHangForBudgetUsesHardOnly() {
+        // Small budgets (not SOFT_BUDGET_BYTES) — brief says avoid multi-MiB fixtures
+        SupportEvidenceCollector.BudgetState softPast = new SupportEvidenceCollector.BudgetState(
+                100_000 + 10,
+                100_000,
+                250_000,
+                new ArrayList<>());
+        assertTrue(softPast.softExceeded());
+        assertFalse(SupportComposer.shouldOmitHangForBudget(softPast, 50));
+        assertTrue(SupportComposer.shouldOmitHangForBudget(softPast, 200_000));
+
+        SupportEvidenceCollector.BudgetState underSoft = new SupportEvidenceCollector.BudgetState(
+                0,
+                100_000,
+                250_000,
+                new ArrayList<>());
+        assertFalse(underSoft.softExceeded());
+        assertFalse(SupportComposer.shouldOmitHangForBudget(underSoft, 50));
     }
 
     @Test

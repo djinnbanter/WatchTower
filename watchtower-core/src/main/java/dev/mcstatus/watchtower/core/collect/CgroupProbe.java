@@ -55,9 +55,7 @@ public final class CgroupProbe {
         if (cpu.limitCores() != null) {
             system.addProperty("cpu_limit_cores", round2(cpu.limitCores()));
         }
-        if (cpu.cpuSource() != null) {
-            system.addProperty("cpu_source", cpu.cpuSource());
-        }
+        // cpu_source is set by CpuUsageSampler from usage counters, not from limit alone.
     }
 
     public static MemoryReading readMemory() {
@@ -109,13 +107,57 @@ public final class CgroupProbe {
                 return new CpuReading(cores, "cgroup_v2");
             }
         } else if ("v1".equals(path.version())) {
-            Long quota = readLong(path.dir().resolve("cpu.cfs_quota_us"));
-            Long period = readLong(path.dir().resolve("cpu.cfs_period_us"));
+            CgroupPath cpuPath = resolveCpuacctPath(selfCgroup, cgroupRoot);
+            Path dir = cpuPath != null ? cpuPath.dir() : path.dir();
+            Long quota = readLong(dir.resolve("cpu.cfs_quota_us"));
+            Long period = readLong(dir.resolve("cpu.cfs_period_us"));
             if (quota != null && period != null && quota > 0 && period > 0) {
                 return new CpuReading(quota / (double) period, "cgroup_v1");
             }
         }
         return new CpuReading(null, null);
+    }
+
+    /**
+     * Cumulative CPU time used by this cgroup, in nanoseconds.
+     * v2: {@code cpu.stat} {@code usage_usec}; v1: {@code cpuacct.usage}.
+     */
+    public static Long readCpuUsageNanos() {
+        return readCpuUsageNanos(DEFAULT_SELF_CGROUP, DEFAULT_CGROUP_ROOT);
+    }
+
+    static Long readCpuUsageNanos(Path selfCgroup, Path cgroupRoot) {
+        CgroupPath path = resolveCgroupPath(selfCgroup, cgroupRoot);
+        if (path != null && "v2".equals(path.version())) {
+            Long usageUsec = readKeyValueLong(path.dir().resolve("cpu.stat"), "usage_usec");
+            if (usageUsec != null && usageUsec >= 0) {
+                return usageUsec * 1_000L;
+            }
+            return null;
+        }
+        CgroupPath cpuPath = resolveCpuacctPath(selfCgroup, cgroupRoot);
+        if (cpuPath != null) {
+            Long usageNs = readLong(cpuPath.dir().resolve("cpuacct.usage"));
+            if (usageNs != null && usageNs >= 0) {
+                return usageNs;
+            }
+        }
+        return null;
+    }
+
+    /** {@code cgroup_v2}, {@code cgroup_v1}, or null when usage is unreadable. */
+    static String readCpuUsageSource(Path selfCgroup, Path cgroupRoot) {
+        CgroupPath path = resolveCgroupPath(selfCgroup, cgroupRoot);
+        if (path != null && "v2".equals(path.version())) {
+            if (readKeyValueLong(path.dir().resolve("cpu.stat"), "usage_usec") != null) {
+                return "cgroup_v2";
+            }
+        }
+        CgroupPath cpuPath = resolveCpuacctPath(selfCgroup, cgroupRoot);
+        if (cpuPath != null && readLong(cpuPath.dir().resolve("cpuacct.usage")) != null) {
+            return "cgroup_v1";
+        }
+        return null;
     }
 
     public static boolean cgroupMemoryReadable() {
@@ -198,6 +240,39 @@ public final class CgroupProbe {
                 Path memRoot = cgroupRoot.resolve("memory");
                 Path dir = memRoot.resolve(v1Memory.startsWith("/") ? v1Memory.substring(1) : v1Memory).normalize();
                 if (Files.isDirectory(dir)) {
+                    return new CgroupPath(dir, "v1");
+                }
+            }
+        } catch (IOException ignored) {
+            // fall through
+        }
+        return null;
+    }
+
+    private static CgroupPath resolveCpuacctPath(Path selfCgroup, Path cgroupRoot) {
+        if (!Files.isRegularFile(selfCgroup) || !Files.isDirectory(cgroupRoot)) {
+            return null;
+        }
+        try {
+            List<String> lines = Files.readAllLines(selfCgroup, StandardCharsets.UTF_8);
+            String v1Cpu = null;
+            for (String line : lines) {
+                if (line.startsWith("0::")) {
+                    continue;
+                }
+                String[] parts = line.split(":");
+                if (parts.length >= 3 && (parts[1].contains("cpuacct") || parts[1].equals("cpu"))) {
+                    v1Cpu = parts[2].strip();
+                    break;
+                }
+            }
+            if (v1Cpu == null || v1Cpu.isEmpty()) {
+                return null;
+            }
+            String rel = v1Cpu.startsWith("/") ? v1Cpu.substring(1) : v1Cpu;
+            for (String controller : List.of("cpuacct", "cpu,cpuacct", "cpu")) {
+                Path dir = cgroupRoot.resolve(controller).resolve(rel).normalize();
+                if (Files.isDirectory(dir) && Files.isRegularFile(dir.resolve("cpuacct.usage"))) {
                     return new CgroupPath(dir, "v1");
                 }
             }

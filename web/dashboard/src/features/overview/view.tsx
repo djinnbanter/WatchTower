@@ -28,6 +28,12 @@ import {
 } from '@/features/wizard/persist';
 import { useSessionStore } from '@/app/session-store';
 import {
+  deriveCpuPct,
+  cpuElevated,
+  formatCpuCaption,
+  normalizeCpuDisplaySetting,
+} from '@/features/live/cpu-display';
+import {
   FadeIn,
   GlareIcon,
   PageEnter,
@@ -546,14 +552,38 @@ export function PageView({ route: _route }: { route: RouteState }) {
     const latest = asRecord(live.latest);
     const heap = asRecord(latest.heap_mb);
     const heapMax = num(heap.max);
+    const cpuSetting = normalizeCpuDisplaySetting(asRecord(settingsQ.data).cpu_display);
+    const limitCores = num(latest.cpu_limit_cores, NaN);
+    const limit = Number.isFinite(limitCores) ? limitCores : null;
+    const coresPts = asArray<Record<string, unknown>>(samples.cpu_cores);
+    const hostPts = asArray<Record<string, unknown>>(samples.host_cpu);
+    const take = 40;
+    let cpuSeries: number[] = [];
+    if (coresPts.length) {
+      const slice = coresPts.length > take ? coresPts.slice(coresPts.length - take) : coresPts;
+      const hostSlice = hostPts.length > take ? hostPts.slice(hostPts.length - take) : hostPts;
+      cpuSeries = slice.map((p, i) => {
+        const cores = num(p.v, NaN);
+        const host = num(hostSlice[i]?.v, NaN);
+        return (
+          deriveCpuPct(cpuSetting, {
+            coresUsed: Number.isFinite(cores) ? cores : null,
+            hostCpuPct: Number.isFinite(host) ? host : null,
+            limitCores: limit,
+          }) ?? 0
+        );
+      });
+    } else {
+      cpuSeries = sampleSeries(samples, 'host_cpu');
+    }
     return {
       tps: sampleSeries(samples, 'tps'),
       mspt: sampleSeries(samples, 'mspt'),
       players: sampleSeries(samples, 'players'),
       heap: sampleSeries(samples, 'heap_mb', 40, (v) => (heapMax > 0 ? (v / heapMax) * 100 : v)),
-      cpu: sampleSeries(samples, 'host_cpu'),
+      cpu: cpuSeries,
     };
-  }, [samplesQ.data, liveQ.data]);
+  }, [samplesQ.data, liveQ.data, settingsQ.data]);
 
   if (metaQ.isLoading || opsQ.isLoading || liveQ.isLoading || factsQ.isLoading) {
     return (
@@ -765,7 +795,20 @@ export function PageView({ route: _route }: { route: RouteState }) {
 
   const tps = num(latest.tps, 20);
   const mspt = num(latest.mspt);
-  const cpu = num(latest.host_cpu_pct);
+  const cpuSetting = normalizeCpuDisplaySetting(settings.cpu_display);
+  const cpuInputsRaw = {
+    coresUsed: num(latest.cpu_cores_used, NaN),
+    limitCores: num(latest.cpu_limit_cores, NaN),
+    hostCpuPct: num(latest.host_cpu_pct, NaN),
+  };
+  const cpuInputs = {
+    coresUsed: Number.isFinite(cpuInputsRaw.coresUsed) ? cpuInputsRaw.coresUsed : null,
+    limitCores: Number.isFinite(cpuInputsRaw.limitCores) ? cpuInputsRaw.limitCores : null,
+    hostCpuPct: Number.isFinite(cpuInputsRaw.hostCpuPct) ? cpuInputsRaw.hostCpuPct : null,
+  };
+  const cpu = deriveCpuPct(cpuSetting, cpuInputs) ?? 0;
+  const cpuCaption = formatCpuCaption(cpuSetting, cpuInputs);
+  const cpuWarn = cpuElevated(cpuInputs);
   const players = num(latest.players_online);
   const heap = asRecord(latest.heap_mb);
   const heapPct = num(heap.max) > 0 ? (num(heap.used) / num(heap.max)) * 100 : 0;
@@ -1090,7 +1133,10 @@ export function PageView({ route: _route }: { route: RouteState }) {
                   >
                     <StatusPill tone="info">Restart needed</StatusPill>
                     <span>
-                      {str(modRestartNudge.message, 'Mod jars changed — restart when ready')}
+                      {str(
+                        modRestartNudge.message,
+                        'Pack files changed — restart the server from your host panel. WatchTower will not restart it for you.',
+                      )}
                     </span>
                   </button>
                 ) : null}
@@ -1156,9 +1202,12 @@ export function PageView({ route: _route }: { route: RouteState }) {
               series={sparkSeries.cpu}
               formatOptions={{ maximumFractionDigits: 0 }}
               suffix="%"
-              tone={cpu > 85 ? 'warn' : 'default'}
+              tone={cpuWarn ? 'warn' : 'default'}
             />
           </div>
+          {cpuCaption && cpuCaption !== '—' ? (
+            <p className="mt-2 text-xs text-wt-text-low">{cpuCaption}</p>
+          ) : null}
         </div>
       </HeroCard>
 

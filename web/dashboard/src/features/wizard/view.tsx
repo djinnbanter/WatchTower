@@ -9,6 +9,12 @@ import {
   patchSetupWizard,
   readSetupWizard,
 } from '@/features/wizard/persist';
+import {
+  clampLookbackDays,
+  daysToHours,
+  hoursToLookbackSelection,
+  LOOKBACK_PRESET_DAYS,
+} from '@/features/wizard/lookback-days';
 import { Archive, Check, RefreshCw, Search, Shield, SlidersHorizontal, Radar } from '@/ui/icons';
 import { PageEnter } from '@/ui/motion';
 import { Button, SpecularCtaButton } from '@/ui/patterns';
@@ -49,10 +55,32 @@ export function PageView({ route: _route }: { route: RouteState }) {
   );
   const [backupSaved, setBackupSaved] = useState(false);
   const [skipConfirm, setSkipConfirm] = useState(false);
+  const [baselineDays, setBaselineDays] = useState(() =>
+    clampLookbackDays(typeof paused?.baselineDays === 'number' ? paused.baselineDays : 1),
+  );
+  const [optionsError, setOptionsError] = useState<string | null>(null);
+  const [savingLookback, setSavingLookback] = useState(false);
   const current = STEPS[step]!;
   const Icon = current.icon;
   const isLast = step === STEPS.length - 1;
   const discoveryBlocked = current.id === 'audit' && !discoveryDone;
+
+  const persistBaselineDays = useCallback(async (days: number): Promise<boolean> => {
+    const d = clampLookbackDays(days);
+    setSavingLookback(true);
+    setOptionsError(null);
+    try {
+      await api.saveSettings({ lookbackHours: daysToHours(d) });
+      setBaselineDays(d);
+      patchSetupWizard({ baselineDays: d });
+      return true;
+    } catch (err) {
+      setOptionsError(err instanceof Error ? err.message : 'Could not save baseline window.');
+      return false;
+    } finally {
+      setSavingLookback(false);
+    }
+  }, []);
 
   const finish = useCallback(
     async (extra: Record<string, unknown> = {}) => {
@@ -106,9 +134,21 @@ export function PageView({ route: _route }: { route: RouteState }) {
         </div>
         <div className="space-y-4 px-6 pb-6 pt-2">
           {current.id === 'welcome' ? <WelcomeStep /> : null}
-          {current.id === 'options' ? <OptionsStep /> : null}
+          {current.id === 'options' ? (
+            <OptionsStep
+              days={baselineDays}
+              onDaysChange={setBaselineDays}
+              onPersist={persistBaselineDays}
+              persistError={optionsError}
+              savingLookback={savingLookback}
+            />
+          ) : null}
           {current.id === 'audit' ? (
-            <DiscoveryStep onCompleteChange={setDiscoveryDone} />
+            <DiscoveryStep
+              onCompleteChange={setDiscoveryDone}
+              baselineDays={baselineDays}
+              persistBaselineDays={persistBaselineDays}
+            />
           ) : null}
           {current.id === 'backups' ? (
             <BackupsStep
@@ -118,6 +158,10 @@ export function PageView({ route: _route }: { route: RouteState }) {
             />
           ) : null}
           {current.id === 'security' ? <SecurityStep session={session} /> : null}
+
+          {current.id === 'options' && optionsError ? (
+            <p className="text-sm text-wt-danger">{optionsError}</p>
+          ) : null}
 
           <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
             <Button kind="ghost" onClick={() => setSkipConfirm(true)}>
@@ -136,10 +180,22 @@ export function PageView({ route: _route }: { route: RouteState }) {
               ) : (
                 <SpecularCtaButton
                   kind="primary"
-                  disabled={!canNext}
-                  onClick={() => setStep((s) => s + 1)}
+                  disabled={!canNext || savingLookback}
+                  onClick={() => {
+                    void (async () => {
+                      if (current.id === 'options') {
+                        const ok = await persistBaselineDays(baselineDays);
+                        if (!ok) return;
+                      }
+                      setStep((s) => s + 1);
+                    })();
+                  }}
                 >
-                  {discoveryBlocked ? 'Waiting for discovery…' : 'Next'}
+                  {discoveryBlocked
+                    ? 'Waiting for discovery…'
+                    : savingLookback
+                      ? 'Saving…'
+                      : 'Next'}
                 </SpecularCtaButton>
               )}
             </div>
@@ -184,20 +240,21 @@ function WelcomeStep() {
     <div className="space-y-3 text-sm text-wt-text-mid">
       <p>
         WatchTower is your ops control panel for this Minecraft server — live charts, crash triage,
-        and backups health. Everything stays on your host.
+        and backups health. Everything stays on your host. It is not player analytics.
       </p>
       <ul className="list-disc space-y-1 pl-5">
         <li>
           Change the default username/password <strong>before</strong> discovery (sign-in gate)
         </li>
         <li>
+          On the next step, pick how far back the <strong>first baseline</strong> looks — not your
+          whole server lifetime
+        </li>
+        <li>
           Optionally enable Modrinth lookups, then run the <strong>deep audit baseline</strong>
         </li>
         <li>Point WatchTower at your <strong>backup folder</strong> so freshness stays accurate</li>
         <li>After that, Watching + Scanning keep day-to-day tabs current with deltas</li>
-        <li>
-          Need help later? Use the rail <strong>Support</strong> button for a shareable zip
-        </li>
       </ul>
       <p className="text-xs text-wt-text-low">
         The baseline can take a few minutes on large packs. Live charts still start from now.
@@ -206,11 +263,27 @@ function WelcomeStep() {
   );
 }
 
-function OptionsStep() {
+function OptionsStep({
+  days,
+  onDaysChange,
+  onPersist,
+  persistError,
+  savingLookback,
+}: {
+  days: number;
+  onDaysChange: (days: number) => void;
+  onPersist: (days: number) => Promise<boolean>;
+  persistError: string | null;
+  savingLookback: boolean;
+}) {
   const [lookup, setLookup] = useState(false);
   const [autoScan, setAutoScan] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [customMode, setCustomMode] = useState(
+    () => !LOOKBACK_PRESET_DAYS.includes(days as (typeof LOOKBACK_PRESET_DAYS)[number]),
+  );
+  const [customDraft, setCustomDraft] = useState(String(days));
 
   useEffect(() => {
     let cancelled = false;
@@ -220,6 +293,10 @@ function OptionsStep() {
         if (cancelled) return;
         setLookup(bool(data.modrinth_lookup));
         setAutoScan(bool(data.modrinth_auto_scan_on_mod_changes));
+        const sel = hoursToLookbackSelection(num(data.lookback_hours, 24));
+        onDaysChange(sel.days);
+        setCustomMode(sel.kind === 'custom');
+        setCustomDraft(String(sel.days));
       } catch {
         /* ignore */
       }
@@ -227,7 +304,17 @@ function OptionsStep() {
     return () => {
       cancelled = true;
     };
+    // Sync from settings once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only hydrate
   }, []);
+
+  async function selectDays(next: number, asCustom: boolean) {
+    const d = clampLookbackDays(next);
+    setCustomMode(asCustom);
+    setCustomDraft(String(d));
+    onDaysChange(d);
+    await onPersist(d);
+  }
 
   async function apply(nextLookup: boolean, nextAuto: boolean) {
     setSaving(true);
@@ -236,7 +323,6 @@ function OptionsStep() {
     const auto = nextLookup ? nextAuto : false;
     setAutoScan(auto);
     try {
-      // Live settings POST only accepts camelCase keys.
       await api.saveSettings({
         modrinthLookup: nextLookup,
         modrinthAutoScanOnModChanges: auto,
@@ -248,44 +334,114 @@ function OptionsStep() {
     }
   }
 
+  const presetLabels: Record<number, string> = {
+    1: 'Recent (recommended)',
+    7: 'This week',
+    30: 'This month',
+  };
+
   return (
-    <div className="space-y-3 text-sm text-wt-text-mid">
-      <p>
-        Optional network lookups help identify mods on Modrinth during and after Initial discovery.
-        Leave off if this host should never call out.
-      </p>
-      <label className="flex items-start gap-3 wt-form-row p-3">
-        <input
-          type="checkbox"
-          className="mt-1"
-          checked={lookup}
-          disabled={saving}
-          onChange={(e) => void apply(e.target.checked, autoScan)}
-        />
-        <span>
-          <strong className="text-wt-text">Enable Modrinth lookup</strong>
-          <span className="mt-0.5 block text-xs text-wt-text-low">
-            Sends jar SHA-512 hashes to api.modrinth.com (no world, logs, or player data).
+    <div className="space-y-4 text-sm text-wt-text-mid">
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold text-wt-text">Baseline history</h3>
+          <p className="mt-1 text-xs text-wt-text-low">
+            Charts and continuous Scanning start from <strong className="text-wt-text-mid">now</strong>.
+            This window only shapes the first deep-audit baseline (logs and crashes in range). A longer
+            window means a slower first scan on large packs. Older files can stay on disk — WatchTower
+            does not import your whole server lifetime.
+          </p>
+        </div>
+        <div className="space-y-2" role="radiogroup" aria-label="Baseline history window">
+          {LOOKBACK_PRESET_DAYS.map((preset) => (
+            <label key={preset} className="flex items-start gap-3 wt-form-row p-3">
+              <input
+                type="radio"
+                className="mt-1"
+                name="baseline-lookback"
+                checked={!customMode && days === preset}
+                disabled={savingLookback}
+                onChange={() => void selectDays(preset, false)}
+              />
+              <span>
+                <strong className="text-wt-text">{presetLabels[preset]}</strong>
+                <span className="mt-0.5 block text-xs text-wt-text-low">{preset} day{preset === 1 ? '' : 's'}</span>
+              </span>
+            </label>
+          ))}
+          <label className="flex items-start gap-3 wt-form-row p-3">
+            <input
+              type="radio"
+              className="mt-1"
+              name="baseline-lookback"
+              checked={customMode}
+              disabled={savingLookback}
+              onChange={() => void selectDays(clampLookbackDays(Number(customDraft) || days), true)}
+            />
+            <span className="min-w-0 flex-1">
+              <strong className="text-wt-text">Custom</strong>
+              <span className="mt-1 flex items-center gap-2 text-xs text-wt-text-low">
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  className="w-20 rounded border border-wt-line bg-wt-bg2 px-2 py-1 font-mono text-sm text-wt-text"
+                  value={customDraft}
+                  disabled={savingLookback}
+                  onFocus={() => setCustomMode(true)}
+                  onChange={(e) => setCustomDraft(e.target.value)}
+                  onBlur={() => {
+                    const d = clampLookbackDays(Number(customDraft));
+                    setCustomDraft(String(d));
+                    void selectDays(d, true);
+                  }}
+                />
+                days (1–30)
+              </span>
+            </span>
+          </label>
+        </div>
+        {persistError ? <p className="text-wt-danger">{persistError}</p> : null}
+      </div>
+
+      <div className="space-y-3 border-t border-wt-line pt-4">
+        <p>
+          Optional network lookups help identify mods on Modrinth during and after Initial discovery.
+          Leave off if this host should never call out.
+        </p>
+        <label className="flex items-start gap-3 wt-form-row p-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={lookup}
+            disabled={saving}
+            onChange={(e) => void apply(e.target.checked, autoScan)}
+          />
+          <span>
+            <strong className="text-wt-text">Enable Modrinth lookup</strong>
+            <span className="mt-0.5 block text-xs text-wt-text-low">
+              Sends jar SHA-512 hashes to api.modrinth.com (no world, logs, or player data).
+            </span>
           </span>
-        </span>
-      </label>
-      <label className="flex items-start gap-3 wt-form-row p-3">
-        <input
-          type="checkbox"
-          className="mt-1"
-          checked={autoScan}
-          disabled={saving || !lookup}
-          onChange={(e) => void apply(lookup, e.target.checked)}
-        />
-        <span>
-          <strong className="text-wt-text">Auto-scan when mods change</strong>
-          <span className="mt-0.5 block text-xs text-wt-text-low">
-            After discovery, re-check Modrinth when jars are added or updated.
+        </label>
+        <label className="flex items-start gap-3 wt-form-row p-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={autoScan}
+            disabled={saving || !lookup}
+            onChange={(e) => void apply(lookup, e.target.checked)}
+          />
+          <span>
+            <strong className="text-wt-text">Auto-scan when mods change</strong>
+            <span className="mt-0.5 block text-xs text-wt-text-low">
+              After discovery, re-check Modrinth when jars are added or updated.
+            </span>
           </span>
-        </span>
-      </label>
-      {error ? <p className="text-wt-danger">{error}</p> : null}
-      <p className="text-xs text-wt-text-low">You can change this later in Settings → Monitoring.</p>
+        </label>
+        {error ? <p className="text-wt-danger">{error}</p> : null}
+        <p className="text-xs text-wt-text-low">You can change Modrinth later in Settings → Monitoring.</p>
+      </div>
     </div>
   );
 }
@@ -386,7 +542,15 @@ function ProgressTrack({
   );
 }
 
-function DiscoveryStep({ onCompleteChange }: { onCompleteChange: (ok: boolean) => void }) {
+function DiscoveryStep({
+  onCompleteChange,
+  baselineDays,
+  persistBaselineDays,
+}: {
+  onCompleteChange: (ok: boolean) => void;
+  baselineDays: number;
+  persistBaselineDays: (days: number) => Promise<boolean>;
+}) {
   const [running, setRunning] = useState(false);
   const [starting, setStarting] = useState(false);
   const [stageId, setStageId] = useState('window');
@@ -538,6 +702,14 @@ function DiscoveryStep({ onCompleteChange }: { onCompleteChange: (ok: boolean) =
     setModrinthPhase('idle');
     setModrinthProgress({ done: 0, total: 0 });
     try {
+      const ok = await persistBaselineDays(baselineDays);
+      if (!ok) {
+        setRunning(false);
+        setSuccess(false);
+        setError('Could not save baseline window. Go back to Options and try again.');
+        setStarting(false);
+        return;
+      }
       await api.discoveryStart();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not start discovery';
@@ -551,7 +723,7 @@ function DiscoveryStep({ onCompleteChange }: { onCompleteChange: (ok: boolean) =
     } finally {
       setStarting(false);
     }
-  }, []);
+  }, [baselineDays, persistBaselineDays]);
 
   useEffect(() => {
     if (alreadyOk) {
@@ -673,6 +845,10 @@ function DiscoveryStep({ onCompleteChange }: { onCompleteChange: (ok: boolean) =
         </ol>
       )}
 
+      {(running || starting) && baselineDays > 1 ? (
+        <p className="text-xs text-wt-text-low">Scanning {baselineDays} days of history…</p>
+      ) : null}
+
       {(running || starting) && (
         <div className="space-y-2 wt-form-row p-3">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -734,22 +910,33 @@ function DiscoveryStep({ onCompleteChange }: { onCompleteChange: (ok: boolean) =
       ) : null}
 
       {success === true && (modrinthPhase === 'done' || modrinthPhase === 'skipped') ? (
-        <p className="flex flex-wrap items-center gap-2 text-wt-ok">
-          <Check size={16} /> Baseline ready
-          {(() => {
-            const parts = [
-              counts.logs != null && counts.logs > 0 ? `${counts.logs} logs` : null,
-              counts.crashes != null && counts.crashes > 0 ? `${counts.crashes} crashes` : null,
-              counts.jars != null && counts.jars > 0 ? `${counts.jars} mods` : null,
-              counts.active_issues != null && counts.active_issues > 0
-                ? `${counts.active_issues} issues`
-                : null,
-            ].filter(Boolean);
-            return parts.length ? (
-              <span className="text-xs text-wt-text-low">· {parts.join(' · ')}</span>
-            ) : null;
-          })()}
-        </p>
+        <div className="space-y-2 wt-form-row p-3">
+          <p className="flex items-center gap-2 text-wt-ok">
+            <Check size={16} /> Baseline ready
+          </p>
+          <p className="text-sm text-wt-text-mid">
+            Window:{' '}
+            <strong className="text-wt-text">
+              {baselineDays} day{baselineDays === 1 ? '' : 's'}
+            </strong>
+            {(() => {
+              const parts = [
+                counts.logs != null && counts.logs > 0 ? `${counts.logs} logs` : null,
+                counts.crashes != null && counts.crashes > 0 ? `${counts.crashes} crashes` : null,
+                counts.jars != null && counts.jars > 0 ? `${counts.jars} mods` : null,
+                counts.active_issues != null && counts.active_issues > 0
+                  ? `${counts.active_issues} issues`
+                  : null,
+              ].filter(Boolean);
+              return parts.length ? (
+                <span className="text-xs text-wt-text-low"> · {parts.join(' · ')}</span>
+              ) : null;
+            })()}
+          </p>
+          <p className="text-xs text-wt-text-low">
+            Older crash files on disk stay available. Day-to-day updates come from Watching + Scanning.
+          </p>
+        </div>
       ) : null}
 
       {success === false || modrinthPhase === 'failed' ? (

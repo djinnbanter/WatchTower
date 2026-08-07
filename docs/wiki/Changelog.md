@@ -8,7 +8,25 @@ Full downloads: [GitHub Releases](https://github.com/djinnbanter/WatchTower/rele
 
 ## Unreleased
 
-_(empty)_
+- **Issues stay current on lag** — when WatchTower auto-captures or clears a lag spike, the Issues list refreshes right away; Active no longer shows the same lag twice from peek and the live ledger; Live history minute rollups flush cleanly when the server stops
+- **Safer support packs** — hang dumps and snapshots are scrubbed before zip; the quality checklist really checks redaction; hang dump only shows green when it can fit in the pack
+- **Mod update jar hints** — when you swap or quarantine a mod jar, WatchTower only uses a live jar hint if it belongs to that mod (a mismatched hint is ignored so the wrong file is not touched)
+- **Batch mod actions** — invalid steps in a batch request are rejected with a clear error instead of being silently skipped
+- **Quarantine world risk** — quarantining a mod with high world risk now requires the same extra confirm as soft Disable
+- **Install impact check** — installing a mod update must pass a verified impact fingerprint, same as swap
+- **Update apply hash** — the dashboard sends the Modrinth primary file hash when applying an update, not the first file that happened to have a hash
+- **Setup lookback sticks** — the baseline window you pick in the wizard is kept in `watchtower.conf` across restarts and is what the first deep audit actually uses (TOML defaults no longer overwrite a saved lookback every boot)
+- **Clearer crash stories** — WatchTower no longer calls every crash with a failure note a "mod failed to load"; watchdog follow-ups after a mod runtime crash get the hang story (not a false Chunky pregen blame); paired crashes keep the link to the primary report in the inbox
+- **Dashboard icon in the jar** — the lantern mark (`watchtower-icon-simple.png`) stays in the React dashboard assets so login/rail branding ships inside the NeoForge jar
+- **DR report window** — disaster-recovery reports keep the last-good-start anchor instead of silently widening to the full `--minutes` lookback
+- **Updates impact stays put** — crash-suspect Modrinth enrich no longer wipes Safe/Break/Install hints that the scan already computed
+- **Modrinth uses the real Minecraft version** — live `snapshot` / `platform` wins over coarse jar version guesses so compatible updates match your pack
+- **Install missing deps from Updates** — Break rows that need a new mod include the Modrinth project/version IDs the Install button needs
+- **World size adds up** — world disk no longer counts the whole `world/` folder and each dimension folder on top of it
+- **Space map with backups** — when backups are on the map, the server total is the sum of what you see (world + mods + logs + backups), not server-folder size alone
+- **Discovery after a mid-audit stop** — if the server stops while first discovery / deep audit is running, WatchTower clears the busy lock so the next start is not stuck on "already running"
+- **Settings take effect for log / backup polls** — saving Always-On ops-log interval or backup folders refreshes those schedules without a full restart
+- **Cleanup waits for test restore** — Cleanup stays disabled (and the API refuses) while a backup test restore is still running
 
 ## [1.2.0-beta.1] — 2026-08-02
 
@@ -244,7 +262,7 @@ Watchtower **1.1.0** builds on **1.0.0** / **1.0.0a** with a large ops toolkit u
 - Crash fix advice is evidence-first (Create/watchdog/OOM and related playbooks)
 - Declarative crash rule packs, mod forensics, and CA parity crash kinds
 - Crash inbox groups, Startup boot profile, Logs viewer, Issues acknowledge / Reviewed
-- Modrinth identity + update hints (opt-in; never downloads jars)
+- Modrinth identity + update hints (opt-in); assisted jar mutate requires mods.mutate
 
 ### Live & chrome
 

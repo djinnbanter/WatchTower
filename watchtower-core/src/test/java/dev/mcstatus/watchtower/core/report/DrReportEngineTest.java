@@ -87,6 +87,66 @@ class DrReportEngineTest {
                 "30-minute window should start more recently than 24-hour window");
     }
 
+    @Test
+    void drModeHonorsExplicitWindowStartOverLookbackMinutes() throws Exception {
+        buildCrashLoopFixture(serverDir);
+
+        Path statePath = serverDir.resolve("watchtower/" + WatchtowerFiles.STATE_FILENAME);
+        Files.createDirectories(statePath.getParent());
+        Files.writeString(statePath, "{}", StandardCharsets.UTF_8);
+
+        String explicitStart = ZonedDateTime.now()
+                .minusHours(2)
+                .withNano(0)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+        ReportConfig config = ReportConfig.builder()
+                .serverDir(serverDir.toAbsolutePath().toString())
+                .stateFile(statePath.toAbsolutePath().toString())
+                .reportMode("dr")
+                .lookbackMinutes(30)
+                .lookbackHours(0)
+                .windowStart(explicitStart)
+                .incremental(false)
+                .javaRunning(false)
+                .panelRunning(false)
+                .loader("neoforge")
+                .build();
+
+        ReportEngine.ReportResult result = ReportEngine.run(config, outDir);
+        assertTrue(result.success(), result.message());
+
+        JsonObject meta = result.facts().getAsJsonObject("meta");
+        String windowStart = meta.get("window_start").getAsString();
+        assertNotNull(windowStart);
+
+        java.time.Instant expected = ZonedDateTime.parse(explicitStart).toInstant();
+        java.time.Instant actual = dev.mcstatus.watchtower.core.util.TimeParse.parseTime(windowStart);
+        assertNotNull(actual, "window_start should parse: " + windowStart);
+        long deltaSec = Math.abs(actual.getEpochSecond() - expected.getEpochSecond());
+        assertTrue(deltaSec <= 120,
+                "DR must honor WINDOW_START (~2h ago), not lookbackMinutes=30; got " + windowStart);
+
+        java.time.Instant lookbackOnly = java.time.Instant.now().minusSeconds(30 * 60L);
+        long vsLookback = Math.abs(actual.getEpochSecond() - lookbackOnly.getEpochSecond());
+        assertTrue(vsLookback > 30 * 60L,
+                "window_start must not collapse to now-30m lookback; got " + windowStart);
+    }
+
+    @Test
+    void windowStartEpochPrefersExplicitWindowStartOverLookback() {
+        String explicit = ZonedDateTime.now().minusHours(3).withNano(0)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        ReportConfig config = ReportConfig.builder()
+                .windowStart(explicit)
+                .lookbackMinutes(15)
+                .lookbackHours(24)
+                .build();
+        double epoch = config.windowStartEpoch();
+        double expected = ZonedDateTime.parse(explicit).toInstant().getEpochSecond();
+        assertEquals(expected, epoch, 2.0);
+    }
+
     private static void buildCrashLoopFixture(Path serverDir) throws Exception {
         Path logsDir = serverDir.resolve("logs");
         Path crashDir = serverDir.resolve("crash-reports");

@@ -228,7 +228,7 @@ export function SiteHeader() {
                     key={item.href}
                     href={item.href}
                     aria-current={active ? 'page' : undefined}
-                    className={`wt-menu-in py-3 text-3xl font-semibold tracking-[-0.02em] no-underline ${
+                    className={`wt-menu-in py-3 font-display text-3xl font-semibold tracking-[-0.02em] no-underline ${
                       active ? 'text-[color:var(--wt-accent)]' : 'text-[color:var(--wt-text)]'
                     }`}
                     style={{ animationDelay: `${80 + i * 60}ms` }}

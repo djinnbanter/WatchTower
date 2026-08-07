@@ -23,7 +23,7 @@ Runs **on the machine** as a jar in `mods/` plus an embedded web dashboard (and 
 - NeoForge dedicated servers (primary: **1.21.x**, Java **21**); Linux dedicated hosts common; hosted panels (Pterodactyl, Crafty, AMP, etc.) coexist but are not replaced.
 - Browser dashboard typically `http://<server-ip>:8787` (prefer localhost / SSH tunnel; do not expose 8787 to the open internet).
 - Local disk under the server’s `watchtower/` folder (ops-cache, state, Spark uploads, support zips).
-- Optional companion tooling: [Spark](https://modrinth.com/mod/spark) for lag proof; Modrinth lookups for mod identity/updates (never downloads jars for the operator).
+- Optional companion tooling: [Spark](https://modrinth.com/mod/spark) for lag proof; Modrinth lookups for mod identity/updates. Assisted jar changes (swap / install / quarantine) run only when an account with **mods.mutate** confirms a job — never silent downloads, and WatchTower never restarts the server for you.
 - Rituals: first-run wizard (account → options → Initial discovery → backups → security); day-to-day Overview / Live / Issues / Crashes; Support pack when sharing with a helper or mod author; CLI disaster-recovery when the game process won’t stay up.
 
 ## Capabilities and Constraints
@@ -33,7 +33,7 @@ Runs **on the machine** as a jar in `mods/` plus an embedded web dashboard (and 
 **Hard constraints future UI/product work must honor:**
 
 - Local-first: no required cloud account; no telemetry / log upload by default (opt-in diagnostics or future Cloud are explicit and separate).
-- Advisory ops desk: does **not** restart the server, schedule restarts, kill entities/unload chunks, or quietly edit mods/worlds; Modrinth path does **not** download jars.
+- Advisory ops desk: does **not** restart the server, schedule restarts, kill entities/unload chunks, or quietly edit mods/worlds. Modrinth lookup stays hash/identity by default; assisted jar mutate requires an explicit confirmed job from an account granted **mods.mutate** (no silent pack changes, no auto-restart).
 - Not player analytics / GeoIP / retention surveillance; online roster during lag/crash is ops triage only.
 - Does not replace host panels (start/stop, files, console) or client GPU crash tooling.
 - Kill-switches and conf keys for many detectors live in `watchtower.conf`; UI should not imply irreversible automation where the product is read-only.
@@ -60,7 +60,7 @@ Runs **on the machine** as a jar in `mods/` plus an embedded web dashboard (and 
 
 1. **Triage over spectacle** — every screen should make “what’s wrong / what next” faster; decoration never outranks scanability.
 2. **Local trust** — data stays on the host; network features are opt-in and labeled; redaction is part of Support, not an afterthought.
-3. **Advise, don’t seize control** — recommend restarts, RAM, jar checks, and quiet windows; never silently mutate the server or pack.
+3. **Advise, don’t seize control** — recommend restarts, RAM, jar checks, and quiet windows; never silently mutate the server or pack. Assisted jar changes are confirm-gated and never auto-restart.
 4. **Plain English over jargon** — prefer operator language; technical ids/kill-switches stay available without owning the primary copy.
 5. **Stay in the ops lane** — don’t become a host panel, analytics suite, or cloud-required product; defer fleet/Cloud as optional later bets.
 

@@ -63,6 +63,9 @@ if (latestJar) {
     if (!/assets\/watchtower\/web\/index\.html/.test(listing)) {
       fails.push(`Latest JAR missing dashboard index.html: ${latestJar}`);
     }
+    if (!/assets\/watchtower\/web\/assets\/watchtower-icon-simple\.png/.test(listing)) {
+      fails.push(`Latest JAR missing watchtower-icon-simple.png: ${latestJar}`);
+    }
     const hasViteChunk = listing
       .split(/\r?\n/)
       .some((line) => line.startsWith('assets/watchtower/web/assets/') && line.endsWith('.js'));
@@ -90,6 +93,16 @@ if (existsSync(join(webOut, 'demo-api', 'manifest.json'))) {
 // Hard requirement: demo-api/ must never land in the jar sync tree (dist/).
 if (existsSync(join(ROOT, 'web', 'dashboard', 'dist', 'demo-api'))) {
   fails.push('web/dashboard/dist/ contains demo-api/ — static demo must only write dist-demo/');
+}
+
+const iconSrc = join(ROOT, 'web', 'dashboard', 'assets', 'watchtower-icon-simple.png');
+if (!existsSync(iconSrc)) {
+  fails.push('web/dashboard/assets/watchtower-icon-simple.png missing (copy from web/dashboard-archive/assets/)');
+}
+
+const distIcon = join(ROOT, 'web', 'dashboard', 'dist', 'assets', 'watchtower-icon-simple.png');
+if (existsSync(join(ROOT, 'web', 'dashboard', 'dist')) && !existsSync(distIcon)) {
+  fails.push('web/dashboard/dist/assets/watchtower-icon-simple.png missing after build (copy-static-assets.mjs must copy assets/)');
 }
 
 if (fails.length) {

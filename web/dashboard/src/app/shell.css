@@ -70,6 +70,36 @@
   color: var(--wt-accent);
 }
 
+.sh-rail__item {
+  margin-bottom: 0.1rem;
+}
+
+.sh-rail__link.is-section {
+  color: var(--wt-text);
+}
+
+.sh-rail__children {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  margin: 0.1rem 0 0.35rem;
+  padding-left: 0.35rem;
+  border-left: 1px solid color-mix(in srgb, var(--wt-line) 80%, transparent);
+  margin-left: 1.15rem;
+}
+
+.sh-rail__link--child {
+  padding: 0.35rem 0.55rem 0.35rem 0.55rem;
+  font-size: 0.8125rem;
+  min-height: 2.25rem;
+  border-left-width: 0;
+}
+
+.sh-rail__link--child.is-active {
+  border-left-color: transparent;
+  background: var(--wt-accent-soft);
+}
+
 .sh-rail__badge {
   margin-left: auto;
   border-radius: 2px;

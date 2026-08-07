@@ -101,13 +101,14 @@ public final class DimensionStorageScanner {
         }
 
         JsonArray byDimension = new JsonArray();
-        long worldTotal = 0;
+        Path worldPath = root.resolve("world");
+        boolean hasWorldDir = Files.isDirectory(worldPath);
+
         for (Target t : list) {
             Long bytes = duBytes(t.path.toString());
             if (bytes == null) {
                 continue;
             }
-            worldTotal += bytes;
             JsonObject dim = new JsonObject();
             dim.addProperty("id", t.id);
             dim.addProperty("path", root.relativize(t.path).toString().replace('\\', '/'));
@@ -118,6 +119,27 @@ public final class DimensionStorageScanner {
 
         if (byDimension.isEmpty()) {
             return ExtrasCollector.collectStorage(serverDir);
+        }
+
+        long worldTotal = 0;
+        if (hasWorldDir) {
+            Long worldOnly = duBytes(worldPath.toString());
+            if (worldOnly != null) {
+                worldTotal += worldOnly;
+            }
+        }
+        for (Target t : list) {
+            Path normalized = t.path.toAbsolutePath().normalize();
+            if (hasWorldDir && normalized.startsWith(worldPath.toAbsolutePath().normalize())) {
+                continue;
+            }
+            if (hasWorldDir && normalized.equals(worldPath.toAbsolutePath().normalize())) {
+                continue;
+            }
+            Long bytes = duBytes(t.path.toString());
+            if (bytes != null) {
+                worldTotal += bytes;
+            }
         }
 
         result.addProperty("world_bytes", worldTotal);

@@ -12,6 +12,12 @@ export type MinecraftPlayerOption = {
   online: boolean;
 };
 
+/** Real player UUIDs only — roster can include synthetic `online:name` placeholders. */
+export function isLinkableMinecraftUuid(uuid: string): boolean {
+  const hex = uuid.trim().replace(/-/g, '').toLowerCase();
+  return /^[0-9a-f]{32}$/.test(hex);
+}
+
 export function parsePlayerDirectory(payload: Record<string, unknown>): MinecraftPlayerOption[] {
   const dir = asRecord(payload.player_directory);
   return asArray(dir.players)
@@ -19,11 +25,36 @@ export function parsePlayerDirectory(payload: Record<string, unknown>): Minecraf
       const r = asRecord(raw);
       const uuid = str(r.uuid);
       const name = str(r.name);
-      if (!uuid || !name) return null;
+      if (!uuid || !name || !isLinkableMinecraftUuid(uuid)) return null;
       return { uuid, name, online: bool(r.online) };
     })
     .filter((row): row is MinecraftPlayerOption => row != null)
     .sort((a, b) => Number(b.online) - Number(a.online) || a.name.localeCompare(b.name));
+}
+
+function patchAccountsCache(
+  prev: unknown,
+  accountId: string,
+  link: { minecraft_uuid: string; minecraft_name: string } | null,
+): Record<string, unknown> | unknown {
+  const body = asRecord(prev);
+  const accounts = asArray<Record<string, unknown>>(body.accounts);
+  if (!accounts.length) return prev;
+  return {
+    ...body,
+    accounts: accounts.map((row) => {
+      if (str(row.id) !== accountId) return row;
+      const next = { ...row };
+      if (!link) {
+        delete next.minecraft_uuid;
+        delete next.minecraft_name;
+      } else {
+        next.minecraft_uuid = link.minecraft_uuid;
+        next.minecraft_name = link.minecraft_name;
+      }
+      return next;
+    }),
+  };
 }
 
 function usePlayerOptions(prefetched?: MinecraftPlayerOption[]) {
@@ -34,7 +65,7 @@ function usePlayerOptions(prefetched?: MinecraftPlayerOption[]) {
     enabled: prefetched == null,
   });
   return useMemo(() => {
-    if (prefetched) return prefetched;
+    if (prefetched) return prefetched.filter((o) => isLinkableMinecraftUuid(o.uuid));
     return playersQ.data ? parsePlayerDirectory(asRecord(playersQ.data)) : [];
   }, [prefetched, playersQ.data]);
 }
@@ -47,6 +78,7 @@ export function AccountMinecraftLink({
   disabled,
   options: prefetchedOptions,
   compact,
+  isYou,
 }: {
   accountId: string;
   uuid: string | null;
@@ -56,11 +88,30 @@ export function AccountMinecraftLink({
   options?: MinecraftPlayerOption[];
   /** Single-line table cell; avatar lives in the Person column. */
   compact?: boolean;
+  /** When linking the signed-in account, keep the side-rail session in sync. */
+  isYou?: boolean;
 }) {
   const qc = useQueryClient();
+  const session = useSessionStore((s) => s.session);
+  const setGate = useSessionStore((s) => s.setGate);
   const options = usePlayerOptions(prefetchedOptions);
   const [pick, setPick] = useState('');
   const [error, setError] = useState('');
+
+  const applyLinkLocally = (link: { minecraft_uuid: string; minecraft_name: string } | null) => {
+    qc.setQueryData(['accounts'], (prev: unknown) => patchAccountsCache(prev, accountId, link));
+    if (isYou && session) {
+      const next = { ...session };
+      if (!link) {
+        delete next.minecraft_uuid;
+        delete next.minecraft_name;
+      } else {
+        next.minecraft_uuid = link.minecraft_uuid;
+        next.minecraft_name = link.minecraft_name;
+      }
+      setGate('none', next);
+    }
+  };
 
   const mut = useMutation({
     mutationFn: (patch: {
@@ -68,7 +119,13 @@ export function AccountMinecraftLink({
       minecraft_name?: string;
       clear_minecraft?: boolean;
     }) => api.updateAccount(accountId, patch),
-    onSuccess: () => {
+    onSuccess: (res, patch) => {
+      const body = asRecord(res);
+      const linkedUuid = str(body.minecraft_uuid) || str(patch.minecraft_uuid);
+      const linkedName = str(body.minecraft_name) || str(patch.minecraft_name);
+      const cleared = bool(body.clear_minecraft) || Boolean(patch.clear_minecraft) || !linkedUuid;
+      // Update cache before clearing the pick so the row doesn't flash "Pick a player…".
+      applyLinkLocally(cleared ? null : { minecraft_uuid: linkedUuid, minecraft_name: linkedName || 'Player' });
       setError('');
       setPick('');
       void qc.invalidateQueries({ queryKey: ['accounts'] });
@@ -90,7 +147,10 @@ export function AccountMinecraftLink({
       compact={compact}
       onLink={() => {
         const hit = options.find((o) => o.uuid === pick);
-        if (!hit) return;
+        if (!hit) {
+          setError('Pick a player from the list.');
+          return;
+        }
         mut.mutate({ minecraft_uuid: hit.uuid, minecraft_name: hit.name });
       }}
       onClear={() => mut.mutate({ clear_minecraft: true })}
@@ -151,7 +211,10 @@ export function SelfMinecraftLink() {
         busy={mut.isPending}
         onLink={() => {
           const hit = options.find((o) => o.uuid === pick);
-          if (!hit) return;
+          if (!hit) {
+            setError('Pick a player from the list.');
+            return;
+          }
           mut.mutate({ uuid: hit.uuid, name: hit.name });
         }}
         onClear={() => mut.mutate({ clear: true })}

@@ -33,6 +33,11 @@ public final class DashboardAuthRecord {
     public String ui_theme;
     /** UI accent preset id. Null → signal. */
     public String ui_accent;
+    /**
+     * Optional capability flags (e.g. {@code mods.mutate}). Owner ignores this list —
+     * Owners always have every known capability. Non-owners default empty.
+     */
+    public List<String> capabilities = new ArrayList<>();
 
     public DashboardAuthRecord() {
     }

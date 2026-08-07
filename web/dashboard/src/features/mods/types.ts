@@ -1,16 +1,22 @@
-export type ModViewId =
+﻿export type ModViewId =
   | 'overview'
   | 'updates'
   | 'conflicts'
   | 'log-errors'
   | 'changes'
   | 'modrinth'
-  | 'forensics'
-  | 'configs';
+  | 'forensics';
 
 export type Tone = 'ok' | 'warn' | 'danger' | 'info' | 'neutral';
 
-export type CatalogFilter = 'all' | 'client' | 'server' | 'unresolved' | 'enabled' | 'disabled';
+export type CatalogFilter =
+  | 'all'
+  | 'client'
+  | 'server'
+  | 'unresolved'
+  | 'enabled'
+  | 'disabled'
+  | 'updates';
 
 export type CatalogSort =
   | 'name'

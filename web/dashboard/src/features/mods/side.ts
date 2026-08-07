@@ -232,9 +232,28 @@ export function matchesCatalogFilter(row: CatalogRow, filter: CatalogFilter, has
       return row.disabled !== true;
     case 'disabled':
       return row.disabled === true;
+    case 'updates':
+      return row.modrinth_outdated === true;
     default:
       return true;
   }
+}
+
+/** Parse route `filter` into a CatalogFilter; unknown values become `all`. */
+export function parseCatalogFilter(raw: string | null | undefined): CatalogFilter {
+  const v = String(raw || 'all').toLowerCase();
+  if (
+    v === 'all' ||
+    v === 'client' ||
+    v === 'server' ||
+    v === 'unresolved' ||
+    v === 'enabled' ||
+    v === 'disabled' ||
+    v === 'updates'
+  ) {
+    return v;
+  }
+  return 'all';
 }
 
 export function catalogSideRank(row: CatalogRow): number {

@@ -111,7 +111,11 @@ export function buildStorageTreemapTree(
     id: 'server',
     label: 'Server',
     path: '.',
-    valueGb: positive(input.totalGb) ? input.totalGb : sum,
+    valueGb: input.includeBackups
+      ? sum
+      : positive(input.totalGb)
+        ? input.totalGb
+        : sum,
     tone: 'neutral',
     children: cats,
   };

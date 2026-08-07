@@ -22,7 +22,7 @@ export function Boundaries() {
         <div className="max-w-md lg:pb-1">
           <h2 className="wt-display-sm text-[color:var(--wt-text)]">Not our job.</h2>
           <p className="mt-4 text-[1.0625rem] leading-relaxed text-[color:var(--wt-text-mid)] md:text-[1.125rem]">
-            We stay out of these on purpose.
+            On purpose. Use the tools built for these jobs.
           </p>
           <div
             className="mt-8 hidden h-px w-16 bg-[color:var(--wt-lantern)] lg:block"

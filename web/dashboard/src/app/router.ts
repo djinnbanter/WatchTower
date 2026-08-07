@@ -5,6 +5,7 @@ export type RouteState = {
   issue?: string;
   group?: string;
   mod?: string;
+  filter?: string;
   wiki?: string;
   profile?: string;
   source?: string;
@@ -28,6 +29,7 @@ function parse(): RouteState {
     issue: raw.get('issue') || undefined,
     group: raw.get('group') || undefined,
     mod: raw.get('mod') || undefined,
+    filter: raw.get('filter') || undefined,
     wiki: raw.get('wiki') || undefined,
     profile: raw.get('profile') || undefined,
     source: raw.get('source') || undefined,

@@ -55,11 +55,23 @@ class HostEnvironmentDetectorTest {
         system.addProperty("cpu_count", 8);
         system.addProperty("mem_total_gb", 16.0);
         system.addProperty("ram_source", "cgroup_v2");
+        system.addProperty("cpu_source", "cgroup_v2");
 
         HostEnvironmentDetector.enrichSummary(env, system);
         String summary = env.get("summary").getAsString();
         assertTrue(summary.contains("Crafty"));
         assertTrue(summary.contains("2.0 of 8 cores allocated"));
         assertTrue(summary.contains("CPU % is vs quota"));
+    }
+
+    @Test
+    void enrichSummaryOmitsQuotaClaimWithoutCgroupUsageSource() {
+        JsonObject env = HostEnvironmentDetector.detect("crafty", true, true);
+        JsonObject system = new JsonObject();
+        system.addProperty("cpu_limit_cores", 2.0);
+        system.addProperty("cpu_count", 8);
+
+        HostEnvironmentDetector.enrichSummary(env, system);
+        assertFalse(env.get("summary").getAsString().contains("CPU % is vs quota"));
     }
 }

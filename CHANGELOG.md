@@ -15,6 +15,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Ops live lag / Issues Active / L1 rollup** — `LagSpikeDetector` calls `OpsScanService.refreshIssuesLive` after `applyLagIncident` and `updateLagIssueResolution`; dashboard `buildActiveItems` prefers `issues_live` over peek lag/log-stale duplicates; `LiveMetricsService.unbindServer` flushes rollups with a floored open-minute epoch
+- **Support hang dumps** — soft-hang thread dumps in packs are secret-scrubbed; soft budget no longer skips hangs that still fit the hard size limit
+- **Support snapshot** — `performance/snapshot.json` is packed as redacted JSON text (not a raw file copy)
+- **Support quality gate** — `secrets_redacted` runs a real scrubber self-check; `hang_dump` only passes when a dump is small enough to pack (oversize dumps warn as omitted)
+- **Mutate jar hint binding** — live jar basename hints must belong to the target `mod_id` (mismatched hints are ignored so the wrong jar is not swapped/quarantined)
+- **Mutate batch steps** — non-object entries in `steps` return HTTP 400 instead of being skipped
+- **Quarantine world risk** — high world-risk quarantine requires `confirm_world_risk:true`, same as soft Disable
+- **Install impact fingerprint** — `POST /api/mods/mutate/install` requires a verified `impact_fingerprint` like swap
+- **Apply panel primary hash** — update apply sends the Modrinth primary file `sha512`, not the first hashed file
+- **Wizard lookback persistence** — `WatchtowerSetup.syncTomlIntoConf` seeds `LOOKBACK_HOURS` / `INCREMENTAL` / `LIVE_RETENTION_HOURS` only when missing; `ModReportConfig` prefers conf values; `InitialDiscoveryRunner` passes conf lookback into `ReportRunOptions` so the first baseline matches the wizard window
+- **Crash narration / incident pairing** — `CrashNarrator.isModLoad` drops the non-blank `failure_message` shortcut; pregen template only for `watchdog_pregen` (not `watchdog_followup`); `IncidentChainBuilder` pairs only `mod_runtime` primaries; `FactsBuilder` re-narrates follow-ups after link; `CrashFingerprintGrouper.Member.from` keeps `paired_primary_file`
+- Dashboard packaging keeps `watchtower-icon-simple.png` in `web/dashboard/assets` (and packaging audit) so the NeoForge jar still embeds the lantern mark
+- DR / `ReportEngine` honors explicit `WINDOW_START` instead of always replacing it with lookback minutes
+- Crash-suspect Modrinth enrich no longer calls impact analysis with an empty deps map (preserves ScanJob impact / blockers)
+- Modrinth scan prefers snapshot/platform Minecraft version over jar-suffix heuristics
+- `need_install` impact blockers include `project_id` and `version_id` / `modrinth_version_id` for the Install CTA
+- `DimensionStorageScanner` `world_bytes` / `world_gb` use a single world root du (plus legacy root dims only) instead of summing parent + nested dimensions
+- Insights Storage treemap root `valueGb` equals the sum of displayed children when backups are included
+- Release discovery/report running locks when the server stops mid-audit so the next start is not sticky-locked
+- Call `AlwaysOnOpsLogScheduler.refreshSchedule` after `OPS_LOG_SCAN_SEC` settings save and `BackupPollScheduler.refreshSchedule` after backup dirs save
+- Disable Backups Cleanup while test-restore `job.status` is running; server cleanup rejects when `BackupVerifyScheduler.isRestoreBusy()`
+
 ## [1.2.0-beta.1](https://github.com/djinnbanter/WatchTower/compare/v1.1.9...v1.2.0-beta.1) — 2026-08-02
 
 Artifacts: `watchtower-neoforge-1.2.0-beta.1+mc1.21.jar` · `watchtower-cli-1.2.0-beta.1.jar` in `releases/1.2.0-beta.1/` and `releases/latest/`.

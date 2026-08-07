@@ -13,6 +13,10 @@ import {
   applyTomlValues,
   type TomlFormField,
 } from '../src/features/mods/toml-form';
+import {
+  loadPreviewConfigsFromDir,
+  resolvePreviewConfigDir,
+} from './preview-configs-dir.mjs';
 
 export type FixtureResponse = { status: number; contentType: string; body: string | Buffer };
 export type FixtureSession = Record<string, unknown>;
@@ -125,18 +129,43 @@ function secretHintText(text: string): boolean {
   return /(password|token|secret|api[_-]?key)\s*[=:]/i.test(text);
 }
 
+/** Cached PREVIEW_CONFIG_DIR store — avoid re-walking hundreds of files every request. */
+let previewConfigCache: { dir: string; files: Record<string, ModConfigEntry> } | null = null;
+
+function previewConfigFilesFromEnv(): Record<string, ModConfigEntry> | null {
+  const dir = resolvePreviewConfigDir();
+  if (!dir) return null;
+  if (previewConfigCache?.dir === dir) return previewConfigCache.files;
+  const files = loadPreviewConfigsFromDir(dir) as Record<string, ModConfigEntry>;
+  previewConfigCache = { dir, files };
+  return files;
+}
+
 function loadModConfigStore(session: FixtureSession): Record<string, ModConfigEntry> {
-  const disk = asRecord(readJson('mod-configs.json'));
-  const files = asRecord(disk.files);
   const existing =
     session.modConfigs && typeof session.modConfigs === 'object'
       ? ({ ...(session.modConfigs as Record<string, ModConfigEntry>) } as Record<string, ModConfigEntry>)
       : {};
-  // Keep in-session edits/backups, but pick up newly added fixture files from disk.
-  for (const [path, raw] of Object.entries(files)) {
-    if (existing[path]) continue;
+
+  const fromPreview = previewConfigFilesFromEnv();
+  const files = fromPreview
+    ? fromPreview
+    : (asRecord(asRecord(readJson('mod-configs.json')).files) as Record<string, unknown>);
+
+  // Keep in-session edits/backups, but pick up newly added files from disk/fixtures.
+  for (const [pathKey, raw] of Object.entries(files)) {
+    if (existing[pathKey]) continue;
+    if (fromPreview) {
+      const row = raw as ModConfigEntry;
+      existing[pathKey] = {
+        content: String(row.content ?? ''),
+        mtime: Number(row.mtime ?? Math.floor(Date.now() / 1000)),
+        backups: Array.isArray(row.backups) ? [...row.backups] : [],
+      };
+      continue;
+    }
     const row = asRecord(raw);
-    existing[path] = {
+    existing[pathKey] = {
       content: String(row.content ?? ''),
       mtime: Number(row.mtime ?? Math.floor(Date.now() / 1000)),
       backups: [],
@@ -532,14 +561,114 @@ function previewRoleFromUrl(url: string): string {
   return 'owner';
 }
 
+
+/** Preview: ?mutate=1 grants mods.mutate to admin sessions. */
+function previewMutateFromUrl(url: string): boolean {
+  try {
+    const v = new URL(url, 'http://127.0.0.1').searchParams.get('mutate');
+    return v === '1' || v === 'true' || v === 'yes';
+  } catch {
+    return false;
+  }
+}
+
+function previewCapabilities(
+  role: string,
+  url: string,
+  account?: Record<string, unknown> | null,
+): { capabilities: string[]; can_mutate_mods: boolean } {
+  if (role === 'owner') {
+    return { capabilities: ['mods.mutate'], can_mutate_mods: true };
+  }
+  const fromAccount = Array.isArray(account?.capabilities)
+    ? account!.capabilities.filter((c): c is string => typeof c === 'string')
+    : [];
+  const grant =
+    account?.mods_mutate === true ||
+    fromAccount.includes('mods.mutate') ||
+    (role === 'admin' && previewMutateFromUrl(url));
+  const capabilities = grant
+    ? Array.from(new Set([...fromAccount, 'mods.mutate']))
+    : fromAccount.filter((c) => c !== 'mods.mutate');
+  return { capabilities, can_mutate_mods: grant };
+}
+
+type PreviewMutateJob = {
+  id: string;
+  kind: string;
+  state: string;
+  mod_id?: string;
+  version_id?: string;
+  created_at: string;
+  updated_at: string;
+  actor_name: string;
+  steps: unknown[];
+  error?: string;
+};
+
+function mutateJobs(session: FixtureSession): Map<string, PreviewMutateJob> {
+  const bag = session as { _mutateJobs?: Map<string, PreviewMutateJob> };
+  if (!bag._mutateJobs) bag._mutateJobs = new Map();
+  return bag._mutateJobs;
+}
+
+function beginPreviewMutateJob(
+  session: FixtureSession,
+  kind: string,
+  extras: Partial<PreviewMutateJob> = {},
+): PreviewMutateJob {
+  const now = new Date().toISOString();
+  const job: PreviewMutateJob = {
+    id: 'mut_preview_' + Math.random().toString(36).slice(2, 10),
+    kind,
+    state: 'queued',
+    created_at: now,
+    updated_at: now,
+    actor_name: 'preview',
+    steps: [],
+    ...extras,
+  };
+  mutateJobs(session).set(job.id, job);
+  session.mutateNeedsRestart = true;
+  session.activeMutateJobId = job.id;
+  const stages = ['fetching', 'verifying', 'backing_up', 'applying', 'done'];
+  let i = 0;
+  const tick = () => {
+    const cur = mutateJobs(session).get(job.id);
+    if (!cur || cur.state === 'done' || cur.state === 'failed') return;
+    cur.state = stages[i] || 'done';
+    cur.updated_at = new Date().toISOString();
+    i += 1;
+    if (i < stages.length) setTimeout(tick, 350);
+    else {
+      cur.state = 'done';
+      session.activeMutateJobId = null;
+    }
+  };
+  setTimeout(tick, 200);
+  return job;
+}
+
+function enrichAccountsMutate(accounts: Record<string, unknown>[]): Record<string, unknown>[] {
+  return accounts.map((a) => {
+    const role = String(a.role || '');
+    const caps = Array.isArray(a.capabilities)
+      ? a.capabilities.filter((c): c is string => typeof c === 'string')
+      : [];
+    const mutate = role === 'owner' || a.mods_mutate === true || caps.includes('mods.mutate');
+    const nextCaps = mutate && !caps.includes('mods.mutate') ? [...caps, 'mods.mutate'] : caps;
+    return { ...a, capabilities: nextCaps, mods_mutate: mutate };
+  });
+}
+
 function seedAccounts(session: Record<string, unknown>): Record<string, unknown>[] {
   if (Array.isArray(session.accounts)) {
-    return session.accounts as Record<string, unknown>[];
+    return enrichAccountsMutate(session.accounts as Record<string, unknown>[]);
   }
   const file = asRecord(readJson('accounts.json'));
   const accounts = asArray<Record<string, unknown>>(file.accounts).map((a) => ({ ...a }));
-  session.accounts = accounts;
-  return accounts;
+  session.accounts = enrichAccountsMutate(accounts);
+  return session.accounts as Record<string, unknown>[];
 }
 
 function ownerCount(accounts: Record<string, unknown>[]): number {
@@ -672,6 +801,110 @@ export function createFixtureSession(): FixtureSession {
     baselineRegression: null,
     backupTestRestore: {},
   };
+}
+
+type PreviewModrinthJob = {
+  running: boolean;
+  success: boolean | null;
+  stage: string;
+  stage_label: string;
+  stage_detail: string;
+  progress: { done: number; total: number };
+  stats?: Record<string, unknown>;
+  error?: string;
+};
+
+const previewModrinthJobs = new WeakMap<object, PreviewModrinthJob>();
+
+function getPreviewModsDir(): string | null {
+  const raw = String(process.env.PREVIEW_MODS_DIR || '').trim();
+  return raw || null;
+}
+
+async function startPreviewModrinthJob(session: FixtureSession): Promise<PreviewModrinthJob> {
+  const existing = previewModrinthJobs.get(session);
+  if (existing?.running) return existing;
+
+  const job: PreviewModrinthJob = {
+    running: true,
+    success: null,
+    stage: 'hash',
+    stage_label: 'Hashing jars',
+    stage_detail: 'Starting…',
+    progress: { done: 0, total: 1 },
+  };
+  previewModrinthJobs.set(session, job);
+  session.modrinth = { running: true, success: null, stage: 'hash' };
+
+  void (async () => {
+    try {
+      const dir = getPreviewModsDir();
+      if (!dir) throw new Error('PREVIEW_MODS_DIR is not set');
+      const { loadPreviewModsFromDir } = await import('./preview-mods-dir.mjs');
+      const { runPreviewModrinthScan } = await import('./preview-modrinth-scan.mjs');
+      const mods = loadPreviewModsFromDir(dir);
+      if (!mods.length) throw new Error(`No jars found in ${dir}`);
+
+      job.progress = { done: 0, total: mods.length };
+      const result = await runPreviewModrinthScan({
+        mods,
+        onProgress: (p) => {
+          job.stage = String(p.stage || job.stage);
+          job.stage_label = String(p.stage_label || job.stage_label);
+          job.stage_detail = String(p.stage_detail || '');
+          if (p.progress && typeof p.progress === 'object') {
+            job.progress = {
+              done: Number((p.progress as { done?: number }).done || 0),
+              total: Number((p.progress as { total?: number }).total || mods.length),
+            };
+          }
+          session.modrinth = {
+            running: true,
+            success: null,
+            stage: job.stage,
+            progress: job.progress,
+          };
+        },
+      });
+
+      const ops = asRecord(session.opsCache ?? readJson('ops-cache.json'));
+      const cloned = structuredClone(ops) as Record<string, unknown>;
+      cloned.modrinth_scan = {
+        updated_at: result.updated_at,
+        mods: result.mods,
+        updates: result.updates,
+      };
+      session.opsCache = cloned;
+
+      job.running = false;
+      job.success = true;
+      job.stage = 'done';
+      job.stage_label = 'Done';
+      job.stage_detail = `Matched ${result.stats.matched}/${result.stats.jars_considered}`;
+      job.progress = {
+        done: Number(result.stats.jars_considered || 1),
+        total: Number(result.stats.jars_considered || 1),
+      };
+      job.stats = result.stats as Record<string, unknown>;
+      session.modrinth = {
+        running: false,
+        success: true,
+        stage: 'done',
+        stats: result.stats,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      job.running = false;
+      job.success = false;
+      job.stage = 'error';
+      job.stage_label = 'Scan failed';
+      job.stage_detail = message;
+      job.error = message;
+      session.modrinth = { running: false, success: false, stage: 'error', error: message };
+    }
+  })();
+
+  return job;
 }
 
 
@@ -888,6 +1121,97 @@ export async function handleFixtureRequest(
             });
           }
 
+
+          if (method === 'GET' && pathOnly === '/api/mods/mutate/status') {
+            const activeId = typeof session.activeMutateJobId === 'string' ? session.activeMutateJobId : null;
+            const job = activeId ? mutateJobs(session).get(activeId) : null;
+            return jsonRes(200, {
+              busy: !!job && job.state !== 'done' && job.state !== 'failed',
+              job_id: job?.id,
+              kind: job?.kind,
+              state: job?.state,
+              actor: job?.actor_name,
+              mod_id: job?.mod_id,
+              needs_restart: session.mutateNeedsRestart === true,
+              live_server: true,
+            });
+          }
+
+          if (method === 'GET' && pathOnly === '/api/mods/mutate/versions') {
+            const modId = new URL(url, 'http://127.0.0.1').searchParams.get('mod_id') || 'preview-mod';
+            return jsonRes(200, {
+              mod_id: modId,
+              project_id: 'preview-project',
+              versions: [
+                {
+                  id: 'ver_preview_latest',
+                  version_number: '2.1.0',
+                  name: '2.1.0',
+                  changelog: 'Preview fixture update.',
+                  date_published: '2026-07-01T12:00:00Z',
+                  files: [{ filename: `${modId}-2.1.0.jar`, primary: true, hashes: { sha512: 'abc' } }],
+                },
+                {
+                  id: 'ver_preview_prev',
+                  version_number: '2.0.6',
+                  name: '2.0.6',
+                  date_published: '2026-05-01T12:00:00Z',
+                  files: [{ filename: `${modId}-2.0.6.jar`, primary: true, hashes: { sha512: 'def' } }],
+                },
+              ],
+            });
+          }
+
+          if (method === 'GET' && pathOnly === '/api/mods/mutate/backups') {
+            return jsonRes(200, { backups: [] });
+          }
+
+          if (method === 'GET' && pathOnly.startsWith('/api/mods/mutate/jobs/')) {
+            const jobId = pathOnly.slice('/api/mods/mutate/jobs/'.length);
+            const job = mutateJobs(session).get(jobId);
+            if (!job) return jsonRes(404, { error: 'not_found', message: 'No mutate job with that id' });
+            return jsonRes(200, job);
+          }
+
+          if (
+            method === 'POST' &&
+            [
+              '/api/mods/mutate/swap',
+              '/api/mods/mutate/batch',
+              '/api/mods/mutate/install',
+              '/api/mods/mutate/quarantine',
+              '/api/mods/mutate/undo',
+            ].includes(pathOnly)
+          ) {
+            const body = (requestBody && typeof requestBody === 'object' ? requestBody : {}) as Record<
+              string,
+              unknown
+            >;
+            if (body.confirm !== true) {
+              return jsonRes(400, { error: 'confirm_required', message: 'Set confirm:true after reviewing the change' });
+            }
+            const kind =
+              pathOnly.endsWith('/swap')
+                ? 'swap'
+                : pathOnly.endsWith('/batch')
+                  ? 'batch_swap'
+                  : pathOnly.endsWith('/install')
+                    ? 'install'
+                    : pathOnly.endsWith('/quarantine')
+                      ? 'quarantine'
+                      : 'undo';
+            const job = beginPreviewMutateJob(session, kind, {
+              mod_id: typeof body.mod_id === 'string' ? body.mod_id : undefined,
+              version_id:
+                typeof body.modrinth_version_id === 'string'
+                  ? body.modrinth_version_id
+                  : typeof body.version_id === 'string'
+                    ? body.version_id
+                    : undefined,
+            });
+            return jsonRes(202, { ok: true, job_id: job.id, state: job.state, job });
+          }
+
           if (method === 'POST' && pathOnly === '/api/mods/disable') {
             const body = (requestBody && typeof requestBody === 'object' ? requestBody : {}) as Record<
               string,
@@ -1029,6 +1353,19 @@ export async function handleFixtureRequest(
           }
 
           if (method === 'POST' && pathOnly === '/api/modrinth/scan') {
+            if (getPreviewModsDir()) {
+              const job = await startPreviewModrinthJob(session);
+              return jsonRes(200, {
+                ok: true,
+                preview: true,
+                preview_mods_dir: true,
+                running: true,
+                stage: job.stage,
+                stage_label: job.stage_label,
+                stage_detail: job.stage_detail,
+                progress: job.progress,
+              });
+            }
             session.modrinth = {
               running: true,
               success: null,
@@ -1048,6 +1385,22 @@ export async function handleFixtureRequest(
           }
 
           if (method === 'GET' && pathOnly === '/api/modrinth/status') {
+            const liveJob = previewModrinthJobs.get(session);
+            if (liveJob) {
+              return jsonRes(200, {
+                enabled: true,
+                running: liveJob.running,
+                success: liveJob.success,
+                stage: liveJob.stage,
+                stage_label: liveJob.stage_label,
+                stage_detail: liveJob.stage_detail,
+                progress: liveJob.progress,
+                ...(liveJob.stats ? { stats: liveJob.stats } : {}),
+                ...(liveJob.error ? { error: liveJob.error } : {}),
+                preview: true,
+                preview_mods_dir: true,
+              });
+            }
             const m = asRecord(session.modrinth);
             if (!m.running && m.success == null) {
               return jsonRes(200, readJson('modrinth-status.json') ?? { enabled: true, running: false });
@@ -1147,20 +1500,35 @@ export async function handleFixtureRequest(
 
           if (method === 'GET' && pathOnly === '/api/auth/session') {
             const role = previewRoleFromUrl(url);
+            const username = role === 'owner' ? 'ella' : role === 'admin' ? 'marco' : 'sam';
             const appearance =
               session.appearance && typeof session.appearance === 'object'
                 ? (session.appearance as Record<string, unknown>)
                 : {};
+            const accounts = seedAccounts(session);
+            const me = accounts.find((a) => String(a.username).toLowerCase() === username) ?? null;
+            const linkedUuid =
+              typeof me?.minecraft_uuid === 'string' && me.minecraft_uuid.trim()
+                ? String(me.minecraft_uuid).trim()
+                : null;
+            const linkedName =
+              typeof me?.minecraft_name === 'string' && me.minecraft_name.trim()
+                ? String(me.minecraft_name).trim()
+                : null;
+            const caps = previewCapabilities(role, url, me);
             return jsonRes(200, {
               authenticated: true,
               fully_authenticated: true,
-              username: role === 'owner' ? 'ella' : role === 'admin' ? 'marco' : 'sam',
+              username,
               preview: true,
               must_change_password: false,
               role,
               can_write: role === 'owner' || role === 'admin',
-              minecraft_uuid: '069a79f4-44e9-4726-a5be-fca90e38aaf5',
-              minecraft_name: role === 'owner' ? 'Ella' : role === 'admin' ? 'Marco' : 'Sam',
+              capabilities: caps.capabilities,
+              can_mutate_mods: caps.can_mutate_mods,
+              ...(linkedUuid
+                ? { minecraft_uuid: linkedUuid, minecraft_name: linkedName || username }
+                : {}),
               ...(typeof appearance.ui_theme === 'string' ? { ui_theme: appearance.ui_theme } : {}),
               ...(typeof appearance.ui_accent === 'string' ? { ui_accent: appearance.ui_accent } : {}),
             });
@@ -1285,22 +1653,73 @@ export async function handleFixtureRequest(
               row.minecraft_uuid = String(body.minecraft_uuid).trim();
               row.minecraft_name = String(body.minecraft_name || '').trim() || 'Player';
             }
+            
+            if (body.mods_mutate !== undefined || body.capabilities !== undefined) {
+              const caps = Array.isArray(body.capabilities)
+                ? body.capabilities.filter((c): c is string => typeof c === 'string')
+                : Array.isArray(row.capabilities)
+                  ? (row.capabilities as string[])
+                  : [];
+              let next = caps.filter((c) => c !== 'mods.mutate');
+              if (body.mods_mutate === true) next = [...next, 'mods.mutate'];
+              else if (body.mods_mutate === false) {
+                /* already stripped */
+              } else if (Array.isArray(body.capabilities)) {
+                next = body.capabilities.filter((c): c is string => typeof c === 'string');
+              } else if (caps.includes('mods.mutate')) {
+                next = [...next, 'mods.mutate'];
+              }
+              if (Array.isArray(body.capabilities) && body.mods_mutate === undefined) {
+                next = body.capabilities.filter((c): c is string => typeof c === 'string');
+              }
+              row.capabilities = Array.from(new Set(next));
+              row.mods_mutate = (row.capabilities as string[]).includes('mods.mutate') || String(row.role) === 'owner';
+            }
             accounts[idx] = row;
             session.accounts = accounts;
-            return jsonRes(200, { ok: true });
+            const out: Record<string, unknown> = { ok: true };
+            if (row.minecraft_uuid) {
+              out.minecraft_uuid = row.minecraft_uuid;
+              out.minecraft_name = row.minecraft_name || 'Player';
+            } else {
+              out.clear_minecraft = true;
+            }
+            return jsonRes(200, out);
           }
 
           if (method === 'POST' && pathOnly === '/api/accounts/me/minecraft') {
             const body = (requestBody && typeof requestBody === 'object' ? requestBody : {}) as Record<string, unknown>;
             const role = previewRoleFromUrl(url);
             const username = role === 'owner' ? 'ella' : role === 'admin' ? 'marco' : 'sam';
-            if (body.clear === true) {
-              return jsonRes(200, { ok: true });
+            const accounts = seedAccounts(session);
+            const idx = accounts.findIndex((a) => String(a.username).toLowerCase() === username);
+            if (idx < 0) {
+              return jsonRes(400, { error: 'invalid_account', message: 'Unknown account' });
             }
+            const row = { ...accounts[idx]! };
+            if (body.clear === true) {
+              delete row.minecraft_uuid;
+              delete row.minecraft_name;
+              accounts[idx] = row;
+              session.accounts = accounts;
+              return jsonRes(200, { ok: true, clear: true });
+            }
+            const uuid = String(body.uuid || '').trim();
+            const name = String(body.name || username).trim() || username;
+            if (!uuid) {
+              return jsonRes(400, {
+                error: 'invalid_minecraft_link',
+                message: 'Minecraft UUID is required',
+              });
+            }
+            row.minecraft_uuid = uuid;
+            row.minecraft_name = name;
+            accounts[idx] = row;
+            session.accounts = accounts;
             return jsonRes(200, {
               ok: true,
-              minecraft_uuid: String(body.uuid || '069a79f4-44e9-4726-a5be-fca90e38aaf5'),
-              minecraft_name: String(body.name || username),
+              minecraft_uuid: uuid,
+              minecraft_name: name,
             });
           }
 
@@ -1383,6 +1802,7 @@ export async function handleFixtureRequest(
               incremental: 'incremental',
               updateCheck: 'update_check',
               metricsContextBanner: 'metrics_context_banner',
+              cpuDisplay: 'cpu_display',
               tpsWarn: 'tps_warn',
               msptWarn: 'mspt_warn',
               opsPollSec: 'ops_poll_sec',

@@ -4,41 +4,72 @@ import { api } from '@/api/client';
 import { navigate, type RouteState } from '@/app/router';
 import { asArray, asRecord, bool, get, num, str } from '@/lib/utils';
 import { FadeIn, HeroWatermark, PageEnter } from '@/ui/motion';
-import { ErrorState, HeroCard, HeroTabNav, StatusPill, VitalTile } from '@/ui/patterns';
+import { ErrorState, HeroCard, StatusPill, VitalTile } from '@/ui/patterns';
 import { Boxes } from '@/ui/icons';
 import { buildBadgeMaps, enrichedFactsMods } from './catalog';
 import { ChangesTab } from './changes-tab';
-import { ConfigsTab } from './configs-tab';
 import { ConflictsTab } from './conflicts-tab';
+import { guessModIdFromConfigPath } from './config-paths';
 import { ForensicsTab } from './forensics-tab';
+import { LibraryTab } from './library-tab';
 import { LogErrorsTab } from './log-errors-tab';
+import { ModProjectPage } from './mod-project-page';
+import { ModUpdateDetailPage } from './mod-update-detail-page';
 import { ModrinthOverviewBanner, ModrinthTab } from './modrinth-tab';
-import { OverviewTab } from './overview-tab';
-import { UpdatesTab } from './updates-tab';
-import type { ModViewId } from './types';
+import { parseCatalogFilter } from './side';
+import type { CatalogFilter, CatalogSort, ModViewId, VerdictFilter } from './types';
 import './mods.css';
 
-const VIEWS: { id: ModViewId; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'updates', label: 'Updates' },
-  { id: 'conflicts', label: 'Conflicts' },
-  { id: 'log-errors', label: 'Log errors' },
-  { id: 'changes', label: 'Changes' },
-  { id: 'configs', label: 'Configs' },
-  { id: 'modrinth', label: 'Modrinth' },
-  { id: 'forensics', label: 'Forensics' },
-];
-
-const VALID = new Set(VIEWS.map((v) => v.id));
+const VALID = new Set<string>([
+  'overview',
+  'updates',
+  'conflicts',
+  'log-errors',
+  'changes',
+  'modrinth',
+  'forensics',
+]);
 
 type IconCmp = ComponentType<{ size?: number; className?: string }>;
 const BoxesIcon = Boxes as IconCmp;
 
 export function PageView({ route }: { route: RouteState }) {
-  const rawView = (route.view as ModViewId) || 'overview';
-  const view = VALID.has(rawView) ? rawView : 'overview';
-  const initialModId = route.mod || null;
   const qc = useQueryClient();
+
+  const rawView = (route.view as string) || 'overview';
+  const view: ModViewId = VALID.has(rawView) ? (rawView as ModViewId) : 'overview';
+  const initialModId = route.mod || null;
+  const updatesView = view === 'updates';
+  const catalogFilter: CatalogFilter = updatesView
+    ? 'updates'
+    : parseCatalogFilter(route.filter === 'updates' ? 'all' : route.filter);
+
+  // Deep link ?filter=updates → Updates sidebar page
+  useEffect(() => {
+    if (route.view !== 'updates' && route.filter === 'updates') {
+      navigate(
+        { tab: 'mods', view: 'updates', filter: null, mod: route.mod || null, panel: null },
+        true,
+      );
+    }
+  }, [route.view, route.filter, route.mod]);
+
+  // Legacy ?view=configs → open mod project page + config popup when possible
+  useEffect(() => {
+    if (route.view !== 'configs') return;
+    const path = route.panel && String(route.panel).startsWith('config/') ? String(route.panel) : null;
+    const guessed = path ? guessModIdFromConfigPath(path) : null;
+    navigate(
+      {
+        tab: 'mods',
+        view: 'overview',
+        mod: route.mod || guessed,
+        panel: path,
+        filter: null,
+      },
+      true,
+    );
+  }, [route.view, route.panel, route.mod]);
 
   const opsQ = useQuery({ queryKey: ['ops-cache'], queryFn: api.opsCache });
   const factsQ = useQuery({ queryKey: ['facts'], queryFn: api.facts });
@@ -50,6 +81,8 @@ export function PageView({ route }: { route: RouteState }) {
   });
 
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<CatalogSort>('name');
+  const [verdictFilter, setVerdictFilter] = useState<VerdictFilter>('all');
   const [showTechNames, setShowTechNames] = useState(() => {
     try {
       return localStorage.getItem('wt.techNames') === 'true';
@@ -126,6 +159,20 @@ export function PageView({ route }: { route: RouteState }) {
     }
   }
 
+  function setCatalogFilter(next: CatalogFilter) {
+    if (next === 'updates') {
+      navigate({ tab: 'mods', view: 'updates', filter: null, mod: null });
+      return;
+    }
+    navigate({
+      tab: 'mods',
+      view: 'overview',
+      filter: next === 'all' ? null : next,
+      mod: null,
+    });
+    setVerdictFilter('all');
+  }
+
   if (opsQ.isLoading) {
     return (
       <PageEnter className="md-page">
@@ -159,8 +206,13 @@ export function PageView({ route }: { route: RouteState }) {
           ? 'Catalog, updates, and Modrinth status in one place.'
           : 'Running mods, side scores, and Modrinth context — pick a row for the full detail.';
 
+  const isLibrary = view === 'overview' || view === 'updates';
+  const showProject = isLibrary && !!initialModId;
+  const showHero = view !== 'modrinth';
+
   return (
     <PageEnter className="md-page">
+      {showHero ? (
       <FadeIn className="md-hero-wrap">
         <HeroCard
           className={`md-hero md-hero--${heroTone}`}
@@ -254,112 +306,119 @@ export function PageView({ route }: { route: RouteState }) {
                 tone={logErrorCount ? 'warn' : 'default'}
               />
             </div>
-
-            <HeroTabNav
-              layoutGroupId="md-views"
-              aria-label="Mods sections"
-              stretch={false}
-              className="md-hero__tabs"
-              value={view}
-              items={VIEWS.map((v) => ({
-                id: v.id,
-                label: v.label,
-                count:
-                  v.id === 'updates' && modrinthUpdates.length
-                    ? modrinthUpdates.length
-                    : v.id === 'conflicts' && conflictCount
-                      ? conflictCount
-                      : v.id === 'log-errors' && logErrorCount
-                        ? logErrorCount
-                        : null,
-              }))}
-              onChange={(id) =>
-                navigate({
-                  tab: 'mods',
-                  view: id,
-                  mod: null,
-                  panel: id === 'configs' ? route.panel || null : null,
-                })
-              }
-            />
           </div>
         </HeroCard>
       </FadeIn>
+      ) : null}
 
-      {view === 'overview' ? (
-        <OverviewTab
-          runningMods={runningMods}
-          modsInventory={modsInventory}
-          showTechNames={showTechNames}
-          search={search}
-          onSearch={setSearch}
-          badgeMaps={badgeMaps}
-          factsMods={factsMods}
-          initialModId={initialModId}
-          updateCount={modrinthUpdates.length}
-        />
-      ) : null}
-      {view === 'updates' ? (
-        <UpdatesTab
-          modrinthUpdates={modrinthUpdates}
-          factsMods={factsMods}
-          runningMods={runningMods}
-          badgeMaps={badgeMaps}
-          showTechNames={showTechNames}
-          search={search}
-          onSearch={setSearch}
-          initialModId={initialModId}
-          modrinthLookupEnabled={modrinthLookupEnabled}
-        />
-      ) : null}
-      {view === 'conflicts' ? (
-        <ConflictsTab
-          recommendations={recommendations}
-          modIssues={modIssues}
-          factsMods={factsMods}
-          search={search}
-          onSearch={setSearch}
-        />
-      ) : null}
-      {view === 'log-errors' ? (
-        <LogErrorsTab
-          modLogErrors={modLogErrors}
-          factsErrors={factsOptional.mod_log_errors}
-          recommendations={recommendations}
-          modIssues={modIssues}
-          hasReport={hasReport}
-          search={search}
-          onSearch={setSearch}
-        />
-      ) : null}
-      {view === 'changes' ? (
-        <ChangesTab
-          modsInventory={modsInventory}
-          search={search}
-          onSearch={setSearch}
-          factsMods={factsMods}
-        />
-      ) : null}
-      {view === 'configs' ? (
-        <ConfigsTab search={search} onSearch={setSearch} initialPath={route.panel || null} />
-      ) : null}
-      {view === 'modrinth' ? (
-        <ModrinthTab
-          status={modrinthStatus}
-          modrinthLookupEnabled={modrinthLookupEnabled}
-          hasReport={hasReport}
-          factsMods={factsMods}
-          modrinthUpdates={modrinthUpdates}
-        />
-      ) : null}
-      {view === 'forensics' ? (
-        <ForensicsTab
-          factsOptional={factsOptional}
-          search={search}
-          onSearch={setSearch}
-          hasReport={hasReport}
-        />
-      ) : null}
+      <div className="md-suite">
+        {isLibrary && !showProject ? (
+          <LibraryTab
+            runningMods={runningMods}
+            showTechNames={showTechNames}
+            search={search}
+            onSearch={setSearch}
+            badgeMaps={badgeMaps}
+            factsMods={factsMods}
+            filter={catalogFilter}
+            onFilter={setCatalogFilter}
+            sort={sort}
+            onSort={setSort}
+            modrinthUpdates={modrinthUpdates}
+            verdictFilter={verdictFilter}
+            onVerdictFilter={setVerdictFilter}
+            chromeMode={updatesView ? 'updates' : 'library'}
+          />
+        ) : null}
+
+        {showProject && initialModId && updatesView ? (
+          <ModUpdateDetailPage
+            modId={initialModId}
+            runningMods={runningMods}
+            factsMods={factsMods}
+            badgeMaps={badgeMaps}
+            showTechNames={showTechNames}
+            search={search}
+            onSearch={setSearch}
+            filter={catalogFilter}
+            onFilter={setCatalogFilter}
+            sort={sort}
+            onSort={setSort}
+            modrinthUpdates={modrinthUpdates}
+            verdictFilter={verdictFilter}
+            onVerdictFilter={setVerdictFilter}
+          />
+        ) : null}
+
+        {showProject && initialModId && !updatesView ? (
+          <ModProjectPage
+            modId={initialModId}
+            runningMods={runningMods}
+            factsMods={factsMods}
+            badgeMaps={badgeMaps}
+            showTechNames={showTechNames}
+            search={search}
+            onSearch={setSearch}
+            filter={catalogFilter}
+            onFilter={setCatalogFilter}
+            sort={sort}
+            onSort={setSort}
+            modrinthUpdates={modrinthUpdates}
+            verdictFilter={verdictFilter}
+            onVerdictFilter={setVerdictFilter}
+            chromeMode="library"
+            initialConfigPath={
+              route.panel && String(route.panel).startsWith('config/') ? String(route.panel) : null
+            }
+          />
+        ) : null}
+
+        {view === 'conflicts' ? (
+          <ConflictsTab
+            recommendations={recommendations}
+            modIssues={modIssues}
+            factsMods={factsMods}
+            search={search}
+            onSearch={setSearch}
+          />
+        ) : null}
+        {view === 'log-errors' ? (
+          <LogErrorsTab
+            modLogErrors={modLogErrors}
+            factsErrors={factsOptional.mod_log_errors}
+            recommendations={recommendations}
+            modIssues={modIssues}
+            hasReport={hasReport}
+            search={search}
+            onSearch={setSearch}
+          />
+        ) : null}
+        {view === 'changes' ? (
+          <ChangesTab
+            modsInventory={modsInventory}
+            search={search}
+            onSearch={setSearch}
+            factsMods={factsMods}
+          />
+        ) : null}
+        {view === 'modrinth' ? (
+          <ModrinthTab
+            status={modrinthStatus}
+            modrinthLookupEnabled={modrinthLookupEnabled}
+            hasReport={hasReport}
+            factsMods={factsMods}
+            modrinthUpdates={modrinthUpdates}
+          />
+        ) : null}
+        {view === 'forensics' ? (
+          <ForensicsTab
+            factsOptional={factsOptional}
+            search={search}
+            onSearch={setSearch}
+            hasReport={hasReport}
+          />
+        ) : null}
+      </div>
     </PageEnter>
   );
 }

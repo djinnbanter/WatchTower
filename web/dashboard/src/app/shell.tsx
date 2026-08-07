@@ -155,28 +155,73 @@ export function AppShell({ route, page, children }: Props) {
               <div className="sh-rail__group-label">{group.label}</div>
               <div>
                 {groupPages.map((p) => {
-                  const active = route.tab === p.id;
+                  const tabActive = route.tab === p.id;
+                  const currentView = route.view || 'overview';
+                  const childViews = new Set((p.children ?? []).map((c) => c.view));
+                  const parentActive =
+                    tabActive && (!route.view || route.view === 'overview' || !childViews.has(currentView));
+                  const sectionOpen = (p.children?.length ?? 0) > 0;
                   const badge = p.badge?.();
                   const PageIcon = resolvePageIcon(p.icon);
                   return (
-                    <a
-                      key={p.id}
-                      href={hrefFor(p.id)}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate({ tab: p.id, view: null, panel: null });
-                      }}
-                      className={cn('sh-rail__link', active && 'is-active')}
-                    >
-                      {PageIcon ? (
-                        <PageIcon size={16} className="sh-rail__link-icon" aria-hidden />
+                    <div key={p.id} className={cn('sh-rail__item', sectionOpen && 'is-open')}>
+                      <a
+                        href={hrefFor(p.id)}
+                        aria-current={parentActive ? 'page' : undefined}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate({ tab: p.id, view: null, panel: null, filter: null, mod: null });
+                        }}
+                        className={cn(
+                          'sh-rail__link',
+                          parentActive && 'is-active',
+                          tabActive && !parentActive && 'is-section',
+                        )}
+                      >
+                        {PageIcon ? (
+                          <PageIcon size={16} className="sh-rail__link-icon" aria-hidden />
+                        ) : null}
+                        <span className="truncate">{p.title}</span>
+                        {badge != null && badge !== 0 ? (
+                          <span className="sh-rail__badge">{badge}</span>
+                        ) : null}
+                      </a>
+                      {p.children?.length ? (
+                        <div className="sh-rail__children" role="group" aria-label={`${p.title} tools`}>
+                          {p.children.map((child) => {
+                            const childActive = tabActive && currentView === child.view;
+                            const childBadge = child.badge?.();
+                            return (
+                              <a
+                                key={child.id}
+                                href={hrefFor(p.id, { view: child.view })}
+                                aria-current={childActive ? 'page' : undefined}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  navigate({
+                                    tab: p.id,
+                                    view: child.view,
+                                    panel: null,
+                                    filter: null,
+                                    mod: null,
+                                  });
+                                }}
+                                className={cn(
+                                  'sh-rail__link',
+                                  'sh-rail__link--child',
+                                  childActive && 'is-active',
+                                )}
+                              >
+                                <span className="truncate">{child.title}</span>
+                                {childBadge != null && childBadge !== 0 ? (
+                                  <span className="sh-rail__badge">{childBadge}</span>
+                                ) : null}
+                              </a>
+                            );
+                          })}
+                        </div>
                       ) : null}
-                      <span className="truncate">{p.title}</span>
-                      {badge != null && badge !== 0 ? (
-                        <span className="sh-rail__badge">{badge}</span>
-                      ) : null}
-                    </a>
+                    </div>
                   );
                 })}
               </div>

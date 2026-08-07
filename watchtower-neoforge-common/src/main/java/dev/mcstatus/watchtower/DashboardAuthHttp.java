@@ -4,11 +4,13 @@ import dev.mcstatus.watchtower.runtime.ModRuntime;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import dev.mcstatus.watchtower.core.audit.AuditEvent;
 import dev.mcstatus.watchtower.core.audit.AuditLog;
+import dev.mcstatus.watchtower.core.auth.AccountCapabilities;
 import dev.mcstatus.watchtower.core.auth.AccountRole;
 import dev.mcstatus.watchtower.core.auth.DashboardAuthRecord;
 import dev.mcstatus.watchtower.core.auth.DashboardAuthStore;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -386,6 +389,7 @@ public final class DashboardAuthHttp {
                 row.addProperty("last_login_at", r.last_login_at);
                 row.addProperty("is_you", session != null && session.accountId().equals(r.id));
                 putMinecraftLink(row, r);
+                putCapabilities(row, r);
                 accounts.add(row);
             }
         }
@@ -447,10 +451,12 @@ public final class DashboardAuthHttp {
         boolean hasRole = body.has("role") && !body.get("role").isJsonNull();
         boolean hasDisabled = body.has("disabled") && !body.get("disabled").isJsonNull();
         boolean hasMinecraft = body.has("minecraft_uuid") || body.has("clear_minecraft");
+        boolean hasCapabilities = body.has("capabilities") || body.has("mods_mutate");
         String ip = clientIp(ex);
         try {
             boolean roleChanged = false;
             boolean newlyDisabled = false;
+            boolean capabilitiesChanged = false;
             if (hasRole) {
                 AccountRole newRole = AccountRole.fromWire(text(body, "role"));
                 AccountRole oldRole = AccountRole.fromWire(existing.role);
@@ -470,6 +476,13 @@ public final class DashboardAuthHttp {
                             session, existing.username, null, ip);
                 }
             }
+            if (hasCapabilities) {
+                List<String> caps = resolveCapabilitiesUpdate(body, store.findById(id));
+                store.setCapabilities(id, caps);
+                capabilitiesChanged = true;
+                DashboardAudit.record("account_capabilities_changed", session, existing.username,
+                        String.join(",", caps), ip);
+            }
             if (hasMinecraft) {
                 boolean clear = body.has("clear_minecraft")
                         && !body.get("clear_minecraft").isJsonNull()
@@ -485,16 +498,25 @@ public final class DashboardAuthHttp {
                             name + " " + uuid, ip);
                 }
             }
-            if (roleChanged || newlyDisabled) {
+            if (roleChanged || newlyDisabled || capabilitiesChanged) {
                 DashboardAuthServices.sessions().revokeForAccount(id);
             }
             JsonObject out = new JsonObject();
             out.addProperty("ok", true);
+            // Echo link fields so the UI can update without waiting on a list refetch.
+            DashboardAuthRecord updated = store.findById(id);
+            putMinecraftLink(out, updated);
+            putCapabilities(out, updated);
+            if (!out.has("minecraft_uuid")) {
+                out.addProperty("clear_minecraft", true);
+            }
             sendJson(ex, 200, out);
         } catch (IllegalStateException e) {
             sendJson(ex, 409, errorJson("last_owner", e.getMessage()));
         } catch (IllegalArgumentException e) {
             sendJson(ex, 400, errorJson("invalid_account", e.getMessage()));
+        } catch (IOException e) {
+            sendJson(ex, 500, errorJson("save_failed", e.getMessage() != null ? e.getMessage() : "save failed"));
         }
     }
 
@@ -582,6 +604,62 @@ public final class DashboardAuthHttp {
             out.addProperty("minecraft_name",
                     account.minecraft_name != null ? account.minecraft_name : "");
         }
+    }
+
+    private static void putCapabilities(JsonObject out, DashboardAuthRecord account) {
+        JsonArray caps = new JsonArray();
+        if (account != null && account.capabilities != null) {
+            for (String c : account.capabilities) {
+                if (c != null && !c.isBlank()) {
+                    caps.add(c);
+                }
+            }
+        }
+        // Owner always has mutate; surface it in the convenience flag even when the list is empty.
+        if (account != null
+                && AccountRole.fromWire(account.role) == AccountRole.OWNER
+                && !containsCap(caps, AccountCapabilities.MODS_MUTATE)) {
+            // Keep wire list empty for Owner (implicit); only set the boolean.
+        }
+        out.add("capabilities", caps);
+        out.addProperty("can_mutate_mods", AccountCapabilities.canMutateMods(account));
+    }
+
+    private static boolean containsCap(JsonArray caps, String wanted) {
+        for (JsonElement el : caps) {
+            if (el.isJsonPrimitive() && wanted.equals(el.getAsString())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Accept {@code capabilities:[...]} or {@code mods_mutate:boolean}. When only the boolean
+     * is sent, merge onto the existing capability list.
+     */
+    private static List<String> resolveCapabilitiesUpdate(JsonObject body, DashboardAuthRecord current) {
+        if (body.has("capabilities") && body.get("capabilities").isJsonArray()) {
+            List<String> raw = new ArrayList<>();
+            for (JsonElement el : body.getAsJsonArray("capabilities")) {
+                if (el.isJsonPrimitive()) {
+                    raw.add(el.getAsString());
+                }
+            }
+            return AccountCapabilities.normalize(raw);
+        }
+        List<String> base = new ArrayList<>();
+        if (current != null && current.capabilities != null) {
+            base.addAll(current.capabilities);
+        }
+        boolean grant = body.has("mods_mutate")
+                && !body.get("mods_mutate").isJsonNull()
+                && body.get("mods_mutate").getAsBoolean();
+        base.removeIf(c -> AccountCapabilities.MODS_MUTATE.equals(c));
+        if (grant) {
+            base.add(AccountCapabilities.MODS_MUTATE);
+        }
+        return AccountCapabilities.normalize(base);
     }
 
     public static void handleAccountResetPassword(HttpExchange ex) throws IOException {
@@ -800,6 +878,7 @@ public final class DashboardAuthHttp {
         out.addProperty("can_manage_accounts", session.role().canManageAccounts());
         out.addProperty("fully_authenticated", session.isFullyAuthenticated());
         putMinecraftLink(out, account);
+        putCapabilities(out, account);
         if (account != null) {
             if (account.ui_theme != null && !account.ui_theme.isBlank()) {
                 out.addProperty("ui_theme", account.ui_theme);

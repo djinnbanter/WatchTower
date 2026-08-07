@@ -94,7 +94,6 @@ function Panel({
 function ModrinthStageChecklist({ status }: { status: Record<string, unknown> }) {
   if (!status.running && status.success == null && !status.last_run) return null;
 
-  const stats = asRecord(status.stats);
   const activeId = str(status.stage, MODRINTH_SCAN_STAGES[0].id);
   const activeLabel =
     str(status.stage_label) ||
@@ -201,41 +200,6 @@ function ModrinthStageChecklist({ status }: { status: Record<string, unknown> })
           </div>
         </>
       ) : null}
-
-      {!status.running && (complete || failed) ? (
-        <div
-          className={`md-mr-stages__summary${failed ? ' md-mr-stages__summary--fail' : ' md-mr-stages__summary--ok'}`}
-        >
-          <div className="md-mr-stages__summary-top">
-            <strong>{failed ? 'Last scan failed' : 'Pipeline finished'}</strong>
-            {durationLabel ? <span>{durationLabel}</span> : null}
-          </div>
-          <div className="md-mr-stages__summary-grid">
-            <div>
-              <span>Matched</span>
-              <strong>{stats.matched != null ? String(stats.matched) : '—'}</strong>
-            </div>
-            <div>
-              <span>Outdated</span>
-              <strong>{stats.outdated != null ? String(stats.outdated) : '—'}</strong>
-            </div>
-            <div>
-              <span>API calls</span>
-              <strong>{stats.api_requests != null ? String(stats.api_requests) : '—'}</strong>
-            </div>
-            <div>
-              <span>Coverage</span>
-              <strong>{stats.coverage_pct != null ? pct(num(stats.coverage_pct)) : '—'}</strong>
-            </div>
-          </div>
-          {finishedAt ? (
-            <p className="md-mr-stages__summary-foot">
-              Finished {formatWhen(finishedAt)}
-              {finishedAt ? ` · ${timeAgo(finishedAt)}` : ''}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -291,7 +255,7 @@ export function ModrinthTab({
       <div className="md-empty">
         <EmptyState title="Modrinth lookup is off">
           Enable Modrinth lookup in Settings → Monitoring, then run a scan from this tab. Watchtower
-          only sends jar SHA-512 hashes — it never downloads jars.
+          only sends jar SHA-512 hashes for identity and update hints. Assisted jar changes need mods.mutate permission and an explicit confirm — never silent downloads.
         </EmptyState>
         <Button kind="default" onClick={() => navigate({ tab: 'settings', panel: 'integrations' })}>
           Open Settings
@@ -339,7 +303,7 @@ export function ModrinthTab({
                   </div>
                   <p className="md-mr-hero__hint">
                     Hash installed jars and look them up on Modrinth (batched, rate-limited). Results land
-                    in ops-cache so Overview, Updates, and Crashes stay in sync. Jars are never downloaded.
+                    in ops-cache so Overview, Updates, and Crashes stay in sync. Lookup is the default; assisted jar mutate (when granted) is a separate confirm-gated action.
                   </p>
                 </div>
               </div>
@@ -513,7 +477,7 @@ export function ModrinthTab({
               enableArrowNavigation
               displayScrollbar={false}
               onItemSelect={(row) =>
-                navigate({ tab: 'mods', view: 'updates', mod: str(row.mod_id) })
+                navigate({ tab: 'mods', view: 'updates', filter: null, mod: str(row.mod_id) })
               }
               renderItem={(row, _i, selected) => {
                 const id = str(row.mod_id);
@@ -540,7 +504,7 @@ export function ModrinthTab({
           )}
           {outdatedCount > 0 ? (
             <div className="md-mr-panel__footer">
-              <Button kind="default" onClick={() => navigate({ tab: 'mods', view: 'updates' })}>
+              <Button kind="default" onClick={() => navigate({ tab: 'mods', view: 'updates', filter: null })}>
                 Open Updates ({outdatedCount})
               </Button>
             </div>

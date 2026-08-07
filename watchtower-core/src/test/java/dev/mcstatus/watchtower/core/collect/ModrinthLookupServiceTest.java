@@ -278,6 +278,66 @@ class ModrinthLookupServiceTest {
     }
 
     @Test
+    void enrichCrashSuspectsDoesNotCallEnrichWithEmptyByIdWhenPriorImpactExists() {
+        JsonObject optional = new JsonObject();
+        JsonArray mods = new JsonArray();
+        JsonObject create = new JsonObject();
+        create.addProperty("id", "create");
+        create.addProperty("version", "6.0.0");
+        create.addProperty("modrinth_outdated", true);
+        create.addProperty("modrinth_compatible_version", "6.0.1");
+        mods.add(create);
+        optional.add("mods", mods);
+
+        JsonArray prior = new JsonArray();
+        JsonObject priorRow = new JsonObject();
+        priorRow.addProperty("mod_id", "create");
+        priorRow.addProperty("latest_compatible", "6.0.1");
+        priorRow.addProperty("impact_verdict", "break");
+        JsonArray blockers = new JsonArray();
+        JsonObject b = new JsonObject();
+        b.addProperty("kind", "need_install");
+        b.addProperty("mod_id", "flywheel");
+        blockers.add(b);
+        priorRow.add("blockers", blockers);
+        prior.add(priorRow);
+        optional.add("modrinth_updates", prior);
+
+        ModrinthLookupService.enrichCrashSuspects(optional, null, null);
+
+        JsonObject out = optional.getAsJsonArray("modrinth_updates").get(0).getAsJsonObject();
+        assertEquals("break", out.get("impact_verdict").getAsString());
+        assertEquals("need_install",
+                out.getAsJsonArray("blockers").get(0).getAsJsonObject().get("kind").getAsString());
+    }
+
+    @Test
+    void minecraftVersionPrefersSnapshotOverJarSuffixHeuristic(@TempDir Path serverDir) throws Exception {
+        Path watchtower = serverDir.resolve("watchtower");
+        Files.createDirectories(watchtower);
+        Files.writeString(watchtower.resolve("snapshot.json"),
+                "{\"minecraft_version\":\"1.21.1\"}", StandardCharsets.UTF_8);
+
+        JsonObject facts = new JsonObject();
+        facts.add("meta", new JsonObject());
+        JsonObject optional = new JsonObject();
+        JsonArray mods = new JsonArray();
+        for (int i = 0; i < 5; i++) {
+            JsonObject m = new JsonObject();
+            m.addProperty("id", "mod" + i);
+            m.addProperty("version", "1.0.0+mc1.21");
+            mods.add(m);
+        }
+        optional.add("mods", mods);
+        facts.add("optional", optional);
+
+        String fromFactsOnly = ModrinthLookupService.minecraftVersionFromFacts(facts);
+        String resolved = ModrinthLookupService.resolveMinecraftVersion(facts, serverDir.toString());
+        assertEquals("1.21.1", resolved,
+                "snapshot/platform MC must beat coarse jar-suffix heuristic; factsAlone=" + fromFactsOnly);
+    }
+
+    @Test
     void pickBestMinecraftVotePrefersSpecificityThenCount() {
         Map<String, Integer> votes = new HashMap<>();
         votes.put("1.21", 50);

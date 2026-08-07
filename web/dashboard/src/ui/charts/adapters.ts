@@ -15,6 +15,7 @@ export const LIVE_SERIES_KEYS = [
   'tps',
   'mspt',
   'host_cpu',
+  'cpu_cores',
   'heap_mb',
   'mem_used_gb',
   'mem_available_gb',

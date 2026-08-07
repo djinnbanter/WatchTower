@@ -136,6 +136,109 @@ class SupportComposeRedactionTest {
     }
 
     @Test
+    void hangDumpsAreRedactedInZip() throws Exception {
+        Path serverDir = temp.resolve("server-hang");
+        Path watchtower = serverDir.resolve("watchtower");
+        Path hangs = watchtower.resolve("hangs");
+        Files.createDirectories(hangs);
+        Files.createDirectories(serverDir.resolve("logs"));
+        Files.writeString(serverDir.resolve("logs/latest.log"), "ok\n", StandardCharsets.UTF_8);
+        Files.writeString(watchtower.resolve("ops-cache.json"),
+                "{\"schema_version\":3,\"activity\":{\"events\":[]},\"issues_live\":[],\"crashes\":{\"entries\":[],\"unreviewed\":0}}",
+                StandardCharsets.UTF_8);
+        Files.writeString(watchtower.resolve("performance-rollups.json"), "{}", StandardCharsets.UTF_8);
+        Files.writeString(hangs.resolve("hang-leak.txt"), """
+                "main" #1
+                password=super-secret-token
+                player at 10.0.0.42 uuid 11111111-2222-3333-4444-555555555555
+                """, StandardCharsets.UTF_8);
+
+        SupportComposeOptions opts = SupportComposeOptions.forPreset(SupportComposeOptions.Preset.SERVER_TRIAGE)
+                .toBuilder()
+                .includeSpark(false)
+                .includeCrashes(false)
+                .build();
+
+        SupportComposer.ComposeResult result = SupportComposer.compose(new SupportComposer.ComposeRequest(
+                watchtower,
+                serverDir,
+                watchtower.resolve("ops-cache.json"),
+                watchtower.resolve("performance-rollups.json"),
+                "test-host",
+                "neoforge",
+                "none",
+                true,
+                15,
+                opts,
+                null,
+                null,
+                "1.2.0",
+                "1.21.1",
+                null));
+
+        try (ZipFile zip = new ZipFile(result.zipPath().toFile())) {
+            String hang = readEntry(zip, "evidence/hangs/hang-leak.txt");
+            assertTrue(hang != null && !hang.isBlank());
+            assertFalse(hang.contains("super-secret-token"));
+            assertFalse(hang.contains("10.0.0.42"));
+            assertFalse(hang.contains("11111111-2222-3333-4444-555555555555"));
+            assertTrue(hang.contains("[REDACTED]") || hang.contains("[IP_REDACTED]") || hang.contains("[UUID_REDACTED]"));
+        }
+    }
+
+    @Test
+    void snapshotIsRedactedJsonTextNotRawFile() throws Exception {
+        Path serverDir = temp.resolve("server-snap");
+        Path watchtower = serverDir.resolve("watchtower");
+        Files.createDirectories(watchtower);
+        Files.createDirectories(serverDir.resolve("logs"));
+        Files.writeString(serverDir.resolve("logs/latest.log"), "ok\n", StandardCharsets.UTF_8);
+        Files.writeString(watchtower.resolve("ops-cache.json"),
+                "{\"schema_version\":3,\"activity\":{\"events\":[]},\"issues_live\":[],\"crashes\":{\"entries\":[],\"unreviewed\":0}}",
+                StandardCharsets.UTF_8);
+        Files.writeString(watchtower.resolve("performance-rollups.json"), "{}", StandardCharsets.UTF_8);
+        Files.writeString(watchtower.resolve("snapshot.json"), """
+                {
+                  "note": "password=snapshot-secret",
+                  "peer": "192.168.9.9",
+                  "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+                }
+                """, StandardCharsets.UTF_8);
+
+        SupportComposeOptions opts = SupportComposeOptions.forPreset(SupportComposeOptions.Preset.FULL_EVIDENCE)
+                .toBuilder()
+                .includeSpark(false)
+                .includeCrashes(false)
+                .includeSnapshot(true)
+                .build();
+
+        SupportComposer.ComposeResult result = SupportComposer.compose(new SupportComposer.ComposeRequest(
+                watchtower,
+                serverDir,
+                watchtower.resolve("ops-cache.json"),
+                watchtower.resolve("performance-rollups.json"),
+                "test-host",
+                "neoforge",
+                "none",
+                true,
+                15,
+                opts,
+                null,
+                null,
+                "1.2.0",
+                "1.21.1",
+                null));
+
+        try (ZipFile zip = new ZipFile(result.zipPath().toFile())) {
+            String snap = readEntry(zip, "performance/snapshot.json");
+            assertTrue(snap != null && !snap.isBlank());
+            assertFalse(snap.contains("snapshot-secret"));
+            assertFalse(snap.contains("192.168.9.9"));
+            assertFalse(snap.contains("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
+        }
+    }
+
+    @Test
     void windowLiveHistoryUnderstandsSeriesShape() throws Exception {
         Path live = temp.resolve("live-history.json");
         Files.writeString(live, """

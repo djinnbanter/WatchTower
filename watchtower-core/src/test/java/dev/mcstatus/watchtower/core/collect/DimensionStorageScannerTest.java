@@ -65,4 +65,58 @@ class DimensionStorageScannerTest {
         assertTrue(byMods.get(0).getAsJsonObject().get("gb").getAsDouble()
                 >= byMods.get(1).getAsJsonObject().get("gb").getAsDouble());
     }
+
+    @Test
+    void scan_worldBytesDoesNotDoubleCountNestedDimensions() throws Exception {
+        Files.createDirectories(temp.resolve("world"));
+        Files.createDirectories(temp.resolve("world/DIM-1"));
+        Files.createDirectories(temp.resolve("world/DIM1"));
+        Files.writeString(temp.resolve("world/level.dat"), "O".repeat(8192));
+        Files.writeString(temp.resolve("world/DIM-1/level.dat"), "N".repeat(4096));
+        Files.writeString(temp.resolve("world/DIM1/level.dat"), "E".repeat(2048));
+
+        JsonObject storage = DimensionStorageScanner.scan(temp.toString(), true);
+        Assumptions.assumeTrue(storage.has("by_dimension"),
+                "du unavailable on this host — dimension scan requires du");
+        Assumptions.assumeTrue(storage.has("world_bytes"), "world_bytes required");
+
+        long worldBytes = storage.get("world_bytes").getAsLong();
+
+        ProcessBuilder pb = new ProcessBuilder("du", "-sb", temp.resolve("world").toString());
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        String out = new String(p.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).trim();
+        Assumptions.assumeTrue(p.waitFor() == 0 && !out.isBlank(), "du -sb world failed");
+        long duWorldOnly = Long.parseLong(out.split("\\s+")[0]);
+
+        long sumDims = 0;
+        for (var el : storage.getAsJsonArray("by_dimension")) {
+            JsonObject d = el.getAsJsonObject();
+            String path = d.get("path").getAsString();
+            if (!"world".equals(path) && path.startsWith("world/")) {
+                ProcessBuilder pbDim = new ProcessBuilder("du", "-sb", temp.resolve(path).toString());
+                pbDim.redirectErrorStream(true);
+                Process pd = pbDim.start();
+                String dout = new String(pd.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).trim();
+                if (pd.waitFor() == 0 && !dout.isBlank()) {
+                    sumDims += Long.parseLong(dout.split("\\s+")[0]);
+                }
+            }
+        }
+
+        assertEquals(duWorldOnly, worldBytes, 4096L,
+                "world_bytes must equal du(world), not du(world)+nested dims");
+        assertTrue(sumDims > 0, "fixture should produce nested dim bytes");
+        assertTrue(worldBytes < duWorldOnly + sumDims,
+                "regression guard: world_bytes must not be parent+children sum");
+
+        boolean hasNether = false;
+        boolean hasEnd = false;
+        for (var el : storage.getAsJsonArray("by_dimension")) {
+            String id = el.getAsJsonObject().get("id").getAsString();
+            if ("nether".equals(id)) hasNether = true;
+            if ("end".equals(id)) hasEnd = true;
+        }
+        assertTrue(hasNether && hasEnd, "by_dimension breakdown must still list nested dims");
+    }
 }

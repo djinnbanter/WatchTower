@@ -29,8 +29,7 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
               <div className="p-5 md:p-6">
                 <h2 className="install-step__title">Get the jar</h2>
                 <p className="install-step__copy">
-                  Download the {release.label} release from Modrinth or GitHub. Prefer Modrinth, or
-                  open the repo and grab the jar from Releases.
+                  Download the {release.label} release from Modrinth or GitHub Releases.
                 </p>
                 {release.tag !== 'latest' ? (
                   <p className="install-meta">
@@ -100,8 +99,8 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
               <div className="p-5 md:p-6">
                 <h2 className="install-step__title">Open the dashboard</h2>
                 <p className="install-step__copy">
-                  Once the server is up, open the dashboard on the host. Stay on localhost or an SSH
-                  tunnel. Don&apos;t put port 8787 on the open internet.
+                  Once the server is up, open the dashboard. Prefer localhost or an SSH tunnel.
+                  Don&apos;t expose port 8787 to the open internet.
                 </p>
                 <div className="install-url" role="group" aria-label="Local dashboard address">
                   <div className="install-url__chrome" aria-hidden>
@@ -144,7 +143,7 @@ export function InstallSecureNote() {
         <div className="install-secure__inner">
           <div className="install-secure__head">
             <span className="install-secure__badge">First login</span>
-            <p className="install-secure__note">Ships with these defaults. Change them on first open.</p>
+            <p className="install-secure__note">Default login. Change it the first time you open the dashboard.</p>
           </div>
           <dl className="install-secure__fields">
             <div className="install-secure__field">

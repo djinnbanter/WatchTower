@@ -188,11 +188,11 @@ function parseBlocks(lines: string[]): ReactNode[] {
       continue;
     }
 
-    if (/^[-*+]\s+\[[ xX]\]\s/.test(line)) {
+    if (/^\s*[-*+]\s+\[[ xX]\]\s/.test(line)) {
       const items: ReactNode[] = [];
-      while (i < lines.length && /^[-*+]\s+\[[ xX]\]\s/.test(lines[i])) {
+      while (i < lines.length && /^\s*[-*+]\s+\[[ xX]\]\s/.test(lines[i])) {
         const checked = /\[[xX]\]/.test(lines[i]);
-        const text = lines[i].replace(/^[-*+]\s+\[[ xX]\]\s/, '');
+        const text = lines[i].replace(/^\s*[-*+]\s+\[[ xX]\]\s/, '');
         items.push(
           <li
             key={items.length}
@@ -214,15 +214,15 @@ function parseBlocks(lines: string[]): ReactNode[] {
       continue;
     }
 
-    if (/^[-*+]\s/.test(line)) {
+    if (/^\s*[-*+]\s/.test(line)) {
       const items: ReactNode[] = [];
       while (
         i < lines.length &&
-        /^[-*+]\s/.test(lines[i]) &&
-        !/^[-*+]\s+\[[ xX]\]\s/.test(lines[i])
+        /^\s*[-*+]\s/.test(lines[i]) &&
+        !/^\s*[-*+]\s+\[[ xX]\]\s/.test(lines[i])
       ) {
         items.push(
-          <li key={items.length}>{parseInline(lines[i].replace(/^[-*+]\s/, ''))}</li>,
+          <li key={items.length}>{parseInline(lines[i].replace(/^\s*[-*+]\s/, ''))}</li>,
         );
         i++;
       }
@@ -234,11 +234,11 @@ function parseBlocks(lines: string[]): ReactNode[] {
       continue;
     }
 
-    if (/^\d+\.\s/.test(line)) {
+    if (/^\s*\d+\.\s/.test(line)) {
       const items: ReactNode[] = [];
-      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+      while (i < lines.length && /^\s*\d+\.\s/.test(lines[i])) {
         items.push(
-          <li key={items.length}>{parseInline(lines[i].replace(/^\d+\.\s/, ''))}</li>,
+          <li key={items.length}>{parseInline(lines[i].replace(/^\s*\d+\.\s/, ''))}</li>,
         );
         i++;
       }
@@ -254,9 +254,9 @@ function parseBlocks(lines: string[]): ReactNode[] {
     while (
       i < lines.length &&
       lines[i].trim() &&
-      !/^#{1,6}\s/.test(lines[i]) &&
-      !/^[-*+]\s/.test(lines[i]) &&
-      !/^\d+\.\s/.test(lines[i]) &&
+      !/^\s*#{1,6}\s/.test(lines[i]) &&
+      !/^\s*[-*+]\s/.test(lines[i]) &&
+      !/^\s*\d+\.\s/.test(lines[i]) &&
       !lines[i].startsWith('```') &&
       !(/^[-*_]{3,}\s*$/.test(lines[i]) && !lines[i].includes('|')) &&
       !/^>\s?/.test(lines[i]) &&

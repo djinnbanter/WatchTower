@@ -66,16 +66,23 @@ public final class ModReportConfig {
         map.put("PANEL_DISPLAY_NAME", PanelLabels.displayName(panel.panelId()));
 
         try {
-            int lookback = ModRuntime.config().lookbackHours();
             if (opts != null && opts.lookbackHours() != null) {
-                lookback = Math.max(1, Math.min(720, opts.lookbackHours()));
+                int lookback = Math.max(1, Math.min(720, opts.lookbackHours()));
+                map.put("LOOKBACK_HOURS", String.valueOf(lookback));
+            } else if (!map.containsKey("LOOKBACK_HOURS")) {
+                map.put("LOOKBACK_HOURS", String.valueOf(ModRuntime.config().lookbackHours()));
+            } else {
+                int lookback = Math.max(1, Math.min(720,
+                        WatchtowerConfWriter.readInt(map, "LOOKBACK_HOURS", 24)));
+                map.put("LOOKBACK_HOURS", String.valueOf(lookback));
             }
-            map.put("LOOKBACK_HOURS", String.valueOf(lookback));
-            boolean incremental = ModRuntime.config().incremental();
+
             if (opts != null && opts.incremental() != null) {
-                incremental = opts.incremental();
+                map.put("INCREMENTAL", opts.incremental() ? "true" : "false");
+            } else if (!map.containsKey("INCREMENTAL")) {
+                map.put("INCREMENTAL", ModRuntime.config().incremental() ? "true" : "false");
             }
-            map.put("INCREMENTAL", incremental ? "true" : "false");
+
             if (opts != null && opts.since() != null && !opts.since().isBlank()) {
                 map.put("SINCE", opts.since().strip());
             }
