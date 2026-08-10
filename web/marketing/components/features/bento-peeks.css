@@ -172,10 +172,7 @@
 }
 
 .bento-peek__grade-hint {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-  overflow: hidden;
+  display: block;
 }
 
 .bento-peek__grade-row .desk-pill {
@@ -1077,10 +1074,7 @@
   font-size: 0.75rem;
   line-height: 1.35;
   color: var(--wt-text-mid);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: block;
 }
 
 .bento-peek__crash-steps {
@@ -2326,10 +2320,7 @@
   font-size: 0.75rem;
   line-height: 1.35;
   color: var(--wt-text-mid);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
+  display: block;
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -2966,10 +2957,7 @@
 }
 
 .bento-peek__backup-card .bento-peek__sub {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  display: block;
   flex: 1 1 auto;
   min-height: 0;
   font-size: 0.75rem;

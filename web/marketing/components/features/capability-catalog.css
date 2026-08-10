@@ -47,7 +47,6 @@
   min-width: 0;
   min-height: 0;
   height: 100%;
-  overflow: hidden;
   background: var(--wt-bg1);
   color: var(--wt-text);
 }
@@ -60,7 +59,6 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  overflow: hidden;
   padding: 0.95rem 1rem 1rem;
   background: var(--wt-bg1);
 }
@@ -97,7 +95,7 @@
   line-height: 1.12;
   text-transform: uppercase;
   color: var(--wt-text);
-  max-width: 18ch;
+  max-width: none;
 }
 
 .cap-card__description {
@@ -105,34 +103,13 @@
   font-size: 0.875rem;
   line-height: 1.45;
   color: var(--wt-text-mid);
-  max-width: 42ch;
+  max-width: none;
   text-transform: none;
   letter-spacing: normal;
   font-family: var(--font-sans);
   font-weight: 400;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
-  overflow: hidden;
-}
-
-.cap-span--more-two .cap-card__description,
-.cap-span--wide-bottom .cap-card__description,
-.cap-span--more-half .cap-card__description,
-.cap-span--lead-wide .cap-card__description,
-.cap-span--lead-tall .cap-card__description,
-.cap-span--tall-right .cap-card__description,
-.cap-span--full .cap-card__description {
-  max-width: none;
-}
-
-.cap-span--mid-strip .cap-card__description {
-  -webkit-line-clamp: 3;
-}
-
-.cap-span--stamp .cap-card__description,
-.cap-span--rules .cap-card__description {
-  -webkit-line-clamp: 3;
+  display: block;
+  overflow: visible;
 }
 
 .cap-card__visual {
@@ -195,7 +172,7 @@
 }
 
 .cap-card--media-strip .cap-card__description {
-  max-width: 52ch;
+  max-width: none;
 }
 
 @media (max-width: 1023px) {
@@ -226,10 +203,6 @@
     grid-template-columns: 1fr;
   }
 
-  .cap-card__description {
-    -webkit-line-clamp: 6;
-  }
-
   .cap-card__inner {
     min-height: 0;
   }
@@ -257,25 +230,17 @@
     grid-auto-flow: row dense;
   }
 
-  /* —— Monitor: equal-height rows sized for compact peeks —— */
+  /* —— Monitor: flexible-height rows sized for peeks + full text —— */
   .cap-grid--monitor {
-    grid-template-rows: 440px 400px 340px;
-    grid-auto-rows: 340px;
+    grid-template-rows: minmax(520px, auto) minmax(400px, auto) minmax(340px, auto);
+    grid-auto-rows: minmax(340px, auto);
   }
 
-  .cap-grid--monitor .cap-card__description {
-    -webkit-line-clamp: 2;
-  }
-
-  .cap-grid--monitor .cap-span--more-half .cap-card__description {
-    -webkit-line-clamp: 3;
-  }
-
-  /* —— Triage / Ops / System: equal-height row cards —— */
+  /* —— Triage / Ops / System: flexible-height row cards —— */
   .cap-grid--triage,
   .cap-grid--ops,
   .cap-grid--system {
-    grid-auto-rows: 340px;
+    grid-auto-rows: minmax(340px, auto);
   }
 
   .cap-span--more-one {
@@ -309,20 +274,7 @@
   }
 
   .cap-grid--triage {
-    grid-auto-rows: 360px;
-  }
-
-  .cap-grid--triage .cap-span--lead-tall {
-    /* first row taller for inbox / crash fixtures */
-  }
-
-  .cap-grid--triage .cap-card:nth-child(-n + 2) {
-    /* Issues + Crash sit on first auto row — bump via grid */
-  }
-
-  .cap-grid--ops .cap-span--lead-wide .cap-card__description,
-  .cap-grid--ops .cap-span--more-half .cap-card__description {
-    -webkit-line-clamp: 3;
+    grid-auto-rows: minmax(360px, auto);
   }
 
   .cap-grid--system .cap-span--full {
@@ -343,7 +295,7 @@
   .cap-span--lead-wide .cap-card__title,
   .cap-span--full .cap-card__title {
     font-size: clamp(1.3rem, 1.7vw, 1.7rem);
-    max-width: 22ch;
+    max-width: none;
   }
 
   .cap-span--stamp .cap-card__title,
@@ -353,41 +305,24 @@
   }
 }
 
-/* Triage: two-row template — taller leads, equal bottoms */
+/* Triage: flexible-row template — taller leads, equal bottoms */
 @media (min-width: 1024px) {
   .cap-grid--triage {
-    grid-template-rows: 420px 380px;
-    grid-auto-rows: 380px;
+    grid-template-rows: minmax(420px, auto) minmax(380px, auto);
+    grid-auto-rows: minmax(380px, auto);
   }
 
-  .cap-grid--triage .cap-span--lead-tall .cap-card__description {
-    -webkit-line-clamp: 3;
-  }
-
-  .cap-grid--triage .cap-span--lead-tall .cap-card__title {
-    max-width: 16ch;
+  .cap-span--lead-tall .cap-card__title {
+    max-width: none;
   }
 
   .cap-grid--ops {
-    grid-template-rows: 420px 360px 380px;
-    grid-auto-rows: 360px;
-  }
-
-  .cap-grid--ops .cap-span--lead-wide .cap-card__description {
-    -webkit-line-clamp: 2;
-  }
-
-  .cap-grid--ops .cap-span--more-half .cap-card__description {
-    -webkit-line-clamp: 2;
+    grid-template-rows: minmax(420px, auto) minmax(360px, auto) minmax(380px, auto);
+    grid-auto-rows: minmax(360px, auto);
   }
 
   .cap-grid--system {
-    grid-template-rows: 360px 320px 220px;
-    grid-auto-rows: 320px;
-  }
-
-  .cap-grid--system .cap-span--more-half .cap-card__description,
-  .cap-grid--system .cap-span--more-one .cap-card__description {
-    -webkit-line-clamp: 2;
+    grid-template-rows: minmax(360px, auto) minmax(320px, auto) minmax(360px, auto);
+    grid-auto-rows: minmax(320px, auto);
   }
 }

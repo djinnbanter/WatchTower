@@ -18,9 +18,54 @@ export default function FaqPage() {
     <main>
       <BoardFrame ariaLabel="FAQ board">
         <BoardPageHeader
-          meta={`WatchTower · ${FAQ_PAGE.label} · ${count} answers`}
+          meta={`WatchTower · ${FAQ_PAGE.label} · ${count} Answers`}
           title={FAQ_PAGE.title}
-          lead={FAQ_PAGE.body}
+          lead={
+            <div className="space-y-4">
+              <p>{FAQ_PAGE.body}</p>
+              <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs text-[color:var(--wt-text-low)]">
+                <span>/// TOPICS:</span>
+                <span className="text-[color:var(--wt-text-mid)]">DATA PRIVACY</span>
+                <span>•</span>
+                <span className="text-[color:var(--wt-text-mid)]">RESTARTS</span>
+                <span>•</span>
+                <span className="text-[color:var(--wt-text-mid)]">PERFORMANCE</span>
+                <span>•</span>
+                <span className="text-[color:var(--wt-text-mid)]">CLI RECOVERY</span>
+              </div>
+            </div>
+          }
+          right={
+            <div className="flex flex-col justify-between gap-5 h-full">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] p-3.5">
+                  <p className="wt-meta text-[color:var(--wt-accent)]">Knowledge Base</p>
+                  <p className="mt-1 font-display text-lg leading-tight text-[color:var(--wt-text)] sm:text-xl">
+                    {count} Answers
+                  </p>
+                </div>
+                <div className="border border-[color:var(--wt-line)] bg-[color:var(--wt-ok)]/20 border-[color:var(--wt-ok)]/40 p-3.5">
+                  <p className="wt-meta text-[color:var(--wt-ok)]">License</p>
+                  <p className="mt-1 font-display text-lg leading-tight text-[color:var(--wt-text)] sm:text-xl">
+                    GPL-3.0
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Cta href={DEMO_URL} withArrow newTab className="flex-1 min-w-[130px]">
+                  Live demo
+                </Cta>
+                <Cta
+                  href={LINKS.modrinth}
+                  variant="ghost"
+                  leading={<ModrinthMark className="h-3.5 w-3.5" />}
+                  className="flex-1 min-w-[130px]"
+                >
+                  Modrinth
+                </Cta>
+              </div>
+            </div>
+          }
         />
 
         <div className="border-t border-[color:var(--wt-line)] bg-[color:var(--wt-bg0)] p-5 md:p-8">
@@ -32,15 +77,16 @@ export default function FaqPage() {
             <FaqFoot />
           </div>
           <div className="flex flex-wrap items-center gap-2.5 bg-[color:var(--wt-bg0)] p-6 md:p-8">
-            <Cta href={DEMO_URL} withArrow newTab>
-              Try the live demo
+            <Cta href={LINKS.wiki} newTab className="flex-1 min-w-[130px]">
+              Explore Wiki
             </Cta>
             <Cta
-              href={LINKS.modrinth}
+              href={`${LINKS.github}/issues`}
               variant="ghost"
-              leading={<ModrinthMark className="h-3.5 w-3.5" />}
+              newTab
+              className="flex-1 min-w-[130px]"
             >
-              Get it on Modrinth
+              GitHub Issues
             </Cta>
           </div>
         </div>

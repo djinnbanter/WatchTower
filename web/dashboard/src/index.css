@@ -92,12 +92,12 @@ html[data-theme='dark'] {
   --wt-text: #f3f5f8;
   --wt-text-mid: #b8bfcc;
   --wt-text-low: #8a92a1;
-  --wt-accent: #f97316;
-  --wt-accent-soft: rgba(249, 115, 22, 0.16);
-  --wt-accent-ink: #0a0a0a;
-  --wt-lantern: #f97316;
+  --wt-accent: #4C8DFF;
+  --wt-accent-soft: rgba(76, 141, 255, 0.16);
+  --wt-accent-ink: #0A0F1C;
+  --wt-lantern: #F5A524;
   --wt-ok: #34d399;
-  --wt-warn: #f97316;
+  --wt-warn: #F5A524;
   --wt-danger: #f87171;
   --wt-info: #9DB2CE;
   /* Instrument channels — medium saturation; never share hues with status */
@@ -109,7 +109,7 @@ html[data-theme='dark'] {
   --wt-ch-cpu: #C77FA6;
   --wt-shadow: 0 1px 0 rgba(255, 255, 255, 0.055) inset, 0 6px 18px rgba(0, 0, 0, 0.45);
   --wt-glare: rgba(255, 255, 255, 0.11);
-  --wt-spotlight: rgba(249, 115, 22, 0.15);
+  --wt-spotlight: rgba(76, 141, 255, 0.15);
   --wt-scroll-size: 10px;
   --wt-scroll-track: color-mix(in srgb, var(--wt-bg0) 55%, transparent);
   --wt-scroll-thumb: color-mix(in srgb, var(--wt-accent) 32%, var(--wt-bg3));

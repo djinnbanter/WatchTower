@@ -119,6 +119,27 @@ export function HomeHero() {
                 {HERO_OVERVIEW}
               </motion.p>
 
+              <motion.div className="flex flex-wrap items-center gap-2 pt-1" {...rise(0.46)}>
+                {[
+                  { label: 'What Is It', id: 'what' },
+                  { label: 'Health Overview', id: 'overview' },
+                  { label: 'Fix Inbox', id: 'issues' },
+                  { label: 'Crash Center', id: 'crashes' },
+                  { label: 'Storage Insights', id: 'insights' },
+                ].map(({ label, id }) => (
+                  <a
+                    key={id}
+                    href={`#${id}`}
+                    className="inline-flex items-center gap-1.5 border border-[color:var(--wt-line)] bg-[color:var(--wt-bg0)] px-2.5 py-1 font-mono text-[0.75rem] uppercase tracking-[0.1em] text-[color:var(--wt-text-mid)] no-underline transition-colors duration-200 hover:border-[color:var(--wt-accent)] hover:text-[color:var(--wt-accent)]"
+                  >
+                    <span>{label}</span>
+                    <span aria-hidden className="text-[color:var(--wt-accent)]">
+                      ↓
+                    </span>
+                  </a>
+                ))}
+              </motion.div>
+
               <motion.div
                 className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch"
                 {...rise(0.5)}
@@ -157,12 +178,16 @@ export function HomeHero() {
           className="flex shrink-0 flex-col gap-3 border-t border-[color:var(--wt-line)] bg-[color:var(--wt-bg0)] px-4 py-4 sm:px-5 md:px-10 lg:pl-[max(2.5rem,calc((100vw-1600px)/2+2rem))] lg:pr-10 sm:flex-row sm:items-center sm:justify-between"
           {...rise(0.58, 10)}
         >
-          <p className="wt-meta text-[color:var(--wt-text-low)]">
-            No cloud account /// data stays on your host /// you stay in control
-          </p>
+          <div className="flex items-center gap-3 font-mono text-xs text-[color:var(--wt-text-low)]">
+            <span className="text-[color:var(--wt-ok)]">● LOCAL-FIRST OPS</span>
+            <span>///</span>
+            <span>ZERO CLOUD REQUIRED</span>
+            <span className="hidden md:inline">///</span>
+            <span className="hidden md:inline text-[color:var(--wt-text-mid)]">ADVISORY ONLY</span>
+          </div>
           <Link
             href="#what"
-            className="group inline-flex min-h-12 w-full items-center justify-center gap-3 border border-[color:var(--wt-accent)] bg-[color:var(--wt-accent-soft)] px-4 py-3 no-underline transition-colors active:bg-[color:var(--wt-accent)] active:text-[color:var(--wt-accent-ink)] hover:bg-[color:var(--wt-accent)] hover:text-[color:var(--wt-accent-ink)] sm:w-auto"
+            className="group inline-flex min-h-11 items-center justify-center gap-3 border border-[color:var(--wt-accent)] bg-[color:var(--wt-accent-soft)] px-4 py-2.5 no-underline transition-colors active:bg-[color:var(--wt-accent)] active:text-[color:var(--wt-accent-ink)] hover:bg-[color:var(--wt-accent)] hover:text-[color:var(--wt-accent-ink)] sm:w-auto"
           >
             <span className="wt-meta font-semibold tracking-[0.14em] text-[color:var(--wt-accent)] group-hover:text-[color:var(--wt-accent-ink)] group-active:text-[color:var(--wt-accent-ink)]">
               {HERO_SCROLL_CUE}

@@ -218,7 +218,7 @@ export const FEATURE_BENTO_SECTIONS: FeatureBentoSection[] = [
         id: 'cli-dr',
         title: 'CLI Disaster Recovery',
         body: "Use a simple command-line tool included with WatchTower. If Minecraft won't start at all, run this tool over SSH to gather crash details and view logs in a standalone browser window for troubleshooting.",
-        media: 'overlay',
+        media: 'side',
         span: 'full',
       },
     ],

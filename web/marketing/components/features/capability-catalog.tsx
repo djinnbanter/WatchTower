@@ -83,6 +83,7 @@ export function CapabilityCatalog() {
       {FEATURE_BENTO_SECTIONS.map((section) => (
         <section
           key={section.label}
+          id={section.label.toLowerCase().replace(/[^a-z]+/g, '-')}
           className="cap-section"
           data-section={section.label.toLowerCase().replace(/[^a-z]+/g, '-')}
           aria-label={section.label}
