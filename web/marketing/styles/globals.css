@@ -13,28 +13,28 @@
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-  --wt-bg0: #0a0a0a;      /* ink */
-  --wt-bg1: #121212;      /* panel */
-  --wt-bg2: #121212;
-  --wt-bg3: #1a1a1a;
-  --wt-bg-hot: #0a0a0a;
+  --wt-bg0: #141416;      /* dark grey background */
+  --wt-bg1: #1c1c20;      /* dark grey panel */
+  --wt-bg2: #24242a;
+  --wt-bg3: #2d2e36;
+  --wt-bg-hot: #141416;
   --wt-line: #3f3f46;
   --wt-line-strong: #52525b;
-  --wt-text: #eaeaea;
-  --wt-text-mid: #a3a3a3;
-  --wt-text-low: #737373;
-  --wt-accent: #e8910c;           /* ember orange — CTAs + brand */
-  --wt-accent-soft: rgba(232, 145, 12, 0.16);
+  --wt-text: #f4f4f5;
+  --wt-text-mid: #a1a1aa;
+  --wt-text-low: #71717a;
+  --wt-accent: #f97316;           /* vibrant orange — CTAs + brand */
+  --wt-accent-soft: rgba(249, 115, 22, 0.16);
   --wt-accent-ink: #0a0a0a;
-  --wt-lantern: #e8910c;
+  --wt-lantern: #f97316;
   --wt-ok: #34d399;
-  --wt-warn: #e8910c;
+  --wt-warn: #f97316;
   --wt-danger: #e61919;
   --wt-info: #a3a3a3;
   --wt-shadow: none;
   --wt-plate-outer: transparent;
   --wt-grat: transparent;
-  --wt-nav-bg: #0a0a0a;
+  --wt-nav-bg: #141416;
   /* Instrument channels — match product desk; never share status (ok/warn/danger) hex */
   --wt-ch-tps: #4fb286;
   --wt-ch-mspt: #e0a458;

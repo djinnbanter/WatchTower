@@ -67,8 +67,8 @@ export function DeskDotGrid({
     const paint = (t: number) => {
       if (!visible || w < 1 || h < 1) return;
       const low = readCss('--wt-text-low', '#737373');
-      const accent = readCss('--wt-accent', '#e8910c');
-      const lantern = readCss('--wt-lantern', '#e8910c');
+      const accent = readCss('--wt-accent', '#f97316');
+      const lantern = readCss('--wt-lantern', '#f97316');
 
       ctx.clearRect(0, 0, w, h);
       const breath = reduce ? 0 : Math.sin(t * 0.0007) * 0.5 + 0.5;
