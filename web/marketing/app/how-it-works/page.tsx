@@ -4,6 +4,7 @@ import { Pipeline } from '@/components/how/pipeline';
 import { HowClose } from '@/components/how/how-close';
 import { Cta } from '@/components/cta';
 import { ModrinthMark } from '@/components/brand/modrinth-mark';
+import { SparkMark } from '@/components/brand/spark-mark';
 import {
   HOW_COMPANIONS,
   HOW_FIRST_RUN,
@@ -170,23 +171,43 @@ export default function HowItWorksPage() {
                 {HOW_COMPANIONS.body}
               </p>
 
-              <div className="mt-6 space-y-3">
-                {HOW_COMPANIONS.items.map((item) => (
-                  <div
-                    key={item.title}
-                    className="border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] p-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 bg-[color:var(--wt-accent)]" />
-                      <p className="font-mono text-xs font-semibold uppercase tracking-wider text-[color:var(--wt-text)]">
-                        {item.title}
+              <div className="mt-6 space-y-4">
+                {HOW_COMPANIONS.items.map((item) => {
+                  const isSpark = item.title.toLowerCase().includes('spark');
+                  return (
+                    <div
+                      key={item.title}
+                      className={`border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] p-4 border-l-2 ${
+                        isSpark ? 'border-l-[#FFC93A]' : 'border-l-[#00AF5C]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          {isSpark ? (
+                            <SparkMark size={20} />
+                          ) : (
+                            <ModrinthMark className="h-5 w-5 text-[#00AF5C]" />
+                          )}
+                          <p className="font-mono text-xs font-semibold uppercase tracking-wider text-[color:var(--wt-text)]">
+                            {item.title}
+                          </p>
+                        </div>
+                        <span
+                          className={`font-mono text-[0.6875rem] font-semibold uppercase tracking-wider px-2 py-0.5 border ${
+                            isSpark
+                              ? 'border-[#FFC93A]/30 bg-[#FFC93A]/10 text-[#FFC93A]'
+                              : 'border-[#00AF5C]/30 bg-[#00AF5C]/10 text-[#00AF5C]'
+                          }`}
+                        >
+                          {isSpark ? 'Profiler' : 'Catalog'}
+                        </span>
+                      </div>
+                      <p className="mt-2.5 text-xs leading-relaxed text-[color:var(--wt-text-mid)]">
+                        {item.body}
                       </p>
                     </div>
-                    <p className="mt-2 text-xs leading-relaxed text-[color:var(--wt-text-mid)]">
-                      {item.body}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </article>
