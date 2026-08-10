@@ -10,7 +10,7 @@
   "auto_capture": {
     "enabled": true,
     "reason": "tick_lag",
-    "captured_at": "2026-08-03T20:20:46.149Z",
+    "captured_at": "2026-08-10T15:48:38.471Z",
     "source_path": "watchtower/spark-upload/profile-2026-07-23_20.37.29.sparkprofile"
   },
   "profiles": [
@@ -19,7 +19,7 @@
       "source_file": "profile-2026-07-23_20.37.29.sparkprofile",
       "source_kind": "spark_upload",
       "captured_at": "2026-07-23T21:27:29.299+01:00",
-      "mtime": "2026-08-03T20:20:46.149Z",
+      "mtime": "2026-08-10T15:48:38.471Z",
       "size_bytes": 18571268,
       "fresh": true,
       "auto_captured": true

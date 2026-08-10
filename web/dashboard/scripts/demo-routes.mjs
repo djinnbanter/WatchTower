@@ -52,6 +52,9 @@ export const DEMO_GET_ROUTES = [
   '/api/onboarding/discovery/status',
   '/api/preview/profile',
   '/api/mods/configs',
+  '/api/mods/mutate/status',
+  '/api/mods/mutate/versions',
+  '/api/mods/mutate/backups',
   '/api/soft-hang/dump',
 ];
 
@@ -188,6 +191,12 @@ export const DEMO_MANIFEST_ALLOWLIST = [
   '/api/accounts/reset-password',
   '/api/accounts/delete',
   '/api/mods/configs/undo',
+  '/api/mods/mutate/swap',
+  '/api/mods/mutate/batch',
+  '/api/mods/mutate/install',
+  '/api/mods/mutate/quarantine',
+  '/api/mods/mutate/undo',
+  '/api/mods/mutate/jobs/',
   '/api/support/quality-gate',
   '/api/fs/',
   '/api/fs/list',

@@ -36,6 +36,5 @@
   "ops_log_scan_sec": 60,
   "live_sample_interval_seconds": 1,
   "dashboard_port": 8787,
-  "metrics_context_banner": true,
-  "cpu_display": "auto"
+  "metrics_context_banner": true
 }

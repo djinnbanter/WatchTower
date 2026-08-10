@@ -1,1 +1,1 @@
-{"authenticated":true,"username":"ella","preview":true,"must_change_password":false,"role":"owner","minecraft_uuid":"069a79f4-44e9-4726-a5be-fca90e38aaf5","minecraft_name":"Ella"}
+{"authenticated":true,"fully_authenticated":true,"username":"ella","preview":true,"must_change_password":false,"role":"owner","can_write":true,"capabilities":["mods.mutate"],"can_mutate_mods":true}

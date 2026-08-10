@@ -1,7 +1,7 @@
 {
   "window": "30d",
   "hours": 720,
-  "generated_at": "2026-08-03T21:46:14.998Z",
+  "generated_at": "2026-08-10T15:56:37.778Z",
   "enabled": true,
   "sufficient_data": true,
   "mspt_warn": 50,
@@ -90,35 +90,35 @@
   "players_band_scale_source": "observed_peak",
   "outlier_minutes": [
     {
-      "ts": "2026-08-03T21:01:14.998Z",
+      "ts": "2026-08-10T15:11:37.778Z",
       "players_max": 0,
       "mspt_avg": 72,
       "mem_used_gb_avg": 14.1,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-07-30T18:46:14.998Z",
+      "ts": "2026-08-06T12:56:37.778Z",
       "players_max": 6,
       "mspt_avg": 48,
       "mem_used_gb_avg": 13.8,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-07-23T16:46:14.998Z",
+      "ts": "2026-07-30T10:56:37.778Z",
       "players_max": 0,
       "mspt_avg": 58,
       "mem_used_gb_avg": 14,
       "reason": "high_mspt_idle"
     },
     {
-      "ts": "2026-07-17T19:46:14.998Z",
+      "ts": "2026-07-24T13:56:37.778Z",
       "players_max": 4,
       "mspt_avg": 52,
       "mem_used_gb_avg": 13.5,
       "reason": "high_mspt_vs_hour_median"
     },
     {
-      "ts": "2026-07-10T15:46:14.998Z",
+      "ts": "2026-07-17T09:56:37.778Z",
       "players_max": 7,
       "mspt_avg": 61,
       "mem_used_gb_avg": 14.4,
@@ -127,22 +127,22 @@
   ],
   "sticky_lag": [
     {
-      "started_at": "2026-08-03T20:16:14.998Z",
-      "ended_at": "2026-08-03T21:01:14.998Z",
+      "started_at": "2026-08-10T14:26:37.778Z",
+      "ended_at": "2026-08-10T15:11:37.778Z",
       "duration_min": 45,
       "peak_mspt": 72,
       "narrative": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)"
     },
     {
-      "started_at": "2026-07-26T19:46:14.998Z",
-      "ended_at": "2026-07-26T20:08:14.998Z",
+      "started_at": "2026-08-02T13:56:37.778Z",
+      "ended_at": "2026-08-02T14:18:37.778Z",
       "duration_min": 22,
       "peak_mspt": 55,
       "narrative": "MSPT stayed above threshold for 22 min after players left (peak 55 ms)"
     },
     {
-      "started_at": "2026-07-13T18:46:14.998Z",
-      "ended_at": "2026-07-13T19:24:14.998Z",
+      "started_at": "2026-07-20T12:56:37.778Z",
+      "ended_at": "2026-07-20T13:34:37.778Z",
       "duration_min": 38,
       "peak_mspt": 64,
       "narrative": "MSPT stayed above threshold for 38 min after players left (peak 64 ms)"
@@ -1701,7 +1701,7 @@
   ],
   "daily_series": [
     {
-      "date": "2026-07-05",
+      "date": "2026-07-12",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 15.5,
@@ -1712,7 +1712,7 @@
       "low_tps_minutes": 5
     },
     {
-      "date": "2026-07-06",
+      "date": "2026-07-13",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.2,
@@ -1723,7 +1723,7 @@
       "low_tps_minutes": 4
     },
     {
-      "date": "2026-07-07",
+      "date": "2026-07-14",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.1,
@@ -1734,7 +1734,7 @@
       "low_tps_minutes": 3
     },
     {
-      "date": "2026-07-08",
+      "date": "2026-07-15",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.9,
@@ -1745,7 +1745,7 @@
       "low_tps_minutes": 2
     },
     {
-      "date": "2026-07-09",
+      "date": "2026-07-16",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.8,
@@ -1756,7 +1756,7 @@
       "low_tps_minutes": 1
     },
     {
-      "date": "2026-07-10",
+      "date": "2026-07-17",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 11.3,
@@ -1767,7 +1767,7 @@
       "low_tps_minutes": 0
     },
     {
-      "date": "2026-07-11",
+      "date": "2026-07-18",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 17.2,
@@ -1778,7 +1778,7 @@
       "low_tps_minutes": 5
     },
     {
-      "date": "2026-07-12",
+      "date": "2026-07-19",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 15.2,
@@ -1789,7 +1789,7 @@
       "low_tps_minutes": 4
     },
     {
-      "date": "2026-07-13",
+      "date": "2026-07-20",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.9,
@@ -1800,7 +1800,7 @@
       "low_tps_minutes": 3
     },
     {
-      "date": "2026-07-14",
+      "date": "2026-07-21",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.8,
@@ -1811,7 +1811,7 @@
       "low_tps_minutes": 2
     },
     {
-      "date": "2026-07-15",
+      "date": "2026-07-22",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.4,
@@ -1822,7 +1822,7 @@
       "low_tps_minutes": 1
     },
     {
-      "date": "2026-07-16",
+      "date": "2026-07-23",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.2,
@@ -1833,7 +1833,7 @@
       "low_tps_minutes": 0
     },
     {
-      "date": "2026-07-17",
+      "date": "2026-07-24",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 11,
@@ -1844,7 +1844,7 @@
       "low_tps_minutes": 5
     },
     {
-      "date": "2026-07-18",
+      "date": "2026-07-25",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 16.9,
@@ -1855,7 +1855,7 @@
       "low_tps_minutes": 4
     },
     {
-      "date": "2026-07-19",
+      "date": "2026-07-26",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 14.9,
@@ -1866,7 +1866,7 @@
       "low_tps_minutes": 3
     },
     {
-      "date": "2026-07-20",
+      "date": "2026-07-27",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.4,
@@ -1877,7 +1877,7 @@
       "low_tps_minutes": 2
     },
     {
-      "date": "2026-07-21",
+      "date": "2026-07-28",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.2,
@@ -1888,7 +1888,7 @@
       "low_tps_minutes": 1
     },
     {
-      "date": "2026-07-22",
+      "date": "2026-07-29",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.1,
@@ -1899,7 +1899,7 @@
       "low_tps_minutes": 0
     },
     {
-      "date": "2026-07-23",
+      "date": "2026-07-30",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.9,
@@ -1910,7 +1910,7 @@
       "low_tps_minutes": 5
     },
     {
-      "date": "2026-07-24",
+      "date": "2026-07-31",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 10.7,
@@ -1921,7 +1921,7 @@
       "low_tps_minutes": 4
     },
     {
-      "date": "2026-07-25",
+      "date": "2026-08-01",
       "minutes": 1440,
       "tps_avg": 19.99,
       "mspt_avg": 17.3,
@@ -1932,7 +1932,7 @@
       "low_tps_minutes": 3
     },
     {
-      "date": "2026-07-26",
+      "date": "2026-08-02",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 15.3,
@@ -1943,7 +1943,7 @@
       "low_tps_minutes": 2
     },
     {
-      "date": "2026-07-27",
+      "date": "2026-08-03",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.1,
@@ -1954,7 +1954,7 @@
       "low_tps_minutes": 1
     },
     {
-      "date": "2026-07-28",
+      "date": "2026-08-04",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.9,
@@ -1965,7 +1965,7 @@
       "low_tps_minutes": 0
     },
     {
-      "date": "2026-07-29",
+      "date": "2026-08-05",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.8,
@@ -1976,7 +1976,7 @@
       "low_tps_minutes": 5
     },
     {
-      "date": "2026-07-30",
+      "date": "2026-08-06",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 9.4,
@@ -1987,7 +1987,7 @@
       "low_tps_minutes": 4
     },
     {
-      "date": "2026-07-31",
+      "date": "2026-08-07",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 11.1,
@@ -1998,7 +1998,7 @@
       "low_tps_minutes": 3
     },
     {
-      "date": "2026-08-01",
+      "date": "2026-08-08",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 17,
@@ -2009,7 +2009,7 @@
       "low_tps_minutes": 2
     },
     {
-      "date": "2026-08-02",
+      "date": "2026-08-09",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 15,
@@ -2020,7 +2020,7 @@
       "low_tps_minutes": 1
     },
     {
-      "date": "2026-08-03",
+      "date": "2026-08-10",
       "minutes": 1440,
       "tps_avg": 20,
       "mspt_avg": 8.8,
@@ -2089,49 +2089,49 @@
   ],
   "related_events": [
     {
-      "ts": "2026-08-03T21:38:14.998Z",
+      "ts": "2026-08-10T15:48:37.778Z",
       "type": "lag_incident",
       "title": "Lag spike — MSPT 118ms · TPS 8.4",
       "detail": "MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active. Last command: /chunky continue.",
       "tab_link": "issues"
     },
     {
-      "ts": "2026-08-03T21:38:14.998Z",
+      "ts": "2026-08-10T15:48:37.778Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "Can't keep up! Is the server overloaded? Running 5200ms or 104 ticks behind",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-08-03T21:01:14.998Z",
+      "ts": "2026-08-10T15:11:37.778Z",
       "type": "performance_spike",
       "title": "Sticky lag after players left",
       "detail": "MSPT stayed above threshold for 45 min after players left (peak 72 ms)",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-07-31T17:46:14.998Z",
+      "ts": "2026-08-07T11:56:37.778Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "TPS dipped to 17.2 during Saturday evening peak (6 players).",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-07-25T19:46:14.998Z",
+      "ts": "2026-08-01T13:56:37.778Z",
       "type": "performance_spike",
       "title": "Performance spike",
       "detail": "MSPT spike to 54 ms with 5 players online.",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-07-18T16:46:14.998Z",
+      "ts": "2026-07-25T10:56:37.778Z",
       "type": "tick_lag",
       "title": "Server tick lag",
       "detail": "Sustained low TPS for 8 minutes during mod farm load.",
       "tab_link": "activity"
     },
     {
-      "ts": "2026-07-07T20:46:14.998Z",
+      "ts": "2026-07-14T14:56:37.778Z",
       "type": "performance_spike",
       "title": "Performance spike",
       "detail": "Evening peak MSPT reached 48 ms with 8 players.",
@@ -2175,5 +2175,78 @@
       "chunks_at": "2026-07-26T19:40:00Z"
     },
     "method": "quiet=p95 during Schedule quiet hours; busy=p95 during busy hours; peak=max minute in window"
+  },
+  "ram_sizing": {
+    "window": "7d",
+    "gc_verdict_source": "window",
+    "sufficient_data": true,
+    "sample_minutes": 10080,
+    "span_days": 7,
+    "heap_used_gb_avg": 5.75,
+    "heap_used_gb_p95": 6.2,
+    "heap_used_gb_peak": 6.8,
+    "heap_pressure_pct_avg": 71.9,
+    "heap_pressure_pct_p95": 78.1,
+    "heap_pressure_pct_peak": 84.2,
+    "xmx_source": "live",
+    "xmx_gb": 8,
+    "host_mem_gb": 16,
+    "ram_source": "cgroup_v2",
+    "outside_headroom_gb": 8,
+    "envelope": "ok",
+    "gc_verdict": "healthy",
+    "verdict": "right_sized",
+    "ram_upgrade_blocked": false,
+    "headroom_gb": 1.2,
+    "advice": "Heap peaked around 6.8 GB of 8 GB — sizing looks about right for this window."
+  },
+  "disk_projection": {
+    "verdict": "filling",
+    "days_until_full": 9.2,
+    "fill_rate_gb_per_day": 1.4,
+    "lookback_hours": 24,
+    "sample_minutes": 980,
+    "confidence": "ok",
+    "disk_free_gb": 12.5,
+    "disk_use_pct": 78,
+    "message": "≈9 days until full at current growth",
+    "driver_hint": "world +1.2 GB in 24h"
+  },
+  "baseline_regression": {
+    "active": true,
+    "can_set_baseline": true,
+    "threshold_pct": 10,
+    "has_baseline": true,
+    "baseline_captured_at": "2026-07-31T15:56:38.471Z",
+    "baseline_source": "auto",
+    "label": "Slower than your baseline",
+    "detail": "MSPT p95 is 18% higher than your saved baseline over the last 7 days.",
+    "severity": "warn",
+    "worst_metric": "mspt_p95",
+    "worst_delta_pct": 18.2,
+    "since": "2026-08-06",
+    "deltas_pct": {
+      "mspt_p95": 18.2,
+      "tps_p50": 4.1,
+      "heap_pressure_pct_p95": 6.5
+    },
+    "baseline_metrics": {
+      "tps_p50": 19.6,
+      "tps_p95": 19.9,
+      "mspt_p50": 11.2,
+      "mspt_p95": 38.4,
+      "heap_pressure_pct_p50": 68,
+      "heap_pressure_pct_p95": 74
+    },
+    "current_metrics": {
+      "sample_minutes": 10080,
+      "tps_p50": 18.8,
+      "tps_p95": 19.4,
+      "mspt_p50": 13.1,
+      "mspt_p95": 45.3,
+      "heap_pressure_pct_p50": 72,
+      "heap_pressure_pct_p95": 79,
+      "players_peak": 8
+    }
   }
 }

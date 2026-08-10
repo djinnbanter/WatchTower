@@ -21,7 +21,10 @@ const literals = [...clientSrc.matchAll(/['"`](\/api\/[^'"`?]+)/g)].map((m) =>
 );
 const unique = [...new Set(literals)];
 const allow = new Set(DEMO_MANIFEST_ALLOWLIST.map((p) => p.split('?')[0]));
-const missing = unique.filter((p) => !bakedPaths.has(p) && !allow.has(p));
+const allowPrefixes = DEMO_MANIFEST_ALLOWLIST.filter((a) => a.endsWith('/'));
+const missing = unique.filter(
+  (p) => !bakedPaths.has(p) && !allow.has(p) && !allowPrefixes.some((pref) => p.startsWith(pref)),
+);
 
 if (missing.length) {
   console.error('check-demo-manifest FAIL — /api/ literals not baked or allowlisted:');

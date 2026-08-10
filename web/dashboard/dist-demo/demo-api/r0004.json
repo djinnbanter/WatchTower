@@ -1,1 +1,1 @@
-{"authenticated":true,"username":"sam","preview":true,"must_change_password":false,"role":"viewer","minecraft_uuid":"069a79f4-44e9-4726-a5be-fca90e38aaf5","minecraft_name":"Sam"}
+{"authenticated":true,"fully_authenticated":true,"username":"sam","preview":true,"must_change_password":false,"role":"viewer","can_write":false,"capabilities":[],"can_mutate_mods":false}
