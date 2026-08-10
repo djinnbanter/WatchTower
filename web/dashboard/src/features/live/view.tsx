@@ -48,7 +48,6 @@ import { acksMapFromResponse } from '@/features/issues/helpers';
 import { filterLiveTakeaways, openLiveIssueTakeaways } from './takeaways';
 import {
   deriveCpuPct,
-  cpuElevated,
   formatCpuCaption,
   normalizeCpuDisplaySetting,
   resolveEffectiveCpuMode,
@@ -548,7 +547,6 @@ export function PageView({ route: _route }: { route: RouteState }) {
   };
   const cpu = latest ? (deriveCpuPct(cpuDisplaySetting, cpuInputs) ?? 0) : 0;
   const cpuCaption = latest ? formatCpuCaption(cpuDisplaySetting, cpuInputs) : '';
-  const cpuWarn = cpuElevated(cpuInputs);
   const cpuMode = resolveEffectiveCpuMode(cpuDisplaySetting, cpuInputs);
   const cpuGaugeMax =
     cpuMode === 'panel'

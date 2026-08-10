@@ -13,10 +13,8 @@ import {
   applyTomlValues,
   type TomlFormField,
 } from '../src/features/mods/toml-form';
-import {
-  loadPreviewConfigsFromDir,
-  resolvePreviewConfigDir,
-} from './preview-configs-dir.mjs';
+// @ts-ignore
+import { loadPreviewConfigsFromDir, resolvePreviewConfigDir } from './preview-configs-dir.mjs';
 
 export type FixtureResponse = { status: number; contentType: string; body: string | Buffer };
 export type FixtureSession = Record<string, unknown>;
@@ -135,7 +133,7 @@ let previewConfigCache: { dir: string; files: Record<string, ModConfigEntry> } |
 function previewConfigFilesFromEnv(): Record<string, ModConfigEntry> | null {
   const dir = resolvePreviewConfigDir();
   if (!dir) return null;
-  if (previewConfigCache?.dir === dir) return previewConfigCache.files;
+  if (previewConfigCache && previewConfigCache.dir === dir) return previewConfigCache.files;
   const files = loadPreviewConfigsFromDir(dir) as Record<string, ModConfigEntry>;
   previewConfigCache = { dir, files };
   return files;
@@ -840,7 +838,9 @@ async function startPreviewModrinthJob(session: FixtureSession): Promise<Preview
     try {
       const dir = getPreviewModsDir();
       if (!dir) throw new Error('PREVIEW_MODS_DIR is not set');
+      // @ts-ignore
       const { loadPreviewModsFromDir } = await import('./preview-mods-dir.mjs');
+      // @ts-ignore
       const { runPreviewModrinthScan } = await import('./preview-modrinth-scan.mjs');
       const mods = loadPreviewModsFromDir(dir);
       if (!mods.length) throw new Error(`No jars found in ${dir}`);
@@ -848,7 +848,7 @@ async function startPreviewModrinthJob(session: FixtureSession): Promise<Preview
       job.progress = { done: 0, total: mods.length };
       const result = await runPreviewModrinthScan({
         mods,
-        onProgress: (p) => {
+        onProgress: (p: any) => {
           job.stage = String(p.stage || job.stage);
           job.stage_label = String(p.stage_label || job.stage_label);
           job.stage_detail = String(p.stage_detail || '');

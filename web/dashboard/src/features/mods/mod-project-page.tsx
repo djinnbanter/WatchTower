@@ -240,7 +240,7 @@ export function ModProjectPage({
           <ModUpdateImpactSection
             key="update"
             row={updateRow}
-            mod={mod}
+            mod={mod ?? undefined}
             showTechNames={showTechNames}
             catalogById={catalogById}
             onSelectMod={selectModById}
@@ -305,7 +305,7 @@ export function ModProjectPage({
         return (
           <ModDepsSection
             key="deps"
-            modId={mod.id}
+            modId={mod?.id ?? ''}
             factsMods={factsMods}
             onSelectMod={selectModById}
           />
