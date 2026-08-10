@@ -1,6 +1,5 @@
 'use client';
 
-import { InstrumentPlate } from '@/components/instrument-plate';
 import { MarginNote } from '@/components/type/margin-note';
 import { Reveal } from '@/components/reveal';
 import { FAQ_GROUPS } from '@/content/faq';
@@ -26,7 +25,7 @@ export function FaqLedger() {
           </Reveal>
 
           <Reveal kind="rise" delay={0.05 + gi * 0.04}>
-            <InstrumentPlate>
+            <div className="faq-plate">
               <dl className="m-0">
                 {group.items.map((item) => {
                   n += 1;
@@ -44,7 +43,7 @@ export function FaqLedger() {
                   );
                 })}
               </dl>
-            </InstrumentPlate>
+            </div>
           </Reveal>
         </section>
       ))}

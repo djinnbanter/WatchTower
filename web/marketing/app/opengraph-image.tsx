@@ -21,8 +21,8 @@ export default function OgImage() {
           fontWeight: 600,
         }}
       >
-        <div style={{ color: '#F5A524', fontSize: 28, marginBottom: 16 }}>WatchTower</div>
-        <div>Is the server okay, and what should I fix next?</div>
+        <div style={{ color: '#E8910C', fontSize: 28, marginBottom: 16 }}>WatchTower</div>
+        <div>Minecraft Ops, Sorted!</div>
       </div>
     ),
     { ...size },

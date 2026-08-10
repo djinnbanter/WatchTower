@@ -1,13 +1,2 @@
-export { DeskBorderGlow, type GlowTone } from './desk-border-glow';
-export { DeskSpotlight, type SpotTone } from './desk-spotlight';
 export { MagnetHit } from './magnet-hit';
-export { ScanText } from './scan-text';
-export { SweepBeacon } from './sweep-beacon';
-export { FaultyTerminal } from './faulty-terminal';
-export { DeskFaultyTerminal } from './desk-faulty-terminal';
-export { ShapeGrid } from './shape-grid';
-export { DeskShapeGrid } from './desk-shape-grid';
 export { SparkProvider, useSpark } from './spark-context';
-export { LanternSparkLayer, type SparkTone, type SparkParticle } from './lantern-spark';
-export { Reveal as WatchReveal } from '@/components/reveal';
-export { DeskDotGrid as LanternField } from '@/components/desk-dot-grid';

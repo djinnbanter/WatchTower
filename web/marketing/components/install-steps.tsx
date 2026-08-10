@@ -1,6 +1,5 @@
 'use client';
 
-import { InstrumentPlate } from '@/components/instrument-plate';
 import { Cta } from '@/components/cta';
 import { Reveal } from '@/components/reveal';
 import { ModrinthMark } from '@/components/brand/modrinth-mark';
@@ -25,7 +24,7 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
             <span className="install-step__rail" />
           </div>
           <div className="install-step__body">
-            <InstrumentPlate>
+            <div className="install-step__plate">
               <div className="p-5 md:p-6">
                 <h2 className="install-step__title">Get the jar</h2>
                 <p className="install-step__copy">
@@ -53,7 +52,7 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
                   </Cta>
                 </div>
               </div>
-            </InstrumentPlate>
+            </div>
           </div>
         </Reveal>
       </li>
@@ -65,7 +64,7 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
             <span className="install-step__rail" />
           </div>
           <div className="install-step__body">
-            <InstrumentPlate>
+            <div className="install-step__plate">
               <div className="p-5 md:p-6">
                 <h2 className="install-step__title">Drop it in mods/</h2>
                 <p className="install-step__copy">
@@ -83,7 +82,7 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
                   <p className="install-path__value">mods/watchtower-….jar</p>
                 </div>
               </div>
-            </InstrumentPlate>
+            </div>
           </div>
         </Reveal>
       </li>
@@ -95,7 +94,7 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
             <span className="install-step__rail" />
           </div>
           <div className="install-step__body">
-            <InstrumentPlate>
+            <div className="install-step__plate">
               <div className="p-5 md:p-6">
                 <h2 className="install-step__title">Open the dashboard</h2>
                 <p className="install-step__copy">
@@ -128,7 +127,7 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
                   </p>
                 </div>
               </div>
-            </InstrumentPlate>
+            </div>
           </div>
         </Reveal>
       </li>
@@ -139,7 +138,7 @@ export function InstallSteps({ release }: { release: ReleaseInfo }) {
 export function InstallSecureNote() {
   return (
     <Reveal delay={0.08}>
-      <InstrumentPlate className="install-secure">
+      <div className="install-secure install-step__plate">
         <div className="install-secure__inner">
           <div className="install-secure__head">
             <span className="install-secure__badge">First login</span>
@@ -160,7 +159,7 @@ export function InstallSecureNote() {
             </div>
           </dl>
         </div>
-      </InstrumentPlate>
+      </div>
     </Reveal>
   );
 }

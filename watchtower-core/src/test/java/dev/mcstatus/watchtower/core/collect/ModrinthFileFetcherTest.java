@@ -78,11 +78,35 @@ class ModrinthFileFetcherTest {
     void rejectPathEscapeFilename() {
         ModrinthFileFetcher fetcher = new ModrinthFileFetcher(url -> new byte[]{1});
         var r = fetcher.fetchAndVerify(
-                URI.create("https://example.test/a.jar"),
+                URI.create("https://cdn.modrinth.com/data/example/versions/x/file.jar"),
                 temp.resolve("staging"),
                 "../escape.jar",
                 "aa");
         assertFalse(r.ok());
         assertEquals("invalid_filename", r.errorCode());
+    }
+
+    @Test
+    void rejectNonModrinthCdnHost() {
+        ModrinthFileFetcher fetcher = new ModrinthFileFetcher(url -> new byte[]{1});
+        var r = fetcher.fetchAndVerify(
+                URI.create("https://evil.example/a.jar"),
+                temp.resolve("staging"),
+                "a.jar",
+                "aa".repeat(32));
+        assertFalse(r.ok());
+        assertEquals("invalid_url", r.errorCode());
+    }
+
+    @Test
+    void isAllowedDownloadUrlHttpsCdnOnly() {
+        assertTrue(ModrinthFileFetcher.isAllowedDownloadUrl(
+                URI.create("https://cdn.modrinth.com/data/x/versions/y/z.jar")));
+        assertFalse(ModrinthFileFetcher.isAllowedDownloadUrl(
+                URI.create("http://cdn.modrinth.com/data/x/versions/y/z.jar")));
+        assertFalse(ModrinthFileFetcher.isAllowedDownloadUrl(
+                URI.create("https://cdn.modrinth.com.evil/x.jar")));
+        assertFalse(ModrinthFileFetcher.isAllowedDownloadUrl(
+                URI.create("https://127.0.0.1/x.jar")));
     }
 }

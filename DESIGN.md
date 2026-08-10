@@ -1,414 +1,266 @@
 ---
 name: WatchTower
-description: Night Watch Desk — precise local ops UI for modded Minecraft servers
+description: Industrial Ops Print — marketing site design system (light + dark)
 colors:
-  signal-blue: "#4C8DFF"
-  signal-blue-light: "#1B4FE0"
-  signal-blue-black: "#5B9BFF"
-  lantern-amber: "#F5A524"
-  lantern-amber-light: "#B4690E"
-  accent-ink-dark: "#0A0F1C"
-  accent-ink-light: "#ffffff"
-  bg0-dark: "#0e1016"
-  bg1-dark: "#1a1f29"
-  bg2-dark: "#252b36"
-  bg3-dark: "#323946"
-  bg0-black: "#000000"
-  bg1-black: "#090b0f"
-  bg0-light: "#f2f3f5"
-  bg1-light: "#ffffff"
-  text-dark: "#f3f5f8"
-  text-mid-dark: "#b8bfcc"
-  text-low-dark: "#8a92a1"
-  text-light: "#171a20"
-  text-mid-light: "#4d5562"
-  text-low-light: "#747d8b"
-  ok: "#34d399"
-  ok-light: "#1f9d63"
-  warn: "#F5A524"
-  danger: "#f87171"
-  danger-light: "#d14343"
-  info: "#9DB2CE"
-  info-light: "#48607F"
-  ch-tps: "#4FB286"
-  ch-mspt: "#E0A458"
-  ch-players: "#7FA9D6"
-  ch-heap: "#9B8BD9"
-  ch-disk: "#5FB3C4"
-  ch-cpu: "#C77FA6"
+  ink: "#0A0A0A"
+  panel: "#121212"
+  phosphor: "#EAEAEA"
+  mute-dark: "#737373"
+  rule-dark: "#3f3f46"
+  paper: "#F4F4F0"
+  plate: "#EAE8E3"
+  carbon: "#111111"
+  mute-light: "#5c5c5c"
+  hazard: "#E61919"
+  ember-dark: "#E8910C"
+  ember-light: "#C45F08"
+  lantern-dark: "#E8910C"
+  lantern-light: "#C45F08"
 typography:
   display:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "2.5rem"
-    fontWeight: 600
-    lineHeight: 1.15
-    letterSpacing: "-0.02em"
-  headline:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 600
-    lineHeight: 1.25
-    letterSpacing: "-0.01em"
-  title:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.125rem"
-    fontWeight: 600
-    lineHeight: 1.35
-    letterSpacing: "-0.01em"
+    fontFamily: "Archivo Black, Arial Black, sans-serif"
   body:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.9375rem"
-    fontWeight: 400
-    lineHeight: 1.5
-    letterSpacing: "normal"
-  label:
-    fontFamily: "Geist Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.6875rem"
-    fontWeight: 600
-    lineHeight: 1.3
-    letterSpacing: "0.14em"
+    fontFamily: "Inter, system-ui, sans-serif"
   mono:
-    fontFamily: "JetBrains Mono Variable, ui-monospace, monospace"
-    fontSize: "0.9375rem"
-    fontWeight: 600
-    lineHeight: 1.3
-    letterSpacing: "normal"
+    fontFamily: "JetBrains Mono Variable, JetBrains Mono, ui-monospace, monospace"
 rounded:
-  sm: "2px"
-  md: "4px"
-  lg: "6px"
-spacing:
-  xs: "4px"
-  sm: "8px"
-  md: "12px"
-  lg: "16px"
-  xl: "24px"
-components:
-  button-primary:
-    backgroundColor: "{colors.signal-blue}"
-    textColor: "{colors.accent-ink-dark}"
-    rounded: "{rounded.md}"
-    padding: "8px 14px"
-  button-primary-hover:
-    backgroundColor: "{colors.signal-blue-black}"
-    textColor: "{colors.accent-ink-dark}"
-    rounded: "{rounded.md}"
-    padding: "8px 14px"
-  button-ghost:
-    backgroundColor: "transparent"
-    textColor: "{colors.text-dark}"
-    rounded: "{rounded.md}"
-    padding: "8px 12px"
-  plate-card:
-    backgroundColor: "{colors.bg1-dark}"
-    textColor: "{colors.text-dark}"
-    rounded: "{rounded.md}"
-    padding: "16px"
-  form-row:
-    backgroundColor: "{colors.bg2-dark}"
-    textColor: "{colors.text-dark}"
-    rounded: "{rounded.md}"
-    padding: "12px 16px"
-  hero-card:
-    backgroundColor: "{colors.bg1-dark}"
-    rounded: "{rounded.md}"
-  rail-nav:
-    backgroundColor: "{colors.bg1-dark}"
-    textColor: "{colors.text-mid-dark}"
-    rounded: "{rounded.sm}"
-    padding: "8px 12px"
-  rail-nav-active:
-    backgroundColor: "{colors.signal-blue}"
-    textColor: "{colors.accent-ink-dark}"
-    rounded: "{rounded.sm}"
-    padding: "8px 12px"
-  metric-readout:
-    backgroundColor: "transparent"
-    textColor: "{colors.text-dark}"
-    typography: "{typography.mono}"
-    rounded: "{rounded.sm}"
-    padding: "0"
-  vital-tile:
-    backgroundColor: "transparent"
-    textColor: "{colors.text-dark}"
-    typography: "{typography.mono}"
-    rounded: "{rounded.sm}"
-    padding: "0"
-  chip-status:
-    backgroundColor: "{colors.bg2-dark}"
-    textColor: "{colors.text-mid-dark}"
-    rounded: "{rounded.sm}"
-    padding: "2px 8px"
+  all: "0"
 ---
 
-# Design System: WatchTower
+# Design System: WatchTower (Marketing)
 
 ## How to use this document
 
-This file is the **canonical design system** for the WatchTower ops dashboard (`web/dashboard`). Agents and humans treat it as law for dashboard UI.
+This file is the **canonical design system** for the WatchTower **marketing site** (`web/marketing`). Agents and humans treat it as law for marketing UI, tokens, and motion on public pages.
 
-- Live CSS tokens: `web/dashboard/src/index.css`
-- Shared React primitives: `web/dashboard/src/ui/patterns/`
-- Consistency regression: `npm run test:ui-consistency` in `web/dashboard`
-- Consistency pass notes: `docs/superpowers/specs/2026-08-02-dashboard-ui-consistency-design.md`
+- Live CSS tokens and utility classes: `web/marketing/styles/globals.css`
+- Shared chrome: `web/marketing/components/site-header.tsx`, `site-footer.tsx`, `cta.tsx`, `theme-toggle.tsx`
+- Board primitives: `web/marketing/components/board/*`
+- Home board: `web/marketing/components/home/*`
+- Inner routes: `web/marketing/app/features`, `how-it-works`, `install`, `faq`, `demo`
 
-Generic “premium SaaS / agency” skills may inform **craft** (focus, motion performance, a11y) only when they do **not** contradict this document. Do not invent a parallel aesthetic.
+**Dashboard (`web/dashboard`) is not governed by this file.** The embedded ops UI still follows **Night Watch Desk** (Signal Blue, Geist, tonal plates). See archived guidance: `docs/design/night-watch-desk-dashboard.md`.
+
+Generic “premium SaaS / agency” skills may inform craft (focus, a11y, performance) only when they do **not** contradict this document.
 
 ## Overview
 
-**Creative North Star: "Night Watch Desk"**
+**Creative north star: Industrial Ops Print**
 
-WatchTower’s dashboard is a night-shift ops desk: precise instruments under lantern warmth, Signal Blue for control chrome, and quiet tonal plates instead of loud SaaS glass. The operator arrives under stress (lag, crash, disk pressure); every surface must answer “is it okay?” and “what next?” before it tries to look impressive.
+WatchTower’s marketing site reads like a Swiss-industrial board pack: ruled compartments, zero radius, ember orange for action and brand, hazard red only for true danger. Light mode is print on paper; dark mode is a tactical desk. Public routes share one board frame; Home is a conversion document (desk in the first viewport), not a Shift Log tour.
 
-Personality is **precise** — dense enough to triage, never cluttered for decoration. Form language mixes **tight instruments** (sharp 2–6px corners, mono metrics, high scanability) with **quiet glass** (tonal bg0→bg3 layering, soft inset hairlines, restrained hero glow keyed to status — not periwinkle mush or sparkle spam). Brand mark is the lantern / stone tower; display spelling is **WatchTower**.
+Personality is **structural** — uppercase display titles, mono stamps and nav, sentence-case body copy. No glass cards, CRT scanlines, purple periwinkle, or decorative glow orbs. Display spelling in chrome: **WatchTower**.
 
-**Key Characteristics:**
-- Operate-mode density: list+detail inboxes, mission band, Live charts
-- Signal Blue accent + Lantern Amber brand warmth (lantern ≠ status warn when both appear — warn and lantern share amber intentionally; use lantern for brand, warn for severity copy)
-- Status colours (ok / warn / danger) never share hues with instrument channel colours (TPS / MSPT / heap / …)
-- Three themes: light, dark (default ops), black (OLED)
-- Motion respects `prefers-reduced-motion`; glow intensity ~0.55 on heroes
-- Ruthless plate/hero parity across tabs — one machined instrument cluster, not a collage of page-local styles
+**Key characteristics:**
+- Two themes: light (Swiss print) and dark (tactical desk) — never mixed on one page
+- Ember orange primary accent for CTAs and wordmark (`--wt-accent` / `--wt-lantern`); hazard red reserved for danger
+- `border-radius: 0` everywhere (global enforcement in `globals.css`)
+- Blueprint grid: 1px rules and `gap: 1px` compartment separation preferred over soft shadows
+- Home board document: 00 Hero (promise + CTAs → What is WatchTower → live gauges → non-negotiable) → 02 Issues → 03 Crashes → 04 Overview + Insights → 05 Close
+- Motion: short opacity/translate enters only; honor `prefers-reduced-motion`
 
-## Creative north star
+## Scope
 
-One aesthetic risk worth taking: **identical plate + hero chrome** across every rail tab and operator chrome surface, so the product feels like one desk. Signature element: `HeroCard` / mission vitals. Everything else stays quiet.
+| Surface | System | Document |
+|---------|--------|----------|
+| `web/marketing` | Industrial Ops Print | **This file** |
+| `web/dashboard` | Night Watch Desk | `docs/design/night-watch-desk-dashboard.md` |
+| `web/dashboard-archive`, `web/dr-viewer` | Legacy / out of band | Separate briefs |
+
+Marketing industrial remake **shipped** in `web/marketing` (2026-08-07). Dashboard remake is a future brief.
 
 ## Color system
 
-A cool instrument neutrals stack, one scarce Signal Blue control accent, Lantern Amber for brand warmth, and a strict split between **status** and **channel** hues.
+Semantic names map to CSS custom properties in `globals.css`. Hazard and lantern roles are shared across themes; neutrals swap per mode.
 
-### Primary
-- **Signal Blue** (`#4C8DFF` dark / `#1B4FE0` light / `#5B9BFF` black): active rail, primary CTAs, focus/selection wash, soft accent spotlight. Soft fill via `--wt-accent-soft`. Ink on accent fills uses `--wt-accent-ink` (near-black on dark themes, white on light).
+### Dark (tactical desk)
 
-### Secondary
-- **Lantern Amber** (`#F5A524` dark/black / `#B4690E` light): logo warmth and brand moments; also maps to `--wt-warn` for severity — prefer lantern for identity chrome, warn semantics for Issues/Crashes/Overview severity.
+| Token | Hex | CSS var (typical) | Role |
+|-------|-----|-------------------|------|
+| `ink` | `#0A0A0A` | `--wt-bg0` | Page background |
+| `panel` | `#121212` | `--wt-bg1` | Compartment / plate fill |
+| `phosphor` | `#EAEAEA` | `--wt-text` | Primary text |
+| `mute` | `#737373` | `--wt-text-low` | Meta / secondary |
+| `rule` | `#3f3f46` | `--wt-line` | 1px grid gaps / borders |
+| `ember` / `lantern` | `#E8910C` | `--wt-accent`, `--wt-lantern` | Primary accent — CTAs, wordmark, stamps |
 
-### Tertiary
-- Omit as a third brand accent. **Info steel** (`#9DB2CE` / `#48607F` light) is a quiet informational tone, not a competing brand colour.
+### Light (Swiss industrial print)
 
-### Neutral
-- **Page / card / well / raised** — dark: bg0 `#0e1016`, bg1 `#1a1f29`, bg2 `#252b36`, bg3 `#323946`; black: bg0 `#000000`, cards barely lifted (`#090b0f`…); light: bg0 `#f2f3f5`, bg1 `#ffffff`, …
-- **Text** — dark: `#f3f5f8` / mid `#b8bfcc` / low `#8a92a1`; light: `#171a20` / mid `#4d5562` / low `#747d8b`
-- **Lines** — translucent hairlines (`--wt-line`, `--wt-line-strong`), not heavy rules
+| Token | Hex | CSS var (typical) | Role |
+|-------|-----|-------------------|------|
+| `paper` | `#F4F4F0` | `--wt-bg0` | Page background |
+| `plate` | `#EAE8E3` | `--wt-bg1` | Compartment / plate fill |
+| `carbon` | `#111111` | `--wt-text` | Primary text |
+| `mute` | `#5c5c5c` | `--wt-text-mid`, `--wt-text-low` | Meta / secondary |
+| `rule` | `#111111` (hairline) | `--wt-line` | Borders via grid |
+| `ember` / `lantern` | `#C45F08` | `--wt-accent`, `--wt-lantern` | Primary accent on paper |
 
-### Status & channels
-- **Status:** ok `#34d399` (light `#1f9d63`), warn = lantern amber family, danger `#f87171` (light `#d14343`)
-- **Channels (never equal status hex):** TPS, MSPT, players, heap, disk, CPU — CSS `--wt-ch-*`
+### Status (marketing readouts)
 
-### Named Rules
-**The Channel ≠ Status Rule.** Instrument channel colours must not reuse ok/warn/danger hexes.
+| Role | Dark | Light | Notes |
+|------|------|-------|-------|
+| OK | `#34d399` | `#1f9d63` | `--wt-ok` |
+| Warn | `#e8910c` | `#c45f08` | Ember family |
+| Danger | `#e61919` | `#e61919` | Hazard red — severity only |
 
-**The Scarce Accent Rule.** Signal Blue is control chrome (≤~10% of a screen’s colour mass).
+Channel colours (`--wt-ch-*`) exist for Live chart fixtures; keep desaturated / industrial — no purple heap glow.
 
-**The No AI-SaaS Chrome Rule.** No periwinkle-on-glass clichés, sparkle-as-brand, or decorative purple/indigo defaults.
+### Named rules
+
+**The Ember CTA Rule.** Primary buttons, conversion fills, and wordmark warmth share ember orange (`--wt-accent` / `--wt-lantern`). Bold industrial orange — not neon, not hazard red.
+
+**The Hazard Danger Rule.** Hazard red (`#E61919`) is reserved for true danger / destructive severity — not primary marketing chrome.
+
+**The No Signal Blue Rule.** Marketing does not use dashboard Signal Blue (`#4C8DFF` / `#1B4FE0`). Dashboard accent lives in the archive doc.
 
 ## Typography
 
-**Display / UI Font:** Geist Variable  
-**Body Font:** Geist Variable  
-**Label/Mono Font:** JetBrains Mono Variable for metrics, IDs, tabular readouts
+| Role | Face | CSS | Usage |
+|------|------|-----|-------|
+| Display | Archivo Black | `--font-display`, `.wt-display`, `.wt-hero`, `.wt-entry` | Structural titles; uppercase; tight tracking (`-0.03em`–`-0.06em`); fluid `clamp` for heroes |
+| Body | Inter | `--font-sans`, body default | Sentence-case prose, `.wt-lead` |
+| Data / meta | JetBrains Mono | `--font-mono`, `.wt-meta`, `.wt-label` | Nav labels, ports, versions, step IDs, stamps — uppercase, tracked |
 
-### Hierarchy (CSS vars)
-| Step | Token | Size | Use |
-|---|---|---|---|
-| Display | `--wt-fs-display` | 2.5rem | Rare page-scale titles |
-| Headline | `--wt-fs-xl` | 1.5rem | Section / mission titles |
-| Title | `--wt-fs-lg` | 1.125rem | Card and section heads |
-| Body | `--wt-fs-md` | 0.9375rem | Primary copy |
-| Small | `--wt-fs-sm` | 0.8125rem | Secondary hints |
-| XS / Label | `--wt-fs-xs` | 0.6875rem | Chips; uppercase metric captions |
+### Fluid scale (marketing)
 
-**The Mono-for-Numbers Rule.** Live vitals, gauges, and KPI values use JetBrains Mono + `tabular-nums`. Prose stays Geist.
+| Class / token | Use |
+|---------------|-----|
+| `--wt-fs-hero` | Hero headlines |
+| `--wt-fs-entry` | Board section / compartment titles |
+| `--wt-fs-display-sm` | Section display |
+| `--wt-fs-numeral` | Large mono readouts |
+| `--wt-fs-lead` | Lead paragraphs |
 
-**Voice:** plain-English **sentence case** in UI. Spell the product **WatchTower**.
+**Voice:** plain-English sentence case in body copy. Spell **WatchTower** in chrome.
 
-## Spacing & density
+## Grid, shape & plates
 
-Prefer `8 / 12 / 16 / 24` (`spacing.sm` → `xl`). Operate-mode density — not marketing `py-24` whitespace. Section stacks commonly `space-y-3`. Plate internal padding ~16px; form rows ~12×16.
+| Rule | Value |
+|------|-------|
+| Border radius | `0` — global `border-radius: 0 !important` on `*` |
+| Depth | Tonal `bg0` → `bg1` steps; `--wt-shadow: none` |
+| Separation | 1px `--wt-line` rules; grid `gap: 1px` where compartments meet |
+| Plates | `panel` / `plate` fills; no card shadow stacks |
 
-## Shape & radius
+### Tour bands (legacy utility)
 
-| Token | Value | Use |
-|---|---|---|
-| `--radius-wt-sm` | 2px | Chips, rail items, tight controls |
-| `--radius-wt` | 4px | Default plates, buttons, inputs, HeroCard |
-| `--radius-wt-lg` | 6px | Larger shells only |
+`.wt-tour-band` — full-bleed tonal bands (`ink`, `plate`, `ember`) with top rule and optional `.wt-tour-band__lantern` accent line. Prefer `BoardSection` / ruled plates on public routes.
 
-**The Tight Corner Rule.** New cards and controls default to 4px. Do not introduce `rounded-xl` / `rounded-2xl` / rem-soup (`.85rem`, `14px`) without an explicit exception below.
+### Graticule
 
-Banlist test: `npm run test:ui-consistency` forbids `rounded-xl` / `rounded-2xl` on in-scope surfaces (Visuals/lab allowed).
+`.wt-graticule` — optional blueprint grid (transparent lines in current tokens; decorative grid stripped from hero chrome).
 
-## Elevation, plates & shadows
+## Site chrome
 
-**Tonal layering first.** Depth comes from bg0 (page) → bg1 (rail/cards) → bg2/bg3 (wells).
+### Header
 
-### Shared plate recipe
-`.wt-plate` in `index.css`:
-- `border: 1px solid var(--wt-line)`
-- `border-radius: var(--radius-wt)`
-- `background: color-mix(in srgb, var(--wt-bg1) 92%, transparent)`
-- `box-shadow: var(--wt-shadow)`
+- Flat `ink` / `paper` bar, 1px bottom rule
+- Mono nav: existing labels in industrial casing (`FEATURES`, `HOW`, `INSTALL`, `FAQ`)
+- `Wordmark` — lantern mark + **WatchTower** type
+- `ThemeToggle` — hard rectangular control (not a pill)
 
-### Form row recipe
-`.wt-form-row` — Settings/Wizard shells: hairline + `--radius-wt` + bg2 mix + 12×16 padding.
+### Footer
 
-### Shadow vocabulary
-- **Plate lift** (`var(--wt-shadow)`): one inset hairline + one soft drop
-- **Black theme:** slightly deeper drop so OLED cards separate from pure black
-- **Hero glow:** `HeroCard` / BorderGlow only (~0.55 intensity), status-keyed
-- **Specular CTA:** multi-layer shadow allowed on `.wt-specular-cta` primary CTAs only
+- Ruled link grid + legal
+- Mono revision / URL line
 
-**The Flat-at-Rest Rule.** No multi-layer marketing shadows on ordinary cards. No `--wt-shadow-lg` forks on resting chrome.
+### CTAs (`components/cta.tsx`)
 
-## Themes & accents
+- **Primary:** ember-filled rectangle, `var(--wt-accent)` / `var(--wt-accent-ink)`, 1px border, no radius
+- **Ghost:** transparent fill, 1–2px outline in phosphor/carbon (`--wt-line` / text colour)
 
-### Themes
-Cycle: light → dark → black (footer / appearance controls). Default ops theme is **dark**. System mode resolves to light or dark only (never black).
+### Focus
 
-### Accent presets
-`web/dashboard/src/app/accents.ts`: signal (default), amber, teal, violet, rose, green, coral, slate. Accent remaps `--wt-accent` / soft / ink — do not invent a second Skin (Aero/Sass).
+`:focus-visible` — 2px hazard outline + soft hazard wash (`--wt-accent-soft`).
+
+## Homepage (board document)
+
+Conversion board — not a Shift Log tour. Section map:
+
+1. **00 Hero** — promise + START HERE → **What is WatchTower** → live gauges → non-negotiable strip  
+2. **02 Issues** — short lead + issues inbox mock  
+3. **03 Crashes** — short lead + crash review mock  
+4. **04 Overview + Insights** — grade readout + schedule chart  
+5. **05 Close** — try the demo + Modrinth + GPL footnote  
+
+Shared shell: `BoardFrame` / `BoardPageHeader` / `BoardSection`. Decorative desk glow, faulty terminal, shape-grid, and MagicBento wrappers stay removed.
+
+## Inner pages
+
+| Route | Pattern |
+|-------|---------|
+| `/features` | Board frame + capability catalog (interlocking peeks; no MagicBento) |
+| `/how-it-works` | Board frame + compartmentalized pipeline; flat connectors |
+| `/install` | Board frame + numbered procedure blocks; hazard-bordered login warning |
+| `/faq` | Board frame + ruled ledger rows |
+| `/demo` | Board interstitial; notes ledger + Demo / Modrinth |
+
+Copy authority: `web/marketing/content/*` unless a typo blocks layout.
 
 ## Motion
 
-- Animate `transform` / `opacity` only (compositor-friendly)
-- Never `transition: all` / `transition-all` (banlist enforced)
-- List transition properties explicitly
-- Honor `prefers-reduced-motion` for enters, glow, shimmer
-- No new `backdrop-blur` on scrolling page content (fixed/sticky chrome only if already present)
-- Page enter helpers: `PageEnter`, `FadeIn`, `Stagger` in `web/dashboard/src/ui/motion/`
+### Removed (do not re-import)
 
-## Accessibility & interaction craft
+- MagicBento + `components/react-bits/`
+- Faulty terminal / `desk-faulty-terminal`
+- Border glow / `desk-border-glow`
+- Shape grid / `desk-shape-grid`
+- Desk spotlight ambient (decorative)
+- Sweep/beacon chrome
+- `scan-text` decorative effects
+- GSAP-driven magnetism / particle chrome
 
-- Interactive controls: visible `:focus-visible` ring (accent-soft). Never bare `outline-none` without a replacement.
-- Icon-only buttons: `aria-label`. Decorative icons: `aria-hidden`.
-- Buttons/links: hover feedback; `cursor-pointer` on clickable chrome we ship.
-- Loading: disable primary actions while pending; labels use `…` not `...`.
-- Forms: real `<label>`s; auth `autoComplete` / `name`; `spellCheck={false}` on usernames/codes.
-- Modals: `overscroll-behavior: contain` on scroll bodies (Support pack modal).
-- Flex text rows: `min-w-0` + truncate/break for long mod names/paths.
-- Light theme: keep mid/low text readable; borders must remain visible (not invisible glass).
+### Kept
 
-## Shared primitives (code map)
+- `motion/react` — short opacity + `translateY` enters on sections and hero readouts
+- `Reveal` (`components/reveal.tsx`)
+- `MagnetHit`, `SparkProvider` / `lantern-spark` — minimal interaction accents where still wired
+- `DeskDotGrid` — low-opacity blueprint ambient behind the home hero promise column only
+- `useReducedMotion` / `prefers-reduced-motion` global dampening in `globals.css`
+- Live chart animation — correctness-first; calm over flashy
 
-| Primitive | Where | Role |
-|---|---|---|
-| `.wt-plate` | `src/index.css` | Resting card chrome |
-| `.wt-form-row` | `src/index.css` | Settings/Wizard form shells |
-| `.wt-specular-cta` | `src/index.css` | Specular button chrome |
-| `HeroCard` | `ui/patterns/hero-card.tsx` | Status-keyed mission hero wrapper |
-| `HeroTabNav` | `ui/patterns/hero-tab-nav.tsx` | Mission/inbox section tabs |
-| `PillNav` | `components/pill-nav/` | Insights segment control |
-| `VitalTile` | `ui/patterns/index.tsx` | Shared metric tile (null → —, optional `text`) |
-| `MetricReadout` | `ui/patterns/index.tsx` | Mono metric value + label |
-| `Button` / `SpecularCtaButton` | `ui/patterns/` | Default/primary/ghost actions |
-| `EmptyState` / `ErrorState` | `ui/patterns/index.tsx` | Empty and error plates |
-| `StatusPill` | `ui/patterns/index.tsx` | Tight severity/status chip (`--radius-wt-sm`) |
-| `Section` | `ui/patterns/index.tsx` | Titled section stack |
-| `QueueRow` | `ui/patterns/index.tsx` | Inbox list row |
+Animate `transform` and `opacity` only. No `transition: all`.
 
-Do not redefine local `VitalTile` helpers in feature views. Leave non-VitalTile KPI widgets (e.g. Backups/Activity `Kpi`) as-is unless extracting later with intent.
+## Anti-patterns (reject list)
 
-## Page patterns
-
-### Mission hero
-Outer: `HeroCard` (tone + ~0.55 glow). Inner: `wt-hero-shell` + optional `HeroWatermark` + title/StatusPill + hint + vitals/`VitalTile` or page KPIs + optional `HeroTabNav`.
-
-Used on: Overview, Live, Issues, Crashes, Mods, Spark, Startup, Session, Backups, Activity, Sources. Insights section banners: `HeroCard` if status-toned, else `.wt-plate`.
-
-### List + detail inboxes
-Issues / Crashes / Mods: flat inset rows, Fix | Details panes, severity bands — not thematic colour circus.
-
-### Insights
-Keep `PillNav` (Overview · Schedule · Load · … · World · Storage · Digest). Do not force `HeroTabNav`.
-
-### Settings / Wizard
-Left panel list (Settings IA) + `.wt-form-row` shells. No soft SaaS radii.
-
-### Operator chrome
-Boot, auth gate, wizard, support-pack modal — same radius/button/plate rules. Auth: labels, autocomplete, focus-visible.
-
-## Navigation patterns
-
-- **Rail:** 220px, logo + **WatchTower** wordmark, groups Monitor / Triage / Ops / System, solid Signal Blue active item
-- **HeroTabNav:** Issues, Crashes, Mods, Spark (and similar mission tabs)
-- **PillNav:** Insights only (segment control on tonal well)
-- **Settings:** left panel list
-
-## Forms & settings rows
-
-Use `.wt-form-row` or equivalent token classes. Inputs: `--radius-wt`, hairline border, bg1/bg2, focus-visible accent ring. Pending submits disabled until request completes.
-
-## Empty, error & loading
-
-Prefer shared `EmptyState` / `ErrorState`. Copy: what happened + what to do next (active voice, no apology fluff). Skeletons: `animate-pulse` + `rounded-[var(--radius-wt)]` (never `rounded-xl`).
-
-## Copy & voice
-
-- Sentence case in UI chrome
-- Spell **WatchTower**
-- Loading / progress ends with `…`
-- Numerals for counts
-- Specific action labels (“Save changes”, “Scan now”)
-- Advisory product constraint: do not imply auto-restart, jar download, or silent world mutation
-
-## Allowed exceptions
-
-| Exception | Allowed where |
-|---|---|
-| `999px` / full round | Insights `PillNav`, scroll thumbs, true toggles — **not** cards or primary CTAs |
-| `StatusPill` radius | `--radius-wt-sm` (tight chip, not full pill) |
-| Hero BorderGlow | `HeroCard` only, ~0.55 intensity |
-| Specular multi-shadow | `.wt-specular-cta` primary CTAs |
-| Visuals/lab | Out of product rail; banlist allowlisted |
-
-## Reject list (do not ship)
-
-- Double-Bezel / `rounded-[2rem]` squircles, floating island nav, full-pill primary CTAs
-- Ethereal glass: purple/indigo orbs, heavy blur on scrolling cards, frosted marketing plates
-- Marketing macro-whitespace (`py-24`–`py-40` as default section padding)
-- Soft cream-serif / broadsheet “AI default” looks
-- New display fonts or icon-set swaps
-- `rounded-xl` / `rounded-2xl` on plates/forms/buttons/skeletons
-- `transition: all` / `transition-all`
-- Multi-layer resting-card shadows / `--wt-shadow-lg` forks
-- Channel colours used as status (or the reverse)
+- Glass / frosted plates, `backdrop-blur` on scrolling marketing sections
+- CRT scanlines, faulty-terminal text effects
+- Purple / periwinkle / indigo “AI SaaS” accents
+- Soft multi-layer card shadows and glow orbs
+- Rounded pills on primary CTAs or cards
+- Signal Blue or Geist as marketing brand accents
+- Decorative motion that competes with Live chart correctness
 
 ## Do's and Don'ts
 
 ### Do
-- Keep Signal Blue scarce and purposeful
-- Separate channel colours from status colours
-- Use Geist for UI copy and JetBrains Mono for comparable numbers
-- Prefer tonal bg steps + hairlines over heavy glass blur stacks
-- Respect `prefers-reduced-motion`
+
+- Use ember orange for primary actions and wordmark
+- Keep hazard red for danger severity only
+- Keep radius at zero; separate compartments with rules
+- Use Archivo Black for display, Inter for prose, JetBrains Mono for meta
+- Honor `prefers-reduced-motion`
 - Spell **WatchTower** in chrome you touch
-- Prefer shared patterns (`HeroCard`, `VitalTile`, `Button`, `.wt-plate`, `.wt-form-row`)
-- Run `npm run test:ui-consistency` after chrome edits
+- Point dashboard work at `docs/design/night-watch-desk-dashboard.md`
 
 ### Don't
-- Reintroduce periwinkle / purple-indigo “AI dashboard” palettes
-- Use large pill radii or multi-layer drop shadows as default card chrome
-- Put decorative gradients or sparkle text on triage surfaces
-- Invent a second Skin; themes are light / dark / black only
-- Imply the UI can restart the server, download jars, or auto-clean the world
-- Fight this document with generic high-end SaaS playbooks
+
+- Mix light and dark token sets on one page
+- Reintroduce MagicBento, border-glow, or desk spotlight chrome
+- Use hazard red as a primary CTA fill (ember is the CTA)
+- Apply Night Watch Desk Signal Blue / Geist rules to marketing without an explicit brief
+- Invent Cloud/Panel homepage narrative not in `PRODUCT.md`
 
 ## Repo file map
 
 | Path | Role |
-|---|---|
-| `DESIGN.md` | This system (canonical) |
+|------|------|
+| `DESIGN.md` | Marketing system (this file) |
+| `docs/design/night-watch-desk-dashboard.md` | Archived dashboard / Night Watch Desk |
 | `PRODUCT.md` | Product voice & capabilities |
-| `web/dashboard/src/index.css` | Tokens, `.wt-plate`, `.wt-form-row`, specular CTAs |
-| `web/dashboard/src/ui/patterns/` | Shared React primitives |
-| `web/dashboard/src/ui/motion/` | Enter / reduced-motion helpers |
-| `web/dashboard/src/app/theme.tsx` | Theme provider |
-| `web/dashboard/src/app/accents.ts` | Accent presets |
-| `web/dashboard/src/app/shell.tsx` + `shell.css` | App chrome / rail |
-| `web/dashboard/src/features/*` | Page views + feature CSS |
-| `web/dashboard/scripts/ui-consistency-banlist.test.ts` | Radii + transition-all regression |
-| `docs/superpowers/specs/2026-08-02-dashboard-ui-consistency-design.md` | Consistency pass design notes |
-| `docs/superpowers/plans/2026-08-02-dashboard-ui-consistency.md` | Consistency implementation plan |
-
-Marketing (`web/marketing`), archive, and DR viewer are **out of scope** for this dashboard system unless a separate brief says otherwise.
+| `web/marketing/styles/globals.css` | Tokens, typography utilities, motion dampening |
+| `web/marketing/components/cta.tsx` | Primary / ghost CTAs |
+| `web/marketing/components/board/*` | Shared board frame / page header / section |
+| `web/marketing/components/home/*` | Home conversion board compartments |
+| `web/marketing/components/motion/` | Residual motion helpers (`magnet-hit`, `spark-context`, `lantern-spark`) |
+| `docs/superpowers/specs/2026-08-07-marketing-board-layout-rebuild-design.md` | Board layout rebuild spec |

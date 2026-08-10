@@ -9,6 +9,7 @@ import dev.mcstatus.watchtower.DashboardAuthServices;
 import dev.mcstatus.watchtower.ActivityGapBackfillScheduler;
 import dev.mcstatus.watchtower.ExternalKillPostmortemScheduler;
 import dev.mcstatus.watchtower.ModsDeepJobScheduler;
+import dev.mcstatus.watchtower.ModJarMetadataCacheScheduler;
 import dev.mcstatus.watchtower.DashboardHttpServer;
 import dev.mcstatus.watchtower.HostCpuProbe;
 import dev.mcstatus.watchtower.LiveMetricsService;
@@ -100,6 +101,7 @@ public final class WatchtowerBootstrap {
         HangWatchdog.start(ctx);
         ModsDeepJobScheduler.startBootSeed(ctx);
         ActivityGapBackfillScheduler.startBootCatchup(ctx);
+        ModJarMetadataCacheScheduler.startBootWarm(ctx);
         SCHEDULER.sampleNow(ctx);
         TickMetrics.setPhase("ticking");
         try {
@@ -154,6 +156,7 @@ public final class WatchtowerBootstrap {
         ExternalKillPostmortemScheduler.stop();
         HangWatchdog.stop();
         ModsDeepJobScheduler.stop();
+        ModJarMetadataCacheScheduler.stop();
         ActivityGapBackfillScheduler.stop();
         DashboardAuthServices.shutdown();
         if (ctx != null) {

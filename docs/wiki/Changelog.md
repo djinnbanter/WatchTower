@@ -8,6 +8,7 @@ Full downloads: [GitHub Releases](https://github.com/djinnbanter/WatchTower/rele
 
 ## Unreleased
 
+- **Large-pack lag capture no longer freezes the server (#5)** — WatchTower reads mod jar metadata in the background instead of on the live tick, so recording a lag spike will not trip Minecraft’s hang watchdog on big packs
 - **Issues stay current on lag** — when WatchTower auto-captures or clears a lag spike, the Issues list refreshes right away; Active no longer shows the same lag twice from peek and the live ledger; Live history minute rollups flush cleanly when the server stops
 - **Safer support packs** — hang dumps and snapshots are scrubbed before zip; the quality checklist really checks redaction; hang dump only shows green when it can fit in the pack
 - **Mod update jar hints** — when you swap or quarantine a mod jar, WatchTower only uses a live jar hint if it belongs to that mod (a mismatched hint is ignored so the wrong file is not touched)
@@ -27,6 +28,13 @@ Full downloads: [GitHub Releases](https://github.com/djinnbanter/WatchTower/rele
 - **Discovery after a mid-audit stop** — if the server stops while first discovery / deep audit is running, WatchTower clears the busy lock so the next start is not stuck on "already running"
 - **Settings take effect for log / backup polls** — saving Always-On ops-log interval or backup folders refreshes those schedules without a full restart
 - **Cleanup waits for test restore** — Cleanup stays disabled (and the API refuses) while a backup test restore is still running
+- **Safer mod downloads** — jar fetches only accept `https://cdn.modrinth.com` (no redirects), and the Modrinth version must belong to the project you asked for
+- **Safer jar hints** — ops-cache jar names are only reused when they belong to that mod
+- **Login lockout** — rate limits use the real remote address (spoofed `X-Forwarded-For` no longer bypasses them)
+- **Password / 2FA sessions** — changing password or turning on 2FA ends other signed-in sessions
+- **Pending default password** — WatchTower never overwrites an existing password hash back to the documented default
+- **Folder picker** — `/api/fs/list` only browses under the same roots the backup picker shows
+- **Support pack secrets** — mid-line and JSON `"password":"…"` values are scrubbed; Spark `.sparkprofile` files are named in the pack, not attached raw
 
 ## [1.2.0-beta.1] — 2026-08-02
 

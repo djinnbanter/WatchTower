@@ -74,6 +74,14 @@ public final class FsBrowseService {
     }
 
     public static JsonObject listDirectory(String pathStr) throws IOException {
+        return listDirectory(pathStr, null);
+    }
+
+    /**
+     * List a directory. When {@code allowedRootPaths} is non-null/non-empty, the resolved path
+     * must equal or sit under one of those roots (from {@link #listRoots}).
+     */
+    public static JsonObject listDirectory(String pathStr, Iterable<String> allowedRootPaths) throws IOException {
         if (pathStr == null || pathStr.isBlank()) {
             throw new IOException("Path required");
         }
@@ -90,6 +98,29 @@ public final class FsBrowseService {
             realDir = dir.toRealPath();
         } catch (IOException e) {
             realDir = dir.toAbsolutePath().normalize();
+        }
+
+        if (allowedRootPaths != null) {
+            boolean allowed = false;
+            for (String rootStr : allowedRootPaths) {
+                if (rootStr == null || rootStr.isBlank()) {
+                    continue;
+                }
+                Path root = Path.of(rootStr);
+                Path realRoot;
+                try {
+                    realRoot = root.toRealPath();
+                } catch (IOException e) {
+                    realRoot = root.toAbsolutePath().normalize();
+                }
+                if (realDir.equals(realRoot) || realDir.startsWith(realRoot)) {
+                    allowed = true;
+                    break;
+                }
+            }
+            if (!allowed) {
+                throw new IOException("Path outside allowed browse roots");
+            }
         }
 
         JsonObject out = new JsonObject();
@@ -128,6 +159,24 @@ public final class FsBrowseService {
         out.add("entries", arr);
         out.addProperty("truncated", truncated);
         out.addProperty("archive_count", countArchivesInDir(realDir));
+        return out;
+    }
+
+    /** Collect absolute root paths from a {@link #listRoots} payload. */
+    public static List<String> rootPathsFrom(JsonObject rootsPayload) {
+        List<String> out = new ArrayList<>();
+        if (rootsPayload == null || !rootsPayload.has("roots") || !rootsPayload.get("roots").isJsonArray()) {
+            return out;
+        }
+        for (var el : rootsPayload.getAsJsonArray("roots")) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject row = el.getAsJsonObject();
+            if (row.has("path") && row.get("path").isJsonPrimitive()) {
+                out.add(row.get("path").getAsString());
+            }
+        }
         return out;
     }
 

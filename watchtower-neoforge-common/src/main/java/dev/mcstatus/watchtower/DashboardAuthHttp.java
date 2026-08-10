@@ -212,6 +212,8 @@ public final class DashboardAuthHttp {
 
         store.setPassword(session.accountId(), newPassword.toCharArray());
         DashboardAudit.record("password_changed", session, null, null, clientIp(ex));
+        // Kill other sessions so a stolen cookie does not survive password rotation
+        DashboardAuthServices.sessions().revokeOtherSessions(session.accountId(), session.sessionId());
         SessionManager.SessionState updated = DashboardAuthServices.sessions()
                 .markAccountSetup(session.sessionId(), resolvedUsername);
         JsonObject out = new JsonObject();
@@ -287,6 +289,9 @@ public final class DashboardAuthHttp {
             RecoveryCodeService.GeneratedCodes codes =
                     DashboardAuthServices.store().confirmTotpSetup(session.accountId(), code);
             DashboardAudit.record("totp_enabled", session, null, null, clientIp(ex));
+            // Pre-2FA sessions elsewhere must not stay fully privileged
+            DashboardAuthServices.sessions().revokeOtherSessions(session.accountId(), session.sessionId());
+            DashboardAuthServices.sessions().markTotpEnabledVerified(session.sessionId());
             JsonObject out = new JsonObject();
             out.addProperty("ok", true);
             JsonArray plain = new JsonArray();
@@ -955,11 +960,8 @@ public final class DashboardAuthHttp {
     }
 
     public static String clientIp(HttpExchange ex) {
-        String forwarded = ex.getRequestHeaders().getFirst("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            int comma = forwarded.indexOf(',');
-            return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
-        }
+        // Do not trust client-supplied X-Forwarded-For for rate limits / audit —
+        // spoofing would bypass login lockout when 8787 is reachable without a stripping proxy.
         if (ex.getRemoteAddress() != null && ex.getRemoteAddress().getAddress() != null) {
             return ex.getRemoteAddress().getAddress().getHostAddress();
         }

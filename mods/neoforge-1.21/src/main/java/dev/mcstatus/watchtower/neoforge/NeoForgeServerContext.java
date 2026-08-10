@@ -112,6 +112,11 @@ public final class NeoForgeServerContext implements ServerContext {
     }
 
     @Override
+    public WatchtowerSample.Sample collectSampleLight() {
+        return WatchtowerSampler.collectLight(server);
+    }
+
+    @Override
     public WatchtowerSample.WorldCensus collectWorldCensus() {
         return WatchtowerSampler.collectWorldCensus(server);
     }

@@ -1,11 +1,13 @@
 'use client';
 
-'use client';
-
 import { motion, useReducedMotion } from 'motion/react';
 import type { PipelineNode } from '@/content/how';
 
 const STAGGER_S = 0.08;
+
+function stepLabel(index: number) {
+  return String(index + 1).padStart(2, '0');
+}
 
 /** Collect / peer diagram node - equal-height instrument tile. */
 export function PipelineNodeCard({
@@ -29,8 +31,10 @@ export function PipelineNodeCard({
         ease: [0.16, 1, 0.3, 1],
       }}
       className="flex h-full min-h-[4.75rem] flex-col justify-center gap-1 border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] px-3.5 py-3"
-      style={{ borderRadius: 'var(--wt-radius-md)' }}
     >
+      <span className="font-mono text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--wt-text-low)]">
+        {stepLabel(index)}
+      </span>
       <span className="font-mono text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--wt-text)]">
         {node.label}
       </span>
@@ -66,8 +70,11 @@ export function PipelineAdviseHead({
         delay: reduce ? 0 : index * STAGGER_S,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="flex flex-col gap-1 px-0.5"
+      className="flex flex-col gap-1 border-b border-[color:var(--wt-line)] px-0.5 pb-2"
     >
+      <span className="font-mono text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--wt-text-low)]">
+        {stepLabel(index)}
+      </span>
       <span className="font-mono text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--wt-text)]">
         {node.label}
       </span>

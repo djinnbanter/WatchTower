@@ -154,6 +154,37 @@ public final class SessionManager {
         sessions.entrySet().removeIf(e -> accountId.equals(e.getValue().accountId()));
     }
 
+    /** Revoke every session for the account except {@code keepSessionId} (current browser). */
+    public void revokeOtherSessions(String accountId, String keepSessionId) {
+        if (accountId == null) {
+            return;
+        }
+        sessions.entrySet().removeIf(e ->
+                accountId.equals(e.getValue().accountId())
+                        && (keepSessionId == null || !keepSessionId.equals(e.getKey())));
+    }
+
+    /** After enabling TOTP: this session proved the code; mark it fully 2FA-aware. */
+    public SessionState markTotpEnabledVerified(String sessionId) {
+        SessionState current = get(sessionId);
+        if (current == null) {
+            return null;
+        }
+        SessionState updated = new SessionState(
+                current.sessionId(),
+                current.accountId(),
+                current.username(),
+                current.role(),
+                current.issuedAtEpochSec(),
+                current.expiresAtEpochSec(),
+                true,
+                true,
+                current.mustChangePassword()
+        );
+        sessions.put(sessionId, updated);
+        return updated;
+    }
+
     public int fullyAuthenticatedCount() {
         long now = Instant.now().getEpochSecond();
         int count = 0;

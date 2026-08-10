@@ -12,7 +12,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.neoforged.neoforgespi.language.IModInfo;
 
-import dev.mcstatus.watchtower.core.collect.ModJarMetadataReader;
+import dev.mcstatus.watchtower.core.collect.ModJarMetadataCache;
 import dev.mcstatus.watchtower.runtime.ModRuntime;
 import dev.mcstatus.watchtower.runtime.WatchtowerSample;
 
@@ -85,6 +85,58 @@ public final class WatchtowerSampler {
                 heap,
                 playerSamples,
                 mods
+        );
+    }
+
+    /**
+     * Tick-safe sample for lag capture / live metrics — never walks mod jars.
+     */
+    public static WatchtowerSample.Sample collectLight(MinecraftServer server) {
+        double mspt = TickMetrics.smoothedMspt();
+        double tps = Math.min(20.0, 1000.0 / Math.max(mspt, 0.001));
+        int players = server.getPlayerCount();
+        long entities = -1;
+        long chunks = -1;
+        List<WatchtowerSample.DimensionSample> dimensions = new ArrayList<>();
+
+        boolean countEntities = ModRuntime.config().countEntities();
+        if (countEntities) {
+            entities = 0;
+            chunks = 0;
+            for (ServerLevel level : server.getAllLevels()) {
+                String dimId = level.dimension().location().toString();
+                if (!DEFAULT_DIMENSIONS.contains(dimId)) {
+                    continue;
+                }
+                long levelChunks = level.getChunkSource().getLoadedChunksCount();
+                long levelEntities = 0;
+                for (Entity ignored : level.getAllEntities()) {
+                    levelEntities++;
+                }
+                chunks += levelChunks;
+                entities += levelEntities;
+                dimensions.add(new WatchtowerSample.DimensionSample(dimId, tps, mspt, levelEntities, levelChunks));
+            }
+        }
+
+        dimensions.sort(Comparator.comparing(WatchtowerSample.DimensionSample::id));
+
+        int modCount = countMods(server);
+        List<WatchtowerSample.PlayerSample> playerSamples = samplePlayers(server);
+        WatchtowerSample.HeapMb heap = sampleHeap();
+
+        return new WatchtowerSample.Sample(
+                mspt,
+                tps,
+                players,
+                entities,
+                chunks,
+                modCount,
+                dimensions,
+                TickMetrics.sessionMspt(),
+                heap,
+                playerSamples,
+                List.of()
         );
     }
 
@@ -167,14 +219,7 @@ public final class WatchtowerSampler {
 
     private static List<WatchtowerSample.ModSample> sampleMods(Path serverDir) {
         List<WatchtowerSample.ModSample> out = new ArrayList<>();
-        Map<String, String> nestedToParent = Map.of();
-        if (serverDir != null) {
-            try {
-                nestedToParent = ModJarMetadataReader.nestedIdToParentJar(serverDir.toAbsolutePath().toString());
-            } catch (Exception e) {
-                WatchtowerMod.LOGGER.debug("Nested jar index failed: {}", e.toString());
-            }
-        }
+        Map<String, String> nestedToParent = ModJarMetadataCache.get().nestedIdToParentJar();
         Path modsDir = serverDir != null ? serverDir.resolve("mods") : null;
         try {
             for (IModInfo info : ModList.get().getMods()) {

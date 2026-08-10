@@ -1,4 +1,4 @@
-/* Site footer — always a deep ink plate, both marketing themes. */
+/* Site footer — ruled industrial plate, both marketing themes. */
 
 .wt-site-footer {
   color-scheme: dark;
@@ -6,12 +6,8 @@
   --wt-footer-mid: #b8bfcc;
   --wt-footer-low: #8a92a1;
   --wt-footer-line: rgba(232, 237, 246, 0.12);
-  --wt-footer-line-strong: rgba(232, 237, 246, 0.2);
   --wt-footer-bg: #090b10;
-  --wt-footer-bg-deep: #06070a;
-  --wt-footer-plate: rgba(255, 255, 255, 0.03);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--wt-footer-bg) 92%, #000) 0%, var(--wt-footer-bg-deep) 100%);
+  background: var(--wt-footer-bg);
   color: var(--wt-footer-ink);
   border-top: 1px solid var(--wt-footer-line);
 }
@@ -38,7 +34,7 @@
 .wt-site-footer__link {
   color: var(--wt-footer-mid);
   text-decoration: none;
-  transition: color 220ms cubic-bezier(0.16, 1, 0.3, 1), transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 160ms ease;
 }
 
 .wt-site-footer__link:hover {
@@ -47,10 +43,10 @@
 
 .wt-site-footer__link:focus-visible {
   outline: 2px solid var(--wt-accent);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 .wt-site-footer__meta {
   border-top: 1px solid var(--wt-footer-line);
-  background: color-mix(in srgb, var(--wt-footer-bg-deep) 88%, #000);
+  background: var(--wt-footer-bg);
 }

@@ -6,6 +6,13 @@ import { ModrinthMark } from '@/components/brand/modrinth-mark';
 import { SparkMark } from '@/components/brand/spark-mark';
 import { DeskDial } from '@/components/desk/desk-dial';
 import { CapabilityMark } from '@/components/features/capability-marks';
+import {
+  DeskRadialGauge,
+  HashMeter,
+  RingGauge,
+  SeriesChart,
+} from '@/components/poc-charts';
+import { DESK } from '@/content/baked/desk';
 import '@/components/desk/desk.css';
 import './bento-peeks.css';
 
@@ -155,23 +162,23 @@ function PeekInstrumentGrid({ active = 'live-vitals' }: { active?: string }) {
   );
 }
 
-/** Desk mission grades: A Healthy, C Needs attention, F Critical + restart advice. */
+/** Desk mission grades: A Healthy, B Needs attention, F Critical + restart advice. */
 export function PeekHealthGrade() {
   const grades = [
     {
       letter: 'A',
       tone: 'ok' as const,
       word: 'Healthy',
-      detail: 'Inbox clear · no crash open',
+      detail: 'Inbox clear · ticks steady',
       hint: 'Restart when you want',
       restart: { label: 'Safe', pill: 'ok' as const },
     },
     {
-      letter: 'C',
+      letter: 'B',
       tone: 'warn' as const,
       word: 'Needs attention',
-      detail: '2 open · MSPT + disk runway',
-      hint: 'Fix first, then restart',
+      detail: '5 open · disk runway + MSPT',
+      hint: 'Playable — fix before Friday',
       restart: { label: 'Caution', pill: 'warn' as const },
     },
     {
@@ -216,19 +223,46 @@ export function PeekHealthGrade() {
 
 export function PeekFixInbox() {
   const items = [
-    { tone: 'danger' as const, title: 'MSPT spike after restart', ago: '3m ago', rank: '1' },
-    { tone: 'warn' as const, title: 'Disk runway under 14 days', ago: '1h ago', rank: '2' },
-    { tone: 'info' as const, title: 'Client-only jar on server', ago: 'Yesterday', rank: '3' },
+    {
+      tone: 'danger' as const,
+      sev: 'Critical',
+      title: 'Disk runway under 14 days',
+      ago: '2h ago',
+      rank: '1',
+    },
+    {
+      tone: 'warn' as const,
+      sev: 'Warning',
+      title: 'Entity spike near spawn',
+      ago: '46m ago',
+      rank: '2',
+    },
+    {
+      tone: 'warn' as const,
+      sev: 'Warning',
+      title: 'create - 14 log errors',
+      ago: '3h ago',
+      rank: '3',
+    },
   ];
   return (
-    <div className="bento-peek bento-peek--stack" aria-hidden>
+    <div className="bento-peek bento-peek--inbox" aria-hidden>
+      <div className="bento-peek__inbox-head">
+        <div>
+          <span className="bento-peek__kicker">Fix inbox</span>
+          <span className="bento-peek__inbox-title">5 open · ranked</span>
+        </div>
+        <span className="desk-pill desk-pill--danger">1 critical</span>
+      </div>
       <ul className="bento-peek__queue">
         {items.map((it, i) => (
           <li key={it.title} className={`bento-peek__q-row bento-peek__q-row--${i}`}>
             <span className={`bento-peek__dot bento-peek__dot--${it.tone}`} />
             <span className="bento-peek__q-text">
               <span className="bento-peek__q-title">{it.title}</span>
-              <span className="bento-peek__q-detail">{it.ago}</span>
+              <span className="bento-peek__q-detail">
+                {it.sev} · {it.ago}
+              </span>
             </span>
             <span className="bento-peek__q-rank">#{it.rank}</span>
           </li>
@@ -270,14 +304,10 @@ export function PeekWorldPressure() {
   ];
   const slices = entityPieSlices(entities, 60, 60, 52);
   const total = entities.reduce((sum, s) => sum + s.count, 0);
-  const census = [
-    { label: 'Items', value: 82, channel: 'mspt' as const, note: 'Storm risk' },
-    { label: 'Mobs', value: 54, channel: 'tps' as const, note: 'Elevated' },
-    { label: 'Chunks', value: 71, channel: 'disk' as const, note: 'Loaders on' },
-  ];
   const flags = [
     { tone: 'warn' as const, text: 'Item storm' },
     { tone: 'info' as const, text: 'Unattended loaders' },
+    { tone: 'warn' as const, text: 'Chunks 71%' },
   ];
   return (
     <div className="bento-peek bento-peek--pressure" aria-hidden>
@@ -324,28 +354,6 @@ export function PeekWorldPressure() {
           </ul>
         </div>
 
-        <div className="bento-peek__census">
-          <div className="bento-peek__kicker">World census</div>
-          <ul className="bento-peek__h-bars bento-peek__h-bars--flush">
-            {census.map((r) => (
-              <li key={r.label}>
-                <div className="bento-peek__bar-label">
-                  <span>
-                    {r.label} <em className="bento-peek__census-note">{r.note}</em>
-                  </span>
-                  <span className="bento-peek__mono">{r.value}%</span>
-                </div>
-                <div className="bento-peek__bar-track bento-peek__bar-track--lg">
-                  <span
-                    className="bento-peek__bar-fill"
-                    style={{ width: `${r.value}%`, background: `var(--wt-ch-${r.channel})` }}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         <div className="bento-peek__pressure-flags">
           {flags.map((f) => (
             <span key={f.text} className={`desk-pill desk-pill--${f.tone}`}>
@@ -378,6 +386,76 @@ export function PeekJoinStrip() {
   );
 }
 
+/** Half-width Join Clinic fixture — session + mismatch, not a chip strip alone. */
+export function PeekJoinClinic() {
+  const diffs = [
+    { mod: 'create', detail: 'client missing 6.0.4' },
+    { mod: 'create', detail: 'server 6.0.4 · pack list sent' },
+  ];
+  const online = [
+    { name: 'djinn', meta: '2h 14m' },
+    { name: 'mica', meta: '41m' },
+    { name: 'sable', meta: '18m' },
+  ];
+  return (
+    <div className="bento-peek bento-peek--join" aria-hidden>
+      <Plate className="bento-peek__join-panel">
+        <div className="bento-peek__join-head">
+          <div>
+            <span className="bento-peek__kicker">Session · Join Clinic</span>
+            <span className="bento-peek__join-title">12 online · 2 blocked</span>
+          </div>
+          <span className="desk-pill desk-pill--warn">Pack sync</span>
+        </div>
+
+        <div className="bento-peek__join-split">
+          <div className="bento-peek__join-fail">
+            <span className="bento-peek__kicker">NotchFan42 · reject</span>
+            <ul className="bento-peek__join-diffs">
+              {diffs.map((d) => (
+                <li key={`${d.mod}-${d.detail}`}>
+                  <code>{d.mod}</code>
+                  <span>{d.detail}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <ul className="bento-peek__join-online">
+            {online.map((p) => (
+              <li key={p.name}>
+                <span className="bento-peek__join-dot" />
+                <span className="bento-peek__join-name">{p.name}</span>
+                <span className="bento-peek__mono">{p.meta}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="bento-peek__join-chips">
+          <span className="bento-peek__chip">
+            <span className="bento-peek__chip-icon">
+              <CapabilityMark id="join-clinic" size="md" />
+            </span>
+            Named mod diffs
+          </span>
+          <span className="bento-peek__chip bento-peek__chip--warn">
+            <span className="bento-peek__chip-icon">
+              <CapabilityMark id="jar-drift" size="md" />
+            </span>
+            Player-safe fix copy
+          </span>
+          <span className="bento-peek__chip">
+            <span className="bento-peek__chip-icon">
+              <CapabilityMark id="mods-modrinth" size="md" />
+            </span>
+            No jar downloads
+          </span>
+        </div>
+      </Plate>
+    </div>
+  );
+}
+
 /** Wide Live cell — desk instrument: chart + dial column (not a thin spark over tiny gauges). */
 /** Monotone-ish cubic through points — keeps TPS chart from looking like stretched polylines. */
 function smoothLine(pts: ReadonlyArray<readonly [number, number]>): string {
@@ -398,155 +476,55 @@ function smoothLine(pts: ReadonlyArray<readonly [number, number]>): string {
 }
 
 export function PeekLiveChart() {
-  const uid = useId().replace(/[:]/g, '');
-  // Hour window with a real mid-window soft dip so the 16–20 band isn't empty chrome.
-  const tps = [
-    19.8, 19.9, 19.7, 19.6, 19.8, 19.5, 19.2, 18.9, 18.4, 17.8, 17.1, 16.6, 16.9, 17.4, 18.1, 18.8, 19.2,
-    19.5, 19.7, 19.4, 19.1, 19.6, 19.8, 19.9, 19.7, 19.8, 19.9, 20,
-  ];
-  const msptBars = [
-    4.1, 4.4, 4.8, 5.2, 4.9, 5.6, 6.8, 9.4, 14.2, 11.1, 7.6, 5.8, 5.1, 4.7, 4.5, 4.9, 5.2, 4.8, 4.6, 4.4,
-    4.7, 4.9, 4.6, 4.7,
-  ];
-  const channels = [
-    { label: 'Players', value: '12', tone: 'var(--wt-ch-players)' },
-    { label: 'Heap', value: '61%', tone: 'var(--wt-ch-heap)' },
-    { label: 'CPU', value: '34%', tone: 'var(--wt-ch-cpu)' },
-    { label: 'Host', value: 'panel', tone: 'var(--wt-info)' },
-  ];
-  const w = 640;
-  const h = 200;
-  const padL = 2;
-  const padR = 8;
-  const padT = 10;
-  const padB = 8;
-  const plotW = w - padL - padR;
-  const plotH = h - padT - padB;
-  const yMin = 16;
-  const yMax = 20;
-  const pts = tps.map((v, i) => {
-    const x = padL + (i / Math.max(tps.length - 1, 1)) * plotW;
-    const y = padT + (1 - (v - yMin) / (yMax - yMin)) * plotH;
-    return [x, y] as const;
-  });
-  const line = smoothLine(pts);
-  const area = `${line} L ${padL + plotW} ${padT + plotH} L ${padL} ${padT + plotH} Z`;
-  const last = pts[pts.length - 1];
-  const yTicks = [20, 18, 16];
-  const msptMax = Math.max(...msptBars);
+  const series = DESK.live.series;
+  const max = Math.max(...series, 1);
+  const norm = series.map((v) => v / max);
+  const tps = DESK.live.vitals.find((v) => v.label === 'TPS');
+  const mspt = DESK.live.vitals.find((v) => v.label === 'MSPT');
+  const disk = DESK.live.vitals.find((v) => v.label === 'Disk');
 
   return (
     <div className="bento-peek bento-peek--live" aria-hidden>
-      <Plate className="bento-peek__live-panel">
-        <div className="bento-peek__live-head">
+      <Plate className="bento-peek__live-panel !p-3">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <span className="bento-peek__kicker">TPS · last hour</span>
-            <div className="bento-peek__live-readout">
-              <span className="bento-peek__live-value">19.9</span>
-              <span className="desk-pill desk-pill--ok">Steady</span>
+            <span className="bento-peek__kicker">Live · MSPT window</span>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="font-mono text-2xl tabular-nums text-[color:var(--wt-text)]">
+                {tps?.value ?? '19.4'}
+              </span>
+              <span className="desk-pill desk-pill--warn">MSPT {mspt?.value ?? '48'}ms</span>
             </div>
           </div>
-          <div className="bento-peek__live-head-meta">
-            <span className="bento-peek__sub">Dip ~35m ago · recovered</span>
-            <span className="desk-pill desk-pill--info">Watching</span>
-          </div>
-        </div>
-
-        <div className="bento-peek__live-split">
-          <div className="bento-peek__live-chart">
-            <div className="bento-peek__live-plot">
-              <div className="bento-peek__live-ylabels" aria-hidden>
-                {yTicks.map((tick) => (
-                  <span key={tick}>{tick}</span>
-                ))}
-              </div>
-              <svg className="bento-peek__live-svg" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id={`live-fill-${uid}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--wt-ch-tps)" stopOpacity="0.32" />
-                    <stop offset="100%" stopColor="var(--wt-ch-tps)" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                {yTicks.map((tick) => {
-                  const y = padT + (1 - (tick - yMin) / (yMax - yMin)) * plotH;
-                  return (
-                    <line
-                      key={tick}
-                      x1={padL}
-                      x2={padL + plotW}
-                      y1={y}
-                      y2={y}
-                      stroke="var(--wt-line)"
-                      strokeWidth="1"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  );
-                })}
-                <path d={area} fill={`url(#live-fill-${uid})`} />
-                <path
-                  d={line}
-                  fill="none"
-                  stroke="var(--wt-ch-tps)"
-                  strokeWidth="2.5"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-                <circle
-                  cx={last[0]}
-                  cy={last[1]}
-                  r="4"
-                  fill="var(--wt-bg0)"
-                  stroke="var(--wt-ch-tps)"
-                  strokeWidth="2"
-                  vectorEffect="non-scaling-stroke"
-                />
-              </svg>
-            </div>
-            <div className="bento-peek__live-axis">
-              <span>−60m</span>
-              <span>−30m</span>
-              <span>now</span>
-            </div>
-
-            <div className="bento-peek__live-mspt">
-              <div className="bento-peek__live-mspt-head">
-                <span className="bento-peek__kicker">MSPT · same window</span>
-                <span className="bento-peek__readout">4.7 ms typ · spike 14.2</span>
-              </div>
-              <div className="bento-peek__live-bars">
-                {msptBars.map((v, i) => (
-                  <span
-                    key={i}
-                    className={`bento-peek__live-bar${v >= 10 ? ' is-hot' : ''}`}
-                    style={{ height: `${Math.max(10, (v / msptMax) * 100)}%` }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="bento-peek__live-channels">
-              {channels.map((c) => (
-                <div key={c.label} className="bento-peek__live-channel">
-                  <span className="bento-peek__live-channel-dot" style={{ background: c.tone }} />
-                  <span className="bento-peek__kicker">{c.label}</span>
-                  <strong>{c.value}</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bento-peek__live-dials">
-            <DeskDial value={19.9} max={20} label="TPS" tone="tps" size={112} decimals={1} />
-            <DeskDial value={4.7} max={50} label="MSPT" suffix="ms" tone="mspt" size={112} decimals={1} />
-            <DeskDial value={61} max={100} label="Heap" suffix="%" tone="heap" size={112} decimals={0} />
+          <div className="flex gap-3">
+            <DeskRadialGauge
+              value={Number(tps?.value ?? 19.4)}
+              max={20}
+              label="TPS"
+              color="var(--wt-ok)"
+              className="w-24"
+            />
+            <RingGauge
+              pct={Number(disk?.value ?? 71)}
+              ink="var(--wt-warn)"
+              label="disk"
+              sizeClassName="mx-auto aspect-square max-h-24 w-24"
+            />
           </div>
         </div>
+        <SeriesChart
+          tracks={[{ id: 'mspt', label: 'MSPT', series: norm, color: 'var(--wt-warn)' }]}
+          points={norm.length}
+          mode="line"
+          valueAtFull={max}
+          unit="ms"
+          windowMs={60 * 60 * 1000}
+          className="h-36 md:h-40"
+        />
       </Plate>
     </div>
   );
 }
-
 export function PeekSupportPack() {
   const rows = [
     { file: 'facts.json', note: 'redacted' },
@@ -658,40 +636,104 @@ function PeekGcRam() {
 }
 
 function PeekCrashFingerprints() {
-  const cards = [
+  const groups = [
     {
-      title: 'OutOfMemoryError',
-      fp: 'a3f2…c91',
-      n: '×4',
-      tone: 'danger' as const,
-      log: 'Java heap space · last 2h',
+      title: 'Create contraption collision',
+      when: '49m ago',
+      kind: 'Mod',
+      confidence: 'Medium',
+      summary: 'Stop the stuck assembly so the world can load, then update Create if needed.',
+      active: true,
+      steps: [
+        'Stop the stuck assembly first so the world can load again.',
+        'Replace the broken Create jar with a matching build.',
+        'Find the contraption controller / bearing that null-pathed.',
+      ],
     },
     {
-      title: 'ConcurrentModification',
-      fp: '9b10…e2a',
-      n: '×2',
-      tone: 'warn' as const,
-      log: 'entity tick · nearby log match',
+      title: 'Create crashed while ticking',
+      when: '6h ago',
+      kind: 'Mod',
+      confidence: 'Medium',
+      summary: 'Inspect the stack and update Create or matching addons.',
+      active: false,
+    },
+    {
+      title: 'External kill / OOM',
+      when: 'Unreviewed',
+      kind: 'Host',
+      confidence: 'High',
+      summary: 'Host SIGKILL · reconstructed from logs · no crash report',
+      active: false,
+      host: true,
     },
   ];
+  const active = groups.find((g) => g.active) ?? groups[0]!;
+
   return (
     <div className="bento-peek bento-peek--crashes" aria-hidden>
-      {cards.map((c, i) => (
-        <Plate
-          key={c.fp}
-          className={`bento-peek__card bento-peek__crash-card bento-peek__crash-card--${c.tone} bento-peek__crash-card--${i}`}
-        >
-          <div className="bento-peek__crash-main">
-            <span className={`bento-peek__dot bento-peek__dot--${c.tone}`} />
-            <span className="bento-peek__stack-text">
-              <span className="bento-peek__stack-title">{c.title}</span>
-              <span className="bento-peek__sub">{c.log}</span>
-            </span>
-            <span className={`desk-pill desk-pill--${c.tone === 'danger' ? 'danger' : 'warn'}`}>{c.n}</span>
+      <div className="bento-peek__crashes-head">
+        <div>
+          <span className="bento-peek__kicker">Crash center</span>
+          <span className="bento-peek__inbox-title">11 to review · grouped</span>
+        </div>
+        <span className="desk-pill desk-pill--danger">Mod · Host</span>
+      </div>
+
+      <div className="bento-peek__crashes-split">
+        <div className="bento-peek__crashes-list">
+          {groups.map((g) => (
+            <div
+              key={g.title}
+              className={`bento-peek__crash-row${g.active ? ' is-active' : ''}${
+                g.host ? ' bento-peek__crash-row--host' : ''
+              }`}
+            >
+              <div className="bento-peek__crash-row-top">
+                <span className="bento-peek__crash-row-title">{g.title}</span>
+                <span className="bento-peek__crash-row-when">{g.when}</span>
+              </div>
+              <div className="bento-peek__crash-row-pills">
+                <span
+                  className={`desk-pill desk-pill--${
+                    g.kind === 'Host' ? 'info' : 'warn'
+                  }`}
+                >
+                  {g.kind}
+                </span>
+                <span
+                  className={`desk-pill desk-pill--${
+                    g.confidence === 'High' ? 'ok' : 'warn'
+                  }`}
+                >
+                  {g.confidence}
+                </span>
+                {g.host ? (
+                  <span className="desk-pill desk-pill--neutral">No report</span>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Plate className="bento-peek__crash-detail">
+          <div className="bento-peek__crash-detail-tabs">
+            <span className="bento-peek__crash-tab is-active">Fix</span>
+            <span className="bento-peek__crash-tab">Evidence</span>
+            <span className="bento-peek__crash-tab">Details</span>
           </div>
-          <code className="bento-peek__crash-fp">{c.fp}</code>
+          <div className="bento-peek__crash-detail-title">{active.title}</div>
+          <p className="bento-peek__crash-detail-lead">{active.summary}</p>
+          <ol className="bento-peek__crash-steps">
+            {(active.steps ?? []).map((step, i) => (
+              <li key={step}>
+                <span className="bento-peek__crash-step-n">{i + 1}</span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
         </Plate>
-      ))}
+      </div>
     </div>
   );
 }
@@ -858,8 +900,7 @@ function PeekMods() {
             </div>
             <div className="bento-peek__mods-hint-title">OptiFine · client-only jar</div>
             <p className="bento-peek__mods-hint-body">
-              High-confidence client jar on a dedicated server. Lookup fills the name — WatchTower never
-              downloads a jar for you.
+              High-confidence client jar on a dedicated server. Lookup only — WatchTower never downloads jars.
             </p>
             <div className="bento-peek__mods-hint-meta">
               <span>slug · optifine</span>
@@ -911,17 +952,59 @@ function PeekJarDrift() {
   );
 }
 
-/** Deterministic week×hour load (0–100) — evenings + weekends hotter. */
+/** Deterministic week×hour load (0–100) — real-shaped busy evenings, quiet nights. */
 const SCHEDULE_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
-const SCHEDULE_HOURS = 12; // 2-hour buckets across the day
+const SCHEDULE_HOURS = 12; // 2-hour buckets: 00,02,…,22
+/** Fri 18:00–20:00 bucket — matches “Peak Fri 19:00”. */
+const SCHEDULE_PEAK = { day: 4, h: 9 } as const;
 
 function scheduleLoad(day: number, hourBucket: number): number {
   const hour = hourBucket * 2;
-  const evening = Math.max(0, 1 - Math.abs(hour - 19) / 8);
-  const weekend = day >= 5 ? 1.15 : 1;
-  const night = hour < 7 ? 0.35 : 1;
-  const base = 18 + evening * 62 * weekend * night + (day % 3) * 3 + hourBucket * 1.2;
-  return Math.max(8, Math.min(96, Math.round(base)));
+  // Diurnal curve: dead overnight → soft afternoon climb → evening peak ~19.
+  let v: number;
+  if (hour < 6) v = 4 + hour;
+  else if (hour < 10) v = 12 + (hour - 6) * 5;
+  else if (hour < 14) v = 32 + (hour - 10) * 4;
+  else if (hour < 16) v = 48 + (hour - 14) * 5;
+  else if (hour === 16) v = 62;
+  else if (hour === 18) v = 100; // 18–20 bucket covers Peak Fri 19:00
+  else if (hour === 20) v = 82;
+  else v = 38; // 22
+
+  // Day shape — Fri hottest evening, weekends lively, Tue quiet for restarts.
+  const eveningScale = [0.62, 0.58, 0.68, 0.78, 1, 0.88, 0.72][day] ?? 0.7;
+  const dayScale = [0.85, 0.8, 0.88, 0.92, 1, 1.05, 0.9][day] ?? 0.9;
+  if (hour >= 16) v *= eveningScale;
+  else v *= dayScale;
+
+  // Tue 04–06 restart window — especially quiet.
+  if (day === 1 && hour >= 4 && hour < 8) v *= 0.22;
+  // Sat afternoon play session.
+  if (day === 5 && hour >= 12 && hour < 18) v *= 1.22;
+  // Sun evening drops earlier.
+  if (day === 6 && hour >= 20) v *= 0.55;
+  // Weekday mid-morning quieter.
+  if (day <= 3 && hour >= 8 && hour < 12) v *= 0.72;
+
+  const jitter = ((day * 17 + hourBucket * 13) % 7) - 3;
+  return Math.max(3, Math.min(100, Math.round(v + jitter)));
+}
+
+function scheduleHeatColor(v: number): string {
+  // Cool steel → ember → hazard (no parchment yellow).
+  if (v < 18) {
+    return `color-mix(in srgb, #52525b ${10 + v}%, var(--wt-bg2))`;
+  }
+  if (v < 40) {
+    const t = (v - 18) / 22;
+    return `color-mix(in srgb, #1e3a5f ${Math.round(22 + t * 40)}%, var(--wt-bg2))`;
+  }
+  if (v < 68) {
+    const t = (v - 40) / 28;
+    return `color-mix(in srgb, var(--wt-accent) ${Math.round(28 + t * 42)}%, #1e3a5f)`;
+  }
+  const t = (v - 68) / 32;
+  return `color-mix(in srgb, var(--wt-danger) ${Math.round(35 + t * 45)}%, var(--wt-accent))`;
 }
 
 function PeekSchedule() {
@@ -954,15 +1037,17 @@ function PeekSchedule() {
                 <div className="bento-peek__heatmap-cells">
                   {cells
                     .filter((c) => c.day === day)
-                    .map((c) => (
-                      <span
-                        key={`${c.day}-${c.h}`}
-                        className="bento-peek__heatmap-cell"
-                        style={{
-                          background: `color-mix(in srgb, var(--wt-ch-players) ${Math.round(12 + c.v * 0.85)}%, var(--wt-bg2))`,
-                        }}
-                      />
-                    ))}
+                    .map((c) => {
+                      const peak =
+                        c.day === SCHEDULE_PEAK.day && c.h === SCHEDULE_PEAK.h;
+                      return (
+                        <span
+                          key={`${c.day}-${c.h}`}
+                          className={`bento-peek__heatmap-cell${peak ? ' is-peak' : ''}`}
+                          style={{ background: scheduleHeatColor(c.v) }}
+                        />
+                      );
+                    })}
                 </div>
               </div>
             ))}
@@ -990,24 +1075,7 @@ function PeekSchedule() {
 }
 
 function PeekStorage() {
-  const dims = [
-    { label: 'Overworld', pct: 62, gb: '184 GB' },
-    { label: 'Nether', pct: 28, gb: '41 GB' },
-    { label: 'End', pct: 14, gb: '19 GB' },
-  ];
-  const trend = [48, 50, 51, 53, 55, 56, 58, 59, 61, 62, 64, 66];
-  const w = 160;
-  const h = 48;
-  const min = Math.min(...trend);
-  const max = Math.max(...trend);
-  const span = Math.max(max - min, 1);
-  const line = trend
-    .map((v, i) => {
-      const x = (i / Math.max(trend.length - 1, 1)) * w;
-      const y = h - 4 - ((v - min) / span) * (h - 8);
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(' ');
+  const s = DESK.insights.storage;
 
   return (
     <div className="bento-peek bento-peek--storage" aria-hidden>
@@ -1015,50 +1083,44 @@ function PeekStorage() {
         <div className="bento-peek__storage-split">
           <div className="bento-peek__storage-dims">
             <div className="bento-peek__kicker">By dimension</div>
-            <div className="bento-peek__col-bars bento-peek__col-bars--storage">
-              {dims.map((d) => (
-                <div key={d.label} className="bento-peek__col-bar">
-                  <span className="bento-peek__col-val">{d.gb}</span>
-                  <span className="bento-peek__col-track">
-                    <span
-                      className="bento-peek__col-fill"
-                      style={{ height: `${d.pct}%`, background: 'var(--wt-ch-disk)' }}
-                    />
-                  </span>
-                  <span className="bento-peek__col-cap">{d.label}</span>
+            <div className="bento-peek__storage-dim-list">
+              {s.dims.map((d) => (
+                <div key={d.label} className="bento-peek__storage-dim-row">
+                  <span className="bento-peek__storage-dim-label">{d.label}</span>
+                  <HashMeter
+                    value={d.pct}
+                    ink="var(--wt-ch-disk)"
+                    className="min-w-0 flex-1"
+                    trackClassName="h-2"
+                  />
+                  <span className="bento-peek__storage-dim-gb">{d.gb}</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="bento-peek__storage-runway">
-            <div className="bento-peek__kicker">Disk runway</div>
-            <div className="bento-peek__runway-hero">
-              <span className="bento-peek__runway-days">~12</span>
-              <span className="bento-peek__runway-unit">days left</span>
+            <div className="bento-peek__runway-head">
+              <span className="bento-peek__kicker">Disk runway</span>
+              <span className="desk-pill desk-pill--warn">{s.usedPct}% used</span>
             </div>
-            <div className="bento-peek__runway-facts">
-              <span>
-                Disk <strong>66%</strong>
-              </span>
-              <span>
-                +1.8%/day <strong>filling</strong>
-              </span>
-            </div>
-            <svg className="bento-peek__runway-spark" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-              <path
-                d={line}
-                fill="none"
-                stroke="var(--wt-ch-disk)"
-                strokeWidth="2"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                vectorEffect="non-scaling-stroke"
+
+            <div className="bento-peek__runway-body">
+              <div className="bento-peek__runway-copy">
+                <div className="bento-peek__runway-hero">
+                  <span className="bento-peek__runway-days">~{s.daysLeft}</span>
+                  <span className="bento-peek__runway-unit">days left</span>
+                </div>
+                <p className="bento-peek__runway-facts">
+                  +{s.fillPerDayPct}%/day · {s.freeGb}G free
+                </p>
+              </div>
+              <RingGauge
+                pct={s.usedPct}
+                ink="var(--wt-warn)"
+                label="used"
+                sizeClassName="bento-peek__runway-dial aspect-square h-[5.5rem] w-[5.5rem] shrink-0"
               />
-            </svg>
-            <div className="bento-peek__live-axis">
-              <span>−30d</span>
-              <span>projected fill</span>
             </div>
           </div>
         </div>
@@ -1078,11 +1140,11 @@ function PeekDigest() {
         </div>
         <div className="bento-peek__digest-row">
           <span>Crashes</span>
-          <strong>3</strong>
+          <strong>1 open</strong>
         </div>
         <div className="bento-peek__digest-row">
           <span>Next</span>
-          <strong>Trim item storms</strong>
+          <strong>Trim disk runway</strong>
         </div>
       </Plate>
     </div>
@@ -1143,28 +1205,28 @@ function PeekConfig() {
 function PeekBackups() {
   const rows = [
     {
-      path: 'world/',
+      path: 'world-2026-08-09-1842.zip',
       tone: 'ok' as const,
       status: 'Fresh',
-      age: '2h ago',
-      detail: 'Folder mtime looks current',
+      age: '6h ago',
+      detail: '51.2 GB · verified',
       note: 'Local',
     },
     {
-      path: 'panel/',
+      path: 'world-2026-08-08-0600.zip',
       tone: 'warn' as const,
-      status: 'Stale',
-      age: '3d ago',
-      detail: 'No new archive since Tuesday',
-      note: 'Alpha',
+      status: 'Aging',
+      age: '42h ago',
+      detail: '50.8 GB · still good',
+      note: 'Local',
     },
     {
-      path: 'cloud/',
+      path: 'NAS / offsite',
       tone: 'neutral' as const,
-      status: 'Unknown',
-      age: 'no signal',
-      detail: 'Watcher has no evidence yet',
-      note: 'Alpha',
+      status: 'Missing',
+      age: 'not set',
+      detail: 'External path not configured',
+      note: 'Gap',
     },
   ];
   return (
@@ -1172,10 +1234,10 @@ function PeekBackups() {
       <Plate className="bento-peek__backups-panel">
         <div className="bento-peek__backups-head">
           <div>
-            <span className="bento-peek__kicker">Sources</span>
-            <span className="bento-peek__backups-title">1 fresh · 1 stale · 1 unknown</span>
+            <span className="bento-peek__kicker">Archives</span>
+            <span className="bento-peek__backups-title">Fresh · 51.2 GB · 6h ago</span>
           </div>
-          <span className="desk-pill desk-pill--warn">Check panel</span>
+          <span className="desk-pill desk-pill--ok">Tracking on</span>
         </div>
         <div className="bento-peek__backups-grid">
           {rows.map((r) => (
@@ -1254,12 +1316,10 @@ function PeekActivity() {
 
 function PeekLogs() {
   const lines = [
-    { t: '14:02:11', tag: 'Server', msg: 'Done (42.1s)! For help, type "help"', tone: 'ok' as const },
     { t: '14:17:58', tag: 'Watch', msg: 'TPS 19.8 · heap 61%', tone: '' as const },
     { t: '14:18:03', tag: 'Watch', msg: 'MSPT 48.2 warn', tone: 'warn' as const },
     { t: '14:18:04', tag: 'Issue', msg: 'ranked #1 · MSPT spike after restart', tone: 'warn' as const },
     { t: '14:18:41', tag: 'Join', msg: 'djinn disconnected · channel mismatch', tone: 'info' as const },
-    { t: '14:19:11', tag: 'Join', msg: 'clinic matched · named mod diffs', tone: 'ok' as const },
   ];
   return (
     <div className="bento-peek bento-peek--tail" aria-hidden>
@@ -1287,10 +1347,9 @@ function PeekLogs() {
 
 function PeekStartup() {
   const phases = [
-    { label: 'JVM', sec: '8.2s', pct: 20, on: true },
-    { label: 'Mods', sec: '22.4s', pct: 53, on: true },
-    { label: 'World', sec: '11.1s', pct: 26, on: true },
-    { label: 'Ready', sec: '…', pct: 0, on: false },
+    { label: 'JVM', sec: '8.2s', pct: 20 },
+    { label: 'Mods', sec: '22.4s', pct: 53 },
+    { label: 'World', sec: '11.1s', pct: 26 },
   ];
   return (
     <div className="bento-peek bento-peek--startup" aria-hidden>
@@ -1303,12 +1362,17 @@ function PeekStartup() {
               <span className="bento-peek__runway-unit">sec</span>
             </div>
           </div>
-          <span className="desk-pill desk-pill--warn">World loading</span>
+          <div className="bento-peek__startup-head-meta">
+            <span className="desk-pill desk-pill--warn">World loading</span>
+            <span className="bento-peek__startup-delta">
+              Last 38.6s · <strong>+3.5s</strong>
+            </span>
+          </div>
         </div>
 
         <ul className="bento-peek__startup-phases">
           {phases.map((p) => (
-            <li key={p.label} className={`bento-peek__startup-row${p.on ? ' is-on' : ' is-wait'}`}>
+            <li key={p.label} className="bento-peek__startup-row is-on">
               <div className="bento-peek__startup-row-top">
                 <span className="bento-peek__startup-row-label">
                   <span className="bento-peek__startup-dot" />
@@ -1316,25 +1380,15 @@ function PeekStartup() {
                 </span>
                 <span className="bento-peek__mono">{p.sec}</span>
               </div>
-              <div className="bento-peek__bar-track">
-                <span
-                  className="bento-peek__bar-fill"
-                  style={{
-                    width: `${p.pct}%`,
-                    background: p.on ? 'var(--wt-accent)' : 'var(--wt-bg3)',
-                  }}
-                />
-              </div>
+              <HashMeter
+                value={p.pct}
+                ink="var(--wt-accent)"
+                aria-label={`${p.label} boot share`}
+                trackClassName="h-2"
+              />
             </li>
           ))}
         </ul>
-
-        <div className="bento-peek__startup-foot">
-          <span>
-            Last <strong>38.6s</strong>
-          </span>
-          <span className="bento-peek__startup-delta">+3.5s</span>
-        </div>
       </Plate>
     </div>
   );
@@ -1374,9 +1428,24 @@ function PeekSources() {
 
 function PeekAccounts() {
   const roles = [
-    { role: 'Owner', tone: 'info' as const, who: 'djinn' },
-    { role: 'Admin', tone: 'ok' as const, who: 'maya' },
-    { role: 'Viewer', tone: 'neutral' as const, who: '2 seats' },
+    {
+      role: 'Owner',
+      tone: 'info' as const,
+      who: 'djinn',
+      meta: 'Skin linked · full access',
+    },
+    {
+      role: 'Admin',
+      tone: 'ok' as const,
+      who: 'maya',
+      meta: '2FA on · operate desk',
+    },
+    {
+      role: 'Viewer',
+      tone: 'neutral' as const,
+      who: '2 seats',
+      meta: 'Read-only · no writes',
+    },
   ];
   const audits = [
     { action: 'settings.save', who: 'djinn', ago: '2m ago' },
@@ -1386,26 +1455,43 @@ function PeekAccounts() {
   return (
     <div className="bento-peek bento-peek--accounts" aria-hidden>
       <Plate className="bento-peek__accounts-panel">
-        <div className="bento-peek__accounts-roles">
-          {roles.map((r) => (
-            <div key={r.role} className="bento-peek__accounts-role">
-              <span className={`desk-pill desk-pill--${r.tone}`}>{r.role}</span>
-              <span className="bento-peek__sub">{r.who}</span>
-            </div>
-          ))}
+        <div className="bento-peek__accounts-chrome">
+          <div>
+            <span className="bento-peek__kicker">Accounts</span>
+            <span className="bento-peek__accounts-title">4 seats · 3 roles</span>
+          </div>
+          <span className="desk-pill desk-pill--ok">2FA on</span>
         </div>
-        <div className="bento-peek__accounts-log">
-          <div className="bento-peek__kicker">Audit log</div>
-          <ul>
-            {audits.map((a) => (
-              <li key={a.action + a.ago}>
-                <span className="bento-peek__q-title">{a.action}</span>
-                <span className="bento-peek__q-detail">
-                  {a.who} · {a.ago}
-                </span>
-              </li>
+
+        <div className="bento-peek__accounts-split">
+          <div className="bento-peek__accounts-roles">
+            {roles.map((r) => (
+              <div key={r.role} className="bento-peek__accounts-role">
+                <div className="bento-peek__accounts-role-top">
+                  <span className={`desk-pill desk-pill--${r.tone}`}>{r.role}</span>
+                  <span className="bento-peek__accounts-who">{r.who}</span>
+                </div>
+                <span className="bento-peek__sub">{r.meta}</span>
+              </div>
             ))}
-          </ul>
+          </div>
+
+          <div className="bento-peek__accounts-log">
+            <div className="bento-peek__accounts-log-head">
+              <span className="bento-peek__kicker">Audit log</span>
+              <span className="bento-peek__readout">Permanent</span>
+            </div>
+            <ul>
+              {audits.map((a) => (
+                <li key={a.action + a.ago}>
+                  <span className="bento-peek__accounts-action">{a.action}</span>
+                  <span className="bento-peek__accounts-meta">
+                    {a.who} · {a.ago}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </Plate>
     </div>
@@ -1511,33 +1597,78 @@ function PeekJarDisable() {
 
 function PeekModConfigs() {
   const rows = [
-    { label: 'enableHopper', kind: 'bool', value: 'true' },
-    { label: 'tickRate', kind: 'num', value: '20' },
-    { label: 'maxDepth', kind: 'num', value: '8' },
+    { label: 'enableHopper', kind: 'bool' as const, value: 'true', dirty: false },
+    { label: 'tickRate', kind: 'num' as const, value: '20', dirty: true },
+    { label: 'maxDepth', kind: 'num' as const, value: '8', dirty: false },
+    { label: 'syncInterval', kind: 'num' as const, value: '40', dirty: false },
   ];
   return (
-    <div className="bento-peek bento-peek--config" aria-hidden>
-      <Plate className="bento-peek__config-panel">
-        <div className="bento-peek__config-head">
-          <span className="bento-peek__kicker">config/</span>
-          <span className="bento-peek__readout">TOML form · undo</span>
+    <div className="bento-peek bento-peek--mod-config" aria-hidden>
+      <Plate className="bento-peek__mod-config-panel">
+        <div className="bento-peek__mod-config-chrome">
+          <div className="bento-peek__mod-config-file">
+            <span className="bento-peek__kicker">Editing</span>
+            <code className="bento-peek__mod-config-path">config/create-server.toml</code>
+          </div>
+          <div className="bento-peek__mod-config-tabs">
+            <span className="bento-peek__mod-config-tab is-active">Form</span>
+            <span className="bento-peek__mod-config-tab">TOML</span>
+            <span className="bento-peek__mod-config-tab">Undo</span>
+          </div>
         </div>
-        <ul className="bento-peek__config">
-          {rows.map((r) => (
-            <li key={r.label} className="bento-peek__config-row">
-              <span className={`desk-pill desk-pill--${r.kind === 'bool' ? 'ok' : 'info'}`}>
-                {r.kind === 'bool' ? 'bool' : 'num'}
-              </span>
-              <span className="bento-peek__config-body">
-                <code>
-                  {r.label}
-                  <span className="bento-peek__config-eq">=</span>
-                  <span className="bento-peek__config-val">{r.value}</span>
-                </code>
-              </span>
-            </li>
-          ))}
-        </ul>
+
+        <div className="bento-peek__mod-config-split">
+          <ul className="bento-peek__mod-config-form">
+            {rows.map((r) => (
+              <li
+                key={r.label}
+                className={`bento-peek__mod-config-row${r.dirty ? ' is-dirty' : ''}`}
+              >
+                <span
+                  className={`desk-pill desk-pill--${r.kind === 'bool' ? 'ok' : 'info'}`}
+                >
+                  {r.kind === 'bool' ? 'bool' : 'num'}
+                </span>
+                <span className="bento-peek__mod-config-key">{r.label}</span>
+                {r.kind === 'bool' ? (
+                  <span
+                    className={`bento-peek__mod-config-toggle${
+                      r.value === 'true' ? ' is-on' : ''
+                    }`}
+                  >
+                    <span className="bento-peek__mod-config-knob" />
+                  </span>
+                ) : (
+                  <span className="bento-peek__mod-config-input">{r.value}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <div className="bento-peek__mod-config-side">
+            <div className="bento-peek__mod-config-preview">
+              <span className="bento-peek__kicker">Live preview</span>
+              <code className="bento-peek__mod-config-preview-line">
+                tickRate = <em>20</em>
+              </code>
+              <span className="bento-peek__sub">Dirty · not saved yet</span>
+            </div>
+            <div className="bento-peek__mod-config-safety">
+              <div className="bento-peek__mod-config-safety-row">
+                <span className="bento-peek__kicker">Auto-backup</span>
+                <span className="desk-pill desk-pill--ok">On save</span>
+              </div>
+              <div className="bento-peek__mod-config-safety-row">
+                <span className="bento-peek__kicker">Last backup</span>
+                <span className="bento-peek__readout">2m ago</span>
+              </div>
+              <div className="bento-peek__mod-config-safety-row">
+                <span className="bento-peek__kicker">Undo</span>
+                <span className="desk-pill desk-pill--warn">1 step</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </Plate>
     </div>
   );
@@ -1696,6 +1827,32 @@ function PeekThemeAccent() {
   );
 }
 
+function PeekRoadmap() {
+  const items = [
+    { status: 'Shipped', tone: 'ok' as const, label: 'Join Clinic v2 · mod diff names' },
+    { status: 'Building', tone: 'info' as const, label: 'Weekly ops digest email' },
+    { status: 'Next', tone: 'neutral' as const, label: 'Multi-admin audit log export' },
+  ];
+  return (
+    <div className="bento-peek bento-peek--roadmap" aria-hidden>
+      <Plate className="bento-peek__roadmap-panel">
+        <div className="bento-peek__config-head">
+          <span className="bento-peek__kicker">Roadmap</span>
+          <span className="desk-pill desk-pill--info">In-app</span>
+        </div>
+        <ul className="bento-peek__roadmap-list">
+          {items.map((it) => (
+            <li key={it.label} className="bento-peek__roadmap-row">
+              <span className={`desk-pill desk-pill--${it.tone}`}>{it.status}</span>
+              <span className="bento-peek__roadmap-text">{it.label}</span>
+            </li>
+          ))}
+        </ul>
+      </Plate>
+    </div>
+  );
+}
+
 export function featurePeek(id: string): ReactNode {
   switch (id) {
     case 'health-grade':
@@ -1705,7 +1862,7 @@ export function featurePeek(id: string): ReactNode {
     case 'world-pressure':
       return <PeekWorldPressure />;
     case 'join-clinic':
-      return <PeekJoinStrip />;
+      return <PeekJoinClinic />;
     case 'live-vitals':
       return <PeekLiveChart />;
     case 'support-pack':
@@ -1754,6 +1911,8 @@ export function featurePeek(id: string): ReactNode {
       return <PeekAccounts />;
     case 'theme-accent':
       return <PeekThemeAccent />;
+    case 'roadmap':
+      return <PeekRoadmap />;
     case 'auth':
       return <PeekAuth />;
     case 'help':

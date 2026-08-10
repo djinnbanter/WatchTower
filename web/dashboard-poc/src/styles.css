@@ -1,0 +1,283 @@
+@import 'tailwindcss';
+@import '@fontsource/archivo-black';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/outfit';
+@import '@fontsource-variable/oxanium';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Industrial Ops Print tokens.
+  Dark = tactical desk. Light = Swiss industrial print.
+  shadcn semantic vars map onto WT so Base UI components match the desk.
+*/
+:root,
+[data-theme='dark'],
+.dark {
+  color-scheme: dark;
+  --wt-bg0: #0a0a0a;
+  --wt-bg1: #121212;
+  --wt-bg2: #121212;
+  --wt-bg3: #1a1a1a;
+  --wt-line: #3f3f46;
+  --wt-line-strong: #52525b;
+  --wt-text: #eaeaea;
+  --wt-text-mid: #a3a3a3;
+  --wt-text-low: #737373;
+  --wt-accent: #e8910c;
+  --wt-accent-soft: rgba(232, 145, 12, 0.16);
+  --wt-accent-ink: #0a0a0a;
+  --wt-lantern: #e8910c;
+  --wt-ok: #34d399;
+  --wt-warn: #e8910c;
+  --wt-danger: #e61919;
+  --wt-nav-bg: #0a0a0a;
+  --wt-plate-shadow: none;
+
+  --background: var(--wt-bg0);
+  --foreground: var(--wt-text);
+  --card: var(--wt-bg1);
+  --card-foreground: var(--wt-text);
+  --popover: var(--wt-bg1);
+  --popover-foreground: var(--wt-text);
+  --primary: var(--wt-accent);
+  --primary-foreground: var(--wt-accent-ink);
+  --secondary: var(--wt-bg3);
+  --secondary-foreground: var(--wt-text);
+  --muted: var(--wt-bg3);
+  --muted-foreground: var(--wt-text-mid);
+  --accent: var(--wt-accent-soft);
+  --accent-foreground: var(--wt-accent);
+  --destructive: var(--wt-danger);
+  --border: var(--wt-line);
+  --input: var(--wt-line);
+  --ring: var(--wt-accent);
+  --chart-1: #e8910c;
+  --chart-2: #34d399;
+  --chart-3: #5b8fd4;
+  --chart-4: #c9a227;
+  --chart-5: #e61919;
+  --radius: 0;
+  --sidebar: var(--wt-nav-bg);
+  --sidebar-foreground: var(--wt-text);
+  --sidebar-primary: var(--wt-accent);
+  --sidebar-primary-foreground: var(--wt-accent-ink);
+  --sidebar-accent: var(--wt-bg3);
+  --sidebar-accent-foreground: var(--wt-text);
+  --sidebar-border: var(--wt-line);
+  --sidebar-ring: var(--wt-accent);
+}
+
+[data-theme='light'],
+.light {
+  color-scheme: light;
+  /* Cool Swiss print — neutral paper, not parchment / brown desk. */
+  --wt-bg0: #f4f4f5;
+  --wt-bg1: #ffffff;
+  --wt-bg2: #f4f4f5;
+  --wt-bg3: #e4e4e7;
+  --wt-line: #d4d4d8;
+  --wt-line-strong: #a1a1aa;
+  --wt-text: #18181b;
+  --wt-text-mid: #52525b;
+  --wt-text-low: #71717a;
+  --wt-accent: #c2410c;
+  --wt-accent-soft: rgba(194, 65, 12, 0.1);
+  --wt-accent-ink: #ffffff;
+  --wt-lantern: #c2410c;
+  --wt-ok: #15803d;
+  --wt-warn: #c2410c;
+  --wt-danger: #dc2626;
+  --wt-nav-bg: #fafafa;
+  --wt-plate-shadow: none;
+
+  --background: var(--wt-bg0);
+  --foreground: var(--wt-text);
+  --card: var(--wt-bg1);
+  --card-foreground: var(--wt-text);
+  --popover: var(--wt-bg1);
+  --popover-foreground: var(--wt-text);
+  --primary: var(--wt-accent);
+  --primary-foreground: var(--wt-accent-ink);
+  --secondary: var(--wt-bg3);
+  --secondary-foreground: var(--wt-text);
+  --muted: var(--wt-bg3);
+  --muted-foreground: var(--wt-text-mid);
+  --accent: var(--wt-accent-soft);
+  --accent-foreground: var(--wt-accent);
+  --destructive: var(--wt-danger);
+  --border: var(--wt-line);
+  --input: var(--wt-line);
+  --ring: var(--wt-accent);
+  --sidebar: var(--wt-nav-bg);
+  --sidebar-foreground: var(--wt-text);
+  --sidebar-primary: var(--wt-accent);
+  --sidebar-primary-foreground: var(--wt-accent-ink);
+  --sidebar-accent: var(--wt-bg3);
+  --sidebar-accent-foreground: var(--wt-text);
+  --sidebar-border: var(--wt-line);
+  --sidebar-ring: var(--wt-accent);
+}
+
+:root {
+  --wt-radius-sm: 0;
+  --wt-radius-md: 0;
+  --wt-radius-lg: 0;
+  --font-display: 'Archivo Black', 'Arial Black', sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+  --font-heading: 'Oxanium Variable', 'Inter', system-ui, sans-serif;
+  --wt-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --color-wt-bg0: var(--wt-bg0);
+  --color-wt-bg1: var(--wt-bg1);
+  --color-wt-bg2: var(--wt-bg2);
+  --color-wt-bg3: var(--wt-bg3);
+  --color-wt-line: var(--wt-line);
+  --color-wt-text: var(--wt-text);
+  --color-wt-text-mid: var(--wt-text-mid);
+  --color-wt-text-low: var(--wt-text-low);
+  --color-wt-accent: var(--wt-accent);
+  --color-wt-lantern: var(--wt-lantern);
+  --color-wt-ok: var(--wt-ok);
+  --color-wt-warn: var(--wt-warn);
+  --color-wt-danger: var(--wt-danger);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-heading);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+}
+
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--wt-bg0);
+  color: var(--wt-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-theme='light'] body {
+  background-color: var(--wt-bg0);
+  background-image: none;
+}
+
+[data-theme='light'] .wt-plate {
+  box-shadow: none;
+  background-color: var(--wt-bg1);
+  border-color: var(--wt-line);
+}
+
+.wt-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  line-height: 0.95;
+}
+
+.wt-meta {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wt-plate {
+  background-color: var(--wt-bg1);
+}
+
+/** Chunk industrial meter fill — diagonal hash over phase ink. */
+.wt-bar-hash {
+  background-color: var(--wt-bar-ink, var(--wt-accent));
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0,
+    transparent 3px,
+    color-mix(in srgb, var(--wt-bar-ink, var(--wt-accent)) 55%, #000) 3px,
+    color-mix(in srgb, var(--wt-bar-ink, var(--wt-accent)) 55%, #000) 6px
+  );
+}
+
+[data-theme='light'] .wt-bar-hash {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0,
+    transparent 3px,
+    color-mix(in srgb, var(--wt-bar-ink, var(--wt-accent)) 55%, #18181b) 3px,
+    color-mix(in srgb, var(--wt-bar-ink, var(--wt-accent)) 55%, #18181b) 6px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}

@@ -257,31 +257,15 @@ public final class SupportEvidenceCollector {
                         .forEach(profiles::add);
             }
         }
-        int attached = 0;
         StringBuilder listing = new StringBuilder();
         for (Path profile : profiles) {
             long size = Files.size(profile);
             listing.append(profile.getFileName()).append(" (")
                     .append(ForensicsZipUtil.formatSize(size)).append(")\n");
-            if (attached > 0 && options.sparkPaths().isEmpty()) {
-                continue; // default: only latest
-            }
-            if (size <= 0 || size > options.maxSparkBytes()) {
-                budget.omit("evidence/spark/" + profile.getFileName(), "too_large");
-                continue;
-            }
-            if (!budget.canFit(size)) {
-                budget.omit("evidence/spark/" + profile.getFileName(), "budget");
-                continue;
-            }
-            out.add(CollectedFile.ok("evidence/spark/" + profile.getFileName(), profile, size));
-            attached++;
-            if (options.sparkPaths().isEmpty()) {
-                break;
-            }
+            // Never attach raw .sparkprofile bytes — protobuf cannot be scrubbed for secrets.
+            budget.omit("evidence/spark/" + profile.getFileName(), "binary_unredactable");
         }
         if (!listing.isEmpty()) {
-            // listing handled by caller via text entry
             out.add(new CollectedFile("spark-profiles.txt", null, listing.length(), "listing:" + listing));
         }
         return out;

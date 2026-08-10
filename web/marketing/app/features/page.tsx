@@ -1,39 +1,40 @@
 import type { Metadata } from 'next';
+import { BoardFrame, BoardPageHeader } from '@/components/board';
 import { CapabilityCatalog } from '@/components/features/capability-catalog';
 import { Cta } from '@/components/cta';
 import { ModrinthMark } from '@/components/brand/modrinth-mark';
-import { FEATURE_LEDE } from '@/content/features';
-import { DEMO_URL, LINKS } from '@/content/product';
+import { FEATURE_PAGE } from '@/content/features';
+import { DEMO_URL, LINKS, PAGE_META } from '@/content/product';
 
-export const metadata: Metadata = { title: 'Features' };
+export const metadata: Metadata = {
+  title: { absolute: PAGE_META.features.title },
+  description: PAGE_META.features.description,
+};
 
 export default function FeaturesPage() {
   return (
     <main>
-      <section className="mx-auto w-full max-w-[84rem] px-5 pb-10 pt-20 md:px-8 md:pb-12 md:pt-28">
-        <h1 className="wt-display-sm max-w-[16ch] text-[color:var(--wt-text)] text-balance">
-          Features
-        </h1>
-        <p className="mt-5 max-w-[52ch] text-[1.0625rem] leading-relaxed text-[color:var(--wt-text-mid)]">
-          {FEATURE_LEDE}
-        </p>
-      </section>
+      <BoardFrame ariaLabel="Features board">
+        <BoardPageHeader
+          meta={`WatchTower · ${FEATURE_PAGE.label}`}
+          title={FEATURE_PAGE.title}
+          lead={FEATURE_PAGE.body}
+        />
 
-      <section
-        aria-label="Capability catalog"
-        className="mx-auto w-full max-w-[84rem] px-5 pb-16 md:px-8 md:pb-20"
-      >
-        <CapabilityCatalog />
-      </section>
+        <div className="border-t border-[color:var(--wt-line)] bg-[color:var(--wt-bg0)]">
+          <CapabilityCatalog />
+        </div>
 
-      <section className="border-t border-[color:var(--wt-line)] py-16 md:py-20">
-        <div className="mx-auto flex w-full max-w-[84rem] flex-col gap-6 px-5 md:flex-row md:items-end md:justify-between md:px-8">
-          <p className="max-w-[40ch] text-[1.0625rem] leading-relaxed text-[color:var(--wt-text-mid)]">
-            Open the demo on sample fixtures, or get the jar on Modrinth.
-          </p>
-          <div className="flex flex-wrap items-center gap-2.5">
+        <div className="grid gap-px border-t border-[color:var(--wt-line)] bg-[color:var(--wt-line)] lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <div className="bg-[color:var(--wt-bg1)] p-6 md:p-8">
+            <p className="max-w-[40ch] text-base leading-relaxed text-[color:var(--wt-text-mid)]">
+              Experience the complete WatchTower dashboard with real-time fake server data. No need
+              to install or sign up.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5 bg-[color:var(--wt-bg0)] p-6 md:p-8">
             <Cta href={DEMO_URL} withArrow newTab>
-              Open the demo
+              Try the live demo
             </Cta>
             <Cta
               href={LINKS.modrinth}
@@ -44,7 +45,7 @@ export default function FeaturesPage() {
             </Cta>
           </div>
         </div>
-      </section>
+      </BoardFrame>
     </main>
   );
 }

@@ -3,22 +3,19 @@
 import type { ReactNode } from 'react';
 import NumberFlow from '@number-flow/react';
 import { motion, useReducedMotion } from 'motion/react';
-import type { DeskSurface, DeskVital } from '@/content/baked/desk';
+import type { DeskCrash, DeskSurface, DeskVital } from '@/content/baked/desk';
 import { DESK } from '@/content/baked/desk';
 import { InstrumentPlate } from '@/components/instrument-plate';
 import { WatchSweep } from '@/components/watch-sweep';
-import { StatusGlow } from '@/components/desk/status-glow';
-import { DeskDial, type DialTone } from '@/components/desk/desk-dial';
-import { type GlowTone } from '@/components/motion/desk-border-glow';
-import { DeskSpotlight, type SpotTone } from '@/components/motion/desk-spotlight';
+import {
+  DeskHeatmap,
+  DeskRadialGauge,
+  HashMeter,
+  SeriesChart,
+  SparkBars,
+  type Tone,
+} from '@/components/poc-charts';
 import '@/components/desk/desk.css';
-
-const GLOW_TO_SPOT: Record<GlowTone, SpotTone> = {
-  accent: 'accent',
-  ok: 'ok',
-  warn: 'warn',
-  danger: 'danger',
-};
 
 /** Visual chrome / composition, not which bake data to load. */
 export type DeskChrome = 'rail' | 'bar' | 'bare';
@@ -31,6 +28,12 @@ export type DeskCut =
   | 'chart'
   | 'bands'
   | 'list';
+
+function crashKindTone(kind: DeskCrash['kind']): 'info' | 'warn' | 'danger' {
+  if (kind === 'Host') return 'info';
+  if (kind === 'Hang') return 'danger';
+  return 'warn';
+}
 
 function Spark({
   values,
@@ -102,20 +105,49 @@ function VitalGrid({
 }) {
   return (
     <div
-      className={`desk-vitals${dense ? ' desk-vitals--dense' : ''}${fill ? ' desk-vitals--fill' : ''}`}
+      className={[
+        'grid gap-px bg-[color:var(--wt-line)]',
+        dense ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 lg:grid-cols-3',
+        fill ? 'flex-1' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       aria-label="Live vitals"
     >
-      {vitals.map((v) => (
-        <div key={v.label} className={`desk-vital desk-vital--${v.tone}`}>
-          <div className="desk-vital__label">{v.label}</div>
-          <div className="desk-vital__row">
-            <div className="desk-vital__value">
-              <FlowValue value={v.value} />
+      {vitals.map((v) => {
+        const n = Number(v.value);
+        const isPct =
+          v.unit === '%' || v.channel === 'disk' || v.channel === 'heap' || v.channel === 'cpu';
+        const ink = `var(--wt-ch-${v.channel})`;
+        return (
+          <div key={v.label} className="flex flex-col gap-2 bg-[color:var(--wt-bg1)] p-3 md:p-4">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="font-mono text-[0.65rem] uppercase tracking-wide text-[color:var(--wt-text-low)]">
+                {v.label}
+              </span>
+              <span className="font-mono text-lg tabular-nums" style={{ color: ink }}>
+                <FlowValue value={v.value} />
+                {v.unit ? (
+                  <span className="text-sm text-[color:var(--wt-text-low)]">{v.unit}</span>
+                ) : null}
+              </span>
             </div>
-            <Spark values={v.spark} channel={v.channel} large={fill} />
+            {isPct && Number.isFinite(n) ? (
+              <HashMeter value={n} ink={ink} aria-label={v.label} />
+            ) : v.channel === 'tps' || v.channel === 'mspt' ? (
+              <DeskRadialGauge
+                value={Number.isFinite(n) ? n : 0}
+                max={v.channel === 'tps' ? 20 : 50}
+                label={v.label}
+                color={ink}
+                className="w-full max-w-[7.5rem]"
+              />
+            ) : (
+              <SparkBars samples={[...v.spark]} tone={v.tone as Tone} className="mt-0 h-6" />
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -228,7 +260,15 @@ function OverviewCard({
     <DeskChrome
       title="Overview"
       chrome={chrome}
-      badge={<StatusPill tone="danger">{o.word}</StatusPill>}
+      badge={
+        <StatusPill
+          tone={
+            (o.tone as string) === 'ok' ? 'ok' : (o.tone as string) === 'warn' ? 'warn' : 'danger'
+          }
+        >
+          {o.word}
+        </StatusPill>
+      }
     >
       <div
         className={[
@@ -327,43 +367,36 @@ function OverviewCard({
 }
 
 function LiveDialRow({ compact }: { compact?: boolean }) {
-  const size = compact ? 118 : 142;
-  const dials: Array<{
-    label: string;
-    value: number;
-    max: number;
-    suffix: string;
-    tone: DialTone;
-    decimals?: number;
-  }> = [
-    { label: 'TPS', value: 19.99, max: 20, suffix: '', tone: 'tps', decimals: 1 },
-    { label: 'MSPT', value: 4.7, max: 50, suffix: 'ms', tone: 'mspt', decimals: 1 },
-    { label: 'Heap', value: 79, max: 100, suffix: '%', tone: 'heap', decimals: 0 },
-  ];
-
-  // Prefer baked live vitals when present so marketing stays fixture-true.
   const byLabel = Object.fromEntries(DESK.live.vitals.map((v) => [v.label, v]));
-  const resolved = dials.map((d) => {
-    const baked = byLabel[d.label];
-    if (!baked) return d;
-    const n = Number(baked.value);
-    return Number.isFinite(n) ? { ...d, value: n } : d;
-  });
+  const tps = Number(byLabel.TPS?.value ?? 19.4);
+  const mspt = Number(byLabel.MSPT?.value ?? 48);
+  const disk = Number(byLabel.Disk?.value ?? 71);
+  void compact;
 
   return (
-    <div className={`desk-dials${compact ? ' desk-dials--compact' : ''}`} aria-label="Live vitals">
-      {resolved.map((d) => (
-        <DeskDial
-          key={d.label}
-          label={d.label}
-          value={d.value}
-          max={d.max}
-          suffix={d.suffix}
-          tone={d.tone}
-          size={size}
-          decimals={d.decimals}
-        />
-      ))}
+    <div className="grid grid-cols-3 gap-3" aria-label="Live vitals">
+      <DeskRadialGauge
+        value={tps}
+        max={20}
+        label="TPS"
+        color="var(--wt-ch-tps)"
+        className="w-full"
+      />
+      <DeskRadialGauge
+        value={mspt}
+        max={50}
+        label="MSPT"
+        color="var(--wt-ch-mspt)"
+        className="w-full"
+      />
+      <DeskRadialGauge
+        value={disk}
+        max={100}
+        label="Disk"
+        unit="%"
+        color="var(--wt-ch-disk)"
+        className="w-full"
+      />
     </div>
   );
 }
@@ -377,40 +410,30 @@ function LiveCard({
   chrome: DeskChrome;
   compact?: boolean;
 }) {
-  const max = Math.max(...DESK.live.series);
-  const reduce = useReducedMotion();
   const showChart = cut === 'full';
   const useDials = cut === 'vitals' || cut === 'chart' || compact;
+  const series = DESK.live.series;
+  const max = Math.max(...series, 1);
+  const norm = series.map((v) => v / max);
 
   return (
     <DeskChrome title="Live" chrome={chrome} badge={<StatusPill tone="ok">Watching</StatusPill>}>
       {useDials ? <LiveDialRow compact={compact} /> : <VitalGrid vitals={DESK.live.vitals} dense />}
       {showChart ? (
-        <div className="desk-plate desk-plate--chart">
-          <div className="desk-plate__head">
+        <div className="desk-plate desk-plate--chart mt-3 border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] p-3">
+          <div className="desk-plate__head mb-2">
             <span>MSPT</span>
             <span className="desk-plate__hint">sample window</span>
           </div>
-          <div className="desk-bars" aria-hidden>
-            {DESK.live.series.map((v, i) => (
-              <motion.span
-                key={i}
-                className="desk-bars__col"
-                initial={reduce ? false : { scaleY: 0.15 }}
-                whileInView={{ scaleY: 1 }}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{
-                  duration: 0.55,
-                  delay: i * 0.02,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                style={{
-                  height: `${Math.max(8, (v / max) * 100)}%`,
-                  transformOrigin: 'bottom',
-                }}
-              />
-            ))}
-          </div>
+          <SeriesChart
+            tracks={[{ id: 'mspt', label: 'MSPT', series: norm, color: 'var(--wt-warn)' }]}
+            points={norm.length}
+            mode="bar"
+            valueAtFull={max}
+            unit="ms"
+            windowMs={60 * 60 * 1000}
+            className="h-32 md:h-36"
+          />
         </div>
       ) : null}
     </DeskChrome>
@@ -560,7 +583,7 @@ function CrashesCard({
                           </div>
                           <p className="desk-crash__row-summary">{c.summary}</p>
                           <div className="desk-crash__row-pills">
-                            <StatusPill tone={c.kind === 'Host' ? 'info' : 'warn'}>{c.kind}</StatusPill>
+                            <StatusPill tone={crashKindTone(c.kind)}>{c.kind}</StatusPill>
                             <StatusPill tone={c.confidence === 'High' ? 'ok' : 'warn'}>
                               {c.confidence}
                             </StatusPill>
@@ -576,7 +599,7 @@ function CrashesCard({
           {active ? (
             <div className="desk-crash__detail">
               <div className="desk-crash__detail-pills">
-                <StatusPill tone={active.kind === 'Host' ? 'info' : 'warn'}>{active.kind}</StatusPill>
+                <StatusPill tone={crashKindTone(active.kind)}>{active.kind}</StatusPill>
                 <StatusPill tone={active.confidence === 'High' ? 'ok' : 'warn'}>
                   {active.confidence} confidence
                 </StatusPill>
@@ -630,26 +653,29 @@ function InsightsCard({
   return (
     <DeskChrome title="Insights" chrome={chrome} badge={<StatusPill tone="info">{DESK.insights.window}</StatusPill>}>
       <div className={`desk-insights${compact ? ' desk-insights--center' : ''}`}>
-        <div className="desk-plate">
-          <div className="desk-plate__head">
-            <span>Busy hours</span>
-          </div>
-          <div className="desk-busy">
-            {busy.map((h) => (
-              <div key={h.label} className="desk-busy__row">
-                <span className="desk-busy__label">{h.label}</span>
-                <span className="desk-busy__meta font-mono">
-                  {h.avgPlayers.toFixed(1)} players
-                </span>
-                <span className="desk-busy__meta font-mono">{h.avgMspt.toFixed(1)} ms MSPT</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        {compact ? null : (
+        {compact ? (
           <div className="desk-plate">
-            <div className="desk-queue__title">{DESK.insights.stickyLag}</div>
-            <div className="desk-queue__detail mt-2">{DESK.insights.storageHint}</div>
+            <div className="desk-plate__head">
+              <span>Busy hours</span>
+            </div>
+            <div className="desk-busy">
+              {busy.map((h) => (
+                <div key={h.label} className="desk-busy__row">
+                  <span className="desk-busy__label">{h.label}</span>
+                  <span className="desk-busy__meta font-mono">
+                    {h.avgPlayers.toFixed(1)} players
+                  </span>
+                  <span className="desk-busy__meta font-mono">{h.avgMspt.toFixed(1)} ms MSPT</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] p-2">
+            <DeskHeatmap height={240} />
+            <p className="mt-2 px-1 font-mono text-[0.7rem] text-[color:var(--wt-text-low)]">
+              {DESK.insights.stickyLag}
+            </p>
           </div>
         )}
       </div>
@@ -690,7 +716,11 @@ function BackupsCard({ chrome }: { cut: DeskCut; chrome: DeskChrome }) {
           trailing: (
             <StatusPill
               tone={
-                b.status === 'Healthy' ? 'ok' : b.status === 'In progress' ? 'warn' : 'neutral'
+                b.status === 'Fresh'
+                  ? 'ok'
+                  : b.status === 'Aging' || b.status === 'Missing'
+                    ? 'warn'
+                    : 'neutral'
               }
             >
               {b.status}
@@ -730,9 +760,9 @@ function renderCard(
 export function ProductDesk({
   surface,
   sweep = false,
-  glow = false,
-  pointerGlow = false,
-  spotlight = false,
+  glow: _glow = false,
+  pointerGlow: _pointerGlow = false,
+  spotlight: _spotlight = false,
   chrome = 'rail',
   cut = 'full',
   compact = false,
@@ -741,15 +771,12 @@ export function ProductDesk({
 }: {
   surface: DeskSurface;
   sweep?: boolean;
-  /** Status-keyed BorderGlow-style wash (hero only). */
+  /** @deprecated Flat desks — glow wash removed; prop ignored for API stability. */
   glow?: boolean;
-  /**
-   * Pointer spotlight (same language as Overview HeroReadout).
-   * Accepts a tone for accent/warn/danger wash color.
-   */
-  pointerGlow?: false | GlowTone;
-  /** Soft lantern/accent spotlight follow. */
-  spotlight?: boolean | SpotTone;
+  /** @deprecated Flat desks — spotlight removed; prop ignored for API stability. */
+  pointerGlow?: false | 'accent' | 'ok' | 'warn' | 'danger';
+  /** @deprecated Flat desks — spotlight removed; prop ignored for API stability. */
+  spotlight?: boolean | 'accent' | 'lantern' | 'ok' | 'warn' | 'danger';
   chrome?: DeskChrome;
   cut?: DeskCut;
   /** Shorter marketing cuts: fewer rows, no long narratives. */
@@ -758,44 +785,18 @@ export function ProductDesk({
   stage?: boolean;
   className?: string;
 }) {
-  let card = (
-    <InstrumentPlate className="h-full">
-      <div
-        className={`desk-surface${compact ? ' desk-surface--compact' : ''}${
-          stage ? ' desk-surface--stage' : ''
-        }`}
-      >
-        {renderCard(surface, cut, chrome, compact, stage)}
-        {sweep ? <WatchSweep /> : null}
-      </div>
-    </InstrumentPlate>
-  );
-
-  const spotTone: SpotTone | null = pointerGlow
-    ? GLOW_TO_SPOT[pointerGlow]
-    : spotlight === true
-      ? 'lantern'
-      : spotlight
-        ? spotlight
-        : null;
-
-  if (spotTone) {
-    card = (
-      <DeskSpotlight tone={spotTone} className="h-full">
-        {card}
-      </DeskSpotlight>
-    );
-  }
-
   return (
     <div className={`desk-frame ${className}`}>
-      {glow && surface === 'overview' ? (
-        <StatusGlow tone={DESK.overview.tone} className="h-full">
-          {card}
-        </StatusGlow>
-      ) : (
-        card
-      )}
+      <InstrumentPlate className="h-full">
+        <div
+          className={`desk-surface${compact ? ' desk-surface--compact' : ''}${
+            stage ? ' desk-surface--stage' : ''
+          }`}
+        >
+          {renderCard(surface, cut, chrome, compact, stage)}
+          {sweep ? <WatchSweep /> : null}
+        </div>
+      </InstrumentPlate>
     </div>
   );
 }

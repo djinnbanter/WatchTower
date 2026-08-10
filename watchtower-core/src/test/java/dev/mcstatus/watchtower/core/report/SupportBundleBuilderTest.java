@@ -76,6 +76,24 @@ class SupportRedactorTest {
         assertFalse(SupportRedactor.redactLine("2001:0db8:85a3:0000:0000:8a2e:0370:7334")
                 .contains("2001:0db8"));
     }
+
+    @Test
+    void redactsInlineMidLineSecrets() {
+        String out = SupportRedactor.redactLine("connected user password=s3cret token=abc123 end");
+        assertTrue(out.contains("[REDACTED]"));
+        assertFalse(out.contains("s3cret"));
+        assertFalse(out.contains("abc123"));
+    }
+
+    @Test
+    void redactsQuotedJsonSecrets() {
+        String json = "{\"password\":\"hunter2\",\"host\":\"1.2.3.4\",\"ok\":true}";
+        String out = SupportRedactor.redactJsonText(json);
+        assertTrue(out.contains("[REDACTED]"));
+        assertFalse(out.contains("hunter2"));
+        assertTrue(out.contains("[IP_REDACTED]"));
+        assertFalse(out.contains("1.2.3.4"));
+    }
 }
 
 class SupportComposerV4Test {

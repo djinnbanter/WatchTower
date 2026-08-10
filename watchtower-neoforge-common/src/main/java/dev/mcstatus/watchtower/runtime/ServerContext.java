@@ -36,6 +36,12 @@ public interface ServerContext {
     WatchtowerSample.Sample collectSample();
 
     /**
+     * Tick-safe sample for lag capture / live entity fallback: metrics, players, heap,
+     * optional entity counts — never walks mod jars.
+     */
+    WatchtowerSample.Sample collectSampleLight();
+
+    /**
      * Per-dimension entity/chunk census for world-pressure analysis.
      * Must be called on the server tick thread. Default is empty (no census).
      */

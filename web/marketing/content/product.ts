@@ -1,54 +1,100 @@
 /**
- * Claim sources (do not invent beyond these):
- * - Tagline + two questions: README.md, PRODUCT.md
- * - Local-first / no required cloud / no telemetry by default: PRODUCT.md, docs/ROADMAP.md Promises
- * - Advisory only (no restart, no quiet mod/world edits): README.md, PRODUCT.md
- * - Modrinth never downloads jars: PRODUCT.md / wiki Mods
- * - Not host panel / not player analytics / not client GPU: docs/ROADMAP.md "Not our job"
- * - License GPL-3.0-or-later; local dashboard free forever: README.md, PRODUCT.md
- * - NeoForge 1.21.x, Java 21, Linux dedicated common: README.md
- * Display spelling: WatchTower (DESIGN.md / PRODUCT.md)
+ * Marketing site copy — primary wording from the 2026 reword brief.
+ * Display spelling: WatchTower
  */
 
-/** Single hero line. Product: local ops dashboard for dedicated MC servers (PRODUCT.md). */
-export const TAGLINE = "What's happening on your Minecraft server, and what to do next.";
+/** Meta / SEO fallback (Home meta description is preferred where set). */
+export const TAGLINE =
+  'WatchTower keeps an eye on your NeoForge server while it\'s running, helps organize issues into easy-to-understand lists, and makes troubleshooting crashes and lag simpler—all without relying on cloud tracking or replacing your control panel.';
 
-/** Source: PRODUCT.md Product Purpose, README.md. */
+/** Home hero display title. */
+export const HERO_DISPLAY = 'Minecraft Ops, Sorted!';
+
 export const SUPPORT_LINE =
-  'Local ops dashboard for a dedicated host. Watches while the game runs. Data stays on that machine.';
+  'Just put the jar in the mods folder. It runs while your game is active and shows you a simple list of fixes on your computer.';
 
-/** Hero welcome overview. Source: PRODUCT.md purpose + local-first host. */
+/** Home hero body. */
 export const HERO_OVERVIEW =
-  'Local ops dashboard for a NeoForge dedicated server. Watches while the game runs, then tells you what to fix. No cloud account. Data stays on the host.';
+  'I made WatchTower because I was tired of jumping between control panels, latest logs, and crash reports late at night. Just put the jar in the mods folder. It runs while your game is active and shows you a simple list of fixes on your computer. No need for a cloud account.';
 
-/** Hero context strip. Source: PRODUCT.md local-first / dedicated host / no required cloud. */
-export const HERO_CONTEXT =
-  'Local-first · dedicated host · no cloud required';
+/** Hero stamp / context. */
+export const HERO_CONTEXT = 'Local Ops Desk';
 
-/** Scroll cue into the Live dashboard beat. */
-export const SCROLL_CUE = 'Scroll into Live';
+export const HERO_PRIMARY_CTA = 'Get it on Modrinth';
+export const HERO_SECONDARY_CTA = 'Try the live demo';
 
-/** Close CTA headline. */
-export const CLOSE_HEADLINE = 'Open the demo, then grab the jar.';
+/** Hero status strip — dashboard V2 is in progress, not a ship date. */
+export const HERO_V2_NOTE = 'V2 coming soon';
+export const HERO_V2_DETAIL = 'New desk UI in the works — current build still ships today.';
 
-/** Close CTA body. */
+/** Scroll cue into the next home board. */
+export const HERO_SCROLL_CUE = 'Scroll for more';
+
+/** Scroll cue into Issues. */
+export const SCROLL_CUE = 'Check out the Fix inbox';
+
+/** Product boundary / what-is section. */
+export const WHAT_IS_LABEL = 'What WatchTower Is (and Isn\'t)';
+export const WHAT_IS_TITLE = 'Your Operations Desk, Not a Replacement Panel';
+export const WHAT_IS_LEAD =
+  'WatchTower sits next to your main control panel, not on top of it. It doesn\'t start or stop your server, secretly delete mods, or keep an eye on your players. Instead, it watches your server\'s health, helps prioritize issues, and provides clear advice so you can make the best decisions.';
+
+export const WHAT_IS_BODY = WHAT_IS_LEAD;
+
+export const WHAT_IS_FACTS = [
+  {
+    label: 'Keeps Data Local and Private',
+    detail: 'All information stays on your server—no cloud accounts or hidden tracking needed.',
+  },
+  {
+    label: 'Offers Recommendations, Not Automatic Actions',
+    detail:
+      'WatchTower suggests when to restart and points out problematic mods. You or your control panel choose when to make changes—no automatic moves.',
+  },
+  {
+    label: 'Helps Troubleshoot, Not Spy',
+    detail:
+      'Player lists help explain lag or connection issues—they aren\'t used to gather player data or monitor players.',
+  },
+] as const;
+
+/** Overview / restart proof beat. */
+export const HOME_OVERVIEW_LABEL = 'Live Status';
+export const HOME_OVERVIEW_TITLE = 'Find out if it\'s safe to restart now.';
+export const HOME_OVERVIEW_BODY =
+  'Get an instant health update and advice on whether to restart before you hit reboot. WatchTower looks at busy times, how many players are online, and current server activity so you don\'t accidentally ruin a good session.';
+export const HOME_OVERVIEW_CTA = 'See how restart advice works';
+
+/** Legacy combined lead — prefer HOME_OVERVIEW_* / HOME_INSIGHTS_*. */
+export const HOME_OVERVIEW_INSIGHTS_LEAD = HOME_OVERVIEW_BODY;
+
+/** Insights / storage proof beat. */
+export const HOME_INSIGHTS_LABEL = 'Long-Term Health';
+export const HOME_INSIGHTS_TITLE = 'Check your disk space before it\'s all used up';
+export const HOME_INSIGHTS_BODY =
+  'Keep an eye on how your storage is growing, watch for sudden jumps in data, and see how much time you have before you run out of space. Know how many days you can store more data and find the best times for quiet maintenance.';
+export const HOME_INSIGHTS_CTA = 'See Insights tools';
+
+/** Close CTA. */
+export const CLOSE_LABEL = 'Get Started';
+export const CLOSE_HEADLINE = 'Ready to Make Your Server Run Smoother?';
 export const CLOSE_BODY =
-  'The demo is the real dashboard on sample fixtures. Click around first if you want, then install from Modrinth.';
+  'Just drop the file into the mods folder, restart your server once, and open port 8787. It\'s free, open for everyone, and made for NeoForge 1.21.x.';
+export const CLOSE_PRIMARY_CTA = 'Download from Modrinth';
+export const CLOSE_SECONDARY_CTA = 'View the Installation Guide';
 
 /** Footer product blurb. */
 export const FOOTER_BLURB =
-  'Local ops dashboard for Minecraft dedicated servers. Runs as a jar on the same machine as the game.';
+  'WatchTower is a free, easy-to-use tool that helps manage your modded Minecraft server right from your computer. It\'s designed for server admins who want clear information without having to sift through complex logs.';
 
 /**
- * Feature-tour capability + brings for Shift Log product beats.
- * Left columns name what the surface shows; dashboard mocks hold fixtures (no proof field).
+ * Feature-tour capability + brings for home proof beats.
  */
 export const TOUR = {
   live: {
     capability:
-      'TPS, lag, memory, players, and host load on charts while the server runs. You do not need latest.log open for the basics.',
+      'Shows real-time graphs of things like transaction speed, tick rate, memory usage, CPU load, disk activity, and background tasks. You can zoom in or out on the timeline from minutes to hours to find exactly when slowdowns happen.',
     note: 'dashboard · Live',
-    /** Source: docs/wiki/Live-Charts.md */
     brings: [
       {
         title: 'Game vitals',
@@ -70,9 +116,10 @@ export const TOUR = {
   },
   issues: {
     capability:
-      'Ranked inbox for live finds, scan results, boot problems, and crash pointers. Pick a row, see what to do.',
-    note: 'dashboard · Issues',
-    /** Source: docs/wiki/Issues.md */
+      'WatchTower checks your logs, scripts, and server performance every minute. If a KubeJS script runs into an issue, a client-only jar file gets added silently, or the server pauses temporarily, WatchTower creates a clear step-by-step guide to fix it.',
+    note: 'Issues Inbox',
+    title: 'Your organized list of problems on your server',
+    cta: 'Check out the Fix inbox',
     brings: [
       {
         title: 'Active / Reviewed',
@@ -96,9 +143,11 @@ export const TOUR = {
     ],
   },
   crashes: {
-    capability: 'Crashes grouped by fingerprint, with Fix, Evidence, and Details tabs.',
-    note: 'dashboard · Crashes',
-    /** Source: docs/wiki/Crashes.md + PRODUCT.md advisory */
+    capability:
+      'WatchTower groups similar crash details so you don\'t have to read the same report over and over. It points out the likely problem mod, shows the clues that led to that conclusion, and recognizes when the server was killed by the operating system without leaving a crash log.',
+    note: 'Crashes',
+    title: 'Crash Reports Made Easy',
+    cta: 'Learn how crash grouping works',
     brings: [
       {
         title: 'Fingerprint groups',
@@ -119,10 +168,9 @@ export const TOUR = {
     ],
   },
   overview: {
-    capability:
-      'First screen after login: health grade, needs-attention list, and jumps into the rest of the dashboard.',
-    note: 'dashboard · Overview',
-    /** Source: docs/wiki/Dashboard-Overview.md */
+    capability: HOME_OVERVIEW_BODY,
+    note: HOME_OVERVIEW_LABEL,
+    title: HOME_OVERVIEW_TITLE,
     brings: [
       {
         title: 'Health grade',
@@ -144,10 +192,9 @@ export const TOUR = {
     ],
   },
   insights: {
-    capability:
-      'Day and week views for busy hours, world pressure, storage trends, and a weekly digest.',
-    note: 'dashboard · Insights',
-    /** Source: docs/wiki/Insights.md */
+    capability: HOME_INSIGHTS_BODY,
+    note: HOME_INSIGHTS_LABEL,
+    title: HOME_INSIGHTS_TITLE,
     brings: [
       {
         title: 'Schedule',
@@ -184,29 +231,24 @@ export const TWO_QUESTIONS = [
   },
 ] as const;
 
-/**
- * Instrument captions for the loop band. These describe what the product does.
- * They are not measured performance claims and no numbers are invented here.
- */
 export const READOUTS = [
   { label: 'Watching', value: 'while the game runs' },
   { label: 'Scanning', value: 'logs, mods, crashes, disk' },
   { label: 'Fix inbox', value: 'ranked, with next steps' },
 ] as const;
 
-/** Source: docs/ROADMAP.md "## Promises that don't change" */
 export const PROMISES = [
   {
-    title: 'Your data stays yours',
-    body: "Files stay on your server. We don't upload logs by default. Anonymous diagnostics and Cloud sync are opt-in.",
+    title: 'Keeps Data Local and Private',
+    body: 'All information stays on your server—no cloud accounts or hidden tracking needed.',
   },
   {
-    title: "You're in control",
-    body: 'Network features are opt-in. Risky actions show a preview and an undo. Nothing quietly edits your mods or world.',
+    title: 'Offers Recommendations, Not Automatic Actions',
+    body: 'WatchTower suggests when to restart and points out problematic mods. You or your control panel choose when to make changes—no automatic moves.',
   },
   {
-    title: 'Ops, not surveillance',
-    body: "Helps you run the server. Does not track players like an analytics product.",
+    title: 'Helps Troubleshoot, Not Spy',
+    body: 'Player lists help explain lag or connection issues—they aren\'t used to gather player data or monitor players.',
   },
   {
     title: 'Drop-in beside your host',
@@ -214,7 +256,6 @@ export const PROMISES = [
   },
 ] as const;
 
-/** Source: docs/ROADMAP.md "## Not our job" */
 export const NOT_OUR_JOB = [
   {
     weDont: 'Host panels',
@@ -241,8 +282,43 @@ export const LINKS = {
   wikiInstall: 'https://github.com/djinnbanter/WatchTower/wiki/Installation',
   wikiDisasterRecovery:
     'https://github.com/djinnbanter/WatchTower/wiki/Disaster-Recovery',
+  wikiSecurity: 'https://github.com/djinnbanter/WatchTower/wiki/Security-and-Access',
   license: 'https://github.com/djinnbanter/WatchTower/blob/main/LICENSE',
 } as const;
 
 export const FOOTNOTE =
-  'Free forever on your machine. GPL-3.0-or-later. Runs where the server runs.';
+  'WatchTower is free and open-source software released under GPL-3.0. Minecraft is a registered trademark of Mojang Synergies AB. WatchTower is not affiliated with or endorsed by Mojang, Microsoft, or NeoForge.';
+
+/** Page meta descriptions from the reword. */
+export const PAGE_META = {
+  home: {
+    title: 'WatchTower — Local Dashboard for Minecraft Servers',
+    description:
+      'WatchTower keeps an eye on your NeoForge server while it\'s running, helps organize issues into easy-to-understand lists, and makes troubleshooting crashes and lag simpler—all without relying on cloud tracking or replacing your control panel.',
+  },
+  how: {
+    title: 'How WatchTower Works — Continuous Monitoring & Troubleshooting',
+    description:
+      'Discover how WatchTower gathers real-time data, checks logs for problems, and creates clean support reports directly on your NeoForge server.',
+  },
+  features: {
+    title: 'Features — WatchTower Minecraft Server Dashboard',
+    description:
+      'See all the tools WatchTower offers: live server stats, organized list of fixes, crash analysis, mod setup editor, disk usage estimates, and command-line recovery options.',
+  },
+  install: {
+    title: 'Installation Guide — WatchTower',
+    description:
+      'Easy step-by-step instructions to set up WatchTower on your NeoForge 1.21.x dedicated server in less than two minutes.',
+  },
+  faq: {
+    title: 'FAQ — WatchTower Server Dashboard',
+    description:
+      'Common questions answered about how WatchTower stores data locally, resource usage, compatible control panels, and security concerns.',
+  },
+  demo: {
+    title: 'Interactive Demo — WatchTower Server Dashboard',
+    description:
+      'Try out WatchTower in your browser with live demo data, including server stats, crash reports, and troubleshooting tools.',
+  },
+} as const;

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,7 +23,7 @@ class FsBrowseServiceTest {
         Files.writeString(dir.resolve("readme.txt"), "b");
         Files.createDirectories(dir.resolve("subdir"));
 
-        JsonObject listing = FsBrowseService.listDirectory(dir.toString());
+        JsonObject listing = FsBrowseService.listDirectory(dir.toString(), List.of(dir.toRealPath().toString()));
         assertEquals(dir.toRealPath().toString(), listing.get("path").getAsString());
         assertEquals(1, listing.get("archive_count").getAsInt());
         assertEquals(3, listing.getAsJsonArray("entries").size());
@@ -41,6 +42,17 @@ class FsBrowseServiceTest {
     @Test
     void listDirectoryRejectsTraversal() {
         assertThrows(IOException.class, () -> FsBrowseService.listDirectory("/tmp/../etc"));
+    }
+
+    @Test
+    void listDirectoryRejectsOutsideAllowedRoots() throws Exception {
+        Path tmp = Files.createTempDirectory("wt-fs-browse-sandbox");
+        Path allowed = tmp.resolve("allowed");
+        Path outside = tmp.resolve("outside");
+        Files.createDirectories(allowed);
+        Files.createDirectories(outside);
+        assertThrows(IOException.class,
+                () -> FsBrowseService.listDirectory(outside.toString(), List.of(allowed.toRealPath().toString())));
     }
 
     @Test

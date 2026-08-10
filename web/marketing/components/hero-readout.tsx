@@ -11,15 +11,15 @@ const TONE_INK: Record<string, string> = {
   default: 'var(--wt-text)',
 };
 
-const SEVERITY_LABEL: Record<string, string> = {
-  critical: 'Critical',
-  warning: 'Warn',
-  info: 'Info',
+const VERDICT_TONE: Record<string, string> = {
+  Safe: 'ok',
+  Caution: 'warn',
+  Wait: 'danger',
 };
 
 /**
- * Full-width hero instrument: chrome bar + health grade + fix inbox.
- * Composition borrowed from a dual-pane desk mock; data from DESK fixtures only.
+ * Full-width Overview instrument: chrome + health grade + restart advice.
+ * Matches the home Overview beat (is it safe to restart?) — not the Issues inbox.
  */
 export function HeroReadout() {
   const reduce = useReducedMotion();
@@ -30,11 +30,17 @@ export function HeroReadout() {
   const heap = desk.vitals.find((v) => v.label === 'Heap');
   const cpu = desk.vitals.find((v) => v.label === 'CPU');
   const players = desk.vitals.find((v) => v.label === 'Players');
-
-  const inbox = DESK.issues.bands.flatMap((band) => [...band.items]).slice(0, 2);
-
-  const inboxCount = DESK.issues.bands.reduce((n, b) => n + b.count, 0);
+  const loader = DESK.identity.find((i) => i.label === 'Loader')?.value ?? 'NeoForge';
   const mc = DESK.identity.find((i) => i.label === 'MC')?.value ?? '1.21.1';
+  const verdictTone = VERDICT_TONE[desk.restart.verdict] ?? 'warn';
+  const verdictInk = TONE_INK[verdictTone] ?? TONE_INK.warn;
+  const quiet = DESK.insights.quiet[0];
+
+  const reasons = [
+    players ? `${players.value}${players.unit ?? ''} players online` : null,
+    'Chunky pregen still running',
+    quiet ? `Quiet slot ${quiet.label}` : null,
+  ].filter(Boolean) as string[];
 
   return (
     <InstrumentPlate>
@@ -54,7 +60,9 @@ export function HeroReadout() {
             <span aria-hidden className="text-[color:var(--wt-text-low)]">
               |
             </span>
-            <span>NeoForge {mc} Dedicated</span>
+            <span>
+              {loader} · MC {mc}
+            </span>
           </div>
           <div className="flex items-center gap-2.5 font-mono text-[0.75rem]">
             <span
@@ -74,7 +82,7 @@ export function HeroReadout() {
           </div>
         </div>
 
-        {/* Dual pane */}
+        {/* Dual pane: grade + restart */}
         <div className="grid gap-3 p-3 sm:p-4 md:grid-cols-12 md:gap-4 md:p-5">
           {/* Health */}
           <div
@@ -145,7 +153,7 @@ export function HeroReadout() {
             </div>
           </div>
 
-          {/* Fix inbox */}
+          {/* Restart advice */}
           <div
             className="flex flex-col justify-between border border-[color:var(--wt-line)] bg-[color:var(--wt-bg0)] p-4 md:col-span-8"
             style={{ borderRadius: 'var(--wt-radius-sm)' }}
@@ -155,61 +163,62 @@ export function HeroReadout() {
                 <div className="flex min-w-0 items-center gap-2">
                   <span
                     aria-hidden
-                    className="h-2 w-2 shrink-0 rounded-full bg-[color:var(--wt-warn)]"
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: verdictInk }}
                   />
                   <span className="font-mono text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--wt-text)]">
-                    Issues fix inbox ({inboxCount} open)
+                    Restart advice
                   </span>
                 </div>
-                <span className="font-mono text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-[color:var(--wt-accent)]">
-                  View inbox
+                <span
+                  className="px-1.5 py-0.5 font-mono text-[0.75rem] font-semibold uppercase tracking-[0.1em]"
+                  style={{
+                    borderRadius: 'var(--wt-radius-sm)',
+                    color: verdictInk,
+                    background: `color-mix(in srgb, ${verdictInk} 16%, transparent)`,
+                  }}
+                >
+                  {desk.restart.verdict}
                 </span>
               </div>
 
-              <ul className="mt-3 space-y-2">
-                {inbox.map((issue, i) => {
-                  const severityInk =
-                    issue.severity === 'critical'
-                      ? 'var(--wt-danger)'
-                      : issue.severity === 'warning'
-                        ? 'var(--wt-warn)'
-                        : 'var(--wt-accent)';
-                  return (
-                    <li
-                      key={issue.title}
-                      className="flex items-start justify-between gap-3 border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] px-3 py-2.5"
-                      style={{ borderRadius: 'var(--wt-radius-sm)' }}
-                    >
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className="px-1.5 py-0.5 font-mono text-[0.75rem] font-semibold uppercase tracking-[0.1em]"
-                            style={{
-                              borderRadius: 'var(--wt-radius-sm)',
-                              color: severityInk,
-                              background: `color-mix(in srgb, ${severityInk} 16%, transparent)`,
-                            }}
-                          >
-                            {SEVERITY_LABEL[issue.severity] ?? issue.severity}
-                          </span>
-                          <span className="text-[0.8125rem] font-medium text-[color:var(--wt-text)]">
-                            {issue.title}
-                          </span>
-                        </div>
-                        <p className="font-mono text-[0.75rem] leading-snug text-[color:var(--wt-text-low)]">
-                          {issue.narrative}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
+              <div className="mt-4">
+                <div
+                  className="font-mono text-[1.75rem] font-semibold leading-none tracking-tight md:text-[2rem]"
+                  style={{ color: verdictInk }}
+                >
+                  {desk.restart.verdict}
+                </div>
+                <p className="mt-2 max-w-[42ch] text-[0.875rem] font-normal normal-case leading-relaxed tracking-normal text-[color:var(--wt-text-mid)]">
+                  {desk.restart.summary}
+                </p>
+              </div>
+
+              <ul className="mt-4 space-y-2">
+                {reasons.map((reason) => (
+                  <li
+                    key={reason}
+                    className="flex items-start gap-2 border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] px-3 py-2.5 text-[0.8125rem] text-[color:var(--wt-text)]"
+                    style={{ borderRadius: 'var(--wt-radius-sm)' }}
+                  >
+                    <span
+                      aria-hidden
+                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--wt-accent)]"
+                    />
+                    <span className="font-normal normal-case leading-snug tracking-normal">
+                      {reason}
+                    </span>
+                  </li>
+                ))}
               </ul>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--wt-line)] pt-3 font-mono text-[0.75rem] text-[color:var(--wt-text-low)]">
               <span>
-                Spark:{' '}
-                <span className="text-[color:var(--wt-text-mid)]">optional companion</span>
+                Advisory only —{' '}
+                <span className="text-[color:var(--wt-text-mid)]">
+                  WatchTower never restarts for you
+                </span>
               </span>
               <span>
                 Local data:{' '}

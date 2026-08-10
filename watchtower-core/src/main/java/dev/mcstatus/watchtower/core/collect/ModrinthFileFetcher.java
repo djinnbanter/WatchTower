@@ -46,12 +46,16 @@ public final class ModrinthFileFetcher {
 
     public ModrinthFileFetcher(HttpClient client) {
         this(url -> {
+            if (!isAllowedDownloadUrl(url)) {
+                throw new IOException("Download host not allowed");
+            }
             HttpRequest request = HttpRequest.newBuilder(url)
                     .timeout(Duration.ofMinutes(2))
                     .header("User-Agent", "WatchTower/mod-mutate")
                     .GET()
                     .build();
             try {
+                // Caller-supplied clients should also use Redirect.NEVER; allowlist is checked again here.
                 HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
                 if (response.statusCode() < 200 || response.statusCode() >= 300) {
                     throw new IOException("HTTP " + response.statusCode());
@@ -74,6 +78,9 @@ public final class ModrinthFileFetcher {
     public Result fetchAndVerify(URI url, Path stagingDir, String filename, String expectedSha512) {
         if (url == null) {
             return Result.fail("invalid_url", "Download URL required");
+        }
+        if (!isAllowedDownloadUrl(url)) {
+            return Result.fail("invalid_url", "Download host must be an https Modrinth CDN URL");
         }
         String safeName = ModJarPaths.safeSegment(filename);
         if (safeName == null || !safeName.toLowerCase(Locale.ROOT).endsWith(".jar")) {
@@ -162,12 +169,33 @@ public final class ModrinthFileFetcher {
         };
     }
 
+    /**
+     * Only https://cdn.modrinth.com/… (and same host with optional port). Blocks SSRF via arbitrary URLs/redirects.
+     */
+    public static boolean isAllowedDownloadUrl(URI url) {
+        if (url == null) {
+            return false;
+        }
+        if (!"https".equalsIgnoreCase(url.getScheme())) {
+            return false;
+        }
+        String host = url.getHost();
+        if (host == null || host.isBlank()) {
+            return false;
+        }
+        return "cdn.modrinth.com".equalsIgnoreCase(host.trim());
+    }
+
     private static ByteDownloader defaultHttpDownloader() {
+        // Never follow redirects — a 30x to an internal host would bypass the URL allowlist.
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
-                .followRedirects(HttpClient.Redirect.NORMAL)
+                .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
         return url -> {
+            if (!isAllowedDownloadUrl(url)) {
+                throw new IOException("Download host not allowed");
+            }
             HttpRequest request = HttpRequest.newBuilder(url)
                     .timeout(Duration.ofMinutes(2))
                     .header("User-Agent", "WatchTower/mod-mutate")

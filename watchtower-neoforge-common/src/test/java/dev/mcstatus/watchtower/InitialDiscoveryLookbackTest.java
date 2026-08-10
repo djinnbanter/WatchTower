@@ -103,6 +103,11 @@ class InitialDiscoveryLookbackTest {
         }
 
         @Override
+        public WatchtowerSample.Sample collectSampleLight() {
+            return null;
+        }
+
+        @Override
         public List<OnlinePlayerView> onlinePlayers() {
             return new ArrayList<>();
         }

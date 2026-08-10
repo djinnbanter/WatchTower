@@ -275,9 +275,9 @@ public final class SupportComposer {
                 } else if (cf.skipReason() != null) {
                     recordEvidence(evidenceFiles, cf.zipName(), 0, cf.skipReason());
                 } else if (cf.path() != null) {
-                    recordEvidence(evidenceFiles, cf.zipName(), cf.bytes(), null);
-                    extras.add(SupportBundlePackager.ExtraEntry.file(cf.zipName(), cf.path()));
-                    budget = budget.withUsed(budget.usedBytes() + cf.bytes());
+                    // Defense in depth: never pack raw binary spark profiles
+                    recordEvidence(evidenceFiles, cf.zipName(), 0, "binary_unredactable");
+                    budget.omit(cf.zipName(), "binary_unredactable");
                 }
             }
         }

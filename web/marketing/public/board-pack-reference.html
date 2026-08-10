@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WatchTower — Board Pack · Three Products</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#0A0A0A',
+              panel: '#121212',
+              phosphor: '#EAEAEA',
+              hazard: '#E61919',
+              mute: '#737373',
+            },
+            fontFamily: {
+              display: ['"Archivo Black"', 'Inter', 'sans-serif'],
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+            },
+            borderRadius: { none: '0' },
+          },
+        },
+      };
+    </script>
+    <style>
+      html, body { overflow-x: hidden; background: #0A0A0A; color: #EAEAEA; }
+      * { border-radius: 0 !important; }
+      .t-display {
+        font-family: "Archivo Black", Inter, sans-serif;
+        letter-spacing: -0.04em;
+        text-transform: uppercase;
+        line-height: 0.92;
+      }
+      .t-meta {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .flow-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 1px;
+        background: #3f3f46;
+      }
+      .flow-cell { background: #121212; }
+      @media (max-width: 1023px) {
+        .flow-grid { grid-template-columns: 1fr; }
+      }
+      .arrow-row {
+        display: none;
+      }
+      @media (min-width: 1024px) {
+        .arrow-row { display: grid; }
+      }
+    </style>
+  </head>
+  <body class="bg-ink text-phosphor font-sans antialiased">
+    <main class="w-full max-w-[1600px] mx-auto px-6 lg:px-10 py-10 space-y-0">
+
+      <!-- 1 · DECISION HEADER -->
+      <header class="border border-zinc-700 bg-panel">
+        <div class="grid lg:grid-cols-[1fr_auto] gap-px bg-zinc-700">
+          <div class="bg-panel p-6 lg:p-8 space-y-4">
+            <p class="t-meta text-mute">WatchTower · Board pack · REV 2026-08-07 · Not a ship plan</p>
+            <h1 class="t-display text-4xl sm:text-5xl lg:text-6xl text-phosphor max-w-4xl">
+              Three products.<br />One ops language.<br />Approve the ladder.
+            </h1>
+            <p class="text-base text-zinc-400 max-w-2xl leading-relaxed font-sans normal-case tracking-normal">
+              Same question for admins — <em class="text-phosphor">is the server okay, and what do I fix next?</em> —
+              delivered as a free Mod, a paid Cloud brain, and (later) a full Panel suite.
+              This pack asks for strategy approval and a phased build mandate. No budgets. No dates.
+            </p>
+          </div>
+          <div class="bg-ink p-6 lg:w-72 space-y-4 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-zinc-700">
+            <div>
+              <p class="t-meta text-hazard mb-2">Approve today</p>
+              <ul class="text-sm space-y-2 text-zinc-300">
+                <li class="border-l-2 border-phosphor pl-3">Strategy: three-product ladder</li>
+                <li class="border-l-2 border-phosphor pl-3">Phase 1 — deepen Mod</li>
+                <li class="border-l-2 border-phosphor pl-3">Phase 2 — build Cloud</li>
+              </ul>
+            </div>
+            <div>
+              <p class="t-meta text-hazard mb-2">Conditional</p>
+              <p class="text-sm text-zinc-400 border-l-2 border-hazard pl-3 leading-snug">
+                Phase 3 — Panel in principle only after Cloud gate
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="border-t border-zinc-700 px-6 py-3 bg-ink">
+          <p class="t-meta text-mute">
+            Non-negotiable /// free Mod stays drop-jar-and-go /// no account /// no required agent /// no Cloud-required free tier
+          </p>
+        </div>
+      </header>
+
+      <!-- 2 · LADDER -->
+      <section class="border border-t-0 border-zinc-700">
+        <div class="px-6 py-4 border-b border-zinc-700 bg-ink flex flex-wrap items-baseline justify-between gap-2">
+          <h2 class="t-display text-2xl">01 · Ladder at a glance</h2>
+          <p class="t-meta text-mute">Each step adds a surface · does not kill the last</p>
+        </div>
+        <div class="grid lg:grid-cols-3 gap-px bg-zinc-700">
+          <div class="bg-panel p-5 space-y-3">
+            <p class="t-meta text-phosphor">Phase 1 · Mod</p>
+            <p class="text-xl font-display t-display text-lg">Free · on host</p>
+            <dl class="text-sm space-y-2 text-zinc-400">
+              <div><dt class="t-meta text-mute inline">Brain</dt> <dd class="inline text-zinc-300">Inside game JVM + local desk</dd></div>
+              <div><dt class="t-meta text-mute inline">Control</dt> <dd class="inline text-zinc-300">None — sits beside Crafty / Ptero / AMP</dd></div>
+              <div><dt class="t-meta text-mute inline">Start</dt> <dd class="inline text-zinc-300">Drop jar in mods/ → go</dd></div>
+            </dl>
+          </div>
+          <div class="bg-panel p-5 space-y-3">
+            <p class="t-meta text-phosphor">Phase 2 · Cloud</p>
+            <p class="text-xl font-display t-display text-lg">Paid · opt-in</p>
+            <dl class="text-sm space-y-2 text-zinc-400">
+              <div><dt class="t-meta text-mute inline">Brain</dt> <dd class="inline text-zinc-300">Off-box — fleet, history, heavy analysis</dd></div>
+              <div><dt class="t-meta text-mute inline">Control</dt> <dd class="inline text-zinc-300">Still advisory — no start/stop</dd></div>
+              <div><dt class="t-meta text-mute inline">Start</dt> <dd class="inline text-zinc-300">Same jar + link / enable Cloud</dd></div>
+            </dl>
+          </div>
+          <div class="bg-panel p-5 space-y-3 relative">
+            <p class="t-meta text-hazard">Phase 3 · Panel · gated</p>
+            <p class="text-xl font-display t-display text-lg">Suite SKU</p>
+            <dl class="text-sm space-y-2 text-zinc-400">
+              <div><dt class="t-meta text-mute inline">Brain</dt> <dd class="inline text-zinc-300">Panel host + default companion jar</dd></div>
+              <div><dt class="t-meta text-mute inline">Control</dt> <dd class="inline text-zinc-300">Yes — <strong class="text-phosphor">replaces</strong> Crafty-class for these customers</dd></div>
+              <div><dt class="t-meta text-mute inline">Start</dt> <dd class="inline text-zinc-300">Install panel · jar auto on create</dd></div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 · SHARED -->
+      <section class="border border-t-0 border-zinc-700">
+        <div class="px-6 py-4 border-b border-zinc-700 bg-ink">
+          <h2 class="t-display text-2xl">02 · Shared ops language</h2>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-zinc-700">
+          <div class="bg-panel px-4 py-5 text-center text-sm text-zinc-300">One “is the server okay?”</div>
+          <div class="bg-panel px-4 py-5 text-center text-sm text-zinc-300">Issues · crashes · Fix hints</div>
+          <div class="bg-panel px-4 py-5 text-center text-sm text-zinc-300">Mods / update-impact story</div>
+          <div class="bg-panel px-4 py-5 text-center text-sm text-zinc-300">Support packs · privacy scrub</div>
+        </div>
+        <p class="px-6 py-3 text-sm text-zinc-500 border-t border-zinc-700 bg-ink">
+          An admin who learns the free desk is not learning a new product in Cloud or Panel — same words, different delivery surface.
+        </p>
+      </section>
+
+      <!-- 4 · FLOWS -->
+      <section class="border border-t-0 border-zinc-700">
+        <div class="px-6 py-4 border-b border-zinc-700 bg-ink flex flex-wrap items-baseline justify-between gap-2">
+          <h2 class="t-display text-2xl">03 · Full data flows</h2>
+          <p class="t-meta text-mute">Spine /// Sensors → Signals → Brain → Desk → Actions</p>
+        </div>
+
+        <!-- Legend -->
+        <div class="px-6 py-3 border-b border-zinc-700 bg-panel flex flex-wrap gap-4 text-xs text-zinc-400">
+          <span class="t-meta text-mute">Legend</span>
+          <span>Five stages read left → right</span>
+          <span class="text-hazard">■ Dead path</span>
+          <span>= what still works when Minecraft is down</span>
+        </div>
+
+        <!-- ========== MOD FLOW ========== -->
+        <article class="border-b border-zinc-700">
+          <div class="px-6 py-4 bg-ink flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p class="t-meta text-phosphor mb-1">[ MOD ]</p>
+              <h3 class="t-display text-3xl">WatchTower Mod</h3>
+              <p class="text-sm text-zinc-500 mt-1 max-w-xl">Free forever. Brain mostly inside the game. Sits beside whoever already starts/stops the server.</p>
+            </div>
+            <div class="t-meta text-mute text-right">
+              Commercial · Free<br />Control · None
+            </div>
+          </div>
+
+          <div class="flow-grid mx-0">
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">01 · Sensors</p>
+              <p class="text-sm text-phosphor font-medium">In-game</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Tick / live metrics (TPS, MSPT, CPU, memory)</li>
+                <li>Soft hang / freeze signals</li>
+                <li>Players · joins · session</li>
+                <li>Crash files · peeks (lag, disk, backups…)</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">02 · Signals</p>
+              <p class="text-sm text-phosphor font-medium">On the host disk</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Ops notebook under <code class="text-zinc-300">watchtower/</code></li>
+                <li>Issues · activity · peeks written locally</li>
+                <li>Nothing leaves the machine by default</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">03 · Brain</p>
+              <p class="text-sm text-phosphor font-medium">Inside the JVM</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>“Is the server okay?” grade</li>
+                <li>Issues open/suppressed</li>
+                <li>Crash review · mod update impact</li>
+                <li>Competes with the tick — keep it honest</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">04 · Desk</p>
+              <p class="text-sm text-phosphor font-medium">Local dashboard</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Browser → embedded HTTP on the machine</li>
+                <li>Default port example: 8787</li>
+                <li>Prefer localhost / SSH tunnel</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">05 · Actions</p>
+              <p class="text-sm text-phosphor font-medium">Advisory only</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Fix guidance · Support packs</li>
+                <li>Assisted mod confirm (no silent mutate)</li>
+                <li class="text-hazard">No start / stop / kill</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="bg-hazard text-phosphor px-6 py-3 grid lg:grid-cols-[140px_1fr] gap-3 items-start">
+            <p class="t-meta">Dead path</p>
+            <p class="text-sm leading-relaxed">
+              When Minecraft is dead, Mod sensors and brain stop with the process.
+              Lifecycle stays with the owner’s host panel (Crafty / Ptero / AMP / bare metal).
+              Files on disk may still be there for the next boot — the jar cannot phone home while the game is down.
+            </p>
+          </div>
+        </article>
+
+        <!-- ========== CLOUD FLOW ========== -->
+        <article class="border-b border-zinc-700">
+          <div class="px-6 py-4 bg-ink flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p class="t-meta text-phosphor mb-1">[ CLOUD ]</p>
+              <h3 class="t-display text-3xl">WatchTower Cloud</h3>
+              <p class="text-sm text-zinc-500 mt-1 max-w-xl">Paid opt-in. Same jar as sensor. Brain moves off-box so it is not stuck only in the server thread.</p>
+            </div>
+            <div class="t-meta text-mute text-right">
+              Commercial · Paid<br />Control · None
+            </div>
+          </div>
+
+          <div class="flow-grid">
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">01 · Sensors</p>
+              <p class="text-sm text-phosphor font-medium">Same Mod sensors</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Jar-drop onboarding unchanged</li>
+                <li>In-game Watching + Scanning while up</li>
+                <li>No second install required to start Cloud</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">02 · Signals</p>
+              <p class="text-sm text-phosphor font-medium">Local + ship up</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Ops notebook still on host</li>
+                <li>Opt-in events / snapshots → Cloud</li>
+                <li>Explicit pairing / enable — not silent telemetry</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">03 · Brain</p>
+              <p class="text-sm text-phosphor font-medium">Off-box</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Fleet view across servers</li>
+                <li>History when a node goes dark</li>
+                <li>Heavier analysis · alerts</li>
+                <li>Survives tick pressure on the game</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">04 · Desk</p>
+              <p class="text-sm text-phosphor font-medium">Cloud ops desk</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Remote multi-server account surface</li>
+                <li>Local desk can still work on LAN</li>
+                <li>Same “okay?” language as Mod</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">05 · Actions</p>
+              <p class="text-sm text-phosphor font-medium">Notify · history</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Alerts that reach the operator</li>
+                <li>Retention / review after the fact</li>
+                <li class="text-hazard">Still no start / stop on the host</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="bg-hazard text-phosphor px-6 py-3 grid lg:grid-cols-[140px_1fr] gap-3 items-start">
+            <p class="t-meta">Dead path</p>
+            <p class="text-sm leading-relaxed">
+              Cloud keeps <strong>last-seen + history</strong> from signals already shipped — better than Mod alone when the box is dark.
+              Stronger “process died while Minecraft was down” can come later via an <strong>optional</strong> host watch —
+              never part of free Mod onboarding, never required to begin Cloud.
+            </p>
+          </div>
+
+          <div class="border-t-4 border-hazard bg-ink px-6 py-4 grid lg:grid-cols-[140px_1fr] gap-3">
+            <p class="t-meta text-hazard">Cloud → Panel gate</p>
+            <p class="text-sm text-zinc-300 leading-relaxed">
+              <strong class="text-phosphor">Panel funding unlocks when Cloud shows multi-server operators returning for fleet/history</strong> —
+              not when engineering wants a new project. Board approves Panel <em>in principle</em> only; build starts after this gate.
+            </p>
+          </div>
+        </article>
+
+        <!-- ========== PANEL FLOW ========== -->
+        <article>
+          <div class="px-6 py-4 bg-ink flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p class="t-meta text-hazard mb-1">[ PANEL ] · conditional</p>
+              <h3 class="t-display text-3xl">WatchTower Panel</h3>
+              <p class="text-sm text-zinc-500 mt-1 max-w-xl">
+                Full suite. Looks in from outside. <strong class="text-phosphor">Replaces</strong> Crafty / Lodestone-class tools for this audience.
+                New servers get the companion jar by default.
+              </p>
+            </div>
+            <div class="t-meta text-mute text-right">
+              Commercial · Suite<br />Control · Full
+            </div>
+          </div>
+
+          <div class="flow-grid">
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">01 · Sensors</p>
+              <p class="text-sm text-phosphor font-medium">Outside-in (+ jar)</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Process · console · files · crash folders · exit codes</li>
+                <li><strong class="text-phosphor">Default:</strong> companion jar auto-dropped into <code class="text-zinc-300">mods/</code> on create</li>
+                <li>Opt-out allowed for naked instances</li>
+                <li>Jar must match loader / MC version</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">02 · Signals</p>
+              <p class="text-sm text-phosphor font-medium">Panel store + notebook</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Panel-owned instance state</li>
+                <li>When jar is up: same rich ops notebook as Mod</li>
+                <li>Optional later attach to Cloud</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">03 · Brain</p>
+              <p class="text-sm text-phosphor font-medium">On the panel host</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Same ops language as Mod / Cloud</li>
+                <li>Works while game is down (outside-in)</li>
+                <li>Deeper live Watching when companion jar is loaded</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">04 · Desk</p>
+              <p class="text-sm text-phosphor font-medium">One suite UI</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Control plane + ops desk together</li>
+                <li>Create server → jar present by default</li>
+                <li>Companion status: installed / missing / outdated</li>
+              </ul>
+            </div>
+            <div class="flow-cell p-4 space-y-2">
+              <p class="t-meta text-mute">05 · Actions</p>
+              <p class="text-sm text-phosphor font-medium">Hands + brain</p>
+              <ul class="text-xs text-zinc-400 space-y-1 leading-snug list-disc pl-3">
+                <li>Start / stop / kill / files / console</li>
+                <li>Plus Fix guidance · Support packs</li>
+                <li>New trust bar: observe vs operate must stay clear</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="bg-hazard text-phosphor px-6 py-3 grid lg:grid-cols-[140px_1fr] gap-3 items-start">
+            <p class="t-meta">Dead path</p>
+            <p class="text-sm leading-relaxed">
+              When Minecraft is dead, <strong>Panel still operates the machine</strong> (files, console, restart).
+              Companion jar is idle until the server boots.
+              <strong>You do not need a separate host panel</strong> — WatchTower Panel replaces Crafty / Lodestone-class tools for this audience.
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-px bg-zinc-700 border-t border-zinc-700">
+            <div class="bg-panel p-5 space-y-2">
+              <p class="t-meta text-mute">Audience · Mod ± Cloud</p>
+              <p class="text-sm text-zinc-300 leading-relaxed">
+                Keep Crafty / Ptero / AMP. WatchTower sits beside them. Never forced onto Panel.
+              </p>
+            </div>
+            <div class="bg-panel p-5 space-y-2">
+              <p class="t-meta text-phosphor">Audience · WatchTower Panel</p>
+              <p class="text-sm text-zinc-300 leading-relaxed">
+                One suite: run the process <em>and</em> triage the pack. Replaces Crafty-class — not “Crafty plus a plugin.”
+              </p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- 5 · MANDATE -->
+      <section class="border border-t-0 border-zinc-700">
+        <div class="px-6 py-4 border-b border-zinc-700 bg-ink">
+          <h2 class="t-display text-2xl">04 · Phased mandate</h2>
+        </div>
+        <div class="grid lg:grid-cols-3 gap-px bg-zinc-700">
+          <div class="bg-panel p-5 space-y-3">
+            <p class="t-meta text-phosphor">Phase 1 · Approve now</p>
+            <h3 class="t-display text-xl">Deepen Mod</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              Foundation: one “okay?”, clearer ops locality, desk that does not argue with itself.
+              Sacred: drop-jar onboarding.
+            </p>
+          </div>
+          <div class="bg-panel p-5 space-y-3">
+            <p class="t-meta text-phosphor">Phase 2 · Approve now</p>
+            <h3 class="t-display text-xl">Build Cloud</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              Paid opt-in off-box brain. Jar remains the sensor. Local desk usable without Cloud.
+              Proves fleet + retention before Panel.
+            </p>
+          </div>
+          <div class="bg-ink p-5 space-y-3 border-l-4 border-hazard lg:border-l-0 lg:border-t-4 lg:border-hazard">
+            <p class="t-meta text-hazard">Phase 3 · In principle only</p>
+            <h3 class="t-display text-xl">Panel after gate</h3>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              Full suite with outside-in control + default companion jar.
+              <span class="text-hazard">Build starts only after Cloud gate.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 · RISKS -->
+      <section class="border border-t-0 border-zinc-700">
+        <div class="px-6 py-4 border-b border-zinc-700 bg-ink">
+          <h2 class="t-display text-2xl">05 · Risks &amp; won’t-build</h2>
+        </div>
+        <div class="grid md:grid-cols-2 gap-px bg-zinc-700">
+          <ul class="bg-panel p-5 text-sm text-zinc-300 space-y-2 list-disc pl-5 leading-relaxed">
+            <li>Free Mod never requires account, agent, or Cloud</li>
+            <li>Mod and Cloud stay advisory (no start/stop)</li>
+            <li>Panel start/stop is a new trust bar — observe vs operate must stay clear</li>
+            <li>Panel is not forced on hosted Ptero/Crafty users</li>
+          </ul>
+          <ul class="bg-panel p-5 text-sm text-zinc-300 space-y-2 list-disc pl-5 leading-relaxed">
+            <li>No Cloud-required free tier</li>
+            <li>Optional Cloud host-watch is upgrade, not onboarding</li>
+            <li>This pack does not approve engineering deepenings 1–31 — separate track that strengthens the shared brain</li>
+            <li>No budgets or dates implied by approval</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 7 · CHECKLIST -->
+      <section class="border border-t-0 border-zinc-700">
+        <div class="px-6 py-4 border-b border-zinc-700 bg-ink">
+          <h2 class="t-display text-2xl">06 · Board checklist</h2>
+        </div>
+        <div class="bg-panel divide-y divide-zinc-700">
+          <label class="flex items-start gap-4 px-6 py-4 cursor-pointer hover:bg-ink/50">
+            <input type="checkbox" class="mt-1 accent-hazard w-4 h-4" />
+            <span class="text-sm text-zinc-300"><strong class="text-phosphor t-meta block mb-1">Item 01</strong> Approve three-product strategy (one ops language, three delivery surfaces)</span>
+          </label>
+          <label class="flex items-start gap-4 px-6 py-4 cursor-pointer hover:bg-ink/50">
+            <input type="checkbox" class="mt-1 accent-hazard w-4 h-4" />
+            <span class="text-sm text-zinc-300"><strong class="text-phosphor t-meta block mb-1">Item 02</strong> Approve Phase 1 Mod deepen + Phase 2 Cloud</span>
+          </label>
+          <label class="flex items-start gap-4 px-6 py-4 cursor-pointer hover:bg-ink/50">
+            <input type="checkbox" class="mt-1 accent-hazard w-4 h-4" />
+            <span class="text-sm text-zinc-300"><strong class="text-phosphor t-meta block mb-1">Item 03</strong> Approve Phase 3 Panel <em>conditional</em> on Cloud fleet/retention gate</span>
+          </label>
+          <label class="flex items-start gap-4 px-6 py-4 cursor-pointer hover:bg-ink/50">
+            <input type="checkbox" class="mt-1 accent-hazard w-4 h-4" />
+            <span class="text-sm text-zinc-300"><strong class="text-phosphor t-meta block mb-1">Item 04</strong> Affirm jar-drop onboarding remains sacred for the free Mod</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- 8 · PLAIN COPY -->
+      <details class="border border-t-0 border-zinc-700 bg-ink">
+        <summary class="px-6 py-4 t-meta text-mute cursor-pointer select-none hover:text-phosphor">
+          07 · Plain copy appendix (paste into memo / deck) /// click to expand
+        </summary>
+        <pre class="px-6 pb-6 text-[13px] text-zinc-400 whitespace-pre-wrap font-mono leading-relaxed border-t border-zinc-800 pt-4">WatchTower board pack — three products
+
+ASK
+Approve the three-product strategy and a phased build mandate: deepen Mod (Phase 1), build Cloud (Phase 2), and approve Panel (Phase 3) in principle only after Cloud proves fleet value and retention. No budgets. No ship dates.
+
+LADDER
+1. Mod (free) — Drop jar in mods/, local desk. Brain inside the game JVM. Advisory only. Sits beside Crafty/Ptero/AMP. When Minecraft is dead, the mod cannot talk.
+2. Cloud (paid) — Same jar ships signals up. Brain off-box: fleet, history, heavier analysis, alerts. Still no start/stop. When dark: last-seen + history; optional host watch later, never required for free onboarding.
+3. Panel (suite, gated) — Outside-in control plane + ops brain. Replaces Crafty/Lodestone-class for Panel customers. Default: auto-install companion jar on new servers (opt-out OK). When Minecraft is dead, Panel still operates the machine; jar idle until boot.
+
+SHARED
+One “is the server okay?”, Issues/crashes/Fix hints, mods story, Support privacy — learning transfers across products.
+
+GATE
+Panel funding unlocks when Cloud shows multi-server operators returning for fleet/history — not when engineering wants a new project.
+
+WON’T
+No Cloud-required free tier. No forced Panel on hosted users. Jar-drop stays sacred.</pre>
+      </details>
+
+      <footer class="border border-t-0 border-zinc-700 px-6 py-4 bg-panel flex flex-wrap justify-between gap-2">
+        <p class="t-meta text-mute">WatchTower · Board pack · Hybrid restraint · Spec 2026-08-07</p>
+        <p class="t-meta text-mute">watchtower-three-products-board-*.html</p>
+      </footer>
+    </main>
+  </body>
+</html>

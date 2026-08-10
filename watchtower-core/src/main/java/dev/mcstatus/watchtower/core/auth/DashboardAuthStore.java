@@ -387,19 +387,19 @@ public final class DashboardAuthStore {
     }
 
     /**
-     * Accounts that never completed first login may still have a legacy random password hash.
-     * Align the owner to the documented default so operators can sign in with watchtower/password.
+     * First-boot only: if the sole pending owner has no password hash yet, set the documented default.
+     * Never overwrites an existing hash (including random temp passwords from createAccount).
      */
     public boolean alignPendingDefaultPassword() throws IOException {
         DashboardAuthRecord owner = ownerAccount();
         if (owner == null || !owner.must_change_password || owner.password_changed_at != null) {
             return false;
         }
+        if (owner.password != null) {
+            return false;
+        }
         char[] defaultPassword = DashboardAuthRecord.DEFAULT_INITIAL_PASSWORD.toCharArray();
         try {
-            if (verifyPassword(owner.id, defaultPassword)) {
-                return false;
-            }
             owner.password = PasswordHasher.hashPassword(defaultPassword);
             save();
             return true;

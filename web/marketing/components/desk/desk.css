@@ -18,22 +18,6 @@
   min-height: 0;
 }
 
-.desk-frame.h-full .desk-glow {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-}
-
-/* Ring is absolute; only the plate should grow. Never flex the ring. */
-.desk-frame.h-full .desk-glow > :not(.desk-glow__ring) {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-}
-
 .desk-surface {
   position: relative;
   height: 100%;
@@ -44,51 +28,34 @@
   background: var(--wt-bg0);
 }
 
-.desk-glow {
-  position: relative;
-  isolation: isolate;
+.desk-status-bar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
-.desk-glow__ring {
-  pointer-events: none;
-  position: absolute;
-  inset: -1px;
-  z-index: 0;
-  border-radius: calc(var(--wt-radius-lg) + 1px);
-  background:
-    radial-gradient(28rem 16rem at 12% 0%, color-mix(in srgb, var(--desk-glow) 28%, transparent), transparent 62%),
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--desk-glow) 55%, transparent),
-      transparent 42%,
-      color-mix(in srgb, var(--wt-accent) 35%, transparent)
-    );
-  opacity: 0.55;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  padding: 1px;
+.desk-status-bar__stripe {
+  flex-shrink: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--wt-danger);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .desk-glow:not(.desk-glow--static) .desk-glow__ring {
-    animation: desk-glow-breathe 5.5s cubic-bezier(0.32, 0.72, 0, 1) infinite alternate;
-  }
+.desk-status-bar--ok .desk-status-bar__stripe {
+  background: var(--wt-ok);
 }
 
-@keyframes desk-glow-breathe {
-  from {
-    opacity: 0.42;
-  }
-  to {
-    opacity: 0.62;
-  }
+.desk-status-bar--warn .desk-status-bar__stripe {
+  background: var(--wt-warn);
 }
 
-.desk-glow > :not(.desk-glow__ring) {
-  position: relative;
-  z-index: 1;
+.desk-status-bar--danger .desk-status-bar__stripe {
+  background: var(--wt-danger);
+}
+
+.desk-status-bar--info .desk-status-bar__stripe {
+  background: var(--wt-accent);
 }
 
 .desk-chrome {
@@ -205,9 +172,8 @@
 .desk-chrome__mark {
   width: 1.15rem;
   height: 1.15rem;
-  border-radius: var(--wt-radius-sm);
-  background: linear-gradient(145deg, var(--wt-lantern), color-mix(in srgb, var(--wt-lantern) 40%, #000));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wt-lantern) 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--wt-lantern) 55%, var(--wt-line));
+  background: var(--wt-lantern);
 }
 
 .desk-chrome__tick {

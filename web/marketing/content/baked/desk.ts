@@ -1,7 +1,7 @@
 /**
  * Slim static bake for marketing desk cards.
- * Sourced from web/dashboard/data/* (overview-meta, issues-peek, live-envelope, performance-dashboard).
- * Do not invent metrics; sanitize em-dashes for marketing copy.
+ * Aligned with dashboard-poc create-smp fixtures (Industrial Ops Print).
+ * Do not invent metrics; keep numbers coherent across home + features peeks.
  */
 
 export type DeskVital = {
@@ -56,32 +56,34 @@ export type DeskBusyHour = {
 };
 
 export const DESK = {
-  serverName: 'Example Server',
+  serverName: 'create-smp',
   identity: [
     { label: 'MC', value: '1.21.1' },
     { label: 'Java', value: '21' },
-    { label: 'Host', value: 'Bare-metal' },
+    { label: 'Loader', value: 'NeoForge 21.1.172' },
+    { label: 'Host', value: 'Bare-metal · Win' },
   ],
   overview: {
-    letter: 'D',
-    word: 'Critical',
-    tone: 'danger' as const,
-    headline: 'Needs attention',
-    sub: '38 low-TPS minutes (24h). MSPT p95 134ms. Restart with caution.',
+    letter: 'B',
+    word: 'Needs attention',
+    tone: 'warn' as const,
+    headline: 'Playable, but the desk has open work.',
+    sub: '12 low-TPS minutes (24h). MSPT p95 86ms. Disk runway under 14 days.',
     restart: {
       verdict: 'Caution',
-      summary: 'Players online and pregen active. Wait for a quieter window if you can.',
+      summary:
+        '12 players online and Chunky pregen still running. Prefer the Tue 05:00 window unless you need it now.',
     },
     attention: [
       {
-        label: 'Lag spike - MSPT 118ms / TPS 8.4',
-        detail: 'World pregen was active. Last command: /chunky continue.',
+        label: 'Disk runway under 14 days',
+        detail: 'world/ + backups growing ~2.1 GB/day. Free space lasts ~11 days.',
         severity: 'critical',
       },
       {
-        label: 'Killed by the OS out-of-memory killer',
-        detail: 'External kill evidence in the last scan window.',
-        severity: 'critical',
+        label: 'MSPT p95 86ms with evening player load',
+        detail: 'Entity spike near spawn · Chunky paused mid-run.',
+        severity: 'warning',
       },
       {
         label: 'create - 14 log errors (missing item)',
@@ -89,7 +91,7 @@ export const DESK = {
         severity: 'warning',
       },
       {
-        label: '3 recent pack sync join failures',
+        label: '2 pack sync join failures',
         detail: 'Open Session - Join clinic.',
         severity: 'warning',
       },
@@ -97,41 +99,50 @@ export const DESK = {
     vitals: [
       {
         label: 'TPS',
-        value: '8.4',
+        value: '19.4',
         channel: 'tps',
-        tone: 'danger',
-        spark: [0.95, 0.92, 0.88, 0.7, 0.45, 0.35, 0.42, 0.38, 0.4, 0.36],
+        tone: 'ok',
+        spark: [0.98, 0.97, 0.99, 0.94, 0.88, 0.91, 0.96, 0.97, 0.95, 0.97],
       },
       {
         label: 'MSPT',
-        value: '118',
+        value: '48',
         unit: 'ms',
         channel: 'mspt',
-        tone: 'danger',
-        spark: [0.2, 0.25, 0.3, 0.45, 0.7, 0.95, 0.88, 0.9, 0.85, 0.92],
+        tone: 'warn',
+        spark: [0.35, 0.4, 0.38, 0.55, 0.72, 0.68, 0.5, 0.45, 0.52, 0.48],
       },
       {
         label: 'Players',
-        value: '4',
+        value: '12',
+        unit: '/ 40',
         channel: 'players',
         tone: 'default',
-        spark: [0.2, 0.3, 0.4, 0.5, 0.6, 0.55, 0.5, 0.45, 0.4, 0.4],
+        spark: [0.2, 0.25, 0.35, 0.4, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3],
       },
       {
         label: 'Heap',
-        value: '79',
+        value: '61',
         unit: '%',
         channel: 'heap',
-        tone: 'warn',
-        spark: [0.55, 0.58, 0.6, 0.62, 0.65, 0.7, 0.72, 0.74, 0.76, 0.79],
+        tone: 'default',
+        spark: [0.5, 0.52, 0.54, 0.55, 0.58, 0.6, 0.59, 0.61, 0.6, 0.61],
       },
       {
         label: 'CPU',
-        value: '68',
+        value: '44',
         unit: '%',
         channel: 'cpu',
+        tone: 'default',
+        spark: [0.25, 0.3, 0.35, 0.5, 0.55, 0.48, 0.42, 0.4, 0.45, 0.44],
+      },
+      {
+        label: 'Disk',
+        value: '71',
+        unit: '%',
+        channel: 'disk',
         tone: 'warn',
-        spark: [0.3, 0.35, 0.4, 0.55, 0.7, 0.65, 0.6, 0.68, 0.72, 0.68],
+        spark: [0.62, 0.63, 0.65, 0.66, 0.67, 0.68, 0.69, 0.7, 0.7, 0.71],
       },
     ] satisfies DeskVital[],
   },
@@ -140,54 +151,55 @@ export const DESK = {
     vitals: [
       {
         label: 'TPS',
-        value: '19.99',
+        value: '19.4',
         channel: 'tps',
         tone: 'ok',
-        spark: [0.98, 0.99, 1, 0.99, 0.98, 1, 0.99, 1, 0.98, 1],
+        spark: [0.98, 0.97, 0.99, 0.94, 0.88, 0.91, 0.96, 0.97, 0.95, 0.97],
       },
       {
         label: 'MSPT',
-        value: '4.7',
+        value: '48',
         unit: 'ms',
         channel: 'mspt',
-        tone: 'ok',
-        spark: [0.2, 0.22, 0.18, 0.25, 0.3, 0.22, 0.2, 0.24, 0.19, 0.21],
+        tone: 'warn',
+        spark: [0.35, 0.4, 0.38, 0.55, 0.72, 0.68, 0.5, 0.45, 0.52, 0.48],
       },
       {
         label: 'Players',
-        value: '1',
+        value: '12',
+        unit: '/ 40',
         channel: 'players',
         tone: 'default',
-        spark: [0.1, 0.1, 0.2, 0.2, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1],
+        spark: [0.2, 0.25, 0.35, 0.4, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3],
       },
       {
         label: 'Heap',
-        value: '79',
+        value: '61',
         unit: '%',
         channel: 'heap',
         tone: 'default',
-        spark: [0.7, 0.71, 0.72, 0.73, 0.74, 0.76, 0.77, 0.78, 0.78, 0.79],
+        spark: [0.5, 0.52, 0.54, 0.55, 0.58, 0.6, 0.59, 0.61, 0.6, 0.61],
       },
       {
         label: 'CPU',
-        value: '19',
+        value: '44',
         unit: '%',
         channel: 'cpu',
-        tone: 'ok',
-        spark: [0.15, 0.18, 0.2, 0.22, 0.19, 0.17, 0.2, 0.21, 0.18, 0.19],
+        tone: 'default',
+        spark: [0.25, 0.3, 0.35, 0.5, 0.55, 0.48, 0.42, 0.4, 0.45, 0.44],
       },
       {
         label: 'Disk',
-        value: '41',
+        value: '71',
         unit: '%',
         channel: 'disk',
-        tone: 'ok',
-        spark: [0.38, 0.39, 0.39, 0.4, 0.4, 0.41, 0.41, 0.41, 0.41, 0.41],
+        tone: 'warn',
+        spark: [0.62, 0.63, 0.65, 0.66, 0.67, 0.68, 0.69, 0.7, 0.7, 0.71],
       },
     ] satisfies DeskVital[],
+    /** MSPT sample window - evening climb, still playable. */
     series: [
-      4.2, 5.1, 4.8, 6.2, 8.4, 12.1, 18.5, 24.0, 19.2, 11.4, 7.2, 5.5, 4.9, 5.1, 4.7, 4.6, 5.0, 4.8,
-      4.7, 4.9, 5.2, 4.6, 4.5, 4.7,
+      32, 34, 36, 38, 41, 44, 48, 52, 58, 64, 72, 86, 78, 68, 55, 50, 48, 46, 48, 49, 47, 48, 46, 48,
     ],
   },
   issues: {
@@ -195,18 +207,12 @@ export const DESK = {
       {
         key: 'critical',
         label: 'Critical',
-        count: 2,
+        count: 1,
         items: [
           {
-            title: 'Lag spike - MSPT 118ms / TPS 8.4',
+            title: 'Disk runway under 14 days',
             narrative:
-              'MSPT hit 118ms with TPS 8.4 and 4 players online. World pregen was active.',
-            severity: 'critical',
-            band: 'critical',
-          },
-          {
-            title: 'External kill - out-of-memory',
-            narrative: 'Host OOM killer evidence in the last scan window.',
+              'world/ + backups growing ~2.1 GB/day. At this rate free space lasts ~11 days.',
             severity: 'critical',
             band: 'critical',
           },
@@ -218,78 +224,74 @@ export const DESK = {
         count: 3,
         items: [
           {
+            title: 'Entity spike near spawn',
+            narrative:
+              'MSPT climbed past 50 for 8 minutes with 12 players online. Chunky was paused mid-run.',
+            severity: 'warning',
+            band: 'warning',
+          },
+          {
             title: 'create - 14 log errors (missing item)',
-            narrative: 'create logged 14 error lines in the scan window.',
+            narrative: 'Repeated missing item id in create recipes since last pack bump.',
             severity: 'warning',
             band: 'warning',
           },
           {
-            title: 'ae2 - 6 log errors (recipe compat)',
-            narrative: 'Recipe compatibility errors after the pack update.',
+            title: '2 pack sync join failures',
+            narrative: 'Clients rejected: missing Create 6.0.4 on two joins this evening.',
             severity: 'warning',
             band: 'warning',
           },
+        ] satisfies DeskIssue[],
+      },
+      {
+        key: 'info',
+        label: 'Info',
+        count: 1,
+        items: [
           {
-            title: '3 recent pack sync join failures',
-            narrative: 'NotchFan42 / BuilderBob / FridayGuest failed client pack sync.',
-            severity: 'warning',
-            band: 'warning',
+            title: 'Mod update hint: Create',
+            narrative:
+              'Installed 6.0.4 · Modrinth shows 6.0.6 (lookup only - WatchTower does not download jars).',
+            severity: 'info',
+            band: 'info',
           },
         ] satisfies DeskIssue[],
       },
     ],
   },
   crashes: {
-    unreviewed: 12,
-    needsReview: 11,
+    unreviewed: 1,
+    needsReview: 1,
     /** Flat list kept for compact desk cuts elsewhere. */
     items: [
       {
-        title: 'Create contraption collision',
-        file: 'crash-2026-06-22_14-33-07-server.txt',
-        when: '49m ago',
+        title: 'Create + Flywheel mixin conflict',
+        file: 'crash-2026-08-07_21-14-02-server.txt',
+        when: '3d ago',
         kind: 'Mod',
-        confidence: 'Medium',
+        confidence: 'High',
         summary:
-          'Create contraption collision (create) - stop the stuck assembly so the world can load, then update Create if needed.',
+          'Mixin conflict between Create and Flywheel - quiet for 3 days after review.',
         active: true,
         steps: [
-          'Stop the stuck assembly first so the world can load again.',
-          'Download a matching Create jar and replace the broken one.',
-          'Find the contraption controller / bearing that null-pathed.',
-          'Mark reviewed when the crash is fixed.',
+          'Confirm Create and Flywheel versions still match the pack.',
+          'Leave reviewed unless a new fingerprint appears after a Create bump.',
+          'Mark reviewed when the stack stays quiet.',
         ],
       },
       {
-        title: 'Create crashed while ticking',
-        file: 'crash-2026-06-22_08-11-02-server.txt',
-        when: '6h ago',
-        kind: 'Mod',
-        confidence: 'Medium',
-        summary:
-          'Create crashed during play (create) - inspect the stack and update Create or matching addons.',
-      },
-      {
-        title: 'Corrupt world data',
-        file: 'crash-2026-06-21_20-04-18-server.txt',
-        when: '18h ago',
-        kind: 'Host',
-        confidence: 'High',
-        summary:
-          'World or chunk NBT data looks corrupt (ZLIB/EOF while loading). Restore the affected region from a backup.',
-      },
-      {
         title: 'Watchdog timeout - server stopped responding',
-        file: 'crash-2026-06-22_11.58.03-server.txt',
-        when: '2d ago',
+        file: 'crash-2026-08-05_11.58.03-server.txt',
+        when: '5d ago',
         kind: 'Hang',
         confidence: 'High',
-        summary: 'Server tick watchdog fired - the main thread stopped responding.',
+        summary: 'Server tick watchdog fired during evening peak - reviewed.',
       },
       {
         title: 'Out of memory - heap',
-        file: 'crash-2026-06-18_08-12-44-server.txt',
-        when: 'Unreviewed',
+        file: 'crash-2026-07-28_08-12-44-server.txt',
+        when: '2w ago',
         kind: 'Host',
         confidence: 'High',
         summary: 'Host OOM-killer evidence when the JVM never wrote a crash log.',
@@ -298,91 +300,99 @@ export const DESK = {
     days: [
       {
         label: 'Today',
-        open: 3,
+        open: 0,
+        items: [],
+      },
+      {
+        label: '3 days ago',
+        open: 1,
         items: [
           {
-            title: 'Create contraption collision',
-            file: 'crash-2026-06-22_14-33-07-server.txt',
-            when: '49m ago',
+            title: 'Create + Flywheel mixin conflict',
+            file: 'crash-2026-08-07_21-14-02-server.txt',
+            when: '3d ago',
             kind: 'Mod',
-            confidence: 'Medium',
-            summary:
-              'Create contraption collision (create) - stop the stuck assembly so the world can load, then update Create if needed.',
-            active: true,
-            steps: [
-              'Stop the stuck assembly first so the world can load again.',
-              'Download a matching Create jar and replace the broken one.',
-              'Find the contraption controller / bearing that null-pathed.',
-              'Mark reviewed when the crash is fixed.',
-            ],
-          },
-          {
-            title: 'Create crashed while ticking',
-            file: 'crash-2026-06-22_08-11-02-server.txt',
-            when: '6h ago',
-            kind: 'Mod',
-            confidence: 'Medium',
-            summary:
-              'Create crashed during play (create) - inspect the stack and update Create or matching addons.',
-          },
-          {
-            title: 'Corrupt world data',
-            file: 'crash-2026-06-21_20-04-18-server.txt',
-            when: '18h ago',
-            kind: 'Host',
             confidence: 'High',
             summary:
-              'World or chunk NBT data looks corrupt (ZLIB/EOF while loading). Restore the affected region from a backup.',
+              'Mixin conflict between Create and Flywheel - quiet for 3 days after review.',
+            active: true,
+            steps: [
+              'Confirm Create and Flywheel versions still match the pack.',
+              'Leave reviewed unless a new fingerprint appears after a Create bump.',
+              'Mark reviewed when the stack stays quiet.',
+            ],
           },
         ],
       },
-      { label: 'Mon, Jul 27', open: 1, items: [] },
-      { label: 'Sun, Jul 26', open: 2, items: [] },
+      { label: 'Earlier', open: 2, items: [] },
     ] satisfies DeskCrashDay[],
   },
   insights: {
     window: '7d',
-    stickyLag: 'Sticky lag after players left - MSPT stayed hot for 45 min (peak 72 ms).',
+    stickyLag:
+      'Sticky lag after players left - MSPT stayed elevated 45 min after peak (p95 86ms).',
     busy: [
-      { label: '20:00-21:00 UTC', avgPlayers: 7.7, avgMspt: 24.9 },
-      { label: '21:00-22:00 UTC', avgPlayers: 7.1, avgMspt: 23.6 },
-      { label: '19:00-20:00 UTC', avgPlayers: 5.8, avgMspt: 19.1 },
+      { label: '20:00-21:00 UTC', avgPlayers: 16.2, avgMspt: 62.4 },
+      { label: '21:00-22:00 UTC', avgPlayers: 14.8, avgMspt: 58.1 },
+      { label: '19:00-20:00 UTC', avgPlayers: 12.1, avgMspt: 48.2 },
     ] satisfies DeskBusyHour[],
     quiet: [
-      { label: '05:00-06:00 UTC', avgPlayers: 0.2, avgMspt: 5.4 },
-      { label: '06:00-07:00 UTC', avgPlayers: 0.3, avgMspt: 5.7 },
+      { label: '05:00-06:00 UTC', avgPlayers: 0.4, avgMspt: 18.2 },
+      { label: '06:00-07:00 UTC', avgPlayers: 0.6, avgMspt: 19.1 },
     ] satisfies DeskBusyHour[],
-    /**
-     * Evening climb for Entry 1 chart — hourly averages from
-     * performance-dashboard-30d hour_of_week (UTC). Peaks at 19–21 match busy[].
-     */
     evening: [
-      { label: '15:00', avgPlayers: 2.63, avgMspt: 13.11 },
-      { label: '16:00', avgPlayers: 3.09, avgMspt: 14.63 },
-      { label: '17:00', avgPlayers: 4.51, avgMspt: 16.47 },
-      { label: '18:00', avgPlayers: 4.8, avgMspt: 17.1 },
-      { label: '19:00', avgPlayers: 5.8, avgMspt: 19.1 },
-      { label: '20:00', avgPlayers: 7.7, avgMspt: 24.9 },
-      { label: '21:00', avgPlayers: 7.1, avgMspt: 23.6 },
-      { label: '22:00', avgPlayers: 5.1, avgMspt: 17.7 },
-      { label: '23:00', avgPlayers: 1.8, avgMspt: 10.76 },
+      { label: '15:00', avgPlayers: 4.2, avgMspt: 28.1 },
+      { label: '16:00', avgPlayers: 5.8, avgMspt: 32.4 },
+      { label: '17:00', avgPlayers: 7.4, avgMspt: 38.2 },
+      { label: '18:00', avgPlayers: 9.1, avgMspt: 42.6 },
+      { label: '19:00', avgPlayers: 12.1, avgMspt: 48.2 },
+      { label: '20:00', avgPlayers: 16.2, avgMspt: 62.4 },
+      { label: '21:00', avgPlayers: 14.8, avgMspt: 58.1 },
+      { label: '22:00', avgPlayers: 10.2, avgMspt: 44.8 },
+      { label: '23:00', avgPlayers: 6.1, avgMspt: 34.2 },
     ] satisfies DeskBusyHour[],
-    storageHint: 'Disk use rose 6.2% since last check (12.4 GB less free).',
+    storageHint: 'Disk 71% · 412G free · runway ~11d at ~2.1 GB/day growth.',
+    storage: {
+      daysLeft: 11,
+      usedPct: 71,
+      fillPerDayPct: 1.9,
+      freeGb: 412,
+      totalGb: 1420,
+      dims: [
+        { label: 'Overworld', pct: 58, gb: '612 GB' },
+        { label: 'Nether', pct: 22, gb: '148 GB' },
+        { label: 'End', pct: 12, gb: '86 GB' },
+        { label: 'Backups', pct: 8, gb: '312 GB' },
+      ],
+      trend: [58, 60, 61, 63, 64, 66, 67, 68, 69, 70, 70, 71],
+    },
   },
   mods: {
-    running: 58,
+    running: 186,
     rows: [
       { name: 'create', detail: '14 log errors (missing item)', severity: 'warning' as const },
-      { name: 'ae2', detail: '6 log errors (recipe compat)', severity: 'warning' as const },
-      { name: 'sable', detail: '3 log errors', severity: 'info' as const },
-      { name: 'spark', detail: 'Optional lag proof companion', severity: 'info' as const },
+      { name: 'create', detail: 'Modrinth hint 6.0.6 (installed 6.0.4)', severity: 'info' as const },
+      { name: 'ae2', detail: '6 log errors (recipe compat)', severity: 'info' as const },
+      { name: 'spark', detail: 'Companion · connected', severity: 'info' as const },
     ],
   },
   backups: {
     rows: [
-      { name: 'world-daily', status: 'Healthy', detail: 'Last run 3h ago' },
-      { name: 'Crafty auto', status: 'In progress', detail: 'Backup job running' },
-      { name: 'mods-snapshot', status: 'Stale', detail: 'No run in 9 days' },
+      {
+        name: 'world-2026-08-09-1842.zip',
+        status: 'Fresh',
+        detail: '6h ago · 51.2 GB · verified',
+      },
+      {
+        name: 'world-2026-08-08-0600.zip',
+        status: 'Aging',
+        detail: '42h ago · 50.8 GB',
+      },
+      {
+        name: 'Offsite / NAS',
+        status: 'Missing',
+        detail: 'External path not configured',
+      },
     ],
   },
 } as const;

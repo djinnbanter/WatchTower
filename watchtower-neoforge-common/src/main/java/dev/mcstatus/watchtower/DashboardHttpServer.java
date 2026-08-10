@@ -6386,7 +6386,22 @@ public final class DashboardHttpServer {
             return;
         }
         try {
-            JsonObject out = FsBrowseService.listDirectory(path);
+            ReportConfig config = ModReportConfig.forServer(serverContext);
+            JsonArray lastSearch = null;
+            Path facts = findLatestFacts(WatchtowerPaths.reportDir(serverContext));
+            if (facts != null) {
+                JsonObject parsed = GSON.fromJson(Files.readString(facts), JsonObject.class);
+                JsonObject optional = parsed.getAsJsonObject("optional");
+                if (optional != null && optional.has("last_backup")) {
+                    JsonObject last = optional.getAsJsonObject("last_backup");
+                    if (last.has("search_dirs")) {
+                        lastSearch = last.getAsJsonArray("search_dirs");
+                    }
+                }
+            }
+            JsonObject rootsPayload = FsBrowseService.listRoots(config.serverDir(), config, lastSearch);
+            List<String> allowed = FsBrowseService.rootPathsFrom(rootsPayload);
+            JsonObject out = FsBrowseService.listDirectory(path, allowed);
             sendJson(ex, 200, out);
         } catch (IOException e) {
             JsonObject err = new JsonObject();

@@ -638,7 +638,7 @@ public final class OpsScanService {
     }
 
     public static JsonObject buildManualIncident(ServerContext server, String note, String trigger) {
-        WatchtowerSample.Sample sample = server.collectSample();
+        WatchtowerSample.Sample sample = server.collectSampleLight();
         Instant now = Instant.now();
         String id = IncidentWriter.newIncidentId(now);
 

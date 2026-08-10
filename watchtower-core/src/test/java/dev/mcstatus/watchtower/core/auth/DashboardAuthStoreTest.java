@@ -67,7 +67,7 @@ class DashboardAuthStoreTest {
     }
 
     @Test
-    void alignPendingDefaultPasswordMigratesLegacyRandom() throws Exception {
+    void alignPendingDefaultPasswordDoesNotOverwriteExistingHash() throws Exception {
         Path authPath = tempDir.resolve("dashboard-auth.json");
         AuthKeyStore keys = new AuthKeyStore(tempDir.resolve(".auth-key"));
         String legacyRandom = PasswordHasher.generatePassword(20);
@@ -86,9 +86,23 @@ class DashboardAuthStoreTest {
         assertTrue(store.verifyPassword(ownerId, legacyRandom.toCharArray()));
         assertFalse(store.verifyPassword(ownerId, "password".toCharArray()));
 
+        assertFalse(store.alignPendingDefaultPassword());
+        assertTrue(store.verifyPassword(ownerId, legacyRandom.toCharArray()));
+        assertFalse(store.verifyPassword(ownerId, "password".toCharArray()));
+    }
+
+    @Test
+    void alignPendingDefaultPasswordSeedsWhenHashMissing() throws Exception {
+        Path authPath = tempDir.resolve("dashboard-auth.json");
+        AuthKeyStore keys = new AuthKeyStore(tempDir.resolve(".auth-key"));
+        DashboardAuthStore store = new DashboardAuthStore(authPath, keys);
+        store.ensureDefaultAccount();
+        DashboardAuthRecord owner = store.ownerAccount();
+        owner.password = null;
+        assertTrue(store.mustChangePassword(owner.id));
+
         assertTrue(store.alignPendingDefaultPassword());
-        assertTrue(store.verifyPassword(ownerId, "password".toCharArray()));
-        assertFalse(store.verifyPassword(ownerId, legacyRandom.toCharArray()));
+        assertTrue(store.verifyPassword(owner.id, "password".toCharArray()));
     }
 
     @Test

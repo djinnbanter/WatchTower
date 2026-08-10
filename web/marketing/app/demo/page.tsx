@@ -1,62 +1,90 @@
 import type { Metadata } from 'next';
+import { BoardFrame, BoardPageHeader } from '@/components/board';
 import { Cta } from '@/components/cta';
-import { DEMO_URL, LINKS } from '@/content/product';
+import { ModrinthMark } from '@/components/brand/modrinth-mark';
+import { DEMO_PAGE } from '@/content/install';
+import { DEMO_URL, LINKS, PAGE_META } from '@/content/product';
 
-export const metadata: Metadata = { title: 'Demo' };
+export const metadata: Metadata = {
+  title: { absolute: PAGE_META.demo.title },
+  description: PAGE_META.demo.description,
+};
 
 export default function DemoPage() {
   const demoConfigured = Boolean(process.env.NEXT_PUBLIC_DEMO_URL);
 
   return (
-    <main className="mx-auto max-w-[48rem] px-5 py-16 lg:px-8 lg:py-24">
-      <h1 className="wt-display-sm text-[color:var(--wt-text)]">Demo</h1>
-      <p className="wt-lead mt-4">
-        Real WatchTower dashboard UI on sample fixtures. Open any tab. Clicks work; nothing is
-        saved.
-      </p>
+    <main>
+      <BoardFrame ariaLabel="Demo board">
+        <BoardPageHeader
+          meta={`WatchTower · ${DEMO_PAGE.label}`}
+          title={DEMO_PAGE.title}
+          lead={DEMO_PAGE.body}
+          right={
+            <div className="flex flex-col gap-2.5">
+              {demoConfigured ? (
+                <Cta href={DEMO_URL} withArrow newTab className="w-full">
+                  {DEMO_PAGE.primaryCta}
+                </Cta>
+              ) : (
+                <p className="text-sm leading-relaxed text-[color:var(--wt-text-mid)]">
+                  Demo hosting is not configured yet (`NEXT_PUBLIC_DEMO_URL`). Grab the jar from{' '}
+                  <a
+                    href={LINKS.modrinth}
+                    className="text-[color:var(--wt-text)] underline-offset-2 hover:underline"
+                  >
+                    Modrinth
+                  </a>{' '}
+                  or{' '}
+                  <a
+                    href={LINKS.github}
+                    className="text-[color:var(--wt-text)] underline-offset-2 hover:underline"
+                  >
+                    GitHub
+                  </a>
+                  .
+                </p>
+              )}
+              <Cta
+                href={LINKS.modrinth}
+                variant="ghost"
+                className="w-full"
+                leading={<ModrinthMark className="h-3.5 w-3.5" />}
+              >
+                {DEMO_PAGE.secondaryCta}
+              </Cta>
+            </div>
+          }
+        />
 
-      <ul className="mt-10 space-y-4 border-t border-[color:var(--wt-line)] pt-8 text-sm text-[color:var(--wt-text-mid)]">
-        <li className="flex gap-3">
-          <span className="wt-label shrink-0 pt-0.5">Data</span>
-          <span>Sample fixtures. Not your server.</span>
-        </li>
-        <li className="flex gap-3">
-          <span className="wt-label shrink-0 pt-0.5">Tabs</span>
-          <span>Every surface opens.</span>
-        </li>
-        <li className="flex gap-3">
-          <span className="wt-label shrink-0 pt-0.5">Live</span>
-          <span>No live Minecraft process behind it.</span>
-        </li>
-      </ul>
-
-      <div className="mt-10 flex flex-wrap gap-3">
-        {demoConfigured ? (
-          <Cta href={DEMO_URL} newTab>
-            Open the demo
-          </Cta>
-        ) : (
-          <p className="text-sm leading-relaxed text-[color:var(--wt-text-mid)]">
-            Demo hosting is not configured yet (`NEXT_PUBLIC_DEMO_URL`). That should be the
-            static demo origin (`npm run build:demo` → `dist-demo/`), not the fixture preview on
-            :8081. Until then, grab the jar from{' '}
-            <a href={LINKS.modrinth} className="text-[color:var(--wt-text)] underline-offset-2 hover:underline">
-              Modrinth
-            </a>{' '}
-            or{' '}
-            <a
-              href={LINKS.github}
-              className="text-[color:var(--wt-text)] underline-offset-2 hover:underline"
-            >
-              GitHub
-            </a>
-            , or run the local dashboard preview.
+        <section className="border-t border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] p-5 md:p-8">
+          <p className="wt-meta text-[color:var(--wt-accent)]">{DEMO_PAGE.noticeLabel}</p>
+          <h2 className="mt-3 wt-display max-w-[22ch] text-[clamp(1.5rem,3vw,2rem)] text-[color:var(--wt-text)]">
+            {DEMO_PAGE.noticeTitle}
+          </h2>
+          <p className="mt-3 max-w-[62ch] text-sm leading-relaxed text-[color:var(--wt-text-mid)]">
+            {DEMO_PAGE.noticeBody}
           </p>
-        )}
-        <Cta href={LINKS.modrinth} variant="ghost">
-          Get it on Modrinth
-        </Cta>
-      </div>
+        </section>
+
+        <div className="border-t border-[color:var(--wt-line)] bg-[color:var(--wt-bg0)]">
+          <ul className="m-0 list-none p-0">
+            {DEMO_PAGE.highlights.map((note, i) => (
+              <li
+                key={note.title}
+                className={`grid gap-2 px-5 py-4 md:grid-cols-[minmax(12rem,18rem)_minmax(0,1fr)] md:px-8 ${
+                  i > 0 ? 'border-t border-[color:var(--wt-line)]' : ''
+                }`}
+              >
+                <span className="font-medium text-[color:var(--wt-text)]">{note.title}</span>
+                <span className="text-sm leading-relaxed text-[color:var(--wt-text-mid)]">
+                  {note.body}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </BoardFrame>
     </main>
   );
 }

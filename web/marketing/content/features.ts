@@ -1,10 +1,8 @@
 /**
- * Features page: capability catalog (insides), not dashboard rooms.
- * Sources: docs/ROADMAP.md Works today, README.md, PRODUCT.md.
- * Hyphens only. No Fabric shipping claims. No promises / not-our-job.
+ * Features page — wording from the 2026 reword brief.
+ * Capability ids stay stable for bento peeks where used.
  */
 
-/** Desk status / channel tone for the instrument mark. */
 export type FeatureTone =
   | 'accent'
   | 'lantern'
@@ -22,68 +20,178 @@ export type FeatureCapability = {
   id: string;
   title: string;
   blurb: string;
-  /** Parent room label for wayfinding only. */
   tag: string;
   weight: 'lead' | 'standard';
   tone: FeatureTone;
   alpha?: boolean;
 };
 
-export const FEATURE_LEDE =
-  'What ships under Overview, Live, Issues, and the rest. This is the catalog, not another walk through the home screens.';
+export const FEATURE_PAGE = {
+  label: 'Feature List',
+  title: 'All the tools on your operations desk',
+  body: 'Whether it\'s watching live updates, saving game settings, or fixing problems after a crash, here\'s everything WatchTower offers right in your browser.',
+} as const;
 
+export const FEATURE_LEDE = FEATURE_PAGE.body;
+
+export type FeatureGroup = {
+  label: string;
+  features: { title: string; body: string; alpha?: boolean }[];
+};
+
+/** Categorized Features page copy (word-for-word primary). */
+export const FEATURE_GROUPS: FeatureGroup[] = [
+  {
+    label: 'Monitor',
+    features: [
+      {
+        title: 'Overview',
+        body: 'Think of this as the main control center for your server. It shows how healthy your server is, ranging from Strong to Poor. It also highlights current issues, shows live stats like performance, and gives simple advice on whether to restart, wait, or proceed with caution.',
+      },
+      {
+        title: 'Live Console',
+        body: 'Shows real-time graphs of things like transaction speed, tick rate, memory usage, CPU load, disk activity, and background tasks. You can zoom in or out on the timeline from minutes to hours to find exactly when slowdowns happen.',
+      },
+      {
+        title: 'Insights',
+        body: 'Provides long-term data and planning information across eight different views:\n\n- Schedule: Finds the busiest times for players to help decide the best times to restart the server.\n\n- Load: Shows CPU and memory performance over days or weeks.\n\n- Incidents: Visualizes patterns of crashes or lag happening repeatedly.\n\n- Configs: Checks server settings and flags to suggest safe memory use and spot any bad configurations.\n\n- Mod Changes: Tracks when mods are added, removed, or updated.\n\n- World Pressure: Identifies issues with loading chunks or too many entities causing lag.\n\n- Storage Runway: Predicts how much disk space is left and shows detailed usage with interactive maps.\n\n- Weekly Digest: Automatically creates a weekly summary of crashes, uptime, and performance metrics right on your server.',
+      },
+      {
+        title: 'Session & Join Clinic',
+        body: 'See who\'s currently playing, review past peak times, and check playtime details. The Join Clinic helps diagnose why players might have trouble connecting, like mismatched mods or missing game files.',
+      },
+      {
+        title: 'Startup Analyzer',
+        body: 'Examines the server startup process, including boot times, launch steps, and warnings. It connects any startup errors directly to specific issues that can be fixed, making troubleshooting easier.',
+      },
+    ],
+  },
+  {
+    label: 'Triage',
+    features: [
+      {
+        title: 'Issues (Fix Inbox)',
+        body: 'A sorted list of problems, ranked by how serious they are (Critical, Warning, Info). It automatically sorts issues like lag spikes, pauses, jar drift, misplaced client mods, script errors (KubeJS/CraftTweaker), world pressure, and backup warnings, along with simple steps to fix them.',
+      },
+      {
+        title: 'Crash Center',
+        body: 'Combines similar error reports into one easy-to-understand card. Shows likely causes from mods, full error details, and detects cases where the system was unexpectedly shut down due to running out of memory, even if no standard crash report was made.',
+      },
+      {
+        title: 'Spark Workspace (Alpha)',
+        body: 'Lets you import Spark profile links or files to analyze detailed performance data. It creates easy-to-read summaries, shows sources of lag, and traces what caused delays, all within the dashboard.',
+        alpha: true,
+      },
+      {
+        title: 'Log Viewer',
+        body: 'An in-game log viewer that helps you quickly search, filter, and highlight important information in your latest log files, so you don\'t have to use a terminal or FTP tools.',
+      },
+    ],
+  },
+  {
+    label: 'Operations',
+    features: [
+      {
+        title: 'Mod Manager & Forensics',
+        body: 'Easily manage and monitor your mods:\n\n- Library: Browse and filter all your mods and related files, whether on your computer or server.\n\n- Updates: Check if your mods are up-to-date and see how safe they are—safe, cautious, or potentially breaking.\n\n- Conflicts: Get alerts if different mods clash or if some needed files are missing.\n\n- Jar Drift Detection: Find mods that have been changed or replaced quietly while keeping the same file name.\n\n- Enable/Disable: Turn mods on or off smoothly by adding or removing a simple label, with safety warnings about your world.\n\n- Config Editor: Edit mod settings stored in JSON or TOML files easily, see real-time previews, make automatic backups, and undo changes with one click.',
+      },
+      {
+        title: 'Backup Tracker',
+        body: 'Keep an eye on your backup folders or external signals to make sure backups are fresh. It warns you if backups stop working or take too long. (Panel and Cloud monitoring are still being tested.)',
+      },
+      {
+        title: 'Activity Timeline',
+        body: 'See a combined timeline of important events like players joining, admin commands, lag spikes, and background tasks. It helps answer questions like "What happened just before the game crashed?"',
+      },
+      {
+        title: 'Source Diagnostics',
+        body: 'A built-in checker that makes sure background tools like WatchTower, file watchers, and scans are working properly.',
+      },
+    ],
+  },
+  {
+    label: 'System & Sharing',
+    features: [
+      {
+        title: 'Help Center',
+        body: 'Easily find and search through guides and troubleshooting tips right from the dashboard sidebar.',
+      },
+      {
+        title: 'Accounts & Audit Logging',
+        body: 'Set who can do what with permissions for Owners, Admins, and Viewers. Manage user preferences, enable optional two-factor authentication, connect player skins, and view a permanent record of all actions taken by operators.',
+      },
+      {
+        title: 'Support Pack Generator',
+        body: 'Quickly create a zip file with important logs, crash reports, and setup details that have been cleaned of private info. Share these files easily with mod developers or support communities.',
+      },
+      {
+        title: 'Security Posture',
+        body: 'Keep your dashboard safe with password protection, secure connections through localhost or SSH tunnels, and protected API access.',
+      },
+      {
+        title: 'CLI Disaster Recovery',
+        body: 'Use a simple command-line tool included with WatchTower. If Minecraft won\'t start at all, run this tool over SSH to gather crash details and view logs in a standalone browser window for troubleshooting.',
+      },
+      {
+        title: 'In-App Roadmap',
+        body: 'See what\'s coming next and what\'s being worked on directly inside the admin settings, in real time.',
+      },
+    ],
+  },
+];
+
+/** Kept for bento peeks — titles/blurbs aligned to reword where they map. */
 export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'health-grade',
-    title: 'Health grade + restart advice',
+    title: 'Overview',
     blurb:
-      'Letter grade, reasons when it is not Strong, and Safe / Caution / Wait for a restart. Long uptime plus worse GC can point at a quiet maintenance window. WatchTower does not restart the server for you.',
-    tag: 'Overview',
+      'Think of this as the main control center for your server. It shows how healthy your server is, ranging from Strong to Poor. It also highlights current issues, shows live stats like performance, and gives simple advice on whether to restart, wait, or proceed with caution.',
+    tag: 'Monitor',
     weight: 'lead',
     tone: 'danger',
   },
   {
     id: 'fix-inbox',
-    title: 'Fix inbox ranking',
+    title: 'Issues (Fix Inbox)',
     blurb:
-      'Watching and Scanning fill a ranked inbox. Each issue has a next step. You do not run a big scheduled audit to keep it useful.',
-    tag: 'Issues',
+      'A sorted list of problems, ranked by how serious they are (Critical, Warning, Info). It automatically sorts issues like lag spikes, pauses, jar drift, misplaced client mods, script errors (KubeJS/CraftTweaker), world pressure, and backup warnings, along with simple steps to fix them.',
+    tag: 'Triage',
     weight: 'lead',
     tone: 'danger',
   },
   {
     id: 'join-clinic',
-    title: 'Join / pack sync clinic',
+    title: 'Session & Join Clinic',
     blurb:
-      'Failed joins map to named mod diffs on Session. Player-safe copy of the fix. Read-only. No jar downloads.',
-    tag: 'Session',
+      'See who\'s currently playing, review past peak times, and check playtime details. The Join Clinic helps diagnose why players might have trouble connecting, like mismatched mods or missing game files.',
+    tag: 'Monitor',
     weight: 'lead',
     tone: 'accent',
   },
   {
     id: 'world-pressure',
-    title: 'World pressure',
-    blurb:
-      'Entity, item, and chunk census for item storms, mob spikes, and unattended loaders.',
+    title: 'World Pressure',
+    blurb: 'Identifies issues with loading chunks or too many entities causing lag.',
     tag: 'Insights',
     weight: 'lead',
     tone: 'mspt',
   },
   {
     id: 'support-pack',
-    title: 'Support pack redaction',
+    title: 'Support Pack Generator',
     blurb:
-      'Build a redacted zip (facts, brief, evidence) for a helper or mod author. Discord copy presets match the pack.',
-    tag: 'Support',
+      'Quickly create a zip file with important logs, crash reports, and setup details that have been cleaned of private info. Share these files easily with mod developers or support communities.',
+    tag: 'System & Sharing',
     weight: 'lead',
     tone: 'ok',
   },
   {
     id: 'live-vitals',
-    title: 'Live vitals charts',
+    title: 'Live Console',
     blurb:
-      'TPS, MSPT, players, heap, CPU, and host charts while you watch. Hosted-panel metrics stay honest about what they can see.',
-    tag: 'Live',
+      'Shows real-time graphs of things like transaction speed, tick rate, memory usage, CPU load, disk activity, and background tasks. You can zoom in or out on the timeline from minutes to hours to find exactly when slowdowns happen.',
+    tag: 'Monitor',
     weight: 'standard',
     tone: 'tps',
   },
@@ -91,16 +199,17 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'gc-ram',
     title: 'GC / JVM + RAM advice',
     blurb:
-      'GC pause share of wall time, JVM flags profile, and RAM advice that uses your host or container memory limit. Not a one-size guess.',
-    tag: 'Live',
+      'Checks server settings and flags to suggest safe memory use and spot any bad configurations.',
+    tag: 'Insights',
     weight: 'standard',
     tone: 'heap',
   },
   {
     id: 'crash-fingerprints',
-    title: 'Crash fingerprints',
-    blurb: 'Crash reports grouped and explained in plain English, with nearby log lines for context.',
-    tag: 'Crashes',
+    title: 'Crash Center',
+    blurb:
+      'Combines similar error reports into one easy-to-understand card. Shows likely causes from mods, full error details, and detects cases where the system was unexpectedly shut down due to running out of memory, even if no standard crash report was made.',
+    tag: 'Triage',
     weight: 'standard',
     tone: 'danger',
   },
@@ -108,67 +217,67 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
     id: 'external-kill',
     title: 'External kill / OOM',
     blurb:
-      'Host OOM killer vs panel force-kill when there is no crash report, plus which fix path to take.',
-    tag: 'Crashes',
+      'Detects cases where the system was unexpectedly shut down due to running out of memory, even if no standard crash report was made.',
+    tag: 'Triage',
     weight: 'standard',
     tone: 'danger',
   },
   {
     id: 'silent-fails',
     title: 'Silent script fails',
-    blurb: 'KubeJS, CraftTweaker, datapack, and /reload errors that never crash still show up as Issues.',
-    tag: 'Issues',
+    blurb: 'Script errors (KubeJS/CraftTweaker) that never crash still show up in the Fix inbox.',
+    tag: 'Triage',
     weight: 'standard',
     tone: 'warn',
   },
   {
     id: 'mods-modrinth',
-    title: 'Mod inventory + Modrinth hints',
+    title: 'Mod Manager & Forensics',
     blurb:
-      'Installed jars, conflicts, Modrinth lookup hints, and mod log errors with Active / Reviewed. Modrinth never downloads jars for you.',
-    tag: 'Mods',
+      'Easily manage and monitor your mods: Library, Updates, Conflicts, Jar Drift Detection, Enable/Disable, and Config Editor.',
+    tag: 'Operations',
     weight: 'standard',
     tone: 'accent',
   },
   {
     id: 'jar-drift',
-    title: 'Pack / jar drift',
-    blurb: 'Checksum baseline drift and high-confidence client-only jars land on Issues.',
-    tag: 'Mods',
+    title: 'Jar Drift Detection',
+    blurb: 'Find mods that have been changed or replaced quietly while keeping the same file name.',
+    tag: 'Operations',
     weight: 'standard',
     tone: 'warn',
   },
   {
     id: 'jar-disable',
-    title: 'Soft jar disable / enable',
+    title: 'Enable/Disable',
     blurb:
-      'Rename a mod jar to `*.jar.disabled` so it skips the next boot (or rename it back). Filter All / Enabled / Disabled. High world risk asks you to confirm first. Admins only. No delete.',
-    tag: 'Mods',
+      'Turn mods on or off smoothly by adding or removing a simple label, with safety warnings about your world.',
+    tag: 'Operations',
     weight: 'standard',
     tone: 'warn',
   },
   {
     id: 'mod-configs',
-    title: 'Mods → Configs',
+    title: 'Config Editor',
     blurb:
-      'Edit files under the server `config/` folder from the dashboard. TOML gets a form when WatchTower can parse it; otherwise you edit the raw text. Saves create a backup and support undo. Admins only.',
-    tag: 'Mods',
+      'Edit mod settings stored in JSON or TOML files easily, see real-time previews, make automatic backups, and undo changes with one click.',
+    tag: 'Operations',
     weight: 'standard',
     tone: 'accent',
   },
   {
     id: 'schedule-load',
-    title: 'Schedule + load trends',
+    title: 'Schedule + Load',
     blurb:
-      'Busy vs quiet hours so you plan restarts around actual load. Times follow the timezone you set in the dashboard.',
+      'Finds the busiest times for players to help decide the best times to restart the server. Shows CPU and memory performance over days or weeks.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'players',
   },
   {
     id: 'storage-runway',
-    title: 'Storage + disk runway',
-    blurb: 'Dimension storage scan, plus roughly how many days of disk left. More than a percent-full bar.',
+    title: 'Storage Runway',
+    blurb: 'Predicts how much disk space is left and shows detailed usage with interactive maps.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'disk',
@@ -176,32 +285,35 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'storage-space-map',
     title: 'Storage space map',
-    blurb: 'Treemap of what is using disk. Drill into World, Logs, Mods, or Backups.',
+    blurb: 'Predicts how much disk space is left and shows detailed usage with interactive maps.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'disk',
   },
   {
     id: 'weekly-digest',
-    title: 'Weekly ops digest',
-    blurb: 'Local rollup of grade, crashes, disk, and MSPT trend with one next action. Stays on your host.',
+    title: 'Weekly Digest',
+    blurb:
+      'Automatically creates a weekly summary of crashes, uptime, and performance metrics right on your server.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'lantern',
   },
   {
     id: 'config-audit',
-    title: 'Config audit',
-    blurb: 'Read-only keep / tweak / why for server.properties and startup flags.',
+    title: 'Configs',
+    blurb:
+      'Checks server settings and flags to suggest safe memory use and spot any bad configurations.',
     tag: 'Insights',
     weight: 'standard',
     tone: 'info',
   },
   {
     id: 'spark',
-    title: 'Spark lag proof',
-    blurb: 'Optional Spark companion turns a profile into what ate the tick. Deep Spark workspace is alpha.',
-    tag: 'Spark',
+    title: 'Spark Workspace (Alpha)',
+    blurb:
+      'Lets you import Spark profile links or files to analyze detailed performance data. It creates easy-to-read summaries, shows sources of lag, and traces what caused delays, all within the dashboard.',
+    tag: 'Triage',
     weight: 'standard',
     tone: 'lantern',
     alpha: true,
@@ -209,90 +321,97 @@ export const FEATURE_CAPABILITIES: FeatureCapability[] = [
   {
     id: 'spark-map',
     title: 'Spark Map',
-    blurb: 'Pan and zoom chunk heat from the selected Spark profile. Click a chunk for details.',
-    tag: 'Spark',
+    blurb: 'Shows sources of lag and traces what caused delays, all within the dashboard.',
+    tag: 'Triage',
     weight: 'standard',
     tone: 'lantern',
   },
   {
     id: 'backups',
-    title: 'Backup health',
+    title: 'Backup Tracker',
     blurb:
-      'See whether local backups look present and fresh, then verify zip/tar.gz integrity. Optional test restore only under `watchtower/restore-verify/`. Never into the live world.',
-    tag: 'Backups',
+      'Keep an eye on your backup folders or external signals to make sure backups are fresh. It warns you if backups stop working or take too long. (Panel and Cloud monitoring are still being tested.)',
+    tag: 'Operations',
     weight: 'standard',
     tone: 'ok',
   },
   {
     id: 'activity',
-    title: 'Activity / incident stories',
-    blurb: 'Lag spikes, crashes, and missed backups pulled into one incident thread you can read.',
-    tag: 'Activity',
+    title: 'Activity Timeline',
+    blurb:
+      'See a combined timeline of important events like players joining, admin commands, lag spikes, and background tasks. It helps answer questions like "What happened just before the game crashed?"',
+    tag: 'Operations',
     weight: 'standard',
     tone: 'mspt',
   },
   {
     id: 'logs',
-    title: 'Log tail',
-    blurb: 'latest.log triage in the dashboard so you are not jumping to the host panel for every line.',
-    tag: 'Logs',
+    title: 'Log Viewer',
+    blurb:
+      'An in-game log viewer that helps you quickly search, filter, and highlight important information in your latest log files, so you don\'t have to use a terminal or FTP tools.',
+    tag: 'Triage',
     weight: 'standard',
     tone: 'info',
   },
   {
     id: 'startup',
-    title: 'Startup watch',
-    blurb: 'First minutes and boot health when the process comes up.',
-    tag: 'Startup',
+    title: 'Startup Analyzer',
+    blurb:
+      'Examines the server startup process, including boot times, launch steps, and warnings. It connects any startup errors directly to specific issues that can be fixed, making troubleshooting easier.',
+    tag: 'Monitor',
     weight: 'standard',
     tone: 'accent',
   },
   {
     id: 'sources',
-    title: 'Sources freshness',
-    blurb: 'Poller freshness and which data pull is next, so you know if Watching is current.',
-    tag: 'Sources',
+    title: 'Source Diagnostics',
+    blurb:
+      'A built-in checker that makes sure background tools like WatchTower, file watchers, and scans are working properly.',
+    tag: 'Operations',
     weight: 'standard',
     tone: 'tps',
   },
   {
     id: 'accounts',
-    title: 'Named accounts + audit log',
+    title: 'Accounts & Audit Logging',
     blurb:
-      'Owner / admin / viewer logins, optional Minecraft player link on the side rail, Sign out, and a Settings audit log of account and settings changes.',
-    tag: 'Settings',
+      'Set who can do what with permissions for Owners, Admins, and Viewers. Manage user preferences, enable optional two-factor authentication, connect player skins, and view a permanent record of all actions taken by operators.',
+    tag: 'System & Sharing',
     weight: 'standard',
     tone: 'accent',
   },
   {
     id: 'theme-accent',
     title: 'Theme + accent',
-    blurb: 'Light, Dark, Black, or System, plus an accent color. Saved per signed-in account.',
-    tag: 'Settings',
+    blurb: 'Manage user preferences from the dashboard.',
+    tag: 'System & Sharing',
     weight: 'standard',
     tone: 'info',
   },
   {
     id: 'auth',
-    title: 'Secure login + optional 2FA',
-    blurb: 'Login required by default. Optional 2FA for the dashboard.',
-    tag: 'Settings',
+    title: 'Security Posture',
+    blurb:
+      'Keep your dashboard safe with password protection, secure connections through localhost or SSH tunnels, and protected API access.',
+    tag: 'System & Sharing',
     weight: 'standard',
     tone: 'ok',
   },
   {
     id: 'help',
     title: 'Help Center',
-    blurb: 'In-app wiki with the same guides as the public GitHub wiki.',
-    tag: 'Help',
+    blurb:
+      'Easily find and search through guides and troubleshooting tips right from the dashboard sidebar.',
+    tag: 'System & Sharing',
     weight: 'standard',
     tone: 'info',
   },
   {
     id: 'cli-dr',
-    title: 'Disaster-recovery CLI + viewer',
-    blurb: 'Matching CLI jar and browser viewer when Minecraft will not stay up.',
-    tag: 'CLI',
+    title: 'CLI Disaster Recovery',
+    blurb:
+      'Use a simple command-line tool included with WatchTower. If Minecraft won\'t start at all, run this tool over SSH to gather crash details and view logs in a standalone browser window for troubleshooting.',
+    tag: 'System & Sharing',
     weight: 'standard',
     tone: 'warn',
   },

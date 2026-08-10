@@ -1,86 +1,60 @@
 /**
- * FAQ answers must stay inside PRODUCT.md / README.md / docs/ROADMAP.md truth.
- * Voice: plain ops English for dedicated-server admins. No invented features.
+ * FAQ — wording from the 2026 reword brief.
  */
 
 export type FaqItem = { q: string; a: string };
 
 export type FaqGroup = {
-  /** Mono eyebrow for the group plate */
   label: string;
-  /** One-line group job */
   blurb: string;
   items: FaqItem[];
 };
 
+export const FAQ_PAGE = {
+  label: 'Got Questions?',
+  title: 'Frequently Asked Questions',
+  body: 'All the information you need about WatchTower, how it works, and how it uses your data.',
+} as const;
+
 export const FAQ_GROUPS: FaqGroup[] = [
   {
-    label: 'Scope',
-    blurb: 'What WatchTower is, and what it leaves alone.',
+    label: 'Got Questions?',
+    blurb: 'All the information you need about WatchTower, how it works, and how it uses your data.',
     items: [
       {
-        q: 'Is WatchTower a host panel?',
-        a: "No. It won't start or stop the server, manage files, or replace the console. Keep Pterodactyl, Crafty, AMP, or bare metal for that. WatchTower sits beside them.",
+        q: 'Does WatchTower replace Pterodactyl, Crafty, or AMP?',
+        a: 'No. WatchTower is a tool that helps you monitor your server\'s health. It doesn\'t manage the server itself. You still use your usual server control panel to start, stop, or update your server. WatchTower works alongside it to help you figure out why your server might be running slowly or crashing.',
       },
       {
-        q: 'Is this player analytics?',
-        a: "No. No retention, GeoIP, or leaderboards. Seeing who's online during lag or a crash is ops triage, not player tracking.",
+        q: 'Will WatchTower restart my server automatically?',
+        a: 'No. WatchTower can tell you if restarting might help and whether a reboot is recommended. It also warns if rebooting could affect players, but it doesn\'t automatically restart your server for you.',
       },
       {
-        q: 'Does it support Fabric?',
-        a: 'Right now it ships for NeoForge 1.21.x on Java 21. Fabric is on the roadmap. We are not claiming Fabric support yet.',
+        q: 'Does WatchTower send my server logs or data to the cloud?',
+        a: 'No. Everything stays on your server. All monitoring data, crash reports, logs, and settings are stored locally on your machine in a folder called watchtower/. You don\'t need an internet connection or cloud account to use it.',
       },
       {
-        q: 'Do I need Spark?',
-        a: 'No. Spark is optional. Install it when you want lag profiles broken into next steps. The deep Spark workspace is still alpha.',
+        q: 'How much CPU and memory does WatchTower use?',
+        a: 'It uses very little. It runs background scans about once a minute, and the way it collects data is designed to have minimal impact on your server\'s performance.',
       },
       {
-        q: 'Does Modrinth download jars for me?',
-        a: 'No. Modrinth is lookup and hints only. WatchTower never downloads mod jars for you.',
-      },
-    ],
-  },
-  {
-    label: 'Trust',
-    blurb: 'Control, data, and money.',
-    items: [
-      {
-        q: 'Do I need a cloud account?',
-        a: 'No. WatchTower is local-first. Watchtower Cloud is a future paid option and is not required for the dashboard on your host.',
+        q: 'Is WatchTower a tool for tracking player behavior?',
+        a: 'No. It only shows which players are connected to help you see if lag is caused by players or to troubleshoot join issues. It doesn\'t collect data about what players do, where they are, or keep leaderboards.',
       },
       {
-        q: 'Does it upload my logs?',
-        a: 'Not by default. No telemetry either. Data stays on the host. Anything that talks to the network is opt-in.',
+        q: 'What versions of Minecraft and loaders does it support?',
+        a: 'Right now, it supports NeoForge 1.21.x with Java 21. Support for other Minecraft versions and loaders like Fabric is planned for future updates.',
       },
       {
-        q: 'Will it restart my server?',
-        a: 'No. Overview can say Safe, Caution, or Wait. WatchTower only advises. It never restarts the server for you and never quietly edits mods or the world.',
+        q: 'Is WatchTower free?',
+        a: 'Yes. It\'s open source, licensed under GPL-3.0, and completely free to use on your own server.',
       },
       {
-        q: 'Is it free?',
-        a: 'The local dashboard stays free forever under GPL-3.0-or-later. Get the jar from Modrinth or GitHub Releases.',
-      },
-    ],
-  },
-  {
-    label: 'On the host',
-    blurb: 'Port, login, disk, and when the game will not boot.',
-    items: [
-      {
-        q: 'How do I open the dashboard safely?',
-        a: "After install it listens on port 8787. Prefer localhost or an SSH tunnel. Don't expose 8787 to the open internet. Default login is watchtower / password. Change it on first open.",
-      },
-      {
-        q: 'Where does my data live?',
-        a: 'On the server, under the watchtower/ folder (ops-cache, state, Spark uploads, support zips). Nothing leaves the host unless you choose to share it.',
-      },
-      {
-        q: "What if Minecraft won't boot?",
-        a: 'Keep the matching CLI jar next to WatchTower in mods/. Run it with java -jar over SSH to build a local disaster-recovery bundle. It is not loaded as a Minecraft mod.',
+        q: 'What if my server doesn\'t start at all?',
+        a: 'If Minecraft doesn\'t launch, the WatchTower dashboard won\'t load. You can run the included recovery tool by opening your terminal and typing `java -jar watchtower-cli.jar`. This will help diagnose the problem and generate a report you can view in your browser.',
       },
     ],
   },
 ];
 
-/** Flat list for anything that still wants a linear FAQ. */
 export const FAQ_ITEMS: FaqItem[] = FAQ_GROUPS.flatMap((g) => g.items);

@@ -3,7 +3,7 @@ import '@/styles/globals.css';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { ThemeProvider } from '@/components/theme-provider';
-import { HERO_OVERVIEW, TAGLINE } from '@/content/product';
+import { PAGE_META } from '@/content/product';
 import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     default: 'WatchTower',
     template: '%s · WatchTower',
   },
-  description: `${TAGLINE} ${HERO_OVERVIEW}`,
+  description: PAGE_META.home.description,
   icons: {
     // Same mark as the static demo (watchtower-icon-simple → favicon.ico).
     icon: [
@@ -38,19 +38,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div
           dangerouslySetInnerHTML={{
             __html: `<!--
-          THESIS: The home page is a feature-first Shift Log desk tour - named
-            WatchTower surfaces in order. Left columns teach features; desk mocks
-            hold the sample fixtures.
-          OWN-WORLD: Night Watch Desk at marketing scale. Tonal plates, hairlines only,
-            tight 2/4/6px corners, Signal Blue scarce, Lantern Amber as the sole light
-            source (rail fill). Paper light theme. IBM Plex Sans for marketing
-            display/hero/entry titles; Geist for body/UI; JetBrains Mono for
-            numerals and system chrome. 12px label floor.
+          THESIS: The home page is a feature-first Shift Log — named WatchTower
+            surfaces in order. Left columns teach features; compartment mocks hold
+            the sample fixtures.
+          OWN-WORLD: Industrial Ops Print at marketing scale. Flat ink/paper plates,
+            1px ruled grid, zero radius everywhere. Hazard red for CTAs; lantern
+            amber for brand warmth only. Archivo Black for display titles; Inter
+            for body/UI; JetBrains Mono for meta, ports, and system chrome.
           STORY: Welcome, Live vitals, Issues Fix inbox, Crashes / OOM review, Overview
             grade, Insights schedule, demo.
           FIRST VIEWPORT: Brand-first Welcome. Tagline, overview, CTAs. Scroll cue into
             Live gauges. No glow orbs. No centered SaaS stack.
-          FORM: Ordered desk tour entries (no timeline rail). Feature names live in each h2.
+          FORM: Ordered Shift Log entries (no timeline rail). Feature names live in each h2.
           FINISH: anti-slop negative list + silhouette check before done.
         -->`,
           }}
@@ -58,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <a
             href="#main"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-[var(--wt-radius-md)] focus:bg-[color:var(--wt-accent)] focus:px-3 focus:py-2 focus:text-[color:var(--wt-accent-ink)]"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-[color:var(--wt-accent)] focus:px-3 focus:py-2 focus:text-[color:var(--wt-accent-ink)]"
           >
             Skip to content
           </a>

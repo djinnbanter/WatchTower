@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 /**
  * Always-on redaction for support bundle text artifacts.
- * Does not alter binary Spark profiles.
+ * Binary Spark profiles are listed by name only — never packed raw.
  */
 public final class SupportRedactor {
 
@@ -29,7 +29,7 @@ public final class SupportRedactor {
                     + "|auth[_-]?token|client[_-]?secret|access[_-]?key)\\s*[=:]\\s*)(.*)$");
     private static final Pattern INLINE_SECRET_ASSIGN = Pattern.compile(
             "(?i)((?:password|passwd|token|secret|webhook|api[_-]?key|rcon[_-]?password"
-                    + "|auth[_-]?token|client[_-]?secret|access[_-]?key)\\s*[=:]\\s*)([^\"\\s,\\]}+]+)");
+                    + "|auth[_-]?token|client[_-]?secret|access[_-]?key)\\s*[=:]\\s*)([^\"\\s,\\]}]+)");
 
     private SupportRedactor() {
     }
@@ -58,7 +58,7 @@ public final class SupportRedactor {
         if (m.matches()) {
             scrubbed = m.group(1) + "[REDACTED]";
         } else {
-            scrubbed = line;
+            scrubbed = INLINE_SECRET_ASSIGN.matcher(line).replaceAll("$1[REDACTED]");
         }
         scrubbed = IPV4.matcher(scrubbed).replaceAll("[IP_REDACTED]");
         scrubbed = IPV6_FULL.matcher(scrubbed).replaceAll("[IP_REDACTED]");
@@ -71,10 +71,15 @@ public final class SupportRedactor {
         return redactText(input);
     }
 
-    /** Redact IP-like strings inside JSON text without parsing structure. */
+    private static final Pattern JSON_QUOTED_SECRET = Pattern.compile(
+            "(?i)(\"(?:password|passwd|token|secret|webhook|api[_-]?key|rcon[_-]?password"
+                    + "|auth[_-]?token|client[_-]?secret|access[_-]?key)\"\\s*:\\s*\")([^\"]*)(\")");
+
+    /** Redact IP-like strings and secret values inside JSON text without parsing structure. */
     public static String redactJsonText(String json) {
         String scrubbed = redactText(json);
-        return INLINE_SECRET_ASSIGN.matcher(scrubbed).replaceAll("$1[REDACTED]");
+        scrubbed = INLINE_SECRET_ASSIGN.matcher(scrubbed).replaceAll("$1[REDACTED]");
+        return JSON_QUOTED_SECRET.matcher(scrubbed).replaceAll("$1[REDACTED]$3");
     }
 
     public static boolean looksLikeSecretKey(String key) {

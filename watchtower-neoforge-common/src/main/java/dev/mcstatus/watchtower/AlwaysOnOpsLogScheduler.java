@@ -80,6 +80,7 @@ public final class AlwaysOnOpsLogScheduler {
                         return;
                     }
                     try {
+                        ModJarMetadataCacheScheduler.checkFingerprint(current);
                         OpsScanService.scanOpsLog(current);
                         OpsScanService.scanRunningMods(current);
                         OpsScanService.scanCrashes(current);

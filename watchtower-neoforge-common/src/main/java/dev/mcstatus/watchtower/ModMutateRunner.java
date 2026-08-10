@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.mcstatus.watchtower.core.analyze.ModRestartNudge;
+import dev.mcstatus.watchtower.core.collect.ModJarMetadataCache;
 import dev.mcstatus.watchtower.core.collect.ModJarMetadataReader;
 import dev.mcstatus.watchtower.core.collect.ModJarPaths;
 import dev.mcstatus.watchtower.core.collect.ModJarSwap;
@@ -137,6 +138,7 @@ public final class ModMutateRunner {
             job.transition(ModMutateJob.STATE_DONE);
             state.updateMutateJob(job);
             recordRestartNudge(server, outcome.jarBasename());
+            refreshJarMetadataCache(server, "mutate_swap");
         } else {
             failJob(state, job, outcome.errorCode(), outcome.message(), outcome.retryable());
         }
@@ -224,6 +226,7 @@ public final class ModMutateRunner {
             job.transition(ModMutateJob.STATE_APPLYING);
             job.transition(ModMutateJob.STATE_DONE);
             state.updateMutateJob(job);
+            refreshJarMetadataCache(server, "mutate_batch");
         }
     }
 
@@ -242,9 +245,15 @@ public final class ModMutateRunner {
             return;
         }
 
-        PrimaryFile primary = fetchPrimaryFile(job.version_id, job.expected_sha512, metadataFetcher);
+        if (job.project_id == null || job.project_id.isBlank()) {
+            failJob(state, job, "missing_project", "modrinth_project_id required", false);
+            return;
+        }
+        PrimaryFile primary = fetchPrimaryFile(
+                job.version_id, job.project_id, job.expected_sha512, metadataFetcher);
         if (primary == null) {
-            failJob(state, job, "version_not_found", "Modrinth version not found or has no file", true);
+            failJob(state, job, "version_not_found",
+                    "Modrinth version not found, has no file, or does not belong to this project", true);
             return;
         }
         if (job.expected_sha512 != null && !job.expected_sha512.isBlank()
@@ -296,6 +305,7 @@ public final class ModMutateRunner {
         job.transition(ModMutateJob.STATE_DONE);
         state.updateMutateJob(job);
         recordRestartNudge(server, basename);
+        refreshJarMetadataCache(server, "mutate_install");
         ModRuntime.logger().info("[Watchtower] Installed mod {} as {} (job {})",
                 job.mod_id, basename, job.id);
     }
@@ -328,6 +338,7 @@ public final class ModMutateRunner {
         job.transition(ModMutateJob.STATE_DONE);
         state.updateMutateJob(job);
         recordRestartNudge(server, jar);
+        refreshJarMetadataCache(server, "mutate_quarantine");
     }
 
     private static void runUndo(
@@ -357,6 +368,7 @@ public final class ModMutateRunner {
         job.transition(ModMutateJob.STATE_DONE);
         state.updateMutateJob(job);
         recordRestartNudge(server, result.jarBasename());
+        refreshJarMetadataCache(server, "mutate_undo");
     }
 
     private record SwapOutcome(
@@ -388,11 +400,19 @@ public final class ModMutateRunner {
         String modId = step != null ? step.mod_id : job.mod_id;
         String jarHint = step != null ? step.jar_basename : job.jar_basename;
         String versionId = step != null ? step.version_id : job.version_id;
+        String projectId = step != null ? step.project_id : job.project_id;
         String expectedSha = step != null ? step.expected_sha512 : job.expected_sha512;
         boolean batchStep = step != null;
 
         if (versionId == null || versionId.isBlank()) {
             return SwapOutcome.fail("missing_version", "modrinth_version_id required", false);
+        }
+        if (projectId == null || projectId.isBlank()) {
+            // Resolve from ops-cache when client omitted it
+            projectId = resolveProjectId(server.serverDirectory(), modId);
+        }
+        if (projectId == null || projectId.isBlank()) {
+            return SwapOutcome.fail("missing_project", "modrinth_project_id required", false);
         }
 
         String liveJar = resolveLiveJarBasename(server.serverDirectory(), modId, jarHint);
@@ -409,9 +429,10 @@ public final class ModMutateRunner {
         }
         state.updateMutateJob(job);
 
-        PrimaryFile primary = fetchPrimaryFile(versionId, expectedSha, metadataFetcher);
+        PrimaryFile primary = fetchPrimaryFile(versionId, projectId, expectedSha, metadataFetcher);
         if (primary == null) {
-            return SwapOutcome.fail("version_not_found", "Modrinth version not found or has no file", true);
+            return SwapOutcome.fail("version_not_found",
+                    "Modrinth version not found, has no file, or does not belong to this project", true);
         }
         String sha = (expectedSha != null && !expectedSha.isBlank()) ? expectedSha.trim() : primary.sha512();
         if (sha == null || sha.isBlank()) {
@@ -477,6 +498,7 @@ public final class ModMutateRunner {
 
     public static PrimaryFile fetchPrimaryFile(
             String versionId,
+            String expectedProjectId,
             String expectedSha512Ignored,
             VersionMetadataFetcher metadataFetcher) throws IOException, InterruptedException {
         if (versionId == null || versionId.isBlank() || metadataFetcher == null) {
@@ -487,6 +509,12 @@ public final class ModMutateRunner {
             return null;
         }
         JsonObject version = JsonParser.parseString(body).getAsJsonObject();
+        if (expectedProjectId != null && !expectedProjectId.isBlank()) {
+            String actualProject = str(version, "project_id");
+            if (actualProject == null || !expectedProjectId.trim().equalsIgnoreCase(actualProject.trim())) {
+                return null;
+            }
+        }
         return pickPrimaryFile(version);
     }
 
@@ -617,7 +645,8 @@ public final class ModMutateRunner {
         String fromOps = findJarInOpsCache(serverDir, wanted);
         if (fromOps != null) {
             Path live = ModJarPaths.resolveTopLevelJar(serverDir.resolve("mods"), fromOps);
-            if (live != null && Files.isRegularFile(live)) {
+            if (live != null && Files.isRegularFile(live)
+                    && jarHintBelongsToMod(serverDir, wanted, fromOps)) {
                 return fromOps;
             }
         }
@@ -777,6 +806,18 @@ public final class ModMutateRunner {
             StateManager.setModRestartPending(statePath, pending);
         } catch (Exception e) {
             ModRuntime.logger().debug("Failed to set mod restart nudge: {}", e.toString());
+        }
+    }
+
+    private static void refreshJarMetadataCache(ServerContext server, String reason) {
+        if (server == null) {
+            return;
+        }
+        try {
+            ModJarMetadataCache.get().invalidate(reason);
+            ModJarMetadataCacheScheduler.requestRebuild(server, reason);
+        } catch (Exception e) {
+            ModRuntime.logger().debug("Mod jar metadata cache refresh failed: {}", e.toString());
         }
     }
 

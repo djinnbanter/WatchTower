@@ -248,20 +248,18 @@ public final class ModJarMetadataReader {
         }
     }
 
-    /** Nested mod id (lowercase) → parent top-level jar basename. */
+    /**
+     * Nested mod id (lowercase) → parent top-level jar basename.
+     * Prefers {@link ModJarMetadataCache} last-good; when cold returns empty
+     * (never unzips — tick-safe). Disk rebuilds belong on the cache scheduler.
+     */
     public static Map<String, String> nestedIdToParentJar(String serverDir) {
-        Map<String, String> out = new HashMap<>();
-        for (ModEntry e : readFromModsDir(serverDir)) {
-            if (e.jarFile() == null || e.jarInJar() == null) {
-                continue;
-            }
-            for (JarInJarEntry nested : e.jarInJar()) {
-                if (nested.id() != null && !nested.id().isBlank()) {
-                    out.putIfAbsent(nested.id().toLowerCase(Locale.ROOT), e.jarFile());
-                }
-            }
+        ModJarMetadataCache cache = ModJarMetadataCache.get();
+        ModJarMetadataCache.Snapshot snap = cache.snapshot();
+        if (snap.ready() || !snap.entries().isEmpty()) {
+            return cache.nestedIdToParentJar();
         }
-        return out;
+        return Map.of();
     }
 
     public static void addJarInJarFields(JsonObject mod, List<JarInJarEntry> jarInJar) {

@@ -468,7 +468,7 @@ public final class LiveMetricsService {
             if (now - lastEntityScanEpoch >= entityInterval && ModRuntime.config().countEntities()) {
                 lastEntityScanEpoch = now;
                 try {
-                    WatchtowerSample.Sample sample = server.collectSample();
+                    WatchtowerSample.Sample sample = server.collectSampleLight();
                     entities = sample.entities();
                     chunks = sample.chunks();
                 } catch (Exception e) {

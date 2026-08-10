@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Server hang on large modpacks during lag capture (#5)** — mod jar metadata is no longer unzipped on the tick thread; it is cached in the background and lag incidents use a light sample
 - **Ops live lag / Issues Active / L1 rollup** — `LagSpikeDetector` calls `OpsScanService.refreshIssuesLive` after `applyLagIncident` and `updateLagIssueResolution`; dashboard `buildActiveItems` prefers `issues_live` over peek lag/log-stale duplicates; `LiveMetricsService.unbindServer` flushes rollups with a floored open-minute epoch
 - **Support hang dumps** — soft-hang thread dumps in packs are secret-scrubbed; soft budget no longer skips hangs that still fit the hard size limit
 - **Support snapshot** — `performance/snapshot.json` is packed as redacted JSON text (not a raw file copy)
@@ -36,6 +37,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release discovery/report running locks when the server stops mid-audit so the next start is not sticky-locked
 - Call `AlwaysOnOpsLogScheduler.refreshSchedule` after `OPS_LOG_SCAN_SEC` settings save and `BackupPollScheduler.refreshSchedule` after backup dirs save
 - Disable Backups Cleanup while test-restore `job.status` is running; server cleanup rejects when `BackupVerifyScheduler.isRestoreBusy()`
+- **Mod mutate download SSRF** — `ModrinthFileFetcher` allowlists `https://cdn.modrinth.com` only and does not follow redirects
+- **Mod mutate version binding** — fetch requires the Modrinth `version_id` to belong to the requested `project_id`
+- **Mutate ops-cache jar** — ops-cache basename reuse requires `jarHintBelongsToMod`
+- **Auth pending password** — `alignPendingDefaultPassword` only seeds when the hash is empty; never resets an existing hash to `password`
+- **Auth session revoke** — password change and TOTP enable revoke other sessions for that account
+- **Login rate limit IP** — `clientIp` ignores client `X-Forwarded-For` and uses the TCP remote address
+- **FS browse sandbox** — `/api/fs/list` confines paths to `FsBrowseService.listRoots` roots
+- **Support redaction** — mid-line secret assigns and JSON quoted secret values are scrubbed
+- **Support Spark binaries** — `.sparkprofile` files are listed only (not packed raw; cannot be redacted)
 
 ## [1.2.0-beta.1](https://github.com/djinnbanter/WatchTower/compare/v1.1.9...v1.2.0-beta.1) — 2026-08-02
 

@@ -30,14 +30,14 @@ const ADVISE_PEEK: Record<
   support: { kind: 'support' },
 };
 
-/** Instrument stamp - page h1 owns display weight; stages stay schematic. */
+/** Board compartment stamp — page h1 owns display weight. */
 function StageTitle({ id, children }: { id: string; children: string }) {
   return (
     <h2
       id={id}
-      className="text-center font-mono text-[1.0625rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--wt-text-low)] md:text-[1.1875rem]"
+      className="wt-meta border border-[color:var(--wt-line)] bg-[color:var(--wt-bg1)] px-3 py-2 text-center text-[color:var(--wt-accent)] md:text-left"
     >
-      {children}
+      {`[ ${children.toUpperCase()} ]`}
     </h2>
   );
 }
@@ -57,7 +57,7 @@ function Stage({
     <section
       aria-labelledby={showTitle ? id : undefined}
       aria-label={showTitle ? undefined : title}
-      className="flex flex-col gap-3 md:gap-4"
+      className="flex flex-col gap-3 border border-[color:var(--wt-line)] bg-[color:var(--wt-bg0)] p-4 md:gap-4 md:p-5"
     >
       {showTitle ? <StageTitle id={id}>{title}</StageTitle> : null}
       {children}

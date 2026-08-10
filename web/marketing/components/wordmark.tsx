@@ -1,9 +1,8 @@
 import Image from 'next/image';
 
 /**
- * Lantern mark plus the wordmark set in Geist, matching the dashboard rail.
- * The shipped watchtower-wordmark.png is a duplicate of the icon file, so the
- * name is type rather than an image.
+ * Lantern mark + WatchTower wordmark in industrial display type.
+ * Watch = ink; Tower = lantern (sparse brand warmth only).
  */
 export function Wordmark({
   size = 'sm',
@@ -16,8 +15,9 @@ export function Wordmark({
   tone?: 'inherit' | 'on-dark';
 }) {
   const px = size === 'lg' ? 34 : size === 'md' ? 30 : 26;
-  const type = size === 'lg' ? '1.25rem' : size === 'md' ? '1.1875rem' : '1.0625rem';
-  const ink = tone === 'on-dark' ? 'text-[#f3f5f8]' : 'text-[color:var(--wt-text)]';
+  const type = size === 'lg' ? '1.35rem' : size === 'md' ? '1.2rem' : '1.0625rem';
+  const watchInk =
+    tone === 'on-dark' ? 'var(--wt-footer-ink, #f3f5f8)' : 'var(--wt-text)';
   return (
     <span className={`inline-flex items-center gap-2.5 leading-none ${className}`}>
       <Image
@@ -30,10 +30,11 @@ export function Wordmark({
         style={{ width: px, height: px }}
       />
       <span
-        className={`font-semibold leading-none tracking-[-0.02em] ${ink}`}
-        style={{ fontSize: type }}
+        className="wt-display leading-none"
+        style={{ fontSize: type, letterSpacing: '-0.045em' }}
       >
-        WatchTower
+        <span style={{ color: watchInk }}>Watch</span>
+        <span style={{ color: 'var(--wt-lantern)' }}>Tower</span>
       </span>
     </span>
   );

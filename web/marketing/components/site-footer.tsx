@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Wordmark } from '@/components/wordmark';
 import { Cta } from '@/components/cta';
 import { MagnetHit } from '@/components/motion';
@@ -10,18 +11,24 @@ import { DEMO_URL, FOOTER_BLURB, FOOTNOTE, LINKS } from '@/content/product';
 import './site-footer.css';
 
 const PRODUCT = [
-  { href: '/how-it-works', label: 'How it works' },
+  { href: '/', label: 'Overview' },
   { href: '/features', label: 'Features' },
-  { href: '/install', label: 'Install' },
-  { href: '/demo', label: 'Demo' },
-  { href: '/faq', label: 'FAQ' },
+  { href: '/how-it-works', label: 'How It Works' },
+  { href: '/demo', label: 'Live Demo' },
 ] as const;
 
-const PROJECT = [
-  { href: LINKS.modrinth, label: 'Modrinth' },
-  { href: LINKS.github, label: 'GitHub' },
-  { href: LINKS.wiki, label: 'Wiki' },
-  { href: LINKS.license, label: 'License' },
+const HELP = [
+  { href: '/install', label: 'Quick Start Guide' },
+  { href: LINKS.wiki, label: 'GitHub Wiki', external: true },
+  { href: LINKS.wikiDisasterRecovery, label: 'Disaster Recovery Tips', external: true },
+  { href: `${LINKS.github}/blob/main/docs/ROADMAP.md`, label: 'In-App Roadmap (Upcoming Features)', external: true },
+] as const;
+
+const COMMUNITY = [
+  { href: LINKS.modrinth, label: 'Modrinth Page', external: true },
+  { href: LINKS.github, label: 'GitHub Repository', external: true },
+  { href: LINKS.releasesLatest, label: 'Latest Releases', external: true },
+  { href: LINKS.license, label: 'License Information (GPL-3.0)', external: true },
 ] as const;
 
 function FooterNav({
@@ -36,12 +43,12 @@ function FooterNav({
       <MarginNote className="mb-5 !text-[color:var(--wt-footer-low)]">{label}</MarginNote>
       <ul className="m-0 flex list-none flex-col gap-3 p-0">
         {items.map((item) => (
-          <li key={item.href}>
+          <li key={item.href + item.label}>
             {item.external || item.href === '/demo' ? (
               <a
                 href={item.href === '/demo' ? DEMO_URL : item.href}
                 className="wt-site-footer__link inline-block text-[0.9375rem] font-medium tracking-[-0.01em]"
-                {...(item.href === '/demo'
+                {...(item.href === '/demo' || item.external
                   ? { target: '_blank', rel: 'noopener noreferrer' }
                   : null)}
               >
@@ -63,11 +70,15 @@ function FooterNav({
 }
 
 export function SiteFooter() {
+  const pathname = usePathname();
+  /** Home uses hard full-screen snaps; Close is the end plate — skip site footer there. */
+  if (pathname === '/') return null;
+
   return (
     <footer className="wt-site-footer relative">
       <div className="wt-site-footer__lantern" aria-hidden />
 
-      <div className="relative mx-auto grid max-w-[84rem] gap-14 px-5 py-20 md:grid-cols-[minmax(0,1.55fr)_minmax(0,0.7fr)_minmax(0,0.7fr)] md:gap-12 md:py-24 lg:gap-20 lg:px-8">
+      <div className="relative mx-auto grid max-w-[1600px] gap-14 px-4 py-20 md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.7fr)_minmax(0,0.7fr)_minmax(0,0.7fr)] md:gap-10 md:px-8 md:py-24 lg:gap-14">
         <Reveal className="min-w-0">
           <Wordmark size="lg" tone="on-dark" />
           <p
@@ -79,39 +90,31 @@ export function SiteFooter() {
           <div className="mt-8">
             <MagnetHit>
               <Cta href={DEMO_URL} withArrow newTab>
-                Open the demo
+                Try the live demo
               </Cta>
             </MagnetHit>
           </div>
         </Reveal>
 
         <Reveal delay={0.05}>
-          <FooterNav
-            label="Product"
-            items={PRODUCT.map((item) => ({ ...item, external: false }))}
-          />
+          <FooterNav label="Product" items={PRODUCT.map((item) => ({ ...item }))} />
+        </Reveal>
+
+        <Reveal delay={0.08}>
+          <FooterNav label="Help & Guides" items={[...HELP]} />
         </Reveal>
 
         <Reveal delay={0.1}>
-          <FooterNav
-            label="Project"
-            items={PROJECT.map((item) => ({ ...item, external: true }))}
-          />
+          <FooterNav label="Community & Source Code" items={[...COMMUNITY]} />
         </Reveal>
       </div>
 
       <div className="wt-site-footer__meta relative">
-        <div className="mx-auto flex max-w-[84rem] flex-col gap-3 px-5 py-6 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-          <p
-            className="m-0 font-mono text-[0.75rem] leading-relaxed tracking-[0.04em]"
-            style={{ color: 'var(--wt-footer-low)' }}
-          >
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-3 px-4 py-6 sm:flex-row sm:items-center sm:justify-between md:px-8">
+          <p className="wt-meta m-0 max-w-[72ch]" style={{ color: 'var(--wt-footer-low)' }}>
             {FOOTNOTE}
           </p>
-          <p
-            className="m-0 font-mono text-[0.75rem] uppercase tracking-[0.14em]"
-            style={{ color: 'var(--wt-footer-low)' }}
-          >
+          <p className="wt-meta m-0" style={{ color: 'var(--wt-footer-low)' }}>
             WatchTower
           </p>
         </div>

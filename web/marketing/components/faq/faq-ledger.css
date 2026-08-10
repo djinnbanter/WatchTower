@@ -1,4 +1,4 @@
-/* FAQ ledger — Night Watch Desk field brief */
+/* FAQ ledger — industrial ops print */
 
 .faq-ledger {
   display: flex;
@@ -25,6 +25,11 @@
   font-size: 0.9375rem;
   line-height: 1.5;
   color: var(--wt-text-mid);
+}
+
+.faq-plate {
+  border: 1px solid var(--wt-line);
+  background: var(--wt-bg1);
 }
 
 .faq-row {
@@ -55,10 +60,6 @@
   font-variant-numeric: tabular-nums;
   color: var(--wt-text-low);
   line-height: 1.4;
-}
-
-.faq-group:first-child .faq-row:first-child .faq-row__index {
-  color: var(--wt-accent);
 }
 
 .faq-row__body {
@@ -112,7 +113,7 @@
   text-transform: uppercase;
   color: var(--wt-text);
   text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--wt-text-mid) 35%, transparent);
+  border-bottom: 1px solid var(--wt-line);
   padding-bottom: 0.1rem;
   transition:
     color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
@@ -121,10 +122,10 @@
 
 .faq-foot__links a:hover {
   color: var(--wt-accent);
-  border-color: color-mix(in srgb, var(--wt-accent) 55%, transparent);
+  border-color: var(--wt-accent);
 }
 
 .faq-foot__links a:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--wt-accent) 55%, transparent);
+  outline: 2px solid var(--wt-accent);
   outline-offset: 3px;
 }

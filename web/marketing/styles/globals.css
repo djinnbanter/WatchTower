@@ -1,86 +1,110 @@
 @import "tailwindcss";
-@import "@fontsource-variable/geist";
-@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource/archivo-black";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/inter/800.css";
 @import "@fontsource-variable/jetbrains-mono";
 
 /*
-  Night Watch Desk tokens.
-  Dark = default ops desk. Light = paper daylight desk (Shift Log).
-  Do not invent new brand hues. No decorative glow orbs.
+  Industrial Ops Print tokens (marketing).
+  Dark = tactical desk. Light = Swiss industrial print.
+  Ember orange for brand + CTAs (bold, not neon). Red reserved for danger.
 */
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-  --wt-bg0: #14171e;
-  --wt-bg1: #222833;
-  --wt-bg2: #2e3543;
-  --wt-bg3: #3b4354;
-  --wt-bg-hot: #171519;
-  --wt-line: rgba(232, 237, 246, 0.14);
-  --wt-line-strong: rgba(232, 237, 246, 0.22);
-  --wt-text: #f3f5f8;
-  --wt-text-mid: #b8bfcc;
-  --wt-text-low: #8a92a1;
-  --wt-accent: #4c8dff;
-  --wt-accent-soft: rgba(76, 141, 255, 0.16);
-  --wt-accent-ink: #ffffff;
-  --wt-lantern: #f5a524;
+  --wt-bg0: #0a0a0a;      /* ink */
+  --wt-bg1: #121212;      /* panel */
+  --wt-bg2: #121212;
+  --wt-bg3: #1a1a1a;
+  --wt-bg-hot: #0a0a0a;
+  --wt-line: #3f3f46;
+  --wt-line-strong: #52525b;
+  --wt-text: #eaeaea;
+  --wt-text-mid: #a3a3a3;
+  --wt-text-low: #737373;
+  --wt-accent: #e8910c;           /* ember orange — CTAs + brand */
+  --wt-accent-soft: rgba(232, 145, 12, 0.16);
+  --wt-accent-ink: #0a0a0a;
+  --wt-lantern: #e8910c;
   --wt-ok: #34d399;
-  --wt-warn: #f5a524;
-  --wt-danger: #f87171;
-  --wt-info: #9db2ce;
-  --wt-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 18px 48px rgba(0, 0, 0, 0.45);
-  --wt-plate-outer: rgba(255, 255, 255, 0.04);
-  --wt-grat: rgba(232, 237, 246, 0.035);
-  --wt-nav-bg: rgba(20, 23, 30, 0.72);
+  --wt-warn: #e8910c;
+  --wt-danger: #e61919;
+  --wt-info: #a3a3a3;
+  --wt-shadow: none;
+  --wt-plate-outer: transparent;
+  --wt-grat: transparent;
+  --wt-nav-bg: #0a0a0a;
+  /* Instrument channels — match product desk; never share status (ok/warn/danger) hex */
   --wt-ch-tps: #4fb286;
   --wt-ch-mspt: #e0a458;
   --wt-ch-players: #7fa9d6;
   --wt-ch-heap: #9b8bd9;
   --wt-ch-cpu: #c77fa6;
   --wt-ch-disk: #5fb3c4;
+
+  /* POC / shadcn chart aliases */
+  --background: var(--wt-bg0);
+  --foreground: var(--wt-text);
+  --card: var(--wt-bg1);
+  --card-foreground: var(--wt-text);
+  --muted: var(--wt-bg3);
+  --muted-foreground: var(--wt-text-mid);
+  --border: var(--wt-line);
+  --primary: var(--wt-accent);
+  --primary-foreground: var(--wt-accent-ink);
 }
 
 [data-theme='light'] {
   color-scheme: light;
-  --wt-bg0: #f4f2ee;
-  --wt-bg1: #fbfaf8;
-  --wt-bg2: #eae7e1;
-  --wt-bg3: #ddd9d1;
-  --wt-bg-hot: #f1ece5;
-  --wt-line: rgba(22, 24, 29, 0.14);
-  --wt-line-strong: rgba(22, 24, 29, 0.2);
-  --wt-text: #16181d;
-  --wt-text-mid: #4a5058;
-  --wt-text-low: #696e76;
-  --wt-accent: #1b4fe0;
-  --wt-accent-soft: rgba(27, 79, 224, 0.12);
+  /* Cool Swiss print — neutral paper, not parchment. */
+  --wt-bg0: #f4f4f5;
+  --wt-bg1: #ffffff;
+  --wt-bg2: #f4f4f5;
+  --wt-bg3: #e4e4e7;
+  --wt-bg-hot: #f4f4f5;
+  --wt-line: #d4d4d8;
+  --wt-line-strong: #a1a1aa;
+  --wt-text: #18181b;
+  --wt-text-mid: #52525b;
+  --wt-text-low: #71717a;
+  --wt-accent: #c2410c;
+  --wt-accent-soft: rgba(194, 65, 12, 0.1);
   --wt-accent-ink: #ffffff;
-  --wt-lantern: #b4690e;
-  --wt-ok: #1f9d63;
-  --wt-warn: #b4690e;
-  --wt-danger: #d14343;
-  --wt-info: #48607f;
-  --wt-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 18px 44px rgba(23, 26, 32, 0.1);
-  --wt-plate-outer: rgba(22, 24, 29, 0.04);
-  --wt-grat: rgba(22, 24, 29, 0.05);
-  --wt-nav-bg: rgba(251, 250, 248, 0.86);
-  --wt-ch-tps: #2f8f66;
-  --wt-ch-mspt: #b4690e;
-  --wt-ch-players: #48607f;
-  --wt-ch-heap: #6b5f9a;
-  --wt-ch-cpu: #a05f86;
-  --wt-ch-disk: #3d8a98;
+  --wt-lantern: #c2410c;
+  --wt-ok: #15803d;
+  --wt-warn: #c2410c;
+  --wt-danger: #dc2626;
+  --wt-info: #71717a;
+  --wt-shadow: none;
+  --wt-plate-outer: transparent;
+  --wt-grat: transparent;
+  --wt-nav-bg: #fafafa;
+  --wt-ch-tps: #3a8f6a;
+  --wt-ch-mspt: #c48a3a;
+  --wt-ch-players: #5f85b0;
+  --wt-ch-heap: #7a6bb8;
+  --wt-ch-cpu: #a86588;
+  --wt-ch-disk: #3f96a6;
+
+  --background: var(--wt-bg0);
+  --foreground: var(--wt-text);
+  --card: var(--wt-bg1);
+  --card-foreground: var(--wt-text);
+  --muted: var(--wt-bg3);
+  --muted-foreground: var(--wt-text-mid);
+  --border: var(--wt-line);
+  --primary: var(--wt-accent);
+  --primary-foreground: var(--wt-accent-ink);
 }
 
 :root {
-  --wt-radius-sm: 2px;
-  --wt-radius-md: 4px;
-  --wt-radius-lg: 6px;
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  /* Marketing display only — body/UI stays Geist; instruments stay JetBrains. */
-  --font-display: "IBM Plex Sans Variable", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --wt-radius-sm: 0;
+  --wt-radius-md: 0;
+  --wt-radius-lg: 0;
+  --font-display: "Archivo Black", "Arial Black", sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
   --wt-fs-display: clamp(2.75rem, 7vw, 5rem);
   --wt-fs-display-sm: clamp(1.85rem, 3.8vw, 2.75rem);
   --wt-fs-hero: clamp(2.75rem, 7.5vw, 6rem);
@@ -106,9 +130,22 @@
   --color-wt-ok: var(--wt-ok);
   --color-wt-warn: var(--wt-warn);
   --color-wt-danger: var(--wt-danger);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
   --font-mono: var(--font-mono);
+}
+
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
 }
 
 html,
@@ -132,83 +169,53 @@ body {
   box-shadow: 0 0 0 4px var(--wt-accent-soft);
 }
 
-/* Desk tour rooms: each entry is a full-bleed tonal band. */
-.wt-tour-band {
-  transition: background-color 600ms var(--wt-ease);
-}
-
-.wt-tour-band[data-band='ink'] {
-  background-color: var(--wt-bg0);
-}
-
-.wt-tour-band[data-band='plate'] {
-  background-color: color-mix(in srgb, var(--wt-bg1) 72%, var(--wt-bg0));
-}
-
-.wt-tour-band[data-band='ember'] {
-  background-color: var(--wt-bg-hot);
-}
-
-.wt-tour-band__rule {
-  pointer-events: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 1px;
-  background: var(--wt-line);
-}
-
-.wt-tour-band__lantern {
-  display: block;
-  width: 3rem;
-  height: 1px;
-  background: var(--wt-lantern);
-}
-
-.wt-tour-band:first-child .wt-tour-band__rule {
-  display: none;
-}
-
-.wt-graticule {
-  background-image:
-    repeating-linear-gradient(to right, var(--wt-grat) 0 1px, transparent 1px 88px),
-    repeating-linear-gradient(to bottom, var(--wt-grat) 0 1px, transparent 1px 88px);
+/* Board-pack compartments: hard plates, no soft tonal washes. */
+.wt-board-entry + .wt-board-entry {
+  border-top: 1px solid var(--wt-line);
 }
 
 .wt-display {
   font-family: var(--font-display);
-  font-size: var(--wt-fs-display);
-  font-weight: 600;
-  line-height: 1.02;
-  letter-spacing: var(--wt-track-display);
-  text-wrap: balance;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  line-height: 0.92;
+}
+
+.wt-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .wt-display-sm {
   font-family: var(--font-display);
   font-size: var(--wt-fs-display-sm);
-  font-weight: 600;
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
 .wt-hero {
   font-family: var(--font-display);
   font-size: var(--wt-fs-hero);
-  font-weight: 600;
-  line-height: 0.94;
-  letter-spacing: -0.04em;
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
 .wt-entry {
   font-family: var(--font-display);
   font-size: var(--wt-fs-entry);
-  font-weight: 600;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
@@ -307,4 +314,51 @@ body {
   .wt-menu-in {
     animation: wt-menu-in 0.55s var(--wt-ease) both;
   }
+}
+
+/* Home panels: desktop wheel-paging only. Mobile is normal document scroll. */
+html.wt-home-snap {
+  scroll-behavior: auto;
+}
+
+@media (min-width: 1024px) {
+  html.wt-home-snap .wt-snap-panel {
+    box-sizing: border-box;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  html.wt-home-snap .wt-snap-panel > * {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  /* Board sections: don't stretch content to fill viewport. */
+  html.wt-home-snap .wt-snap-natural {
+    justify-content: center;
+  }
+
+  html.wt-home-snap .wt-snap-natural > * {
+    flex: 0 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.wt-home-snap {
+    scroll-snap-type: none;
+  }
+}
+
+/** POC industrial meter fill — diagonal hash. */
+.wt-bar-hash {
+  background-color: var(--wt-bar-ink, var(--wt-accent));
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0,
+    transparent 3px,
+    color-mix(in srgb, var(--wt-bar-ink, var(--wt-accent)) 55%, #000) 3px,
+    color-mix(in srgb, var(--wt-bar-ink, var(--wt-accent)) 55%, #000) 6px
+  );
 }

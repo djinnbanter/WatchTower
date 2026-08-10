@@ -47,10 +47,10 @@ public final class ModNesting {
             return new JsonArray();
         }
         if (serverDir != null && !serverDir.isBlank()) {
-            // Attach disk jar_in_jar onto parents by matching jar_file / id.
+            // Attach jar_in_jar from session cache (tick-safe; no disk unzip).
             Map<String, ModJarMetadataReader.ModEntry> byJar = new HashMap<>();
             Map<String, ModJarMetadataReader.ModEntry> byId = new HashMap<>();
-            for (ModJarMetadataReader.ModEntry e : ModJarMetadataReader.readFromModsDir(serverDir)) {
+            for (ModJarMetadataReader.ModEntry e : ModJarMetadataCache.get().entries()) {
                 if (e.jarFile() != null) {
                     byJar.putIfAbsent(e.jarFile().toLowerCase(Locale.ROOT), e);
                 }

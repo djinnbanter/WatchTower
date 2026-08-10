@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 
 const BASE =
-  'group inline-flex items-center justify-center whitespace-nowrap font-semibold no-underline transition-[transform,background-color,border-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.98]';
+  'group inline-flex items-center justify-center whitespace-nowrap font-semibold no-underline transition-[background-color,border-color,color] duration-200';
 
 export function Cta({
   href,
@@ -28,43 +28,38 @@ export function Cta({
 }) {
   const primary = variant === 'primary';
   const compact = size === 'sm';
-  const skin = primary
-    ? 'bg-[color:var(--wt-accent)] text-white hover:brightness-110'
-    : 'border border-[color:var(--wt-line-strong)] bg-[color:var(--wt-bg1)] text-[color:var(--wt-text)] hover:border-[color:var(--wt-accent)]';
-  const shell = compact ? 'gap-2 px-3 py-1.5 text-xs' : 'gap-2.5 px-5 py-2.5 text-sm';
-  const chip = compact ? 'h-6 w-6' : 'h-7 w-7';
+  const shell = compact
+    ? 'min-h-9 gap-2 px-3 py-2 text-xs'
+    : 'min-h-11 gap-2.5 px-5 py-3 text-sm sm:min-h-10 sm:py-2.5';
   const arrow = compact ? 12 : 14;
+
+  const style = primary
+    ? {
+        background: 'var(--wt-accent)',
+        color: 'var(--wt-accent-ink)',
+        border: '1px solid var(--wt-accent)',
+      }
+    : {
+        background: 'transparent',
+        color: 'var(--wt-text)',
+        border: '1px solid var(--wt-text)',
+      };
 
   return (
     <a
       href={href}
-      className={`${BASE} ${shell} ${skin} ${className}`}
-      style={{
-        borderRadius: 'var(--wt-radius-md)',
-        ...(primary ? { color: 'var(--wt-accent-ink)' } : null),
-      }}
+      className={`${BASE} ${shell} ${className}`}
+      style={style}
       {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : null)}
     >
       {leading ? (
-        <span
-          className={`inline-flex ${chip} shrink-0 items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-            primary
-              ? 'bg-white/15 group-hover:scale-105'
-              : 'bg-[color:var(--wt-bg2)] text-[color:var(--wt-text-mid)] group-hover:text-[color:var(--wt-text)] group-hover:scale-105'
-          }`}
-          style={{ borderRadius: 'var(--wt-radius-sm)' }}
-          aria-hidden
-        >
+        <span className="inline-flex shrink-0 items-center justify-center" aria-hidden>
           {leading}
         </span>
       ) : null}
       <span>{children}</span>
       {withArrow ? (
-        <span
-          className={`inline-flex ${chip} shrink-0 items-center justify-center bg-white/15 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105`}
-          style={{ borderRadius: 'var(--wt-radius-sm)', color: 'var(--wt-accent-ink)' }}
-          aria-hidden
-        >
+        <span className="inline-flex shrink-0 items-center justify-center" aria-hidden>
           <ArrowUpRight size={arrow} strokeWidth={1.75} />
         </span>
       ) : null}

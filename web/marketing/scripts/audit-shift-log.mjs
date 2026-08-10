@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Anti-slop / Shift Log audit for web/marketing.
+ * Anti-slop / board-layout audit for web/marketing.
  * Exit 1 on failure. Run from web/marketing: node scripts/audit-shift-log.mjs
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
@@ -34,12 +34,12 @@ for (const f of files.filter((p) => /\/content\//.test(rel(p)))) {
   }
 }
 
-// Shift-log + entries + desk + how plates: no sub-12px font sizes
+// Board + home + features + how: no sub-12px font sizes
 const sizeTargets = files.filter((p) => {
   const r = rel(p);
   return (
-    r.startsWith('components/shift-log/') ||
-    r.startsWith('components/entries/') ||
+    r.startsWith('components/board/') ||
+    r.startsWith('components/home/') ||
     r.startsWith('components/features/') ||
     r.startsWith('components/how/') ||
     r.startsWith('components/type/') ||
@@ -62,8 +62,8 @@ for (const f of sizeTargets) {
 const tourNew = files.filter((p) => {
   const r = rel(p);
   return (
-    r.startsWith('components/shift-log/') ||
-    r.startsWith('components/entries/') ||
+    r.startsWith('components/board/') ||
+    r.startsWith('components/home/') ||
     r.startsWith('components/how/') ||
     r === 'app/page.tsx' ||
     r === 'app/how-it-works/page.tsx' ||
@@ -76,14 +76,12 @@ for (const f of tourNew) {
   const r = rel(f);
   if (/--wt-glow-/.test(text)) fail.push(`${r}: --wt-glow-* token`);
   if (/boxShadow:\s*['"]var\(--wt-shadow\)['"]/.test(text) || /box-shadow:\s*var\(--wt-shadow\)/.test(text)) {
-    // InstrumentPlate may still define the token; pages must not apply it
     if (!r.includes('instrument-plate')) {
       fail.push(`${r}: elevation box-shadow via --wt-shadow`);
     }
   }
-  // Atmospheric radial on tour entries/pages
   if (
-    (r.startsWith('components/entries/') ||
+    (r.startsWith('components/home/') ||
       r.startsWith('components/how/') ||
       r === 'app/page.tsx' ||
       r === 'app/how-it-works/page.tsx') &&
@@ -93,59 +91,50 @@ for (const f of tourNew) {
   }
 }
 
-// Feature-tour rail: named surfaces, no clock stamps on the rail
-const EXPECTED_RAIL = [
-  ['welcome', 'Welcome'],
-  ['live', 'Live'],
-  ['issues', 'Issues'],
-  ['crashes', 'Crashes'],
-  ['overview', 'Overview'],
-  ['insights', 'Insights'],
-  ['close', 'End of shift'],
-];
-
-const nightPath = join(ROOT, 'content/night.ts');
-const nightText = readFileSync(nightPath, 'utf8');
-for (const [id, label] of EXPECTED_RAIL) {
-  if (!new RegExp(`id:\\s*'${id}'`).test(nightText)) {
-    fail.push(`night.ts: missing id '${id}'`);
-  }
-  if (!nightText.includes(`railLabel: '${label}'`) && !nightText.includes(`railLabel: "${label}"`)) {
-    fail.push(`night.ts: missing railLabel '${label}'`);
-  }
+// Board Home required; Shift Log architecture retired
+const homePage = readFileSync(join(ROOT, 'app/page.tsx'), 'utf8');
+if (!/HomeBoard/.test(homePage)) {
+  fail.push('app/page.tsx: expected HomeBoard');
 }
-if (/railLabel:\s*'[0-2]\d:[0-5]\d'/.test(nightText)) {
-  fail.push('night.ts: clock-style railLabel still present');
+if (/ShiftLog|WelcomeEntry|LiveEntry|IssuesEntry/.test(homePage)) {
+  fail.push('app/page.tsx: Shift Log / entry list must stay retired');
 }
 
-// Feature-first left columns: no TOUR.proof, no DESK fixture stories in entries
-const productPath = join(ROOT, 'content/product.ts');
-const productText = readFileSync(productPath, 'utf8');
+for (const req of [
+  'components/board/board-frame.tsx',
+  'components/board/board-page-header.tsx',
+  'components/board/board-section.tsx',
+  'components/home/home-board.tsx',
+  'components/home/live-gauges.tsx',
+]) {
+  if (!existsSync(join(ROOT, req))) {
+    fail.push(`missing ${req}`);
+  }
+}
+
+if (existsSync(join(ROOT, 'components/shift-log/log.tsx'))) {
+  fail.push('components/shift-log/log.tsx: ShiftLog should stay removed from Home');
+}
+if (existsSync(join(ROOT, 'components/entries/welcome.tsx'))) {
+  fail.push('components/entries: Home entry modules should stay removed');
+}
+
+// product.ts: no left-column proof narrative keys
+const productText = readFileSync(join(ROOT, 'content/product.ts'), 'utf8');
 if (/\bproof\s*:/.test(productText)) {
-  fail.push('content/product.ts: TOUR.proof (or other proof:) still present - feature-first copy forbids left-column proofs');
-}
-
-const entryBans = [
-  ['components/entries/live.tsx', /\.proof\b|Long busy-hour patterns sit on Insights/],
-  ['components/entries/issues.tsx', /\.proof\b/],
-  ['components/entries/crashes.tsx', /\.proof\b/],
-  ['components/entries/overview.tsx', /DESK\.overview\.letter|Restart verdict:/],
-  ['components/entries/insights.tsx', /stickyLag/],
-];
-for (const [relPath, re] of entryBans) {
-  const text = readFileSync(join(ROOT, relPath), 'utf8');
-  if (re.test(text)) fail.push(`${relPath}: left-column fixture / proof narrative still present`);
+  fail.push('content/product.ts: TOUR.proof (or other proof:) still present');
 }
 
 // How it works is a mechanism pipeline now, not a setup guide
-const howPagePath = join(ROOT, 'app/how-it-works/page.tsx');
-const howPageText = readFileSync(howPagePath, 'utf8');
+const howPageText = readFileSync(join(ROOT, 'app/how-it-works/page.tsx'), 'utf8');
 if (/wizard|mods\/|disaster-recovery CLI|watchtower-cli/i.test(howPageText)) {
   fail.push('app/how-it-works/page.tsx: setup-guide vocabulary should live on Install, not here');
 }
+if (!/BoardFrame|BoardPageHeader/.test(howPageText)) {
+  fail.push('app/how-it-works/page.tsx: expected BoardFrame / BoardPageHeader');
+}
 
-const featuresPagePath = join(ROOT, 'app/features/page.tsx');
-const featuresPage = readFileSync(featuresPagePath, 'utf8');
+const featuresPage = readFileSync(join(ROOT, 'app/features/page.tsx'), 'utf8');
 if (/ProductDesk/.test(featuresPage)) {
   fail.push('app/features/page.tsx: ProductDesk room peeks belong on home, not Features');
 }
@@ -155,9 +144,11 @@ if (/FEATURE_SURFACES/.test(featuresPage)) {
 if (!/CapabilityCatalog/.test(featuresPage)) {
   fail.push('app/features/page.tsx: expected CapabilityCatalog');
 }
+if (!/BoardFrame|BoardPageHeader/.test(featuresPage)) {
+  fail.push('app/features/page.tsx: expected BoardFrame / BoardPageHeader');
+}
 
-const featuresContentPath = join(ROOT, 'content/features.ts');
-const featuresContent = readFileSync(featuresContentPath, 'utf8');
+const featuresContent = readFileSync(join(ROOT, 'content/features.ts'), 'utf8');
 if (!/FEATURE_CAPABILITIES/.test(featuresContent)) {
   fail.push('content/features.ts: missing FEATURE_CAPABILITIES');
 }
@@ -168,14 +159,13 @@ if (!/tone:/.test(featuresContent)) {
   fail.push('content/features.ts: capability tones required for instrument gauges');
 }
 
+const catalogPath = join(ROOT, 'components/features/capability-catalog.tsx');
 const tilePath = join(ROOT, 'components/features/capability-tile.tsx');
-const marksPath = join(ROOT, 'components/features/capability-marks.tsx');
-const bentoPath = join(ROOT, 'components/react-bits/MagicBento.tsx');
-if (!existsSync(marksPath) || !existsSync(bentoPath)) {
-  fail.push('components: capability-marks + react-bits/MagicBento required for Features grid');
+if (!existsSync(catalogPath)) {
+  fail.push('components: capability-catalog required for Features grid');
 }
 if (existsSync(tilePath)) {
-  fail.push('components/features: capability-tile superseded by MagicBento');
+  fail.push('components/features: capability-tile superseded by capability-catalog');
 }
 if (existsSync(join(ROOT, 'components/features/capability-row.tsx'))) {
   fail.push('components/features: capability-row ledger should stay removed');
